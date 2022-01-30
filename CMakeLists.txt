@@ -26,5 +26,5 @@ target_link_libraries(jluna ${JULIA_DIR}/lib/libjulia.so)
 
 ### TEST EXECUTABLE ###
 
-add_executable(JLUNA_TEST .test/main.cpp)
+add_executable(JLUNA_TEST .test/main.cpp .test/test.hpp)
 target_link_libraries(JLUNA_TEST jluna ${JULIA_DIR}/lib/libjulia.so)
