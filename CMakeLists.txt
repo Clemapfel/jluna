@@ -8,13 +8,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
 ### JULIA ###
 
 set(JULIA_DIR /home/clem/Applications/julia/)
-include_directories(${JULIA_DIR})
+include_directories(${JULIA_DIR}/include/julia/)
 
 ### JLUNA ###
 
 add_library(jluna SHARED
-    ./jluna.hpp
-)
+    jluna.hpp
+        include/exceptions.hpp include/typedefs.hpp .src/exceptions.cpp include/julia_extension.hpp)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C
@@ -26,5 +26,5 @@ target_link_libraries(jluna ${JULIA_DIR}/lib/libjulia.so)
 
 ### TEST EXECUTABLE ###
 
-add_executable(JLUNA_TEST main.cpp)
+add_executable(JLUNA_TEST .test/main.cpp)
 target_link_libraries(JLUNA_TEST jluna ${JULIA_DIR}/lib/libjulia.so)
