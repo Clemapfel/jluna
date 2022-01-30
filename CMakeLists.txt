@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 3.16)
+project(jluna)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
+
+### JULIA ###
+
+set(JULIA_DIR /home/clem/Applications/julia/)
+include_directories(${JULIA_DIR})
+
+### JLUNA ###
+
+add_library(jluna SHARED
+    ./jluna.hpp
+)
+
+set_target_properties(jluna PROPERTIES
+    LINKER_LANGUAGE C
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+include_directories(${CMAKE_SOURCE_DIR})
+target_link_libraries(jluna ${JULIA_DIR}/lib/libjulia.so)
+
+### TEST EXECUTABLE ###
+
+add_executable(JLUNA_TEST main.cpp)
+target_link_libraries(JLUNA_TEST jluna ${JULIA_DIR}/lib/libjulia.so)
