@@ -295,7 +295,6 @@ int main()
 
         Test::assert_that((char) unnamed_vector[0][0] == '?');
 
-
         auto unnamed_instance = State::safe_script("return instance");
         auto ui_a = unnamed_instance["_field"];
         auto ui_b = ui_a[0];

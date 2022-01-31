@@ -22,7 +22,7 @@ namespace jluna
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("UInt8", value);
-        return (char) jl_unbox_uint8(value);
+        return static_cast<char>(jl_unbox_uint8(res));
     }
 
     template<Is<uint8_t> T>
