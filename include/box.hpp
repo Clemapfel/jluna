@@ -81,12 +81,16 @@ namespace jluna
     Any* box(T value);
 
     /// @brief box std::complex<T> to Complex{T}
-    template<typename Value_t>
-    Any* box(std::complex<Value_t> value);
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool> = true>
+    Any* box(T value);
 
     /// @brief box std::vector<T> to Vector{T}
-    template<typename Value_t>
-    Any* box(const std::vector<Value_t>& value);
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool> = true>
+    Any* box(const T& value);
 
     /// @brief box std::map<T, U> to IdDict{T, U}
     template<typename T,
@@ -103,8 +107,10 @@ namespace jluna
     Any* box(T value);
 
     /// @brief box std::set<T> to Set{T}
-    template<typename Value_t>
-    Any* box(std::set<Value_t>& value);
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool> = true>
+    Any* box(const T& value);
 
     /// @brief box std::pair<T, U> to Pair{T, U}
     template<typename T,

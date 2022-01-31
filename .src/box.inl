@@ -98,15 +98,15 @@ namespace jluna
         return jl_eval_string(("return \"" + value + "\"").c_str());
     }
 
-    template<typename Value_t>
-    Any* box(std::complex<Value_t> value)
+    template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
+    Any* box(T value)
     {
         static jl_function_t* complex = jl_get_function(jl_base_module, "complex");
         return safe_call(complex, box(value.real()), box(value.imag()));
     }
 
-    template<typename Value_t>
-    Any* box(const std::vector<Value_t>& value)
+    template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
+    Any* box(const T& value)
     {
         static jl_function_t* vector = jl_find_function("jluna", "make_vector");
 
@@ -152,8 +152,8 @@ namespace jluna
         return res;
     }
 
-    template<typename Value_t>
-    Any* box(std::set<Value_t>& value)
+    template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool>>
+    Any* box(const T& value)
     {
         static jl_function_t* make_set = jl_find_function("jluna", "make_set");
 

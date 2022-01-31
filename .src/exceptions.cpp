@@ -58,33 +58,5 @@ namespace jluna
             return;
         }
     }
-
-    template<typename... Args_t>
-    Any* call(Function* function, Args_t... args)
-    {
-        throw_if_uninitialized();
-
-        std::vector<Any*> params;
-        (params.push_back((Any*) args), ...);
-
-        auto* res = jl_call(function, params.data(), params.size());
-        forward_last_exception();
-        return res;
-    }
-
-    template<typename... Args_t>
-    Any* safe_call(Function* function, Args_t... args)
-    {
-        throw_if_uninitialized();
-
-        std::vector<Any*> params;
-        params.push_back((Any*) function);
-        (params.push_back((Any*) args), ...);
-
-        static Function* safe_call = jl_find_function("jluna.exception_handler", "safe_call");
-        auto* res = jl_call(safe_call, params.data(), params.size());
-        forward_last_exception();
-        return res;
-    }
 }
 

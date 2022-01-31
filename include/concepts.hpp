@@ -24,9 +24,5 @@ namespace jluna
 
     /// @concept: is tuple but not pair
     template<typename T>
-    concept IsTuple = requires(T)
-    {
-        std::tuple_size<T>::value;
-        std::tuple_size<T>::value != 2;
-    };
+    concept IsTuple = std::tuple_size<T>::value != 2;
 }

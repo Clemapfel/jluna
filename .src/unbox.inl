@@ -15,77 +15,77 @@ namespace jluna
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("Bool", value);
-        jl_unbox_bool(res);
+        return jl_unbox_bool(res);
     }
 
     template<Is<uint8_t> T>
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("UInt8", value);
-        jl_unbox_uint8(res);
+        return jl_unbox_uint8(res);
     }
 
     template<Is<uint16_t> T>
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("UInt16", value);
-        jl_unbox_uint16(res);
+        return jl_unbox_uint16(res);
     }
 
     template<Is<uint32_t> T>
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("UInt32", value);
-        jl_unbox_uint32(res);
+        return jl_unbox_uint32(res);
     }
 
     template<Is<uint64_t> T>
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("UInt64", value);
-        jl_unbox_uint64(res);
+        return jl_unbox_uint64(res);
     }
 
     template<Is<int8_t> T>
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("Int8", value);
-        jl_unbox_int8(res);
+        return jl_unbox_int8(res);
     }
 
     template<Is<int16_t> T>
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("Int16", value);
-        jl_unbox_int16(res);
+        return jl_unbox_int16(res);
     }
 
     template<Is<int32_t> T>
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("Int32", value);
-        jl_unbox_int32(res);
+        return jl_unbox_int32(res);
     }
 
     template<Is<int64_t> T>
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("Int64", value);
-        jl_unbox_int64(res);
+        return jl_unbox_int64(res);
     }
 
     template<Is<float> T>
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("Float32", value);
-        jl_unbox_float32(res);
+        return jl_unbox_float32(res);
     }
 
     template<Is<double> T>
     T unbox(Any* value)
     {
         auto* res = jl_try_convert("Float64", value);
-        jl_unbox_float64(res);
+        return jl_unbox_float64(res);
     }
 
     template<Is<std::string> T>
@@ -169,7 +169,7 @@ namespace jluna
     template<typename T, typename T1, typename T2, std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool>>
     T unbox(Any* value)
     {
-        value = try_convert(value, "Pair");
+        value = jl_try_convert("Pair", value);
 
         auto* first = jl_get_nth_field(value, 0);
         auto* second = jl_get_nth_field(value, 1);

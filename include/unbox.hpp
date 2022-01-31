@@ -9,6 +9,7 @@
 
 #include <include/concepts.hpp>
 #include <include/typedefs.hpp>
+#include <include/exceptions.hpp>
 
 namespace jluna
 {

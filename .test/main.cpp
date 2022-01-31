@@ -9,6 +9,8 @@ int main()
 {
     State::initialize();
 
+    safe_call(jl_find_function("Base", "println"), jl_nothing, jl_nothing);
+
     std::cout << std::is_same_v<char, uint8_t> << std::endl;
     Test::initialize();
 
@@ -48,6 +50,7 @@ int main()
         });
     };
 
+    //test_box_unbox("Bool", Bool(true));
     test_box_unbox("Char", Char(12));
     test_box_unbox("String", std::string("abc"));
     test_box_unbox("Int8", Int8(12));
@@ -60,6 +63,26 @@ int main()
     test_box_unbox("UInt64", UInt64(12));
     test_box_unbox("Float32", Float32(0.01));
     test_box_unbox("Float64", Float64(0.01));
+    test_box_unbox("Complex", std::complex<double>(0, 1));
+
+    test_box_unbox("Pair", std::pair<size_t, std::string>(12, "abc"));
+    test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(12, "abc", 0.01));
+
+    auto test_box_unbox_iterable = []<typename T>(const std::string& name, T&& value){
+
+        Test::test("box/unbox " + name, [&value](){
+
+            jl_value_t* boxed = box(value);
+            auto unboxed = unbox<T>(boxed);
+
+            Test::assert_that(value == unboxed);
+        });
+    };
+
+    test_box_unbox_iterable("Vector", std::vector<size_t>{1, 2, 3, 4});
+    test_box_unbox_iterable("IdDict", std::map<size_t, std::string>{{12, "abc"}});
+    test_box_unbox_iterable("Dict", std::unordered_map<size_t, std::string>{{12, "abc"}});
+    test_box_unbox_iterable("Set", std::set<size_t>{1, 2, 3, 4});
 
     Test::conclude();
 
