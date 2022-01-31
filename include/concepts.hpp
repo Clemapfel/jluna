@@ -35,4 +35,13 @@ namespace jluna
         typename T::value_type;
     };
 
+    /// @concept describes lambda with signature (Args_t...) -> T
+    template<typename T, typename... Args_t>
+    concept LambdaType =
+    requires(T lambda)
+    {
+        std::is_invocable<T, Args_t...>::value;
+        typename std::invoke_result<T, Args_t...>::type;
+    };
+
 }
