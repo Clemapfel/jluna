@@ -76,7 +76,7 @@ extern "C"
     /// @returns value
     inline jl_value_t* jl_ref_value(jl_value_t* reference)
     {
-        static jl_function_t* get_reference_value = jl_find_function("jluna", "get_reference_value");
+        jl_function_t* get_reference_value = jl_get_function((jl_module_t*) jl_eval_string("return Main.jluna"), "get_reference_value");
         return jl_call1(get_reference_value, reference);
     }
 

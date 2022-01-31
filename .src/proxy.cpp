@@ -6,6 +6,7 @@
 #include <sstream>
 #include <deque>
 #include <sstream>
+#include <iostream>
 
 #include <include/state.hpp>
 #include <include/proxy.hpp>

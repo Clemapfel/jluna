@@ -39,7 +39,6 @@ namespace jluna::State
         else
             jl_init_with_image(path.c_str(), NULL);
 
-
         jl_eval_string(jluna::detail::include);
         forward_last_exception();
 
@@ -55,9 +54,9 @@ namespace jluna::State
         )");
         forward_last_exception();
 
-        Main = Proxy(jl_eval_string("return Main"), nullptr);
-        Base = Main["Base"];
-        Core = Main["Core"];
+        jluna::Main = Proxy((Any*) jl_main_module, nullptr);
+        jluna::Base = Main["Base"];
+        jluna::Core = Main["Core"];
 
         std::atexit(&jluna::detail::on_exit);
     }
@@ -143,11 +142,8 @@ namespace jluna::State::detail
 
     Any * get_reference(size_t key)
     {
-        if (key == 0)
-            return jl_nothing;
-
         static Function* get_reference = jl_find_function("jluna.memory_handler", "get_reference");
-        return jluna::safe_call(get_reference, jl_box_uint64(key));
+        return jluna::safe_call(get_reference, jl_box_uint64(reinterpret_cast<size_t>(key)));
     }
 
     void free_reference(size_t key)

@@ -9,7 +9,7 @@
 
 namespace jluna
 {
-    static Proxy Main = Proxy(nullptr, nullptr);
-    static Proxy Base = Proxy(nullptr, nullptr);
-    static Proxy Core = Proxy(nullptr, nullptr);
+    Proxy Main;
+    Proxy Base;
+    Proxy Core;
 }
