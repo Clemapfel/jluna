@@ -1,0 +1,16 @@
+//
+// Copyright 2021 Clemens Cords
+// Created on 15.12.21 by clem (mail@clemens-cords.com)
+//
+
+#pragma once
+
+#cmakedefine RESOURCE_PATH "@RESOURCE_PATH@"
+
+namespace jluna::detail
+{
+    ///@brief allow julia to load jluna by using C++ #import statement
+    static inline const char* include = R"(
+        include("@RESOURCE_PATH@/include/jluna.jl")
+    )";
+}

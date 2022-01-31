@@ -12,9 +12,15 @@ include_directories(${JULIA_DIR}/include/julia/)
 
 ### JLUNA ###
 
+set(RESOURCE_PATH ${CMAKE_SOURCE_DIR})
+configure_file(${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in ${CMAKE_SOURCE_DIR}/.src/include_julia.inl @ONLY)
+
 add_library(jluna SHARED
     jluna.hpp
-        include/exceptions.hpp include/typedefs.hpp .src/exceptions.cpp include/julia_extension.hpp include/state.hpp include/box.hpp)
+
+        include/exceptions.hpp
+        .src/exceptions.cpp
+        include/typedefs.hpp include/julia_extension.hpp include/box.hpp include/concepts.hpp .src/box.inl include/unbox.hpp .src/unbox.inl include/state.hpp .src/state.cpp)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C

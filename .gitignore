@@ -1,2 +1,3 @@
 /libjluna.so
 /libjluna_c_adapter.so
+/.src/include_julia.inl
