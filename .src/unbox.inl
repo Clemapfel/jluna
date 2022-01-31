@@ -18,6 +18,13 @@ namespace jluna
         return jl_unbox_bool(res);
     }
 
+    template<Is<char> T>
+    T unbox(Any* value)
+    {
+        auto* res = jl_try_convert("UInt8", value);
+        return (char) jl_unbox_uint8(value);
+    }
+
     template<Is<uint8_t> T>
     T unbox(Any* value)
     {

@@ -10,7 +10,7 @@
 
 namespace jluna
 {
-    /// @concept: reintepretable to jl_value_t*
+    /// @concept: reinterpretable to jl_value_t*
     template<typename T>
     concept IsJuliaValuePointer =
         std::is_same_v<T, jl_value_t*> or

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <julia/julia.h>
+#include <julia.h>
 
 namespace jluna
 {
@@ -27,4 +27,5 @@ namespace jluna
 
     using Any = jl_value_t;
     using Function = jl_function_t;
+    using Symbol = jl_sym_t;
 }

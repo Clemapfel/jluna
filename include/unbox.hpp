@@ -23,6 +23,9 @@ namespace jluna
     template<Is<bool> T>
     T unbox(Any* value);
 
+    template<Is<char> T>
+    T unbox(Any* value);
+
     /// @brief unbox to uint8
     template<Is<uint8_t> T>
     T unbox(Any* value);
@@ -109,6 +112,13 @@ namespace jluna
     /// @brief unbox to tuple
     template<IsTuple T>
     T unbox(Any* value);
+
+    /// @concept requires a value to be unboxed from a julia-side value
+    template<typename T>
+    concept Unboxable = requires(T t, jl_value_t* v)
+    {
+        {unbox<T>(v)};
+    };
 }
 
 #include ".src/unbox.inl"

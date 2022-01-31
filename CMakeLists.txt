@@ -20,7 +20,7 @@ add_library(jluna SHARED
 
         include/exceptions.hpp
         .src/exceptions.cpp
-        include/typedefs.hpp include/julia_extension.hpp include/box.hpp include/concepts.hpp .src/box.inl include/unbox.hpp .src/unbox.inl include/state.hpp .src/state.cpp)
+        include/typedefs.hpp include/julia_extension.hpp include/box.hpp include/concepts.hpp .src/box.inl include/unbox.hpp .src/unbox.inl include/state.hpp .src/state.cpp include/proxy.hpp .src/proxy.cpp include/utilities.hpp .src/proxy.inl)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C

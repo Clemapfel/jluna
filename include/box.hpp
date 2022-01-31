@@ -126,6 +126,13 @@ namespace jluna
     /// @brief box std::tuple<Ts...> to Tuple{Ts...}
     template<IsTuple T>
     Any* box(T value);
+
+    /// @concept requires a value to be boxable into a julia-side value
+    template<typename T>
+    concept Boxable = requires(T t)
+    {
+        {box(t)};
+    };
 }
 
 #include ".src/box.inl"
