@@ -14,7 +14,7 @@ include_directories(${JULIA_DIR}/include/julia/)
 
 add_library(jluna SHARED
     jluna.hpp
-        include/exceptions.hpp include/typedefs.hpp .src/exceptions.cpp include/julia_extension.hpp)
+        include/exceptions.hpp include/typedefs.hpp .src/exceptions.cpp include/julia_extension.hpp include/state.hpp include/box.hpp)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C

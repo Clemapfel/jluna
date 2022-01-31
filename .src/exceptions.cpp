@@ -7,6 +7,7 @@
 #include <include/julia_extension.hpp>
 
 #include <sstream>
+#include <vector>
 
 namespace jluna
 {
@@ -24,24 +25,24 @@ namespace jluna
         return _value;
     }
 
-    JuliaUnitializedException::JuliaUnitializedException()
+    JuliaUninitializedException::JuliaUninitializedException()
         : std::exception()
     {}
 
-    const char * JuliaUnitializedException::what() const noexcept
+    const char * JuliaUninitializedException::what() const noexcept
     {
         return "[C++][ERROR] jluna and julia need to be initialized using jluna::initialize() before usage";
     }
 
-    void throw_if_unitialized()
+    void throw_if_uninitialized()
     {
         if (not jl_is_initialized())
-            throw JuliaUnitializedException();
+            throw JuliaUninitializedException();
     }
 
     void forward_last_exception()
     {
-        throw_if_unitialized();
+        throw_if_uninitialized();
 
         auto* jl_c_exception = jl_exception_occurred();
         if (jl_c_exception != nullptr)
@@ -56,6 +57,34 @@ namespace jluna
             );
             return;
         }
+    }
+
+    template<typename... Args_t>
+    Any* call(Function* function, Args_t... args)
+    {
+        throw_if_uninitialized();
+
+        std::vector<Any*> params;
+        (params.push_back((Any*) args), ...);
+
+        auto* res = jl_call(function, params.data(), params.size());
+        forward_last_exception();
+        return res;
+    }
+
+    template<typename... Args_t>
+    Any* safe_call(Function* function, Args_t... args)
+    {
+        throw_if_uninitialized();
+
+        std::vector<Any*> params;
+        params.push_back((Any*) function);
+        (params.push_back((Any*) args), ...);
+
+        static Function* safe_call = jl_get_function("jluna.exception_handler", "safe_call");
+        auto* res = jl_call(safe_call, params.data(), params.size());
+        forward_last_exception();
+        return res;
     }
 }
 

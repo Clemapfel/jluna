@@ -34,15 +34,15 @@ namespace jluna
             operator Any*();
 
         protected:
-            Any* _value;
+            Any* _value = nullptr;
             std::string _message;
     };
 
     /// @brief exception thrown when trying to use jluna or julia before initialization
-    struct JuliaUnitializedException : public std::exception
+    struct JuliaUninitializedException : public std::exception
     {
         /// @brief ctor
-        JuliaUnitializedException();
+        JuliaUninitializedException();
 
         /// @brief get description
         /// @returns c-string
@@ -50,8 +50,24 @@ namespace jluna
     };
 
     /// @brief throw exception, used frequently for safeguarding code
-    void throw_if_unitialized();
+    void throw_if_uninitialized();
 
     /// @brief if exception occurred, forward as JuliaException
     void forward_last_exception();
+
+    /// @brief call function with args, with brief exception forwarding
+    /// @tparam Args_t: argument types, must be castable to Any*
+    /// @param function
+    /// @param args
+    /// @returns result
+    template<typename... Args_t>
+    Any* call(Function* function, Args_t... args);
+
+    /// @brief call function with args, with verbose exception forwarding
+    /// @tparam Args_t: argument types, must be castable to Any*
+    /// @param function
+    /// @param args
+    /// @returns result
+    template<typename... Args_t>
+    Any* safe_call(Function* function, Args_t... args);
 }
