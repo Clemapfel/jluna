@@ -80,6 +80,10 @@ namespace jluna
     template<Is<std::string> T>
     Any* box(T value);
 
+    /// @brief box c-string to String
+    template<Is<const char*> T>
+    Any* box(T value);
+
     /// @brief box std::complex<T> to Complex{T}
     template<typename T,
         typename Value_t = typename T::value_type,

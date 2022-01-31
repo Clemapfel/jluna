@@ -85,7 +85,7 @@ namespace jluna
         throw_if_uninitialized();
 
         std::vector<Any*> params;
-        params.push_back((Any*) function);
+        params.push_back(function);
         (params.push_back((Any*) args), ...);
 
         static Function* safe_call = jl_get_function((jl_module_t*) jl_eval_string("jluna.exception_handler"), "safe_call");

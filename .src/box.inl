@@ -98,6 +98,12 @@ namespace jluna
         return jl_eval_string(("return \"" + value + "\"").c_str());
     }
 
+    template<Is<const char*> T>
+    Any* box(T value)
+    {
+        return box(std::string(value));
+    }
+
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
     Any* box(T value)
     {
@@ -171,7 +177,7 @@ namespace jluna
     template<typename T, typename T1, typename T2, std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool>>
     Any* box(T value)
     {
-        static jl_function_t* pair = jl_get_function(jl_core_module, "Pair");
+        static jl_function_t* pair = jl_find_function("jluna", "make_pair");
         return safe_call(pair, box(value.first), box(value.second));
     }
 

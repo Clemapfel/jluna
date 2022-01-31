@@ -9,9 +9,6 @@ int main()
 {
     State::initialize();
 
-    safe_call(jl_find_function("Base", "println"), jl_nothing, jl_nothing);
-
-    std::cout << std::is_same_v<char, uint8_t> << std::endl;
     Test::initialize();
 
     Test::test("catch c exception", [](){

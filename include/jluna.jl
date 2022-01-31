@@ -104,6 +104,16 @@ module jluna
     end
 
     """
+    make_pair(::T, ::U) -> Pair{T, U}
+
+    wrap pair ctor
+    """
+    function make_pair(a::T, b::U) ::Pair{T, U} where {T, U}
+
+        return a => b
+    end
+
+    """
     assert_isa(::T, ::Symbol) -> Nothing
 
     throw assertion if x is not of named type
