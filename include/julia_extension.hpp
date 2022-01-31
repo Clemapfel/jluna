@@ -71,6 +71,15 @@ extern "C"
         return jluna::safe_call(convert, jl_eval_string(("return " + std::string(type)).c_str()), value);
     }
 
+    /// @brief throw error if value is not of type named
+    /// @param value
+    /// @param types_name
+    inline void jl_assert_type(jl_value_t* value, const std::string& type_str)
+    {
+        static jl_function_t* assert_isa = jl_find_function("jluna", "assert_isa");
+        jluna::safe_call(assert_isa, value, jl_symbol(type_str.c_str()));
+    }
+
     /// @brief get value of reference
     /// @param reference
     /// @returns value

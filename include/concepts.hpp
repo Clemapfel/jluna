@@ -25,4 +25,14 @@ namespace jluna
     /// @concept: is tuple but not pair
     template<typename T>
     concept IsTuple = std::tuple_size<T>::value != 2;
+
+    /// @concept: is iterable
+    template<typename T>
+    concept Iterable = requires(T t)
+    {
+        {t.begin()};
+        {t.end()};
+        typename T::value_type;
+    };
+
 }

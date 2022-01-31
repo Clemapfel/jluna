@@ -12,3 +12,4 @@
 #include <include/state.hpp>
 #include <include/proxy.hpp>
 #include <include/utilities.hpp>
+#include <include/array.hpp>
