@@ -6,6 +6,7 @@
 #pragma once
 
 #include <type_traits>
+#include <tuple>
 
 namespace jluna
 {
@@ -20,4 +21,12 @@ namespace jluna
     /// @concept: wrapper for std::is_same_v
     template<typename T, typename U>
     concept Is = std::is_same<T, U>::value;
+
+    /// @concept: is tuple but not pair
+    template<typename T>
+    concept IsTuple = requires(T)
+    {
+        std::tuple_size<T>::value;
+        std::tuple_size<T>::value != 2;
+    };
 }

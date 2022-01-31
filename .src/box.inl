@@ -97,4 +97,98 @@ namespace jluna
     {
         return jl_eval_string(("return \"" + value + "\"").c_str());
     }
+
+    template<typename Value_t>
+    Any* box(std::complex<Value_t> value)
+    {
+        static jl_function_t* complex = jl_get_function(jl_base_module, "complex");
+        return safe_call(complex, box(value.real()), box(value.imag()));
+    }
+
+    template<typename Value_t>
+    Any* box(const std::vector<Value_t>& value)
+    {
+        static jl_function_t* vector = jl_find_function("jluna", "make_vector");
+
+        std::vector<jl_value_t*> args;
+        args.reserve(value.size());
+        for (auto& v : value)
+            args.push_back(box(v));
+
+        auto* res = jl_call(vector, args.data(), args.size());
+        forward_last_exception();
+        return res;
+    }
+
+    template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::map<Key_t, Value_t>>, bool>>
+    Any* box(T value)
+    {
+        static jl_function_t* iddict = jl_get_function(jl_base_module, "IdDict");
+
+        std::vector<jl_value_t*> args;
+        args.reserve(value.size());
+
+        for (const std::pair<Key_t, Value_t>& pair : value)
+            args.push_back(box(pair));
+
+        auto* res = jl_call(iddict, args.data(), args.size());
+        forward_last_exception();
+        return res;
+    }
+
+    template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::unordered_map<Key_t, Value_t>>, bool>>
+    Any* box(T value)
+    {
+        static jl_function_t* dict = jl_get_function(jl_base_module, "Dict");
+
+        std::vector<jl_value_t*> args;
+        args.reserve(value.size());
+
+        for (const std::pair<Key_t, Value_t>& pair : value)
+            args.push_back(box(pair));
+
+        auto* res = jl_call(dict, args.data(), args.size());
+        forward_last_exception();
+        return res;
+    }
+
+    template<typename Value_t>
+    Any* box(std::set<Value_t>& value)
+    {
+        static jl_function_t* make_set = jl_find_function("jluna", "make_set");
+
+        std::vector<jl_value_t*> args;
+        args.reserve(value.size());
+
+        for (const auto& t : value)
+            args.push_back(box(t));
+
+        auto* res = jl_call(make_set, args.data(), args.size());
+        forward_last_exception();
+        return res;
+    }
+
+    template<typename T, typename T1, typename T2, std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool>>
+    Any* box(T value)
+    {
+        static jl_function_t* pair = jl_get_function(jl_core_module, "Pair");
+        return safe_call(pair, box(value.first), box(value.second));
+    }
+
+    template<IsTuple T>
+    Any* box(T value)
+    {
+        static jl_function_t* tuple = jl_get_function(jl_core_module, "tuple");
+
+        std::vector<jl_value_t*> args;
+        args.reserve(std::tuple_size_v<T>);
+
+        std::apply([&](auto&&... elements) {
+            (args.push_back(box(elements)), ...);
+        }, value);
+
+        auto* res = jl_call(tuple, args.data(), args.size());
+        forward_last_exception();
+        return res;
+    }
 }
