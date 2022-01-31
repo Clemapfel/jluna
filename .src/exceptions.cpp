@@ -81,7 +81,7 @@ namespace jluna
         params.push_back((Any*) function);
         (params.push_back((Any*) args), ...);
 
-        static Function* safe_call = jl_get_function("jluna.exception_handler", "safe_call");
+        static Function* safe_call = jl_find_function("jluna.exception_handler", "safe_call");
         auto* res = jl_call(safe_call, params.data(), params.size());
         forward_last_exception();
         return res;
