@@ -6,7 +6,7 @@
 module jluna
 
     """
-    get_value_type_of_array(::Array{T}) -> Type
+    `get_value_type_of_array(::Array{T}) -> Type`
 
     forward value type of array
     """
@@ -16,7 +16,7 @@ module jluna
     end
 
     """
-    get_reference_value(::Base.RefValue{T}) -> T
+    `get_reference_value(::Base.RefValue{T}) -> T`
 
     forward value of reference
     """
@@ -28,7 +28,7 @@ module jluna
     setindex!(str::String, c::Char, i::Int64) = setindex!(collect(str), c, i)
 
     """
-    is_number_only(::String) -> Bool
+    `is_number_only(::String) -> Bool`
 
     check whether a string can be transformed into a base 10 number
     """
@@ -44,7 +44,7 @@ module jluna
     end
 
     """
-    is_method_available(::Function, ::Any) -> Bool
+    `is_method_available(::Function, ::Any) -> Bool`
 
     check if method of given function is available for a specific variable
     """
@@ -54,7 +54,7 @@ module jluna
     end
 
     """
-    get_function(::Symbol, ::Module) -> Function
+    `get_function(::Symbol, ::Module) -> Function`
 
     exception-safe function access wrapper
     """
@@ -65,7 +65,7 @@ module jluna
     export get_function
 
     """
-    exists(<:AbstractArray, ::Any) -> Bool
+    `exists(<:AbstractArray, ::Any) -> Bool`
 
     check if element exists in array
     """
@@ -75,7 +75,7 @@ module jluna
     end
 
     """
-    tuple_at(::Tuple, ::Integer) -> Any
+    `tuple_at(::Tuple, ::Integer) -> Any`
 
     get nth element of tuple
     """
@@ -84,7 +84,7 @@ module jluna
     end
 
     """
-    make_vector(::T...) -> Vector{T}
+    `make_vector(::T...) -> Vector{T}`
 
     wrap vector ctor in varargs argument, used by box/unbox
     """
@@ -94,7 +94,7 @@ module jluna
     end
 
     """
-    make_set(::T...) -> Set{T}
+    `make_set(::T...) -> Set{T}`
 
     wrap set ctor in varargs argument, used by box/unbox
     """
@@ -104,7 +104,7 @@ module jluna
     end
 
     """
-    make_pair(::T, ::U) -> Pair{T, U}
+    `make_pair(::T, ::U) -> Pair{T, U}`
 
     wrap pair ctor
     """
@@ -114,7 +114,7 @@ module jluna
     end
 
     """
-    assert_isa(::T, ::Symbol) -> Nothing
+    `assert_isa(::T, ::Symbol) -> Nothing`
 
     throw assertion if x is not of named type
     """
@@ -131,7 +131,7 @@ module jluna
     end
 
     """
-    convert(::T, symbol::Symbol) -> Any
+    `convert(::T, symbol::Symbol) -> Any`
 
     convert value type, declared via symbol
     """
@@ -148,7 +148,7 @@ module jluna
     end
 
     """
-    invoke(function::Any, arguments::Any...) -> Any
+    `invoke(function::Any, arguments::Any...) -> Any`
 
     wrap function call for non-function objects
     """
@@ -157,7 +157,7 @@ module jluna
     end
 
     """
-    serialize(<:AbstractDict{T, U}) -> Vector{Pair{T, U}}
+    `serialize(<:AbstractDict{T, U}) -> Vector{Pair{T, U}}`
 
     transform dict into array
     """
@@ -171,7 +171,7 @@ module jluna
     end
 
     """
-    serialize(::Set{T}) -> Vector{T}
+    `serialize(::Set{T}) -> Vector{T}`
 
     transform dict into array
     """
@@ -186,7 +186,7 @@ module jluna
     end
 
     """
-    dot(::Array, field::Symbol) -> Any
+    `dot(::Array, field::Symbol) -> Any`
 
     wrapped dot operator
     """
@@ -199,21 +199,21 @@ module jluna
     export dot;
 
     """
-    dot(::Module, field::Symbol) -> Any
+    `dot(::Module, field::Symbol) -> Any`
 
     wrapped dot operator
     """
     dot(x::Module, field_name::Symbol) = return x.eval(field_name);
 
     """
-    dot(x::Any, field::Symbol) -> Any
+    `dot(x::Any, field::Symbol) -> Any`
 
     wrapped dot operator, x.field
     """
     dot(x::Any, field_name::Symbol) = return eval(:($x.$field_name))
 
     """
-    unquote(::Expr) -> Expr
+    `unquote(::Expr) -> Expr`
 
     remove all line number notes and the outer most :quote block from an expression
     """
@@ -390,7 +390,7 @@ module jluna
         const _ref_id_marker = '#'
 
         """
-        print_refs() -> Nothing
+        `print_refs() -> Nothing`
 
         pretty print _ref state, for debugging
         """
@@ -403,7 +403,7 @@ module jluna
         end
 
         """
-        create_reference(::UInt64, ::Any) -> UInt64
+        `create_reference(::UInt64, ::Any) -> UInt64`
 
         add reference to _refs
         """
@@ -430,7 +430,7 @@ module jluna
         end
 
         """
-        set_reference(::UInt64, ::T) -> Nothing
+        `set_reference(::UInt64, ::T) -> Nothing`
 
         update the value of a reference in _refs without adding a new entry or changing it's key, ref pointers C++ side stay valid
         """
@@ -441,6 +441,9 @@ module jluna
         end
 
         """
+        `assign(::T, ::Symbol) -> T`
+
+        assign variable using proxy name-chain
         """
         function assign(new_value::T, names::Symbol...) ::T where T
 
@@ -476,6 +479,9 @@ module jluna
         end
 
         """
+        `evaluate(::Symbol) -> Any`
+
+        evaluate variable value using proxy name-chain
         """
         function evaluate(names::Symbol...) ::Any
 
@@ -497,7 +503,9 @@ module jluna
         end
 
         """
-        get_reference(::Int64) -> Any
+        `get_reference(::Int64) -> Any`
+
+        access reference in _refs
         """
         function get_reference(key::UInt64) ::Any
 
@@ -509,7 +517,7 @@ module jluna
         end
 
         """
-        free_reference(::UInt64) -> Nothing
+        `free_reference(::UInt64) -> Nothing`
 
         free reference from _refs
         """
@@ -534,7 +542,7 @@ module jluna
         end
 
         """
-        force_free() -> Nothing
+        `force_free() -> Nothing`
 
         immediately deallocate all C++-managed values
         """
