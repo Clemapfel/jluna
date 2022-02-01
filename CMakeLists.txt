@@ -42,7 +42,7 @@ endif()
 if (${JULIA_FOUND})
 
     # verify version
-    
+
 
     message("[LOG] Succesfully detected julia image at $ENV{JULIA_PATH}")
 else()
