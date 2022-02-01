@@ -21,9 +21,19 @@ For more information, visit https://github.com/Clemapfel/jluna/blob/master/READM
 endif()
 
 message("[LOG] detected julia image at $ENV{JULIA_PATH}")
-include_directories("$ENV{JULIA_PATH}/include/julia")
+
+set(JULIA_LIB "$ENV{JULIA_PATH}/lib/libjulia.so")
+set(JULIA_INCLUDE "$ENV{JULIA_PATH}/include/julia")
+
+message("[LOG] ${JULIA_LIB}")
+message("[LOG] ${JULIA_INCLUDE}")
+
+include_directories(${JULIA_INCLUDE})
 
 ### JLUNA ###
+
+include_directories("/home/clem/Workspace/jluna")
+message("[LOG] ${CMAKE_SOURCE_DIR}")
 
 set(RESOURCE_PATH ${CMAKE_SOURCE_DIR})
 configure_file(${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in ${CMAKE_SOURCE_DIR}/.src/include_julia.inl @ONLY)
@@ -80,12 +90,10 @@ set_target_properties(jluna_c_adapter PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-include_directories(${CMAKE_SOURCE_DIR})
-
-target_link_libraries(jluna_c_adapter $ENV{JULIA_PATH}/lib/libjulia.so)
-target_link_libraries(jluna jluna_c_adapter $ENV{JULIA_PATH}/lib/libjulia.so)
+target_link_libraries(jluna_c_adapter ${JULIA_LIB})
+target_link_libraries(jluna jluna_c_adapter ${JULIA_LIB})
 
 ### TEST EXECUTABLE ###
 
 add_executable(JLUNA_TEST .test/main.cpp .test/test.hpp)
-target_link_libraries(JLUNA_TEST jluna $ENV{JULIA_PATH}/lib/libjulia.so)
+target_link_libraries(JLUNA_TEST jluna ${JULIA_LIB})

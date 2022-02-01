@@ -5,6 +5,8 @@
 #include <.src/c_adapter.hpp>
 #include <include/julia_extension.hpp>
 
+#include <include/exceptions.hpp>
+
 using namespace jluna;
 int main()
 {
