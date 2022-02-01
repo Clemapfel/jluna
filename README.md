@@ -27,7 +27,39 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 
 ### Showcase
 ```cpp
+#include <jluna.hpp>
+using namespace jluna;
 
+// initialize julia and jluna 
+State::initialize();
+
+// execute arbitrary strings with exception forwarding
+State::safe_script(R"(
+    array3d = reshape(collect(1:(3*3*3)), 3, 3, 3)
+    f(x) = x*x*x
+)");
+
+// call julia-side functions with C++-side values
+int result = Main["f"](12);
+Base["println"](result);
+
+// access / mutate julia-side values
+Array<size_t, 3> cpp_array3d = Main["array3d"];
+
+for (auto& e : cpp_array3d)
+    e = e.operator size_t() + 1; // this also modifies array3d julia-side 
+
+// compatible with many C++ objects
+// including lambdas which can wrap any function
+Main["f"] = [](Any* x) -> void {
+    std::cout << "cpp lambda called " << unbox<std::string>(x) << std::endl;
+};
+
+State::script("f(\"completely julia-side\")");
+```
+```
+1728
+cpp lambda called completely julia-side
 ```
 
 ---
