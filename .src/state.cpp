@@ -39,6 +39,12 @@ namespace jluna::State
         else
             jl_init_with_image(path.c_str(), NULL);
 
+        jl_eval_string(R"(
+            if (tryparse(Float32, SubString(string(VERSION), 1, 3)) < 1.8)
+                throw(ErrorException("[ERROR] jluna requires julia version 1.7.0 or higher"))
+            end
+        )");
+
         jl_eval_string(jluna::detail::include);
         forward_last_exception();
 

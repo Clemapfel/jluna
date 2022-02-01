@@ -10,6 +10,13 @@ int main()
 {
     State::initialize();
 
+    Base["println"] = []() -> void {
+        std::cout << "called" << std::endl;
+    };
+
+    Base["println"]();
+
+    return 0;
     Test::initialize();
 
     Test::test("catch c exception", [](){

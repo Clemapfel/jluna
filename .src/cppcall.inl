@@ -139,5 +139,77 @@ namespace jluna
             );
         });
     }
+
+    template<LambdaType<> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda)
+    {
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        register_function(id, lambda);
+
+        static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
+        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
+        forward_last_exception();
+        return res;
+    }
+
+    template<LambdaType<Any*> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda)
+    {
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        register_function(id, lambda);
+
+        static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
+        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
+        forward_last_exception();
+        return res;
+    }
+
+    template<LambdaType<Any*, Any*> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda)
+    {
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        register_function(id, lambda);
+
+        static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
+        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
+        forward_last_exception();
+        return res;
+    }
+
+    template<LambdaType<Any*, Any*, Any*> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda)
+    {
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        register_function(id, lambda);
+
+        static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
+        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
+        forward_last_exception();
+        return res;
+    }
+
+    template<LambdaType<Any*, Any*, Any*, Any*> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda)
+    {
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        register_function(id, lambda);
+
+        static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
+        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
+        forward_last_exception();
+        return res;
+    }
+
+    template<LambdaType<std::vector<Any*>> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda)
+    {
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        register_function(id, lambda);
+
+        static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
+        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
+        forward_last_exception();
+        return res;
+    }
 }
 

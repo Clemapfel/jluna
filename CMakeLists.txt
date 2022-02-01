@@ -7,8 +7,21 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
 
 ### JULIA ###
 
-set(JULIA_DIR /home/clem/Applications/julia/)
-include_directories(${JULIA_DIR}/include/julia/)
+if (NOT DEFINED ENV{JULIA_PATH})
+    execute_process(
+            COMMAND julia -e "println(joinpath(Sys.BINDIR, \"..\"))"
+            OUTPUT_VARIABLE JULIA_PATH_LOCAL)
+
+    if ("${JULIA_PATH}" STREQUAL "")
+    message(FATAL_ERROR "Cannot determine location of julia image. Please manually set the environment variable JULIA_PATH (in bash) using\n    export JULIA_PATH='~/path/to/your/.../julia'\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))
+For more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
+    endif()
+
+    set($ENV{JULIA_PATH} ${JULIA_PATH_LOCAL})
+endif()
+
+message("[LOG] detected julia image at $ENV{JULIA_PATH}")
+include_directories("$ENV{JULIA_PATH}/include/julia")
 
 ### JLUNA ###
 
@@ -18,9 +31,39 @@ configure_file(${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in ${CMAKE_SOURCE_DIR}
 add_library(jluna SHARED
     jluna.hpp
 
-        include/exceptions.hpp
-        .src/exceptions.cpp
-        include/typedefs.hpp include/julia_extension.hpp include/box.hpp include/concepts.hpp .src/box.inl include/unbox.hpp .src/unbox.inl include/state.hpp .src/state.cpp include/proxy.hpp .src/proxy.cpp include/utilities.hpp .src/proxy.inl include/array.hpp .src/array.inl .src/array_iterator.inl include/cppcall.hpp .src/cppcall.inl)
+    include/exceptions.hpp
+    .src/exceptions.cpp
+
+    include/typedefs.hpp
+    include/concepts.hpp
+    include/julia_extension.hpp
+
+    include/box.hpp
+    .src/box.inl
+
+    include/unbox.hpp
+    .src/unbox.inl
+
+    include/state.hpp
+    .src/state.cpp
+
+    include/proxy.hpp
+    .src/proxy.cpp
+    .src/proxy.inl
+
+    include/utilities.hpp
+
+    include/array.hpp
+    .src/array.inl
+    .src/array_iterator.inl
+
+    include/cppcall.hpp
+    .src/cppcall.inl
+
+    include/expression.hpp
+    .src/expression.cpp
+
+)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C
@@ -28,7 +71,7 @@ set_target_properties(jluna PROPERTIES
 )
 
 add_library(jluna_c_adapter SHARED
-    include/c_adapter.hpp
+    .src/c_adapter.hpp
     .src/c_adapter.cpp
 )
 
@@ -38,10 +81,11 @@ set_target_properties(jluna_c_adapter PROPERTIES
 )
 
 include_directories(${CMAKE_SOURCE_DIR})
-target_link_libraries(jluna_c_adapter ${JULIA_DIR}/lib/libjulia.so)
-target_link_libraries(jluna jluna_c_adapter ${JULIA_DIR}/lib/libjulia.so)
+
+target_link_libraries(jluna_c_adapter $ENV{JULIA_PATH}/lib/libjulia.so)
+target_link_libraries(jluna jluna_c_adapter $ENV{JULIA_PATH}/lib/libjulia.so)
 
 ### TEST EXECUTABLE ###
 
 add_executable(JLUNA_TEST .test/main.cpp .test/test.hpp)
-target_link_libraries(JLUNA_TEST jluna ${JULIA_DIR}/lib/libjulia.so)
+target_link_libraries(JLUNA_TEST jluna $ENV{JULIA_PATH}/lib/libjulia.so)
