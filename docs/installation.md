@@ -14,6 +14,7 @@ The following is a step-by-step guide to creating our own application using `jlu
     5.2 [CMake: Cannot find julia.h / libjulia.so](#cannot-find-juliah--libjuliaso)<br>
     5.3 [C++: Cannot find <julia.h> / <jluna.hpp>](#cannot-find-juliah--jlunahpp)<br>
     5.4 [C++: State::initialize fails](#stateinitialize-fails)<br>
+6. [Creating an Issue](#)
 
 ### Creating the Project
 
@@ -338,6 +339,23 @@ This means julia is not installed on a system level or that `JULIA_PATH` was not
 State::initialize("/path/to/(...)/julia/bin")
 ```
 Where `path/to/(...)` is replaced with the absolute path to your image of julia. This will tell the C-API to load julia from that image, rather from the default system image.
+
+## Creating an Issue
+
+If you your problem still persists, it may be appropriate to open a github issue. First, please verify that:
+
++ you are on a linux-based, 64-bit operating system
++ julia 1.7.0 (or higher) is installed
++ cmake 3.16 (or higher) is installed
++ g++-10 (or higher) and gcc-9 (or higher) are installed
++ `my_project/CMakeLists.txt` and `my_project/main.cpp` are identical to the code in [installation](#installation)
++ `State::initialize` and `set(JULIA_EXECUTABLE (...))` are modified as outlined above
++ `jluna` was freshly pulled from the git repo
++ `my_project/jluna/` contains `libjluna.so` and `libjluna_c_adapter.so`
++ `my_project/jluna/build/JLUNA_TEST` was ran
++ your issue is not covered in ["troubleshoot"](#troubleshooting)
+
+If and only if all of the above apply, please create an issue stating your operating system and distro, the output of `JLUNA_TEST`, and your problem in the [issues tab](https://github.com/Clemapfel/jluna/issues).
 
 
 
