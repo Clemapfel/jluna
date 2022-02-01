@@ -12,6 +12,8 @@ int main()
 {
     State::initialize("/home/clem/Applications/julia/bin");
 
+    State::new_undef("lambda") = []() -> void { std::cout << "cpp called" << std::endl; };
+    State::script("lambda()");
 
     return 0;
     Test::initialize();
