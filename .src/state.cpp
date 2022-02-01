@@ -39,13 +39,18 @@ namespace jluna::State
         else
             jl_init_with_image(path.c_str(), NULL);
 
+        jl_eval_string(jluna::detail::include);
+        forward_last_exception();
+
         jl_eval_string(R"(
-            if (tryparse(Float32, SubString(string(VERSION), 1, 3)) < 1.8)
-                throw(ErrorException("[ERROR] jluna requires julia version 1.7.0 or higher"))
+            begin
+                local version = tryparse(Float32, SubString(string(VERSION), 1, 3))
+                if (version < 1.8)
+                    local message = "jluna requires julia v1.7.0 or higher, but v" * string(VERSION) * " was detected. Please download the latest julia release at https://julialang.org/downloads/#current_stable_release"
+                    throw(AssertionError(message))
+                end
             end
         )");
-
-        jl_eval_string(jluna::detail::include);
         forward_last_exception();
 
         jl_eval_string(("jluna._cppcall.eval(:(_library_name = \"" + std::string(RESOURCE_PATH) + "/libjluna_c_adapter.so\"))").c_str());
