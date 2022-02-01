@@ -4,6 +4,7 @@
 //
 
 #include <include/julia_extension.hpp>
+#include <include/cppcall.hpp>
 
 namespace jluna
 {
@@ -197,4 +198,16 @@ namespace jluna
         forward_last_exception();
         return res;
     }
+
+    template<LambdaType<Any*> T>
+    Any* box(T lambda)
+    {
+        std::string id = "#" + std::to_string(++detail::_internal_function_id_name);
+        register_function(id, lambda);
+
+        static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
+        return jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
+    }
+
+
 }

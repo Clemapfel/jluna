@@ -2,6 +2,7 @@
 #include <julia.h>
 #include <jluna.hpp>
 #include <.test/test.hpp>
+#include <.src/c_adapter.hpp>
 #include <include/julia_extension.hpp>
 
 using namespace jluna;
@@ -599,6 +600,121 @@ int main()
         vec.push_front(999);
         vec.push_back(666);
         Test::assert_that(vec.size() == 6 and vec.front<int>() == 999 and vec.back<int>() == 666);
+    });
+
+    Test::test("C: initialize adapter", []()
+    {
+
+    });
+
+    Test::test("C: hash", [](){
+
+        const std::string str = "(±)☻aödunÖAOA12891283912";
+
+        size_t a = jluna::c_adapter::hash(str);
+        size_t b = jl_unbox_uint64(jl_call1(jl_get_function(jl_base_module, "hash"), (jl_value_t*) jl_symbol(str.data())));
+
+        Test::assert_that(a == b);
+    });
+
+    Test::test("C: register/unregister", [](){
+
+        std::string name = "test";
+        size_t id = c_adapter::hash(name);
+        register_function(name, []() -> void {});
+        Test::assert_that(c_adapter::is_registered(id));
+
+        c_adapter::unregister_function(name);
+        Test::assert_that(not c_adapter::is_registered(id));
+    });
+
+    Test::test("C: reject name", [](){
+
+        bool thrown = false;
+        try
+        {
+            register_function(".", []() -> void {});
+        }
+        catch (...)
+        {
+            thrown = true;
+        }
+
+        Test::assert_that(thrown);
+    });
+
+    Test::test("C: call success", [](){
+
+        register_function("test", [](jl_value_t* in) -> jl_value_t* {
+
+            auto as_int = jl_unbox_int64(in);
+            as_int += 11;
+            return jl_box_int64(as_int);
+        });
+
+        State::safe_script("@assert cppcall(:test, 100) == 111");
+    });
+
+    Test::test("C: not registered", [](){
+
+        bool thrown = false;
+        try
+        {
+            State::safe_script("cppcall(:unnamed)");
+        }
+        catch (...)
+        {
+            thrown = true;
+        }
+
+        Test::assert_that(thrown);
+    });
+
+    Test::test("C: forward exception", [](){
+
+        register_function("test", []() -> void {
+
+            throw std::out_of_range("123");
+        });
+
+        bool thrown = false;
+
+        try
+        {
+            State::safe_script("cppcall(:test)");
+        }
+        catch (...)
+        {
+            thrown = true;
+        }
+    });
+
+    Test::test("C: reject wrong-sized tuple", [](){
+
+        register_function("zero", []() -> void {});
+        register_function("one", [](jl_value_t*) -> void {});
+        register_function("two", [](jl_value_t*, jl_value_t*) -> void {});
+        register_function("three", [](jl_value_t*, jl_value_t*, jl_value_t*) -> void {});
+        register_function("four", [](jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*) -> void {});
+        register_function("vec", [](std::vector<jl_value_t*>) -> void {});
+
+        for (std::string e : {"one", "two", "three", "four", "vec"})
+        {
+            bool thrown = false;
+            try
+            {
+                if (e == "zero")
+                    State::safe_script("cppcall(:" + e + ", 123)");
+                else
+                    State::safe_script("cppcall(:" + e + ")");
+            }
+            catch (JuliaException& e)
+            {
+                thrown = true;
+            }
+
+            Test::assert_that(thrown);
+        }
     });
 
     Test::conclude();

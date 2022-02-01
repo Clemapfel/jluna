@@ -9,28 +9,11 @@
 
 #include <vector>
 
-#include <typedefs.hpp>
+#include <include/typedefs.hpp>
 #include <include/concepts.hpp>
 
 namespace jluna
 {
-    namespace detail
-    {
-        static inline size_t _internal_function_id_name = 0;
-
-        /// @brief forward lambda returning void as jl_nothing
-        /// @param func: lambda
-        /// @param args: arguments
-        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<std::is_same_v<Return_t, void>, Bool> = true>
-        jl_value_t* invoke_lambda(const Lambda_t* func, Args_t... args);
-
-        /// @brief forward lambda returning jl_value_t* as jl_value_t*
-        /// @param func: lambda
-        /// @param args: arguments
-        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<std::is_same_v<Return_t, jl_value_t*>, Bool> = true>
-        jl_value_t* invoke_lambda(const Lambda_t* func, Args_t... args);
-    }
-
     /// @brief register lambda with signature void() or jl_value_t*()
     /// @param name: function name
     /// @param lambda
@@ -66,4 +49,59 @@ namespace jluna
     /// @param lambda
     template<LambdaType<std::vector<jl_value_t*>> Lambda_t>
     void register_function(const std::string& name, const Lambda_t& lambda);
+    
+    /// @brief register anonymous lambda with signature void() or jl_value_t*()
+    /// @param lambda
+    /// @returns julia-side anonymous function wrapping lambda
+    template<LambdaType<> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda);
+    
+    /// @brief register anonymous lambda with signature void(jl_value_t*) or jl_value_t*(jl_value_t*)
+    /// @param lambda
+    /// @returns julia-side anonymous function wrapping lambda
+    template<LambdaType<jl_value_t*> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda);
+    
+    /// @brief register anonymous lambda with signature void(jl_value_t*, jl_value_t*) or jl_value_t*(jl_value_t*, jl_value_t*)
+    /// @param lambda
+    /// @returns julia-side anonymous function wrapping lambda
+    template<LambdaType<jl_value_t*, jl_value_t*> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda);
+    
+    /// @brief register anonymous lambda with signature void(3x jl_value_t*) or jl_value_t*(3x jl_value_t*)
+    /// @param lambda
+    /// @returns julia-side anonymous function wrapping lambda
+    template<LambdaType<jl_value_t*, jl_value_t*, jl_value_t*> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda);
+    
+    /// @brief register anonymous lambda with signature void(4x jl_value_t*) or jl_value_t*(4x jl_value_t*)
+    /// @param lambda
+    /// @returns julia-side anonymous function wrapping lambda
+    template<LambdaType<jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda);
+    
+    /// @brief register anonymous lambda with signature void(std::vector<jl_value_t*>) or jl_value_t*(std::vector<jl_value_t*>)
+    /// @param lambda
+    /// @returns julia-side anonymous function wrapping lambda
+    template<LambdaType<std::vector<jl_value_t*>> Lambda_t>
+    Function* register_unnamed_function(const Lambda_t& lambda);
+    
+    namespace detail
+    {
+        /// @brief forward lambda returning void as jl_nothing
+        /// @param func: lambda
+        /// @param args: arguments
+        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<std::is_same_v<Return_t, void>, Bool> = true>
+        jl_value_t* invoke_lambda(const Lambda_t* func, Args_t... args);
+
+        /// @brief forward lambda returning jl_value_t* as jl_value_t*
+        /// @param func: lambda
+        /// @param args: arguments
+        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<std::is_same_v<Return_t, jl_value_t*>, Bool> = true>
+        jl_value_t* invoke_lambda(const Lambda_t* func, Args_t... args);
+        
+        static inline size_t _unnamed_function_id = 1;
+    }
 }
+
+#include ".src/cppcall.inl"

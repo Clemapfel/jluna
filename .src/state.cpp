@@ -42,8 +42,11 @@ namespace jluna::State
         jl_eval_string(jluna::detail::include);
         forward_last_exception();
 
+        jl_eval_string(("jluna._cppcall.eval(:(_library_name = \"" + std::string(RESOURCE_PATH) + "/libjluna_c_adapter.so\"))").c_str());
+        forward_last_exception();
+
         jl_eval_string(R"(
-            if isdefined(Main, :jluna) # && _cppcall.verify_library()
+            if isdefined(Main, :jluna) & jluna._cppcall.verify_library()
                 print("[JULIA][LOG] ")
                 Base.printstyled("initialization successfull.\n"; color = :green)
             else

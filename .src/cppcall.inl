@@ -3,8 +3,9 @@
 // Created on 31.01.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/cppcall.hpp>
+#include <include/julia_extension.hpp>
 #include <include/exceptions.hpp>
+#include <.src/c_adapter.hpp>
 
 namespace jluna
 {

@@ -21,6 +21,10 @@ namespace jluna
     /// @brief convert C++-side value to julia side value
     /// @param value: C++-side value
     /// @returns pointer to julia-side value
+
+    // ###########################################################
+
+    /// @brief box identity
     template<IsJuliaValuePointer T>
     Any* box(T value);
 
@@ -126,6 +130,30 @@ namespace jluna
     /// @brief box std::tuple<Ts...> to Tuple{Ts...}
     template<IsTuple T>
     Any* box(T value);
+    
+    /// @brief box lambda with signature () -> Any
+    template<LambdaType<> T>
+    Any* box(T lambda);
+
+    /// @brief box lambda with signature (Any) -> Any
+    template<LambdaType<Any*> T>
+    Any* box(T lambda);
+
+    /// @brief box lambda with signature (Any, Any) -> Any
+    template<LambdaType<Any*, Any*> T>
+    Any* box(T lambda);
+
+    /// @brief box lambda with signature (Any, Any, Any) -> Any
+    template<LambdaType<Any*, Any*, Any*> T>
+    Any* box(T lambda);
+
+    /// @brief box lambda with signature (Any, Any, Any, Any) -> Any
+    template<LambdaType<Any*, Any*, Any*, Any*> T>
+    Any* box(T lambda);
+
+    /// @brief box lambda with signature (vector{Any}) -> Any
+    template<LambdaType<std::vector<Any*>> T>
+    Any* box(T lambda);
 
     /// @concept requires a value to be boxable into a julia-side value
     template<typename T>

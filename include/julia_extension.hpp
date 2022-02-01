@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <julia/julia.h>
+#include <julia.h>
 
 #include <string>
 
@@ -96,5 +96,40 @@ extern "C"
     {
         static jl_function_t* deepcopy = jl_get_function(jl_base_module, "deepcopy");
         return jl_call1(deepcopy, in);
+    }
+
+    /// @brief wrap undef
+    /// @returns value
+    inline jl_value_t* jl_undef_initializer()
+    {
+        return jl_eval_string("return undef");
+    }
+
+    /// @brief get nth element of tuple
+    /// @param tuple
+    /// @param index, 0-based
+    /// @returns value
+    inline jl_value_t* jl_tupleref(jl_value_t* tuple, size_t n)
+    {
+        static jl_function_t* get = jl_get_function(jl_base_module, "get");
+        return jl_call3(get, tuple, jl_box_uint64(n + 1), jl_undef_initializer());
+    }
+
+    /// @brief get length of tuple
+    /// @param tuple
+    /// @returns length
+    inline size_t jl_tuple_len(jl_value_t* tuple)
+    {
+        static jl_function_t* length = jl_get_function(jl_base_module, "length");
+        return jl_unbox_int64(jl_call1(length, tuple));
+    }
+
+    /// @brief hash julia-side by first converting to symbol
+    /// @param string
+    /// @returns hash
+    inline size_t jl_hash(const char* str)
+    {
+        static jl_function_t* hash = jl_get_function(jl_base_module, "hash");
+        return jl_unbox_uint64(jl_call1(hash, (jl_value_t*) jl_symbol(str)));
     }
 }

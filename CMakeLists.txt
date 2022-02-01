@@ -20,15 +20,26 @@ add_library(jluna SHARED
 
         include/exceptions.hpp
         .src/exceptions.cpp
-        include/typedefs.hpp include/julia_extension.hpp include/box.hpp include/concepts.hpp .src/box.inl include/unbox.hpp .src/unbox.inl include/state.hpp .src/state.cpp include/proxy.hpp .src/proxy.cpp include/utilities.hpp .src/proxy.inl include/array.hpp .src/array.inl .src/array_iterator.inl include/cppcall.hpp .src/cppcall.cpp)
+        include/typedefs.hpp include/julia_extension.hpp include/box.hpp include/concepts.hpp .src/box.inl include/unbox.hpp .src/unbox.inl include/state.hpp .src/state.cpp include/proxy.hpp .src/proxy.cpp include/utilities.hpp .src/proxy.inl include/array.hpp .src/array.inl .src/array_iterator.inl include/cppcall.hpp .src/cppcall.inl)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
+add_library(jluna_c_adapter SHARED
+    include/c_adapter.hpp
+    .src/c_adapter.cpp
+)
+
+set_target_properties(jluna_c_adapter PROPERTIES
+    LINKER_LANGUAGE C
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
 include_directories(${CMAKE_SOURCE_DIR})
-target_link_libraries(jluna ${JULIA_DIR}/lib/libjulia.so)
+target_link_libraries(jluna_c_adapter ${JULIA_DIR}/lib/libjulia.so)
+target_link_libraries(jluna jluna_c_adapter ${JULIA_DIR}/lib/libjulia.so)
 
 ### TEST EXECUTABLE ###
 
