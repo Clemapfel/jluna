@@ -7,33 +7,53 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
 
 ### JULIA ###
 
+# set julia automatically if JULIA_PATH wasn't set
 if (NOT DEFINED ENV{JULIA_PATH})
     execute_process(
             COMMAND julia -e "println(joinpath(Sys.BINDIR, \"..\"))"
             OUTPUT_VARIABLE JULIA_PATH_LOCAL)
 
     if ("${JULIA_PATH}" STREQUAL "")
-    message(FATAL_ERROR "Cannot determine location of julia image. Please manually set the environment variable JULIA_PATH (in bash) using\n    export JULIA_PATH='~/path/to/your/.../julia'\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))
+    message(FATAL_ERROR "Cannot determine location of julia image. Before running cmake, please manually set the environment variable JULIA_PATH using\n    export JULIA_PATH=/path/to/your/.../julia\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))
 For more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
     endif()
 
     set($ENV{JULIA_PATH} ${JULIA_PATH_LOCAL})
 endif()
 
-message("[LOG] detected julia image at $ENV{JULIA_PATH}")
-
 set(JULIA_LIB "$ENV{JULIA_PATH}/lib/libjulia.so")
 set(JULIA_INCLUDE "$ENV{JULIA_PATH}/include/julia")
+set(JULIA_FOUND TRUE)
 
-message("[LOG] ${JULIA_LIB}")
-message("[LOG] ${JULIA_INCLUDE}")
+# verify shared library
+if (NOT EXISTS ${JULIA_LIB})
+    message(WARNING "Cannot find shared library libjulia.so in $ENV{JULIA_PATH}/lib/")
+
+    set(JULIA_FOUND FALSE)
+endif()
+
+# verify header
+if (NOT EXISTS ${JULIA_INCLUDE}/julia.h)
+    message(WARNING "Cannot find library header julia.h in $ENV{JULIA_PATH}/include/julia/")
+
+    set(JULIA_FOUND FALSE)
+endif()
+
+if (${JULIA_FOUND})
+
+    # verify version
+    
+
+    message("[LOG] Succesfully detected julia image at $ENV{JULIA_PATH}")
+else()
+    message(FATAL_ERROR "Failed to detect julia image. Make sure JULIA_PATH is set correctly and that the julia image is uncompressed and not corrupted.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
+endif()
 
 include_directories(${JULIA_INCLUDE})
 
 ### JLUNA ###
 
-include_directories("/home/clem/Workspace/jluna")
-message("[LOG] ${CMAKE_SOURCE_DIR}")
+include_directories(${CMAKE_SOURCE_DIR})
 
 set(RESOURCE_PATH ${CMAKE_SOURCE_DIR})
 configure_file(${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in ${CMAKE_SOURCE_DIR}/.src/include_julia.inl @ONLY)
@@ -96,4 +116,4 @@ target_link_libraries(jluna jluna_c_adapter ${JULIA_LIB})
 ### TEST EXECUTABLE ###
 
 add_executable(JLUNA_TEST .test/main.cpp .test/test.hpp)
-target_link_libraries(JLUNA_TEST jluna ${JULIA_LIB})
+target_link_libraries(JLUNA_TEST jluna)
