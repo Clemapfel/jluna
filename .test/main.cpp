@@ -10,7 +10,7 @@
 using namespace jluna;
 int main()
 {
-    State::initialize();
+    State::initialize("/home/clem/Applications/julia/bin");
 
 
     return 0;
