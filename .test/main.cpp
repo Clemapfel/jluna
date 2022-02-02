@@ -12,6 +12,19 @@ int main()
 {
     State::initialize();
 
+    std::cout << to_julia_type<
+        std::tuple<
+            std::vector<
+                std::pair<
+                    size_t,
+                    std::string
+                >
+            >,
+            std::map<uint64_t, int64_t>,
+            std::unordered_map<size_t, std::string>
+        >
+    >::type_name << std::endl;
+
     Test::initialize();
 
     Test::test("catch c exception", [](){
