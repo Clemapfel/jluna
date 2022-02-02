@@ -23,8 +23,8 @@ Please navigate to the appropriate section by clicking the links below:
   5.5 [Detached Proxies](#detached-proxies)<br>
   5.6 [Making a Named Proxy Unnamed](#making-a-named-proxy-unnamed)<br>
 6. [Functions](#functions)<br>
-   6.1 [Accessing julia Functions from C++](#accessing-julia-functions)<br>
-   6.2 [Calling julia Functions from C++](#calling-julia-functions)<br>
+   6.1 [Accessing julia Functions from C++](#functions)<br>
+   6.2 [Calling julia Functions from C++](#functions)<br>
    6.3 [Accessing C++ Functions from julia](#registering-functions)<br>
    6.4 [Calling C++ Functions from julia](#calling-c-functions-from-julia)<br>
    6.5 [Allowed Function Names](#allowed-function-names)<br>
@@ -69,11 +69,11 @@ int main()
 }
 ```
 
-When a program exits regularly, all julia-side values allocated through `jluna` are safely deallocated automatically. Do not call `jl_atexit_hool()`. 
+When a program exits regularly, all julia-side values allocated through `jluna` are safely deallocated automatically. Do not call `jl_atexit_hool()` at any point as this may invalidate C++-side memory and cause undefined behavior.
 
 ## Executing Code
 
-`jluna` has two ways of executing code (represented C++ side as string): *with* exception forwarding and *without* exception forwarding. Code called without exception forwarding will not only not report any errors, but simply appear to "do nothing". If a fatal error occurrs, the entire application wil crash without warning. <br>
+`jluna` has two ways of executing code (represented C++ side as string): *with* exception forwarding and *without* exception forwarding. Code called without exception forwarding will not only not report any errors, but simply appear to "do nothing". If a fatal error occurs, the entire application wil crash without warning.<br>
 Because of this, it is highly recommended to always air on the side of safety by using the `safe_` overloads whenever possible:
 
 ```cpp
@@ -96,9 +96,11 @@ State::safe_script(R"(
 )");
 ```
 
+`safe_` overloads have marginal overhead from try-catching execution and sanity checking inputs. If you want maximum performance, `State::script` is identical to just calling the pure C-API.
+
 ## Garbage Collector (GC)
 
-The julia-side garbage collector operates completely independently, just like it would in a pure julia program. However, sometimes it is necessary to disable or control its behavior manually. To do this, `jluna::State` offers the following member functions:
+The julia-side garbage collector operates completely independently, just like it would in a pure julia program. However, sometimes it is necessary to disable or control its behavior manually. To do this, `jluna::State` offers the following functions:
 
 #### Enabling/Disabling GC
 ```cpp
@@ -115,14 +117,14 @@ State::collect_garbage();
 bool State::is_garbage_collector_enabled();
 ```
 
-When using `jluna` and not pure C-API, most objects are safe from being garbage collected. It is therefore rarely necessary to manually disable the GC. See the section on [proxies](#accessing-variables) for more information.
+When using `jluna` and allocating memory specifically through it, objects are safe from being garbage collected. It is therefore almost never necessary to manually disable the GC. See the section on [proxies](#accessing-variables) for more information.
 
 ## Boxing / Unboxing
 
-Julia and C++ do not share any memory. Objects that have the same conceptual type can have very different memory layouts. For example, `Char` in julia is a 32-bit value, while it is 8-bits in C++. Comparing `std::set` to `Base.set` will of course be even more of a difference.<br>
+Julia and C++ do not share any memory. Objects that have the same conceptual type can have very different memory layouts. For example, `Char` in julia is a 32-bit value, while it is 8-bits in C++. Comparing `std::set` to `Base.set` will of course be even more of a difference on a bit-level.<br>
 Because of this, when transferring memory from one languages state to the others, we're not only moving memory but converting it by reformating its layout. 
 
-**Boxing** is the process of taking C++-side memory, converting it and then allocating the now julia-compatible memory julia-side. Conversely, **unboxing** is the process of taking julia-side memory, converting it and then allocating it C++-side. Boxing/Unboxing are handled by an overload of the following functions:
+**Boxing** is the process of taking C++-side memory, converting it and then allocating the now julia-compatible memory julia-side. Conversely, **unboxing** is the process of taking julia-side memory, converting it, then allocating it C++-side. Boxing/Unboxing are handled by an overload of the following functions:
 
 ```cpp
 template<typename T>
@@ -131,9 +133,9 @@ Any* box(T);
 template<typename T>
 T unbox(Any*);
 ```
-where `Any*` is an address of julia-side memory.
+where `Any*` is an address of julia-side memory of arbitrary type (but not necessarily of type `Base.Any`).
 
-All box/unbox functions have exactly this signature, ambiguity is resolved via concepts and [SFINAE](https://en.cppreference.com/w/cpp/types/enable_if).
+All box/unbox functions have exactly this signature, ambiguity is resolved via [C++ concepts](https://en.cppreference.com/w/cpp/language/constraints) and [SFINAE](https://en.cppreference.com/w/cpp/types/enable_if).
 
 ### Concepts
 
@@ -185,7 +187,7 @@ template<Is<MyClass> T>
 T unbox(Any* value);
 ```
 
-Where `Is<T, U>` is a concept that resolves to true if `U` and `T` are the same type. We will learn more about making usertypes compatible in the [section on usertypes](#usertypes).
+Where `Is<T, U>` is a concept that resolves to true if `U` and `T` are the same type. We will learn more about making usertypes that are compatible with jluna in the [~~section on usertypes~~](#usertypes).
 
 ### List of (Un)Boxables
 
@@ -235,9 +237,25 @@ std::set<T>              -> Set{T, U}       *
 
 * where T, U are also (Un)Boxables
 ° where R is the rank of the array
+
+std::function<void()>                       -> function ()      ::Nothing        
+std::function<void(Any*)>                   -> function (::Any) ::Nothing  
+std::function<void(Any*, Any*)>             -> function (xs...) ::Nothing  *
+std::function<void(Any*, Any*, Any*)>       -> function (xs...) ::Nothing  *
+std::function<void(Any*, Any*, Any*, Any*)> -> function (xs...) ::Nothing  *
+std::function<void(std::vector<Any*>)>      -> function (::Vector{Any}) ::Nothing
+
+std::function<Any*()>                       -> function ()      ::Any        
+std::function<Any*(Any*)>                   -> function (::Any) ::Any
+std::function<Any*(Any*, Any*)>             -> function (xs...) ::Any      *
+std::function<Any*(Any*, Any*, Any*)>       -> function (xs...) ::Any      *
+std::function<Any*(Any*, Any*, Any*, Any*)> -> function (xs...) ::Any      *
+std::function<Any*(std::vector<Any*>)>      -> function (::Vector{Any}) ::Any
+
+* where xs... is enforced to be of approriate size at runtime
 ```
 
-We learn how to box/unbox functions in a [later section](#functions).
+We will learn more on how to box/unbox functions in the [section on calling C++ functions from julia](#functions).
 
 ---
 
@@ -249,7 +267,7 @@ Let's say we have a variable `var` julia-side:
 State::script("var = 1234")
 ```
 
-To access the value of this variable we can use the C-API. We receive a pointer to the memory `var` holds using `jl_eval_string`, then `unbox` that pointer:
+To access the value of this variable, we can use the C-API. We receive a pointer to the memory `var` holds using `jl_eval_string`, then `unbox` that pointer:
 
 ```cpp
 Any* var_ptr = jl_eval_string("return var");
@@ -271,12 +289,12 @@ std::cout << as_int << std::endl;
 1234
 ```
 
-While both ways get us the desired value, neither is a good way to actually manage the variable itself. How do we reassign it? Can we dereference the c-pointer? Who has ownership of the memory? All these questions are hard to manage using the C-API, however `jluna` offers a one-stop-shop solution for all of these problems: `jluna::Proxy`.
+While both ways get us the desired value, neither is a good way to actually manage the variable itself. How do we reassign it? Can we dereference the c-pointer? Who has ownership of the memory? Is it safe from the garbage collector? All these questions are hard to manage using the C-API, however `jluna` offers a one-stop-shop solution: `jluna::Proxy`.
 
 A proxy holds two things: the **memory address of its value** and a **symbol**. We'll get to the symbol later, for now, let's focus on the memory:<br>
 Memory held by a proxy is safe from the julia garbage collector (GC) and assured to be valid. This means we don't have to worry about keeping a reference or pausing the GC when modifying the variable. Any memory, be it temporary or something explicitly referenced by a julia-side variable or `Base.Ref`, is guaranteed to be safe to access. 
 
-We rarely create a proxy ourself, most of the time it will be generated for us by `State::(safe_)script`:
+We rarely create a proxy ourself, most of the time it will be generated for us by `State::(safe_)script` or similar functions:
 
 ```cpp
 State::script("var = 1234")
@@ -300,12 +318,13 @@ auto as_int = (int) proxy;
 auto as_int = unbox<int>(proxy) // discouraged
 ```
 
-Where the first version is encouraged for style reasons. `jluna` handles implicit conversion behind the scenes, this makes it so we don't have to worry what the actual type of the julia-value is. `jluna` will try it's hardest to make our declaration work:
+Where the first version is encouraged for style reasons. `jluna` handles implicit conversion behind the scenes. This makes it, so we don't have to worry what the actual type of the julia-value is. `jluna` will try it's hardest to make our declaration work:
 
 ```cpp
 State::script("var = 1234")
 auto proxy = State::script("return var")
 
+// all of the following work by triggering julia-side conversion:
 size_t as_size_t = proxy;
 std::string as_string = proxy;
 std::complex<double> as_complex = proxy;
@@ -331,9 +350,11 @@ terminate called after throwing an instance of 'jluna::JuliaException'
   (...)
 ```
 
-This is already much more convenient than manually unboxing c-pointers, however the true usefulness of proxies lies in their ability to *mutate* julia-side values.
+This is already much more convenient than manually unboxing c-pointers, however the true usefulness of proxies lies in their ability to not only access but *mutate* julia-side values.
 
 ## Mutating Variables
+
+To mutate a variable means to change its value, its type or both.<br>
 
 As stated before, a proxy holds exactly one pointer to julia-side memory and exactly one symbol. There are two types of symbols it can hold:
 
@@ -342,13 +363,16 @@ As stated before, a proxy holds exactly one pointer to julia-side memory and exa
 
 The behavior of proxies changes, depending on wether their symbol is a name or not. A proxies whos symbol is a name is called a **named proxy**, a proxy whos symbol is an internal id is called an **unnamed proxy**. 
 
-To generate an unnamed proxy, we use `State::(safe_)script`.<br> To generate a named proxy we use `Proxy::operator[]`.
+To generate an unnamed proxy, we use `State::(safe_)script`.<br> To generate a named proxy we use `Proxy::operator[]` or `State::make_new<T>`:
 
 ```cpp
 State::safe_script("var = 1234");
 
 auto unnamed_proxy = State::safe_script("return var");
 auto named_proxy = Main["var"];
+
+// or, in one line:
+auto named_proxy = State::new_int64() = 1234;
 ```
 
 where `Main`, `Base`, `Core` are global, pre-initialized proxies holding the corresponding julia-side modules singletons.

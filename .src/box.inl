@@ -205,5 +205,36 @@ namespace jluna
         return register_unnamed_function(lambda);
     }
 
+    template<LambdaType<Any*> T>
+    Any* box(T lambda)
+    {
+        return register_unnamed_function(lambda);
+    }
+
+    template<LambdaType<Any*, Any*> T>
+    Any* box(T lambda)
+    {
+        return register_unnamed_function(lambda);
+    }
+
+    template<LambdaType<Any*, Any*, Any*> T>
+    Any* box(T lambda)
+    {
+        return register_unnamed_function(lambda);
+    }
+
+
+    template<LambdaType<Any*, Any*, Any*, Any*> T>
+    Any* box(T lambda)
+    {
+        return register_unnamed_function(lambda);
+    }
+
+    template<LambdaType<std::vector<Any*>> T>
+    Any* box(T lambda)
+    {
+        return register_unnamed_function(lambda);
+    }
+
 
 }

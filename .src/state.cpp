@@ -107,12 +107,6 @@ namespace jluna::State
         return unbox<T>(res);
     }
 
-    Proxy new_undef(const std::string& variable_name)
-    {
-        State::safe_script(variable_name + " = undef");
-        return Main[variable_name];
-    }
-    
     void collect_garbage()
     {
         jluna::throw_if_uninitialized();

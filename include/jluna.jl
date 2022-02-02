@@ -157,6 +157,16 @@ module jluna
     end
 
     """
+    `create_or_assign(::Symbol, ::T) -> T`
+
+    assign variable in main, or if none exist, create it and assign
+    """
+    function create_or_assign(symbol::Symbol, value::T) ::T where T
+        return Main.eval(:($symbol = $value))
+    end
+
+
+    """
     `serialize(<:AbstractDict{T, U}) -> Vector{Pair{T, U}}`
 
     transform dict into array

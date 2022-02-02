@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <julia.h>
 #include <type_traits>
 #include <tuple>
 
@@ -17,6 +18,21 @@ namespace jluna
         std::is_same_v<T, jl_module_t*> or
         std::is_same_v<T, jl_function_t*> or
         std::is_same_v<T, jl_sym_t*>;
+
+    /// @concept is primitive numbertype
+    template<typename T>
+    concept IsNumerical =
+        std::is_same_v<T, float> or
+        std::is_same_v<T, double> or
+        std::is_same_v<T, char> or
+        std::is_same_v<T, uint8_t> or
+        std::is_same_v<T, uint16_t> or
+        std::is_same_v<T, uint32_t> or
+        std::is_same_v<T, uint64_t> or
+        std::is_same_v<T, uint8_t> or
+        std::is_same_v<T, uint16_t> or
+        std::is_same_v<T, uint32_t> or
+        std::is_same_v<T, uint64_t>;
 
     /// @concept: wrapper for std::is_same_v
     template<typename T, typename U>

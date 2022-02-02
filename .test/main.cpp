@@ -12,30 +12,6 @@ int main()
 {
     State::initialize();
 
-// execute arbitrary strings with exception forwarding
-State::safe_script(R"(
-    array3d = reshape(collect(1:(3*3*3)), 3, 3, 3)
-    f(x) = x*x*x
-)");
-
-// call julia-side functions with C++-side values
-int result = Main["f"](12);
-Base["println"](result);
-
-// access / mutate julia-side values
-Array<size_t, 3> cpp_array3d = Main["array3d"];
-
-for (auto e : cpp_array3d)
-    e = e.operator size_t() + 1; // this also modifies array3d julia-side
-
-// compatible with many C++ objects
-// including lambdas which can wrap any function
-Main["f"] = [](Any* x) -> void {
-    std::cout << "cpp lambda called " << unbox<std::string>(x) << std::endl;
-};
-
-State::script("f(\"completely julia-side\")");
-    return 0;
     Test::initialize();
 
     Test::test("catch c exception", [](){
@@ -111,6 +87,108 @@ State::script("f(\"completely julia-side\")");
     test_box_unbox_iterable("IdDict", std::map<size_t, std::string>{{12, "abc"}});
     test_box_unbox_iterable("Dict", std::unordered_map<size_t, std::string>{{12, "abc"}});
     test_box_unbox_iterable("Set", std::set<size_t>{1, 2, 3, 4});
+
+    Test::test("make_new_undef", [](){
+
+        auto undef = State::new_undef("name");
+        Test::assert_that(undef == jl_undef_initializer());
+    });
+
+    Test::test("make_new_int", []() {
+
+        int8_t value = 1;
+        auto res = State::new_int8("test", value);
+        Test::assert_that(res.operator int8_t() == value);
+
+        res = State::new_int16("test", int16_t(value));
+        Test::assert_that(res.operator int16_t() == value);
+
+        res = State::new_int32("test", int32_t(value));
+        Test::assert_that(res.operator int32_t() == value);
+
+        res = State::new_int64("test", int64_t(value));
+        Test::assert_that(res.operator int64_t() == value);
+
+        res = State::new_uint8("test", uint8_t(value));
+        Test::assert_that(res.operator uint8_t() == value);
+
+        res = State::new_uint16("test", uint16_t(value));
+        Test::assert_that(res.operator uint16_t() == value);
+
+        res = State::new_uint32("test", uint32_t(value));
+        Test::assert_that(res.operator uint32_t() == value);
+
+        res = State::new_uint64("test", uint64_t(value));
+        Test::assert_that(res.operator uint64_t() == value);
+    });
+
+    Test::test("make_new_float", []() {
+
+        float value = 1;
+        auto res = State::new_float32("test", value);
+        Test::assert_that(res.operator float() == value);
+
+        res = State::new_float64("test", value);
+        Test::assert_that(res.operator double() == value);
+
+        //jl_eval_string("test = undef");
+    });
+
+    Test::test("make_new_vector", []() {
+
+        std::vector<size_t> value = {1, 2, 3};
+        auto res = State::new_vector("test", value);
+        Test::assert_that(res.operator std::vector<size_t>() == value);
+
+        //jl_eval_string("test = undef");
+    });
+
+    Test::test("make_new_set", []() {
+
+        std::set<size_t> value = {1, 2, 3};
+        auto res = State::new_set("test", value);
+        Test::assert_that(res.operator std::set<size_t>() == value);
+
+        //jl_eval_string("test = undef");
+    });
+
+
+    Test::test("make_new_dict", []() {
+
+        std::unordered_map<size_t, std::string> value = {{2, "abc"}};
+        auto res = State::new_dict("test", value);
+        Test::assert_that(res.operator  std::unordered_map<size_t, std::string>() == value);
+
+        //jl_eval_string("test = undef");
+    });
+
+    Test::test("make_new_iddict", []() {
+
+        std::map<size_t, std::string> value = {{2, "abc"}};
+        auto res = State::new_iddict("test", value);
+        Test::assert_that(res.operator std::map<size_t, std::string>() == value);
+
+        //jl_eval_string("test = undef");
+    });
+
+
+    Test::test("make_new_pair", []() {
+
+        std::pair<size_t, std::string> value = {2, "abc"};
+        auto res = State::new_pair("test", value.first, value.second);
+        Test::assert_that(res.operator std::pair<size_t, std::string>() == value);
+
+        //jl_eval_string("test = undef");
+    });
+
+    Test::test("make_new_tuple", []() {
+
+        std::tuple<size_t, std::string, int> value = {2, "abc", -1};
+        auto res = State::new_tuple("test", std::get<0>(value), std::get<1>(value), std::get<2>(value));
+        Test::assert_that(res.operator std::tuple<size_t, std::string, int>() == value);
+
+        //jl_eval_string("test = undef");
+    });
 
     Test::test("create_reference", []() {
 

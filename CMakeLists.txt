@@ -93,7 +93,7 @@ add_library(jluna SHARED
     include/expression.hpp
     .src/expression.cpp
 
-)
+        .src/state.inl .src/typedefs.inl)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C
