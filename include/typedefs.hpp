@@ -28,4 +28,12 @@ namespace jluna
     using Any = jl_value_t;
     using Function = jl_function_t;
     using Symbol = jl_sym_t;
+
+    /// @brief constexpr transform C++ type into the julia type it will be after unboxing
+    /// @tparam julia type
+    /// @returns type_name, accessible via member
+    template<typename T>
+    struct to_julia_type;
 }
+
+#include ".src/typedefs.inl"
