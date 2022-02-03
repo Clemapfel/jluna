@@ -94,6 +94,15 @@ module jluna
     end
 
     """
+    `make_vector(::Type{T}, ::Any...) -> Vector{T}`
+
+    create vector by converting all elements to target type
+    """
+    function make_vector(type::Type{T}, xs...) where T
+       return convert.(T, [xs...])
+    end
+
+    """
     `make_set(::T...) -> Set{T}`
 
     wrap set ctor in varargs argument, used by box/unbox
@@ -101,6 +110,16 @@ module jluna
     function make_set(args::T...) ::Set{T} where T
 
         return Set([args...]);
+    end
+
+    """
+    `make_set(::Type{T}, ::Any...) -> Set{T}`
+
+
+    """
+    function make_set(type::Type{T}, xs...) ::Set{T} where T
+
+        return Set(make_vector(type, xs...));
     end
 
     """
@@ -426,7 +445,7 @@ module jluna
             global _current_id += 1;
             key = _current_id;
 
-            #println("[JULIA] allocated " * string(key) * " (" * Base.string(to_wrap) * ")")
+            println("[JULIA] allocated " * string(key) * " (" * Base.string(to_wrap) * ")")
 
             if (haskey(_refs[], key))
                 @assert _refs[][key].x == to_wrap && typeof(to_wrap) == typeof(_refs[][key].x)
@@ -538,7 +557,7 @@ module jluna
             end
 
             @assert haskey(_refs[], key)
-            #println("[JULIA] freed " * string(key) * " (" * Base.string(typeof(_refs[][key].x)) * ")")
+            println("[JULIA] freed " * string(key) * " (" * Base.string(typeof(_refs[][key].x)) * ")")
 
             global _ref_counter[][key] -= 1
             count = _ref_counter[][key]

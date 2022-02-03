@@ -37,7 +37,7 @@ namespace jluna
             Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, Symbol* symbol);
 
             /// @brief dtor
-            ~Proxy() = default;
+            ~Proxy();
 
             /// @brief access field
             /// @param field_name

@@ -254,8 +254,18 @@ std::function<Any*(std::vector<Any*>)>      -> function (::Vector{Any}) ::Any
 
 * where xs... is enforced to be of approriate size at runtime
 ```
-
 We will learn more on how to box/unbox functions in the [section on calling C++ functions from julia](#functions).
+
+The template meta function `to_julia_type` is provided to convert a C++ type into a julia-type:
+
+```
+std::cout << to_julia_type<Array<size_t, 4>> std::endl;
+``` 
+```
+Array{UInt64, 4}
+```
+
+Which can help remind user what type gets converted to what and is used internally to ensure that the result of a `box` call of exactly the type the user specified. For example a `std::pair<int, std::string>` could bind to a `Pair{Any, Any}` julia-side, however instead, `jluna` deduces the type to be exactly `Pair{Int32, String}` after boxing.
 
 ---
 

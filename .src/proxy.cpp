@@ -114,6 +114,11 @@ namespace jluna
         : _content(new ProxyValue(value, symbol))
     {}
 
+    Proxy::~Proxy()
+    {
+        _content.reset();
+    }
+
     Proxy Proxy::operator[](const std::string& field)
     {
         Symbol* symbol = jl_symbol(field.c_str());

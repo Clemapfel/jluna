@@ -108,7 +108,7 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
     Any* box(T value)
     {
-        static jl_function_t* complex = jl_get_function(jl_base_module, "complex");
+        static jl_function_t* complex = jl_get_function(jl_base_module, to_julia_type<T>::type_name.c_str());
         return safe_call(complex, box(value.real()), box(value.imag()));
     }
 
@@ -130,7 +130,7 @@ namespace jluna
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::map<Key_t, Value_t>>, bool>>
     Any* box(T value)
     {
-        static jl_function_t* iddict = jl_get_function(jl_base_module, "IdDict");
+        static jl_function_t* iddict = jl_get_function(jl_base_module, to_julia_type<T>::type_name.c_str());
 
         std::vector<jl_value_t*> args;
         args.reserve(value.size());
@@ -146,7 +146,7 @@ namespace jluna
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::unordered_map<Key_t, Value_t>>, bool>>
     Any* box(T value)
     {
-        static jl_function_t* dict = jl_get_function(jl_base_module, "Dict");
+        static jl_function_t* dict = jl_get_function(jl_base_module, to_julia_type<T>::type_name.c_str());
 
         std::vector<jl_value_t*> args;
         args.reserve(value.size());
