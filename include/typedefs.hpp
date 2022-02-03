@@ -6,6 +6,7 @@
 #pragma once
 
 #include <julia.h>
+#include ".src/typedefs.inl"
 
 namespace jluna
 {
@@ -31,10 +32,11 @@ namespace jluna
     using Module = jl_module_t;
 
     /// @brief constexpr transform C++ type into the julia type it will be after unboxing
-    /// @tparam julia type
-    /// @returns type_name, accessible via member if type can be deduced
+    /// @tparam C++ type
+    /// @returns type_name, accessible via member if type can be deduced, has no member otherwise
     template<typename T>
-    struct to_julia_type;
+    struct to_julia_type
+    {
+        static inline const std::string type_name = detail::to_julia_type_aux<T>::type_name;
+    };
 }
-
-#include ".src/typedefs.inl"

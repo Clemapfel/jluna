@@ -12,16 +12,26 @@ int main()
 {
     State::initialize();
 
+    struct No {};
+
     std::cout << to_julia_type<
         std::tuple<
             std::vector<
                 std::pair<
-                    size_t,
+                    int,
                     std::string
                 >
             >,
-            std::map<uint64_t, int64_t>,
-            std::unordered_map<size_t, std::string>
+            std::map<uint64_t, std::set<char>>,
+            std::unordered_map<
+                size_t,
+                Array<
+                    std::complex<
+                        double
+                    >,
+                    3
+                >
+            >
         >
     >::type_name << std::endl;
 

@@ -5,6 +5,15 @@
 
 namespace jluna
 {
+    namespace detail
+    {
+        template<typename Value_t, size_t N>
+        struct to_julia_type_aux<Array<Value_t, N>>
+        {
+            static inline const std::string type_name = "Array{" + to_julia_type_aux<Value_t>::type_name + ", " + std::to_string(N) + "}";
+        };
+    }
+
     template<Boxable V, size_t R>
     Array<V, R>::Array(jl_value_t* value, std::shared_ptr<typename Proxy::ProxyValue>& owner, jl_sym_t* symbol)
         : Proxy(value, owner, symbol)
