@@ -110,6 +110,8 @@ namespace jluna
     {
         static jl_function_t* complex = jl_get_function(jl_base_module, to_julia_type<T>::type_name.c_str());
         return safe_call(complex, box(value.real()), box(value.imag()));
+
+        TODO use strring to type for boxing and conversion
     }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
@@ -119,6 +121,7 @@ namespace jluna
 
         std::vector<jl_value_t*> args;
         args.reserve(value.size());
+
         for (auto& v : value)
             args.push_back(box(v));
 

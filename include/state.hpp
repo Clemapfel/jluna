@@ -16,9 +16,12 @@
 #include <include/typedefs.hpp>
 #include <include/box.hpp>
 
+/// forward declarations
 namespace jluna
 {
     class Proxy;
+    template<Boxable, size_t>
+    class Array;
 }
 
 namespace jluna::State
@@ -199,6 +202,9 @@ namespace jluna::State
     /// @returns *named* proxy to newly created value
     template<Boxable... Ts>
     [[nodiscard]] Proxy new_tuple(const std::string& name, Ts...);
+
+    template<Boxable T, size_t N, Is<size_t>... Dims>
+    [[nodiscard]] Array<T, N> new_array(const std::string& name, Dims... dims);
 
     /// @brief trigger the garbage collector
     void collect_garbage();

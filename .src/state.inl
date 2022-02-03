@@ -6,6 +6,7 @@
 #include <include/utilities.hpp>
 #include <include/julia_extension.hpp>
 #include <include/proxy.hpp>
+#include <include/array.hpp>
 
 namespace jluna::State
 {
@@ -125,5 +126,28 @@ namespace jluna::State
     Proxy new_tuple(const std::string& name, Ts... args)
     {
         return jluna::detail::create_or_assign(name, box<std::tuple<Ts...>>(std::make_tuple(args...)));
+    }
+
+    template<Boxable T, size_t N, Is<size_t>... Dims>
+    Array<T, N> new_array(const std::string& name, Dims... dims)
+    {
+        static_assert(sizeof...(Dims) == N, "wrong number of dimension initializers");
+
+        std::stringstream str;
+        str << name << " = " << to_julia_type<Array<T, N>>::type_name << "(undef,";
+
+        auto add = [&](size_t dim, size_t i){
+            str << dim << (i != sizeof...(Dims) ? ", " : ")");
+        };
+
+        {
+            size_t i = 0;
+            (add(dims, ++i), ...);
+        }
+
+        std::cout << str.str() << std::endl;
+
+        State::safe_script(str.str());
+        return Main["name"];
     }
 }

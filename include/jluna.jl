@@ -167,6 +167,20 @@ module jluna
     end
 
     """
+    `string_to_type` -> Type
+
+    evaluate string to type name if possible
+    """
+    function string_to_type(str::String) ::Type
+
+        res = Main.eval(Meta.parse(str))
+        if !(res isa Type)
+           throw(UndefVarError(Symbol(str))
+        end
+        return res
+    end
+
+    """
     `invoke(function::Any, arguments::Any...) -> Any`
 
     wrap function call for non-function objects

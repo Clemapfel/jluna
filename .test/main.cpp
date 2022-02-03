@@ -12,7 +12,7 @@ int main()
 {
     State::initialize();
 
-    State::script("array = collect(1:10);");
+    auto a = State::new_array<size_t, 3>("array", 3ul, 3ul, 3ul);
 
     jl_eval_string("jluna.memory_handler.force_free()");
 
