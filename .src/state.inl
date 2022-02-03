@@ -148,6 +148,6 @@ namespace jluna::State
         std::cout << str.str() << std::endl;
 
         State::safe_script(str.str());
-        return Main["name"];
+        return Main[name];
     }
 }

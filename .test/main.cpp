@@ -12,16 +12,6 @@ int main()
 {
     State::initialize();
 
-    auto a = State::new_array<size_t, 3>("array", 3ul, 3ul, 3ul);
-
-    jl_eval_string("jluna.memory_handler.force_free()");
-
-    jl_eval_string("wait(200)");
-
-    return 0;
-
-    struct No {};
-
     std::cout << to_julia_type<
         std::tuple<
             std::vector<

@@ -133,6 +133,15 @@ module jluna
     end
 
     """
+    `make_complex(:T, :T) -> Complex{T}`
+
+    wrap complex ctor
+    """
+    function make_complex(real::T, imag::T) ::Complex{T} where T
+        return Complex{T}(real, imag)
+    end
+
+    """
     `assert_isa(::T, ::Symbol) -> Nothing`
 
     throw assertion if x is not of named type
@@ -175,7 +184,7 @@ module jluna
 
         res = Main.eval(Meta.parse(str))
         if !(res isa Type)
-           throw(UndefVarError(Symbol(str))
+           throw(UndefVarError(Symbol(str)))
         end
         return res
     end
@@ -459,7 +468,7 @@ module jluna
             global _current_id += 1;
             key = _current_id;
 
-            println("[JULIA] allocated " * string(key) * " (" * Base.string(to_wrap) * ")")
+            #println("[JULIA] allocated " * string(key) * " (" * Base.string(to_wrap) * ")")
 
             if (haskey(_refs[], key))
                 @assert _refs[][key].x == to_wrap && typeof(to_wrap) == typeof(_refs[][key].x)
@@ -571,7 +580,7 @@ module jluna
             end
 
             @assert haskey(_refs[], key)
-            println("[JULIA] freed " * string(key) * " (" * Base.string(typeof(_refs[][key].x)) * ")")
+            #println("[JULIA] freed " * string(key) * " (" * Base.string(typeof(_refs[][key].x)) * ")")
 
             global _ref_counter[][key] -= 1
             count = _ref_counter[][key]
