@@ -42,7 +42,7 @@ namespace jluna
             /// @brief access field
             /// @param field_name
             /// @returns field as proxy
-            virtual Proxy operator[](const std::string& field);
+            Proxy operator[](const std::string& field);
 
             /// @brief access field
             /// @param field_name

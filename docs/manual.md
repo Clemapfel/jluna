@@ -35,7 +35,8 @@ Please navigate to the appropriate section by clicking the links below:
   7.1 [Constructing Arrays](#ctors)<br>
   7.2 [Indexing](#indexing)<br>
   7.3 [Iterating](#iterating)<br>
-  7.4 [Vectors](#vectors)
+  7.4 [Vectors](#vectors)<br>
+  7.5 [Matrices](#matrices)<br>
 8. [~~Expressions~~](#expressions)<br>
 9. [~~Usertypes~~](#usertypes)<br>
 10. [C-API](#c-api)<br>
@@ -927,7 +928,7 @@ For lambdas with different signature, they would of course expect 1, 2, etc. man
 
 ## Arrays
 
-julia-side objects of type `T <: AbstractArray` are represented C++-side by their own proxy type: `jluna::Array<T, R>`. Just like in julia, `T` is the value_type and `R` the rank (or dimensionality) of the array. <br>
+julia-side objects of type `T <: AbstractArray` that are rectangular (or box or n-dimensional orthotopic) are represented C++-side by their own proxy type: `jluna::Array<T, R>`. Just like in julia, `T` is the value_type and `R` the rank (or dimensionality) of the array. <br>
 
 julia array types and `jluna` array types correspond to each other like so:
 
@@ -1043,8 +1044,9 @@ To closer illustrate the relationship between indexing in `jluna` and indexing i
 | 1    | `M[1]`| `M.at(0)` or `M[0]`|
 | 2    | `M[1, 2]`  | `M.at(0, 1)`|
 | 3    | `M[1, 2, 3]`  | `M.at(0, 1)`|
-|      |       | |
 | Any  | `M[ [1, 13, 7] ]`| `M[ {0, 12, 6} ]` |
+|      |        |     |
+| *    | `M[:]`  | not available | 
 
 ### Iterating
 

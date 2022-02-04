@@ -38,6 +38,7 @@ namespace jluna
             /// @brief linear indexing, no bounds checking
             /// @param index, 0-based
             /// @returns assignable iterator to element
+            /// @note this function intentionally shadows Proxy::operator[](size_t) -> Proxy
             auto operator[](size_t);
 
             /// @brief julia-style list indexing
@@ -255,7 +256,7 @@ namespace jluna
     template<Boxable Value_t>
     class Matrix : public Array<Value_t, 2>
     {
-        // this feature is not yet implemented
+        // this feature is not yet implemented, consider using Array<T, 2> instead
     };
 
     /// @brief box array
@@ -272,6 +273,15 @@ namespace jluna
     template<typename T,
         typename Value_t = typename T::value_type,
         std::enable_if_t<std::is_same_v<T, Vector<Value_t>>, bool> = true>
+    Any* box(T value)
+    {
+        return value.operator Any*();
+    }
+
+    /// @brief box matrix
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        std::enable_if_t<std::is_same_v<T, Matrix<Value_t>>, bool> = true>
     Any* box(T value)
     {
         return value.operator Any*();

@@ -109,12 +109,6 @@ State::new_named_undef("fancy_func") = [captured = std::ref(instance)](Any* in) 
 State::script("res = fancy_func(123)");
 State::script("println(res)");
 ```
-
-
-
-
-
-
 ---
 
 ### Features
@@ -135,11 +129,11 @@ Some of the many advantages `jluna` has over the C-API include:
 ### Planned (but not yet implemented):
 In order of priority, highest first:
 
-+ `v0.6`: expression proxy, access to meta features via C++
-+ `v0.7`: creating new modules and datatypes completely C++-Side
-+ `v0.8`: thread-safety, parallelization
-+ `v0.9`: 0-overhead performance version of proxies and `cppcall`
-+ `v1.0`: multiple julia worlds, save-states: restoring a previous julia state
++ `v0.6 - 0.7`: expression proxy, access to meta features via C++ including C-API-only introspection
++ `v0.7 - 0.8`: linear algebra, matrices
++ `v0.8 - 0.9`: thread-safety, parallelization
++ `v0.9 - 1.0`: 0-overhead performance version of proxies and `cppcall`
++ `v1.0+`: multiple julia worlds, save-states: restoring a previous julia state
 ---
 
 ## Documentation

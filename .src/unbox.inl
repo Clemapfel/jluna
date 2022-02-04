@@ -104,7 +104,7 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("Complex", value);
+        auto* res = jl_try_convert(to_julia_type<std::complex<Value_t>>::type_name.c_str(), value);
 
         auto* re = jl_get_nth_field(value, 0);
         auto* im = jl_get_nth_field(value, 1);
@@ -115,7 +115,7 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("Vector", value);
+        auto* res = jl_try_convert(to_julia_type<std::vector<Value_t>>::type_name.c_str(), value);
 
         std::vector<Value_t> out;
         out.reserve(jl_array_len(value));
@@ -129,7 +129,7 @@ namespace jluna
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::map<Key_t, Value_t>>, bool>>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("IdDict", value);
+        auto* res = jl_try_convert(to_julia_type<std::map<Key_t, Value_t>>::type_name.c_str(), value);
 
         static jl_function_t* serialize = jl_find_function("jluna", "serialize");
 
@@ -145,7 +145,7 @@ namespace jluna
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::unordered_map<Key_t, Value_t>>, bool>>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("Dict", value);
+        auto* res = jl_try_convert(to_julia_type<std::unordered_map<Key_t, Value_t>>::type_name.c_str(), value);
 
         static jl_function_t* serialize = jl_find_function("jluna", "serialize");
 
@@ -161,7 +161,7 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool>>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("Set", value);
+        auto* res = jl_try_convert(to_julia_type<std::set<Value_t>>::type_name.c_str(), value);
         static jl_function_t* serialize = jl_find_function("jluna", "serialize");
 
         jl_array_t* as_array = (jl_array_t*) safe_call(serialize, value);
@@ -176,7 +176,7 @@ namespace jluna
     template<typename T, typename T1, typename T2, std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool>>
     T unbox(Any* value)
     {
-        value = jl_try_convert("Pair", value);
+        value = jl_try_convert(to_julia_type<std::pair<T1, T2>>::type_name.c_str(), value);
 
         auto* first = jl_get_nth_field(value, 0);
         auto* second = jl_get_nth_field(value, 1);
@@ -219,7 +219,7 @@ namespace jluna
     template<IsTuple T>
     T unbox(Any* value)
     {
-        value = jl_try_convert("Tuple", value);
+        value = jl_try_convert(to_julia_type<T>::type_name.c_str(), value);
 
         return detail::unbox_tuple_pre(value, T());
     }

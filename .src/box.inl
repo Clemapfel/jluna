@@ -102,7 +102,7 @@ namespace jluna
     template<Is<const char*> T>
     Any* box(T value)
     {
-        return box(std::string(value));
+        return box<std::string>(std::string(value));
     }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
@@ -121,7 +121,7 @@ namespace jluna
         args.reserve(value.size());
 
         for (auto& v : value)
-            args.push_back(box(v));
+            args.push_back(box<Value_t>(v));
 
         auto* res = jl_call(vector, args.data(), args.size());
         forward_last_exception();
@@ -169,7 +169,7 @@ namespace jluna
         args.reserve(value.size());
 
         for (const auto& t : value)
-            args.push_back(box(t));
+            args.push_back(box<Value_t>(t));
 
         auto* res = jl_call(make_set, args.data(), args.size());
         forward_last_exception();
@@ -180,7 +180,7 @@ namespace jluna
     Any* box(T value)
     {
         static jl_function_t* pair = jl_find_function("jluna", "make_pair");
-        return safe_call(pair, box(value.first), box(value.second));
+        return safe_call(pair, box<T1>(value.first), box<T2>(value.second));
     }
 
     template<IsTuple T>

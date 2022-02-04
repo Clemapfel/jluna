@@ -18,7 +18,7 @@ namespace jluna::State
 
     inline Proxy new_named_bool(const std::string& name, bool value)
     {
-        jluna::detail::create_or_assign(name, jl_box_bool(value));
+        return jluna::detail::create_or_assign(name, jl_box_bool(value));
     }
     
     inline Proxy new_named_char(const std::string& name, char value)

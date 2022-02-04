@@ -84,6 +84,15 @@ module jluna
     end
 
     """
+    `tuple_length(::Tuple) -> Integer`
+
+    get length of tuple
+    """
+    function tuple_length(x::Tuple{N}) where N
+        return N
+    end
+
+    """
     `make_new(::String, xs...) -> Any`
 
     parse string to type, then call ctor with given args
@@ -639,7 +648,8 @@ module jluna
         mutable struct UnnamedFunctionProxy
 
             _id::Symbol
-            _f::Function
+            _call::Function
+            _n_arguments::Int64
 
             function UnnamedFunctionProxy(id::Symbol)
 
@@ -655,7 +665,7 @@ module jluna
         end
 
         # make function proxy struct callable
-        (x::UnnamedFunctionProxy)(xs...) = return x._f(xs...)
+        (instance::UnnamedFunctionProxy)(args...) = instance._call(args...);
 
         # ctor wrapper for jluna
         new_unnamed_function(s::Symbol) = return UnnamedFunctionProxy(s)

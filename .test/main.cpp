@@ -7,58 +7,11 @@
 
 #include <include/exceptions.hpp>
 
-struct FancyStruct
-{
-    FancyStruct() = default;
-    const std::string msg = "cpp called with argument: ";
-
-    template<typename T>
-    decltype(auto) fancy_func(T in) const noexcept
-    {
-        std::cout << msg << std::to_string(in) << std::endl;
-        return in + 10;
-    }
-};
 
 using namespace jluna;
 int main()
 {
     State::initialize();
-
-
-State::script("array = collect(1:9)");
-Array<size_t, 1> cpp_array = Main["array"];
-
-size_t cpp_at_3 = cpp_array.at(3);
-size_t jl_at_3 = Base["getindex"](cpp_array, 3);
-
-std::cout << "cpp  : " << cpp_at_3 << std::endl;
-std::cout << "julia: " << jl_at_3 << std::endl;
-return 0;
-
-return 0;
-
-    std::cout << to_julia_type<
-        std::tuple<
-            std::vector<
-                std::pair<
-                    int,
-                    std::string
-                >
-            >,
-            std::map<uint64_t, std::set<char>>,
-            std::unordered_map<
-                size_t,
-                Array<
-                    std::complex<
-                        double
-                    >,
-                    3
-                >
-            >
-        >
-    >::type_name << std::endl;
-
     Test::initialize();
 
     Test::test("catch c exception", [](){
