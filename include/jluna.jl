@@ -84,6 +84,16 @@ module jluna
     end
 
     """
+    `make_new(::String, xs...) -> Any`
+
+    parse string to type, then call ctor with given args
+    """
+    function make_new(name::String, xs...) ::Any
+
+        return Main.eval(:($(Meta.parse(name))($(xs...))))
+    end
+
+    """
     `make_vector(::T...) -> Vector{T}`
 
     wrap vector ctor in varargs argument, used by box/unbox

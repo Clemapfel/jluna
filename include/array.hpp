@@ -251,6 +251,31 @@ namespace jluna
         protected:
             using Array<Value_t, 1>::_content;
     };
+
+    template<Boxable Value_t>
+    class Matrix : public Array<Value_t, 2>
+    {
+        // this feature is not yet implemented
+    };
+
+    /// @brief box array
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        size_t Rank = T::rank,
+        std::enable_if_t<std::is_same_v<T, Array<Value_t, Rank>>, bool> = true>
+    Any* box(T value)
+    {
+        return value.operator Any*();
+    }
+
+    /// @brief box vector
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        std::enable_if_t<std::is_same_v<T, Vector<Value_t>>, bool> = true>
+    Any* box(T value)
+    {
+        return value.operator Any*();
+    }
 }
 
 #include ".src/array.inl"

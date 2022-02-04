@@ -166,6 +166,13 @@ namespace jluna
             std::shared_ptr<ProxyValue> _content;
             std::deque<Symbol*> assemble_name() const;
     };
+
+    /// @brief box proxy
+    template<Is<Proxy> T>
+    Any* box(T value)
+    {
+        return value.operator Any*();
+    }
 }
 
 #include ".src/proxy.inl"

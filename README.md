@@ -96,7 +96,7 @@ auto instance = FancyStruct();
 
 // wrap C++-only member function in lambda
 // then assign lambda to julia-side variable "fancy_func"
-State::new_undef("fancy_func") = [captured = std::ref(instance)](Any* in) -> Any*
+State::new_named_undef("fancy_func") = [captured = std::ref(instance)](Any* in) -> Any*
 {
     // call member on capture instance
     captured.get().fancy_func<size_t>(unbox<size_t>(in));

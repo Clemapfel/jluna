@@ -8,6 +8,7 @@
 #include <julia.h>
 #include <type_traits>
 #include <tuple>
+#include <functional>
 
 namespace jluna
 {
@@ -51,13 +52,9 @@ namespace jluna
         typename T::value_type;
     };
 
+    class Proxy;
+
     /// @concept describes lambda with signature (Args_t...) -> T
     template<typename T, typename... Args_t>
-    concept LambdaType =
-    requires(T lambda)
-    {
-        std::is_invocable<T, Args_t...>::value;
-        typename std::invoke_result<T, Args_t...>::type;
-    };
-
+    concept LambdaType = std::is_invocable<T, Args_t...>::value and not std::is_base_of<Proxy, T>::value;
 }
