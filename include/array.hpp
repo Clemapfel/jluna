@@ -122,6 +122,9 @@ namespace jluna
             /// @returns true if 0 element, false otherwise
             bool empty() const;
 
+            /// @brief cast to Any*
+            using Proxy::operator Any*;
+
         protected:
             using Proxy::_content;
 
@@ -241,6 +244,9 @@ namespace jluna
             /// @param value
             template<Boxable T = Value_t>
             void push_back(T value);
+
+            /// @brief: cast to Any*
+            using Array<Value_t, 1>::operator Any*;
 
         protected:
             using Array<Value_t, 1>::_content;

@@ -2,7 +2,7 @@
 
 Julia is a beautiful language, it is well-designed and well-documented. julia C-API is also well-designed, less beautiful and much less... documented.
 
-Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official Julia C-API and replace it in usage in C++ projects by making accessing julia unique strengths through C++ safe, hassle-free and just as beautiful.
+Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official Julia C-API and replace it in usage in C++ projects, by making accessing julias unique strengths through C++ safe, hassle-free and just as beautiful.
 
 ---
 
@@ -26,45 +26,94 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 ---
 
 ### Showcase
+#### Access Julia-Side Values/Functions
 ```cpp
-#include <jluna.hpp>
-using namespace jluna;
-
-// initialize julia and jluna 
-State::initialize();
-
 // execute arbitrary strings with exception forwarding
 State::safe_script(R"(
     f(x) = x*x*x
+    
+    mutable struct MyStruct
+        _field
+        MyStruct() = new(123)
+    end
+
+    instance = MyStruct();
 )");
+
+// access and modify variables
+Main["instance"]["_field"] = 456;
+State::script(R"(println("instance._field is now: ", instance._field))");
 
 // call julia-side functions with C++-side values
 int result = Main["f"](12);
 Base["println"](result);
 ```
 ```
+instance._field is now: 456
 1728
 ```
 ---
+#### Multi-Dimensional Array Interface
 ```cpp
-// fully iterable, assignable array interface
-Array<size_t, 3> cpp_array3d = Main["array3d"];
-for (auto& e : cpp_array3d)
-    e = e.operator size_t() + 1; 
+State::script("array = collect(1:9)");
+Array<size_t, 1> cpp_array = Main["array"];
 
-State::script("println(array3d)");
+// julia style list indexing
+auto sub_array = cpp_array[{6, 5, 4, 3, 2}];
+Base["println"]((Any*) sub_array);
+
+// iterable and assignable
+for (auto e : cpp_array)
+    e = e.operator size_t() + 10;
+
+State::script("println(array)");
 ```
+```
+[7, 6, 5, 4, 3]
+[11, 12, 13, 14, 15, 16, 17, 18, 19]
+```
+---
+#### Call C++ Functions from Julia
 
-// compatible with many C++ objects, including lambdas
-Main["f"] = [](Any* x) -> void {
-    std::cout << "cpp lambda called " << unbox<std::string>(x) << std::endl;
+```cpp
+// arbitary C++-only struct
+struct FancyStruct
+{
+    FancyStruct() = default;
+
+    template<typename T>
+    decltype(auto) fancy_func(T in) const noexcept
+    {
+        std::cout << "cpp called with argument: ";
+        std::cout << std::to_string(in);
+        std::cout << std::endl;
+        
+        return in + 10;
+    }
 };
-State::script("f(\"completely julia-side\")");
+
+auto instance = FancyStruct();
+
+// wrap C++-only member function in lambda
+// then assign lambda to julia-side variable "fancy_func"
+State::new_undef("fancy_func") = [captured = std::ref(instance)](Any* in) -> Any*
+{
+    // call member on capture instance
+    captured.get().fancy_func<size_t>(unbox<size_t>(in));
+
+    // return value to julia
+    return box(456);
+};
+
+/// now callable from julia
+State::script("res = fancy_func(123)");
+State::script("println(res)");
 ```
-```
-1728
-cpp lambda called completely julia-side
-```
+
+
+
+
+
 
 ---
 
@@ -75,10 +124,11 @@ Some of the many advantages `jluna` has over the C-API include:
 + call C++ functions from julia using any julia-type
 + assigning C++-side proxies also mutates the corresponding variable with the same name julia-side
 + julia-side values, including temporaries, are kept safe from the garbage collector while they are in use C++-side
-+ verbose exception forwarding from Julia, compile-time assertions
++ verbose exception forwarding from julia, compile-time assertions
 + wraps [most](./docs/quick_and_dirty.md#list-of-unboxables) of the relevant C++ `std` objects and types
-+ multidimensional, iterable array interface with Julia-style indexing
-+ human-written manual, including inline documentation for IDEs for both C++ and Julia code
++ multidimensional, iterable array interface with julia-style indexing
++ manual written by a human for beginners
++ inline documentation for IDEs for both C++ and Julia code 
 + freely mix `jluna` and the C-API
 + And more!
 
@@ -87,16 +137,16 @@ In order of priority, highest first:
 
 + `v0.6`: expression proxy, access to meta features via C++
 + `v0.7`: creating new modules and datatypes completely C++-Side
-+ `v0.8`: thread-safe `cppcall`, parallelization
++ `v0.8`: thread-safety, parallelization
 + `v0.9`: 0-overhead performance version of proxies and `cppcall`
-+ `v1.0`: multiple julia states, save-states: restoring a previous julia state
++ `v1.0`: multiple julia worlds, save-states: restoring a previous julia state
 ---
 
 ## Documentation
 
 A step-by-step introduction and reference guide intended for users is available [here](./docs/manual.md). Furthermore, all user-facing code has in-line documentation available through most IDEs (or the julia `help?` command). 
 
-Advanced users are encouraged to check the headers (available in `jluna/include`) for implementation details. They are formatted specifically to be easily understood by 3rd parties. 
+Advanced users are encouraged to check the headers (available in `jluna/include/`) for implementation details. They are formatted specifically to be easily understood by 3rd parties. 
 
 ---
 
@@ -117,7 +167,7 @@ Currently, only g++10 is supported, clang support is planned in the future.
 
 ## Installation & Troubleshooting
 
-A step-by-step tutorial on how to create a new C++ project, compile and link jluna can be found [here](./docs/installation.md).
+A step-by-step tutorial on how to create, compile and link a new C++ Project with jluna can be found [here](./docs/installation.md).
 
 ---
 

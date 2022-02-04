@@ -7,10 +7,42 @@
 
 #include <include/exceptions.hpp>
 
+struct FancyStruct
+{
+    FancyStruct() = default;
+    const std::string msg = "cpp called with argument: ";
+
+    template<typename T>
+    decltype(auto) fancy_func(T in) const noexcept
+    {
+        std::cout << msg << std::to_string(in) << std::endl;
+        return in + 10;
+    }
+};
+
 using namespace jluna;
 int main()
 {
     State::initialize();
+
+    auto instance = FancyStruct();
+
+// wrap C++-only member function in lambda
+// then assign lambda to julia-side variable "fancy_func"
+State::new_undef("fancy_func") = [captured = std::ref(instance)](Any* in) -> Any*
+{
+    // call member on capture instance
+    captured.get().fancy_func<size_t>(unbox<size_t>(in));
+
+    // return value to julia
+    return box(456);
+};
+
+/// call from only julia:
+State::script("res = fancy_func(123)");
+State::script("println(res)");
+
+return 0;
 
     std::cout << to_julia_type<
         std::tuple<

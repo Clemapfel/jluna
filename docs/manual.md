@@ -265,7 +265,7 @@ std::cout << to_julia_type<Array<size_t, 4>> std::endl;
 Array{UInt64, 4}
 ```
 
-Which can help remind user what type gets converted to what and is used internally to ensure that the result of a `box` call of exactly the type the user specified. For example a `std::pair<int, std::string>` could bind to a `Pair{Any, Any}` julia-side, however instead, `jluna` deduces the type to be exactly `Pair{Int32, String}` after boxing.
+This can help remind user what type gets converted and can be used when generating julia code.
 
 ---
 
@@ -744,22 +744,24 @@ While arbitrary julia-valid characters (except `.` and `#`) in the functions nam
 
 #### Calling Functions
 
-After having registered a function, we then call the function (from within julia) using `cppcall`. Instead of a string for a name, we're using a `Symbol` that has the exact same contents as the string name used C++-side. `cppcall` has the following signature:
+After having registered a function, we then call the function (from within julia) using `cppcall`. Instead of a string for a name, we're using a `Symbol` that has the exact same contents as the string-typed name used C++-side. `cppcall` has the following signature:
 
 ```julia
 cppcall(::Symbol, xs...) -> Any
 ```
 
-Unlike julias `ccall`, we do not supply anything but the functions name and the arguments to be forwarded. The return type and type of the arguments is deduced automatically and we can use any julia type as arguments, not just C-friendly ones.<br> <br>
-Calling our `print_vector`, which first prints the entire vector, then adds `10` to each element, in julia would look like this:
+Unlike julias `ccall`, we do not supply anything but the functions name, and the arguments to be forwarded. The return type and type of the arguments is deduced at runtime. Also unlike `cppcall`, we can use any julia type as arguments, not just C-friendly ones.<br> <br>
+Calling our `print_vector` in julia would look like this:
 
-```julia
-# in cpp
+```cpp
+// in cpp
 register_function("print_vector", [](Any* x) -> Any* {
-    <see above>
+    // prints entire vector
+    // then adds 10 to each element
+    // then returns newly modified vector to julia
 }
 
-# in julia
+// in julia
 result = cppcall(:print_vector, [1, 2, 3, 4])
 println("julia prints: ", result)
 ```
@@ -773,7 +775,6 @@ cpp prints:
 julia prints: [11, 12, 13, 14]
 ```
 
-With cppcall we can use any julia type directly, as long as it is unboxable.
 
 #### Possible Signatures
 

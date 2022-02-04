@@ -109,7 +109,7 @@ namespace jluna
     Any* box(T value)
     {
         static jl_function_t* complex = jl_find_function("jluna", "make_complex");
-        return safe_call(complex, box(value.real()), box(value.imag()));
+        return safe_call(complex, box<Value_t>(value.real()), box<Value_t>(value.imag()));
     }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
@@ -191,8 +191,8 @@ namespace jluna
         std::vector<jl_value_t*> args;
         args.reserve(std::tuple_size_v<T>);
 
-        std::apply([&](auto&&... elements) {
-            (args.push_back(box(elements)), ...);
+        std::apply([&](auto... elements) {
+            (args.push_back(box<decltype(elements)>(elements)), ...);
         }, value);
 
         auto* res = jl_call(tuple, args.data(), args.size());
@@ -203,39 +203,36 @@ namespace jluna
     template<LambdaType<> T>
     Any* box(T lambda)
     {
-        return register_unnamed_function(lambda);
+        return register_unnamed_function<T>(lambda);
     }
 
     template<LambdaType<Any*> T>
     Any* box(T lambda)
     {
-        return register_unnamed_function(lambda);
+        return register_unnamed_function<T>(lambda);
     }
 
     template<LambdaType<Any*, Any*> T>
     Any* box(T lambda)
     {
-        return register_unnamed_function(lambda);
+        return register_unnamed_function<T>(lambda);
     }
 
     template<LambdaType<Any*, Any*, Any*> T>
     Any* box(T lambda)
     {
-        return register_unnamed_function(lambda);
+        return register_unnamed_function<T>(lambda);
     }
-
 
     template<LambdaType<Any*, Any*, Any*, Any*> T>
     Any* box(T lambda)
     {
-        return register_unnamed_function(lambda);
+        return register_unnamed_function<T>(lambda);
     }
 
     template<LambdaType<std::vector<Any*>> T>
     Any* box(T lambda)
     {
-        return register_unnamed_function(lambda);
+        return register_unnamed_function<T>(lambda);
     }
-
-
 }
