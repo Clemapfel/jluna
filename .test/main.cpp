@@ -12,6 +12,28 @@ using namespace jluna;
 int main()
 {
     State::initialize();
+
+    State::new_named_undef("lambda") = [](Any* x, Any* y) -> Any*
+{
+    auto as_string = unbox<std::string>(x);
+    std::cout << "cpp prints " << as_string << " and returns: " << std::endl;
+    auto as_set = unbox<std::set<size_t>>(y);
+
+    size_t out = 0;
+    for (size_t x : as_set)
+        out += x;
+
+    return box(out);
+
+    return jl_nothing;
+};
+
+// now callable from julia
+State::safe_script(R"(
+    println(Main.lambda("what julia handed it", Set([1, 2, 3, 3, 4])))  # non-c-types work no problem!
+)");
+
+return 0;
     Test::initialize();
 
     Test::test("catch c exception", [](){

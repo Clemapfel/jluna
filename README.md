@@ -76,38 +76,30 @@ State::script("println(array)");
 #### Call C++ Functions from Julia
 
 ```cpp
-// arbitary C++-only struct
-struct FancyStruct
+/// register lambda and bind to julia-side variable
+State::new_named_undef("lambda") = [](Any* x, Any* y) -> Any*
 {
-    FancyStruct() = default;
+    auto as_string = unbox<std::string>(x);
+    std::cout << "cpp prints " << as_string << " and returns: " << std::endl;
+    auto as_set = unbox<std::set<size_t>>(y);
 
-    template<typename T>
-    decltype(auto) fancy_func(T in) const noexcept
-    {
-        std::cout << "cpp called with argument: ";
-        std::cout << std::to_string(in);
-        std::cout << std::endl;
-        
-        return in + 10;
-    }
+    size_t out = 0;
+    for (size_t x : as_set)
+        out += x;
+
+    return box(out);
+
+    return jl_nothing;
 };
 
-auto instance = FancyStruct();
-
-// wrap C++-only member function in lambda
-// then assign lambda to julia-side variable "fancy_func"
-State::new_named_undef("fancy_func") = [captured = std::ref(instance)](Any* in) -> Any*
-{
-    // call member on capture instance
-    captured.get().fancy_func<size_t>(unbox<size_t>(in));
-
-    // return value to julia
-    return box(456);
-};
-
-/// now callable from julia
-State::script("res = fancy_func(123)");
-State::script("println(res)");
+// now callable from julia
+State::safe_script(R"(
+    println(Main.lambda("what julia handed it", Set([1, 2, 3, 3, 4])))  # non-c-types work!
+)");
+```
+```
+cpp prints what julia handed it and returns: 
+10
 ```
 ---
 
