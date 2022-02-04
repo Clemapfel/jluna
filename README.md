@@ -147,7 +147,7 @@ For `jluna` you'll need:
 + [**cmake 3.16**](https://cmake.org/download/) (or higher)
 + unix-based operating system
 
-Currently, only g++10 is supported, clang support is planned in the future.
+Currently, only g++10 and g++11 are supported, clang support is planned in the future.
 
 ---
 
