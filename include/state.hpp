@@ -16,7 +16,6 @@
 #include <include/typedefs.hpp>
 #include <include/box.hpp>
 
-/// forward declarations
 namespace jluna
 {
     class Proxy;

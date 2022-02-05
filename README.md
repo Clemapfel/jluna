@@ -151,7 +151,7 @@ Currently, only g++10 and g++11 are supported, clang support is planned in the f
 
 ---
 
-## Installation & Troubleshooting
+## [Installation & Troubleshooting](./docs/installation.md)
 
 A step-by-step tutorial on how to create, compile and link a new C++ Project with jluna can be found [here](./docs/installation.md).
 

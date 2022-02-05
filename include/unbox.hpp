@@ -14,8 +14,12 @@
 namespace jluna
 {
     /// @brief convert julia-side value to C++-side value
-    /// @param value: julia-side value
-    /// @returns C++ struct
+    /// @param value: pointer to julia-side memory of arbitrary type
+    /// @returns C++-side object by value
+
+    // ###########################################################
+
+    /// @brief unbox to Any*
     template<Is<Any*> T>
     T unbox(Any* value);
     
@@ -23,6 +27,7 @@ namespace jluna
     template<Is<bool> T>
     T unbox(Any* value);
 
+    /// @brief unbox to char
     template<Is<char> T>
     T unbox(Any* value);
 

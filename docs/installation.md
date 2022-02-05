@@ -195,7 +195,7 @@ make
 
 If errors appear, be sure `JULIA_PATH` is still set correctly as it is needed to find `julia.h`. Otherwise head to [troubleshooting](#troubleshooting).
 
-After compiliation succeeded, the directory should now have the following layout:
+After compilation succeeded, the directory should now have the following layout:
 
 ```
 my_project/
@@ -397,22 +397,3 @@ If and only if all of the above apply, head to the [issues tab](https://github.c
 + provide a minimum working example that recreates the bug
 
 We will try to resolve your problem as soon as possible and are thankful for your input and collaboration.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

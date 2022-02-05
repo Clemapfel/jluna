@@ -1125,10 +1125,11 @@ Note that `Array<T, R>::operator[](Range_t&&)` (linear indexing with a range) al
 
 ## C-API
 
-(this section is not fully formatted yet, however code examples are given)
+(this section is not fully formatted yet. Code examples are given, however)
 
 ```cpp
 #include <julia.h>
+#include <include/julia_extension.hpp>
 ```
 
 ### Meaning of C-Types
@@ -1190,9 +1191,7 @@ T value = unbox<T>(jl_eval_string("return value_name"));
 #### Accessing Functions in C
 
 ```cpp
-jl_function_t* function = (jl_function_t*) jl_eval_string("return function_name");
-// or
-jl_function_t* function = jl_get_function((jl_module_t*) jl_eval_string("return module_name"), "function_name"))
+jl_function_t* println = jl_get_function((jl_module_t*) jl_eval_string("return Main.Base")), "println");
 ```
 
 #### Calling Functions in C

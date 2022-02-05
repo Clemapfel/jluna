@@ -62,17 +62,7 @@ namespace jluna
     /// @param args
     /// @returns result
     template<typename... Args_t>
-    Any* call(Function* function, Args_t... args)
-    {
-        throw_if_uninitialized();
-
-        std::vector<Any*> params;
-        (params.push_back((Any*) args), ...);
-
-        auto* res = jl_call(function, params.data(), params.size());
-        forward_last_exception();
-        return res;
-    }
+    Any* call(Function* function, Args_t... args);
 
     /// @brief call function with args, with verbose exception forwarding
     /// @tparam Args_t: argument types, must be castable to Any*
@@ -80,17 +70,7 @@ namespace jluna
     /// @param args
     /// @returns result
     template<typename... Args_t>
-    Any* safe_call(Function* function, Args_t... args)
-    {
-        throw_if_uninitialized();
-
-        std::vector<Any*> params;
-        params.push_back(function);
-        (params.push_back((Any*) args), ...);
-
-        static Function* safe_call = jl_get_function((jl_module_t*) jl_eval_string("jluna.exception_handler"), "safe_call");
-        auto* res = jl_call(safe_call, params.data(), params.size());
-        forward_last_exception();
-        return res;
-    }
+    Any* safe_call(Function* function, Args_t... args);
 }
+
+#include ".src/exceptions.inl"

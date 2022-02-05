@@ -260,6 +260,8 @@ namespace jluna
     };
 
     /// @brief box array
+    /// @param array
+    /// @returns pointer to newly allocated julia-side value
     template<typename T,
         typename Value_t = typename T::value_type,
         size_t Rank = T::rank,
@@ -270,6 +272,8 @@ namespace jluna
     }
 
     /// @brief box vector
+    /// @param vector
+    /// @returns pointer to newly allocated julia-side value
     template<typename T,
         typename Value_t = typename T::value_type,
         std::enable_if_t<std::is_same_v<T, Vector<Value_t>>, bool> = true>
@@ -279,6 +283,8 @@ namespace jluna
     }
 
     /// @brief box matrix
+    /// @param matrix
+    /// @returns pointer to newly allocated julia-side value
     template<typename T,
         typename Value_t = typename T::value_type,
         std::enable_if_t<std::is_same_v<T, Matrix<Value_t>>, bool> = true>

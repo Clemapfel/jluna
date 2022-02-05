@@ -61,7 +61,7 @@ extern "C"
 
         void free_function(size_t id)
         {
-            std::cout << "freed unnamed function with id #" << id << std::endl;
+            //std::cout << "freed unnamed function with id #" << id << std::endl;
             _functions.erase(id);
         }
     }

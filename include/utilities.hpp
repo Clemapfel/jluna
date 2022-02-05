@@ -9,18 +9,14 @@
 
 namespace jluna
 {
+    /// @brief Proxy of singleton Main, initialized by State::initialize
     inline Proxy Main;
-    inline Proxy Base;
-    inline Proxy Core;
 
-    namespace detail
-    {
-        template<Is<Any*>... Ts>
-        inline Proxy create_or_assign(const std::string& symbol, Ts... args)
-        {
-            static jl_function_t* create_or_assign = jl_find_function("jluna", "create_or_assign");
-            safe_call(create_or_assign, (jl_value_t*) jl_symbol(symbol.c_str()), args...);
-            return Main[symbol];
-        }
-    }
+    /// @brief Proxy of singleton Main.Base, initialized by State::initialize
+    inline Proxy Base;
+
+    /// @brief Proxy of singleton Main.Base.Core, initialized by State::initialize
+    inline Proxy Core;
 }
+
+#include ".src/utilities.inl"
