@@ -3,6 +3,8 @@
 // Created on 02.02.22 by clem (mail@clemens-cords.com)
 //
 
+
+
 #include <include/utilities.hpp>
 #include <include/julia_extension.hpp>
 #include <include/proxy.hpp>
@@ -144,8 +146,6 @@ namespace jluna::State
             size_t i = 0;
             (add(dims, ++i), ...);
         }
-
-        std::cout << str.str() << std::endl;
 
         State::safe_script(str.str());
         return Main[name];
