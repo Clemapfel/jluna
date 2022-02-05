@@ -812,7 +812,7 @@ Only the following signatures for lambdas are allowed (this is enforced at compi
 (Any*, Any*, Any*, Any*) -> Any*
 ```
 
-Templated lambdas will be supported in a future version but are currently dissalowed as of `jluna v0.5`
+Templated lambdas will be supported in a future version but are currently disallowed as of `jluna v0.5`
 
 #### Using Non-julia Objects in Functions
 
@@ -902,7 +902,7 @@ lambda_proxy = []() -> void {
 };
 ```
 
-Here, we first create an unintialized variable named `Main.lambda` julia-side, being returned a named proxy which manages this variable. <br>
+Here, we first create an uninitialized variable named `Main.lambda` julia-side, being returned a named proxy which manages this variable. <br>
 This proxy is then assigned a lambda of signature `() -> void`, which an allowed signature. Because the proxy is named and because the lambda is boxable, this operation is valid and also assigns `Main.lambda`. `Main.lambda` now has the following value:
 
 ```cpp
@@ -960,7 +960,7 @@ Note that instead of `auto`, we declared `unnamed` and `named` to be explicitly 
 auto array = State::script("return array").as<Array<Int64, 3>();
 ```
 
-However the latter is discourage for style reasons.
+However, the latter is discouraged for style reasons.
 
 
 We can use the generic value type `Any` to make it possible for the array proxy to attach any julia-side array, regardless of value type. `jluna` provides 3 convenient typedefs for this:
@@ -985,7 +985,7 @@ Array1d as_any = Main["hetero_array"]; // triggers no cast
 There are two ways to index a multidimensional array jluna:
 
 + **linear** indexing treats the array as 1-dimensional and returns the n-th value in column-major order
-+ **multi-dimensional** indexing requires one index per dimension and returns the array as if it the index was a spacial coordinate
++ **multi-dimensional** indexing requires one index per dimension and returns the array as if the index was a spacial coordinate
 
 To keep with C-convention, indices in `jluna` are 0-based instead of 1-based.
 
