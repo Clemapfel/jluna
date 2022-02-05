@@ -1,8 +1,8 @@
-# jluna: A modern Julia ⭤ C++ Wrapper (v0.5)
+# jluna: A modern julia ⭤ C++ Wrapper (v0.5)
 
 Julia is a beautiful language, it is well-designed and well-documented. julia C-API is also well-designed, less beautiful and much less... documented.
 
-Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official Julia C-API and replace it in usage in C++ projects, by making accessing julias unique strengths through C++ safe, hassle-free and just as beautiful.
+Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API and replace it in usage in C++ projects, by making accessing julias unique strengths through C++ safe, hassle-free and just as beautiful.
 
 ---
 
@@ -17,7 +17,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
     4.2 [🔗 Installation](./docs/installation.md)<br>
     4.3 [🔗 Troubleshooting](./docs/installation.md#troubleshooting)<br>
 5. [Dependencies](#dependencies)<br>
-   5.1 [Julia 1.7.0+](#dependencies)<br>
+   5.1 [julia 1.7.0+](#dependencies)<br>
    5.2 [g++10](#dependencies)<br>
    5.3 [cmake 3.19+](#dependencies)<br>
    5.4 [Linux / Mac OS](#dependencies)
@@ -26,7 +26,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 ---
 
 ### Showcase
-#### Access Julia-Side Values/Functions
+#### Access julia-Side Values/Functions
 ```cpp
 // execute arbitrary strings with exception forwarding
 State::safe_script(R"(
@@ -73,7 +73,7 @@ State::script("println(array)");
 [11, 12, 13, 14, 15, 16, 17, 18, 19]
 ```
 ---
-#### Call C++ Functions from Julia
+#### Call C++ Functions from julia
 
 ```cpp
 /// register lambda and bind to julia-side variable
@@ -114,7 +114,7 @@ Some of the many advantages `jluna` has over the C-API include:
 + wraps [most](./docs/quick_and_dirty.md#list-of-unboxables) of the relevant C++ `std` objects and types
 + multidimensional, iterable array interface with julia-style indexing
 + manual written by a human for beginners
-+ inline documentation for IDEs for both C++ and Julia code 
++ inline documentation for IDEs for both C++ and julia code 
 + freely mix `jluna` and the C-API
 + And more!
 
@@ -129,7 +129,7 @@ Some of the many advantages `jluna` has over the C-API include:
 
 ## Documentation
 
-A step-by-step introduction and reference guide intended for users is available [here](./docs/manual.md). Furthermore, all user-facing code has in-line documentation available through most IDEs (or the julia `help?` command). 
+A step-by-step introduction and reference guide intended is available [here](./docs/manual.md). Furthermore, all user-facing code has in-line documentation available through most IDEs (or the julia `help?` command). 
 
 Advanced users are encouraged to check the headers (available in `jluna/include/`) for implementation details. They are formatted specifically to be easily understood by 3rd parties. 
 
@@ -137,7 +137,7 @@ Advanced users are encouraged to check the headers (available in `jluna/include/
 
 ## Dependencies
 
-`jluna` aims to be as modern as is practical. It uses C++20 features extensively and aims to support the newest Julia version, rather than focusing on backwards compatibility. If you are looking for a C++ library that supports Julia 1.5 or lower, consider checking out [CxxWrap](https://github.com/JuliaInterop/CxxWrap.jl) instead.
+`jluna` aims to be as modern as is practical. It uses C++20 features extensively and aims to support the newest julia version, rather than focusing on backwards compatibility. If you are looking for a C++ library that supports julia 1.5 or lower, consider checking out [CxxWrap](https://github.com/JuliaInterop/CxxWrap.jl) instead.
 
 For `jluna` you'll need:
 + [**Julia 1.7.0**](https://julialang.org/downloads/#current_stable_release) (or higher)
@@ -195,12 +195,14 @@ Then you can make `jluna` available to your library using:
 #include <jluna.hpp>
 ```
 
-If any problems appear at any point, head to the [step-by-step guide](./docs/installation.md).
+If errors appear at any point, head to the [step-by-step guide](./docs/installation.md).
 
 ---
 
 ## License
 
-`jluna` is freely available for non-commercial and educational use. For use in for-profit commercial applications, please [contact the developer](https://www.clemens-cords.com/contact).
+`jluna` is supplied under creative commons license, available [here](https://creativecommons.org/licenses/by-nc/3.0/legalcode). 
+
+It is freely available for non-commercial and educational use. For use in for-profit commercial applications, please [contact the developer](https://www.clemens-cords.com/contact).
 
 ---
