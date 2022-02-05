@@ -145,7 +145,7 @@ For `jluna` you'll need:
 + [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04) (or higher)
   - including `-fconcepts`
 + [**cmake 3.16**](https://cmake.org/download/) (or higher)
-+ unix-based operating system
++ unix-based, 64-bit operating system
 
 Currently, only g++10 and g++11 are supported, clang support is planned in the future.
 
@@ -153,7 +153,50 @@ Currently, only g++10 and g++11 are supported, clang support is planned in the f
 
 ## [Installation & Troubleshooting](./docs/installation.md)
 
-A step-by-step tutorial on how to create, compile and link a new C++ Project with jluna can be found [here](./docs/installation.md).
+A step-by-step tutorial on how to create, compile and link a new C++ Project with `jluna` can be found [here](./docs/installation.md). It is recommended that you follow this guide closely instead of trying to resolve issues on your own.
+
+### For Advanced Users Only
+
+Users familiar with C++ and cmake can go through the following steps:
+
+Install:
+
++ `g++-11`
++ `julia 1.7+`
++ `cmake 3.16+`
+
+Then execute (in the same directory as your `CMakeLists.txt`):
+
+```bash
+git clone https://github.com/Clemapfel/jluna.git
+
+export JULIA_PATH=$(julia -e "println(joinpath(Sys.BINDIR, \"..\"))")
+
+mkdir build
+cd build
+cmake -D CMAKE_CXX_COMPILER=g++-11 ..
+make
+
+./JLUNA_TEST
+
+cd ..
+rm -r build
+```
+
+Where `JULIA_PATH` needs to be set at the time of compilation.
+
+Link against `jluna/libjluna.so`, `jluna/libjluna_c_adapter.so` and `$ENV{JULIA_PATH}/lib/libjulia.so`.
+
+Add `"${CMAKE_SOURCE_DIR}/jluna"` and `"$ENV{JULIA_PATH}/include/julia"` to your include directories.
+
+Then you can make `jluna` available to your library using:
+
+```cpp
+#include <julia.h>
+#include <jluna.hpp>
+```
+
+If any problems appear at any point, head to the [step-by-step guide](./docs/installation.md).
 
 ---
 
