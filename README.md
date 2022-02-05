@@ -119,12 +119,11 @@ Some of the many advantages `jluna` has over the C-API include:
 + And more!
 
 ### Planned (but not yet implemented):
-In order of priority, highest first:
 
-+ `v0.6 - 0.7`: expression proxy, access to meta features via C++ including C-API-only introspection
-+ `v0.7 - 0.8`: linear algebra, matrices
-+ `v0.8 - 0.9`: thread-safety, parallelization
-+ `v0.9 - 1.0`: 0-overhead performance version of proxies and `cppcall`
++ `v0.6-0.7`: expression proxy, access to meta features via C++ including C-API-only introspection
++ `v0.7-0.8`: linear algebra, matrices
++ `v0.8-0.9`: thread-safety, parallelization
++ `v0.9-1.0`: 0-overhead performance version of proxies and `cppcall`
 + `v1.0+`: multiple julia worlds, save-states: restoring a previous julia state
 ---
 
