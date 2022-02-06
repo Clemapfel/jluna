@@ -1,5 +1,7 @@
 # jluna: A modern julia ⭤ C++ Wrapper (v0.5)
 
+![](./favicon.png)
+
 Julia is a beautiful language, it is well-designed and well-documented. Julias C-API is also well-designed, less beautiful and much less... documented.
 
 Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API and replace it in usage in C++ projects, by making accessing julias unique strengths through C++ safe, hassle-free and just as beautiful.
