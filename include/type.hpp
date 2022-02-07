@@ -6,6 +6,7 @@
 #pragma once
 
 #include <julia.h>
+#include <include/typedefs.hpp>
 #include <include/proxy.hpp>
 #include <include/symbol.hpp>
 
@@ -14,30 +15,21 @@ namespace jluna
     class Type : public Proxy
     {
         public:
-
-            struct FieldDescription
-            {
-                Type* owner_type;
-                Symbol name;
-                Type type;
-                size_t index;
-            };
-
             /// @brief ctor
             /// @param value
             Type(jl_datatype_t* value);
 
+            /// @brief ctor
+            /// @param value
+            /// @param owner
+            /// @param symbol
+            Type(Any* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol);
+
             /// @brief get direct super type
-            Type super() const;
+            Type get_super_type() const;
 
             /// @brief get name
-            Symbol name() const;
-
-            /// @brief get parameter names
-            std::vector<Symbol> parameters() const;
-
-            /// @brief get parameter types
-            std::vector<Symbol> types() const;
+            Symbol get_symbol() const;
 
             /// @brief get number of fields
             /// @returns size_t
@@ -45,26 +37,50 @@ namespace jluna
 
             /// @brief get field names
             /// @returns vector
-            std::vector<FieldDescription> get_fields() const;
+            const std::vector<Symbol>& get_field_symbols() const;
+
+            /// @brief get field types
+            /// @returns vector
+            const std::vector<Type>& get_field_types() const;
 
             /// @brief if type is singleton, get instance of that singleton
             /// @returns instance ptr if singleton-type, nullptr otherwise
             Any* get_singleton_instance() const;
 
-            /// @brief is current type a subtype of arg
+            /// @brief this <: other
             /// @param other
             /// @returns true if subtype, false otherwise
-            bool is_subtype_of(Type&) const;
+            bool is_subtype_of(const Type&) const;
 
-            /// @brief is current type a super of arg
+            /// @brief this <: other
+            /// @param other
+            /// @returns true if subtype, false otherwise
+            bool operator<(const Type&) const;
+
+            /// @brief other <: this
             /// @param other
             /// @returns true if super, false otherwise
-            bool is_supertype_of(Type&) const;
+            bool is_supertype_of(const Type&) const;
 
-            /// @brief is current type the same as arg
+            /// @brief this <: other
+            /// @param other
+            /// @returns true if subtype, false otherwise
+            bool operator>(const Type&) const;
+
+            /// @brief this === other
             /// @param other
             /// @returns true if both are the same type, false otherwise
-            bool is_same_as(Type&) const;
+            bool is_same_as(const Type&) const;
+
+            /// @brief this === other
+            /// @param other
+            /// @returns true if both are the same type, false otherwise
+            bool operator==(const Type&) const;
+
+            /// @brief not(this === other)
+            /// @param other
+            /// @returns true if both are the same type, false otherwise
+            bool operator!=(const Type&) const;
 
             /// @brief is primitive type
             /// @returns bool
@@ -73,6 +89,10 @@ namespace jluna
             /// @brief is struct type
             /// @returns bool
             bool is_struct_type() const;
+
+            /// @brief is mutable
+            /// @returns bool
+            bool is_mutable() const;
 
             /// @brief is bits type
             /// @returns bool
@@ -118,8 +138,15 @@ namespace jluna
             /// @returns bool
             bool is_unionall_type() const;
 
-            /// @brief is mutable
-            /// @returns bool
-            bool is_mutable() const;
+        private:
+            jl_datatype_t* get() const;
+
+            bool _field_symbols_initialized = false;
+            mutable std::vector<Symbol> _field_symbols;
+
+            bool _field_types_initialized = false;
+            mutable std::vector<Type> _field_types;
     };
+
+
 }

@@ -10,34 +10,21 @@ using namespace jluna;
 using namespace jluna::detail;
 int main()
 {
-
     State::initialize();
-    jl_datatype_t* test = jl_nothing_type;
-    jl_is_abstracttype()
-    std::cout << jl_symbol_name((jl_sym_t*) test->name->name) << std::endl;
-    return 0;
 
-    /*
-    auto htable = jl_main_module->bindings;
+    State::safe_script(R"(
+        struct Test <: Function
+            _field_01::Integer
+            _field_02::Function
+        end
+    )");
 
-    for (size_t i = 0; i < htable.size / 2; ++i)
-    {
-        auto key = htable.table[2*i];
-        auto value = htable.table[2*i+1];
+    Type type = Main["Test"];
 
-        if ((size_t) key != 0x1)
-        {
-            std::cout << "" << jl_symbol_name((jl_sym_t*) key) << " : ";
-            std::cout << jl_to_string(jl_typeof((jl_value_t*) value)) << std::endl;
-        }
-    }*/
+    std::cout << type.is_subtype_of(Type(jl_function_type)) << std::endl;
 
-    auto array = jl_main_module->usings;
-    for (size_t i = 0; i < array.len; ++i)
-    {
-        auto key = array.items[i];
-        std::cout << jl_to_string((jl_value_t*) key) << std::endl;
-    }
+    for (auto& s : type.get_field_types())
+        std::cout << s.operator std::string() << std::endl;
 
     return 0;
 

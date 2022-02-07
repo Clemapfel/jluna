@@ -10,6 +10,7 @@
 
 #include <include/state.hpp>
 #include <include/proxy.hpp>
+#include <include/type.hpp>
 
 namespace jluna
 {
@@ -199,9 +200,9 @@ namespace jluna
         return out;
     }
 
-    Proxy Proxy::get_type() const
+    Type Proxy::get_type() const
     {
-        return Proxy(jl_typeof(_content->value()), nullptr);
+        return Type((jl_datatype_t*) jl_typeof(_content->value()));
     }
 
     bool Proxy::is_mutating() const

@@ -16,3 +16,5 @@
 #include <include/utilities.hpp>
 #include <include/array.hpp>
 #include <include/cppcall.hpp>
+#include <include/type.hpp>
+#include <include/symbol.hpp>

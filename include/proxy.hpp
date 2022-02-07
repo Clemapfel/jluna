@@ -17,6 +17,8 @@
 
 namespace jluna
 {
+    class Type;
+
     /// @brief holds ownership of julia-side value. mutating named proxies mutate the corresponding variable, c.f docs/manual.md
     class Proxy
     {
@@ -95,7 +97,7 @@ namespace jluna
 
             /// @brief get type
             /// @returns proxy to singleton type
-            Proxy get_type() const;
+            Type get_type() const;
 
             /// @brief call with any arguments
             /// @tparams Args_t: types of arguments, need to be boxable
