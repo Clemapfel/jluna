@@ -384,6 +384,9 @@ namespace jluna::State
         size_t create_reference(Any* in);
         Any* get_reference(size_t key);
         void free_reference(size_t key);
+
+        void initialize_modules();
+        void initialize_types();
     }
 }
 

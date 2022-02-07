@@ -14,6 +14,8 @@
 #include <include/proxy.hpp>
 #include <include/utilities.hpp>
 #include <.src/include_julia.inl>
+#include <include/module.hpp>
+#include <include/type.hpp>
 
 namespace jluna::detail
 {
@@ -42,6 +44,7 @@ namespace jluna::State
         jl_eval_string(jluna::detail::include);
         forward_last_exception();
 
+
         jl_eval_string(R"(
             begin
                 local version = tryparse(Float32, SubString(string(VERSION), 1, 3))
@@ -68,9 +71,8 @@ namespace jluna::State
         )");
         forward_last_exception();
 
-        jluna::Main = Proxy((Any*) jl_main_module, nullptr);
-        jluna::Base = Main["Base"];
-        jluna::Core = Main["Core"];
+        detail::initialize_modules();
+        detail::initialize_types();
 
         std::atexit(&jluna::detail::on_exit);
     }
@@ -166,6 +168,71 @@ namespace jluna::State::detail
         jl_gc_enable(false);
         jluna::safe_call(free_reference, jl_box_uint64(reinterpret_cast<size_t>(key)));
         jl_gc_enable(before);
+    }
+
+    void initialize_modules()
+    {
+        AbstractArray_t = Type((jl_datatype_t*) jl_eval_string("return Core.AbstractArray"));
+        AbstractChar_t = Type((jl_datatype_t*) jl_eval_string("return Core.AbstractChar"));
+        AbstractFloat_t = Type((jl_datatype_t*) jl_eval_string("return Core.AbstractFloat"));
+        AbstractString_t = Type((jl_datatype_t*) jl_eval_string("return Core.AbstractString"));
+        Any_t = Type((jl_datatype_t*) jl_eval_string("return Core.Any"));
+        Array_t = Type((jl_datatype_t*) jl_eval_string("return Core.Array"));
+        Bool_t = Type((jl_datatype_t*) jl_eval_string("return Core.Bool"));
+        Char_t = Type((jl_datatype_t*) jl_eval_string("return Core.Char"));
+        DataType_t = Type((jl_datatype_t*) jl_eval_string("return Core.DataType"));
+        DenseArray_t = Type((jl_datatype_t*) jl_eval_string("return Core.DenseArray"));
+        Exception_t = Type((jl_datatype_t*) jl_eval_string("return Core.Exception"));
+        Expr_t = Type((jl_datatype_t*) jl_eval_string("return Core.Expr"));
+        Float16_t = Type((jl_datatype_t*) jl_eval_string("return Core.Float16"));
+        Float32_t = Type((jl_datatype_t*) jl_eval_string("return Core.Float32"));
+        Float64_t = Type((jl_datatype_t*) jl_eval_string("return Core.Float64"));
+        Function_t = Type((jl_datatype_t*) jl_eval_string("return Core.Function"));
+        GlobalRef_t = Type((jl_datatype_t*) jl_eval_string("return Core.GlobalRef"));
+        IO_t = Type((jl_datatype_t*) jl_eval_string("return Core.IO"));
+        Int128_t = Type((jl_datatype_t*) jl_eval_string("return Core.Int128"));
+        Int16_t = Type((jl_datatype_t*) jl_eval_string("return Core.Int16"));
+        Int32_t = Type((jl_datatype_t*) jl_eval_string("return Core.Int32"));
+        Int64_t = Type((jl_datatype_t*) jl_eval_string("return Core.Int64"));
+        Int8_t = Type((jl_datatype_t*) jl_eval_string("return Core.Int8"));
+        Integer_t = Type((jl_datatype_t*) jl_eval_string("return Core."));
+        LineNumberNode_t = Type((jl_datatype_t*) jl_eval_string("return Core.LineNumberNode"));
+        Method_t = Type((jl_datatype_t*) jl_eval_string("return Core.Method"));
+        Module_t = Type((jl_datatype_t*) jl_eval_string("return Core.Module"));
+        NTuple_t = Type((jl_datatype_t*) jl_eval_string("return Core.NTuple"));
+        NamedTuple_t = Type((jl_datatype_t*) jl_eval_string("return Core.NamedTuple"));
+        Nothing_t = Type((jl_datatype_t*) jl_eval_string("return Core.Nothing"));
+        Number_t = Type((jl_datatype_t*) jl_eval_string("return Core.Number"));
+        Pair_t = Type((jl_datatype_t*) jl_eval_string("return Core.Pair"));
+        Ptr_t = Type((jl_datatype_t*) jl_eval_string("return Core.Ptr"));
+        QuoteNode_t = Type((jl_datatype_t*) jl_eval_string("return Core.QuoteNode"));
+        Real_t = Type((jl_datatype_t*) jl_eval_string("return Core.Real"));
+        Ref_t = Type((jl_datatype_t*) jl_eval_string("return Core.Ref"));
+        Signed_t = Type((jl_datatype_t*) jl_eval_string("return Core.Signed"));
+        String_t = Type((jl_datatype_t*) jl_eval_string("return Core.String"));
+        Symbol_t = Type((jl_datatype_t*) jl_eval_string("return Core.Symbol"));
+        Task_t = Type((jl_datatype_t*) jl_eval_string("return Core.Task"));
+        Tuple_t = Type((jl_datatype_t*) jl_eval_string("return Core.Tuple"));
+        Type_t = Type((jl_datatype_t*) jl_eval_string("return Core.Type"));
+        TypeVar_t = Type((jl_datatype_t*) jl_eval_string("return Core.TypeVar"));
+        UInt128_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt128"));
+        UInt16_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt16_t"));
+        UInt32_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt32_t"));
+        UInt64_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt64_t"));
+        UInt8_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt8_t"));
+        UndefInitializer_t = Type((jl_datatype_t*) jl_eval_string("return Core.UndefInitializer"));
+        Union_t = Type((jl_datatype_t*) jl_eval_string("return Core.Union"));
+        UnionAll_t = Type((jl_datatype_t*) jl_eval_string("return Core.UnionAll"));
+        Unsigned_t = Type((jl_datatype_t*) jl_eval_string("return Core.Unsigned"));
+        VecElement_t = Type((jl_datatype_t*) jl_eval_string("return Core.VecElement"));
+        WeakRef_t = Type((jl_datatype_t*) jl_eval_string("return Core.WeakRef"));
+    }
+
+    void initialize_types()
+    {
+        Main = Module(jl_main_module);
+        Core = Module(jl_core_module);
+        Base = Module(jl_base_module);
     }
 }
 

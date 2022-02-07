@@ -15,6 +15,8 @@ namespace jluna
     class Type : public Proxy
     {
         public:
+            Type() = default;
+            
             /// @brief ctor
             /// @param value
             Type(jl_datatype_t* value);
@@ -30,6 +32,18 @@ namespace jluna
 
             /// @brief get name
             Symbol get_symbol() const;
+
+            /// @brief get number of fields
+            /// @returns size_t
+            size_t get_n_parameters() const;
+
+            /// @brief get field names
+            /// @returns vector
+            const std::vector<Symbol>& get_parameter_symbols() const;
+
+            /// @brief get field types
+            /// @returns vector
+            const std::vector<Type>& get_parameter_types() const;
 
             /// @brief get number of fields
             /// @returns size_t
@@ -148,5 +162,60 @@ namespace jluna
             mutable std::vector<Type> _field_types;
     };
 
-
+    inline Type AbstractArray_t;
+    inline Type AbstractChar_t;
+    inline Type AbstractFloat_t;
+    inline Type AbstractString_t;
+    inline Type Any_t;
+    inline Type Array_t;
+    inline Type Bool_t;
+    inline Type Char_t;
+    inline Type DataType_t;
+    inline Type DenseArray_t;
+    inline Type Exception_t;
+    inline Type Expr_t;
+    inline Type Float16_t;
+    inline Type Float32_t;
+    inline Type Float64_t;
+    inline Type Function_t;
+    inline Type GlobalRef_t;
+    inline Type IO_t;
+    inline Type Int_t;
+    inline Type Int128_t;
+    inline Type Int16_t;
+    inline Type Int32_t;
+    inline Type Int64_t;
+    inline Type Int8_t;
+    inline Type Integer_t;
+    inline Type LineNumberNode_t;
+    inline Type Method_t;
+    inline Type Module_t;
+    inline Type NTuple_t;
+    inline Type NamedTuple_t;
+    inline Type Nothing_t;
+    inline Type Number_t;
+    inline Type Pair_t;
+    inline Type Ptr_t;
+    inline Type QuoteNode_t;
+    inline Type Real_t;
+    inline Type Ref_t;
+    inline Type Signed_t;
+    inline Type String_t;
+    inline Type Symbol_t;
+    inline Type Task_t;
+    inline Type Tuple_t;
+    inline Type Type_t;
+    inline Type TypeVar_t;
+    inline Type UInt_t;
+    inline Type UInt128_t;
+    inline Type UInt16_t;
+    inline Type UInt32_t;
+    inline Type UInt64_t;
+    inline Type UInt8_t;
+    inline Type UndefInitializer_t;
+    inline Type Union_t;
+    inline Type UnionAll_t;
+    inline Type Unsigned_t;
+    inline Type VecElement_t;
+    inline Type WeakRef_t;
 }
