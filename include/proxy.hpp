@@ -28,13 +28,13 @@ namespace jluna
             /// @brief construct with no owner, reserved for global temporaries and main
             /// @param value
             /// @param symbol
-            Proxy(Any* value, Symbol* symbol = nullptr);
+            Proxy(Any* value, jl_sym_t* symbol = nullptr);
 
             /// @brief construct with owner
             /// @param value
             /// @param owner: shared pointer to owner
             /// @param symbol
-            Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, Symbol* symbol);
+            Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol);
 
             /// @brief dtor
             ~Proxy();
@@ -63,6 +63,9 @@ namespace jluna
 
             /// @brief cast to Any
             operator Any*();
+
+            /// @brief cast to const Any
+            operator const Any*() const;
 
             /// @brief cast to string using julias Base.string
             virtual operator std::string() const;
@@ -137,11 +140,11 @@ namespace jluna
                 friend class Proxy;
 
                 public:
-                    ProxyValue(Any*, Symbol*);
-                    ProxyValue(Any*, std::shared_ptr<ProxyValue>& owner, Symbol*);
+                    ProxyValue(Any*, jl_sym_t*);
+                    ProxyValue(Any*, std::shared_ptr<ProxyValue>& owner, jl_sym_t*);
                     ~ProxyValue();
 
-                    Any* get_field(Symbol*);
+                    Any* get_field(jl_sym_t*);
 
                     std::shared_ptr<ProxyValue> _owner;
 
@@ -165,7 +168,7 @@ namespace jluna
             };
 
             std::shared_ptr<ProxyValue> _content;
-            std::deque<Symbol*> assemble_name() const;
+            std::deque<jl_sym_t*> assemble_name() const;
     };
 
     /// @brief box proxy

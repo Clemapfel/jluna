@@ -58,12 +58,6 @@ namespace jluna
     /// @brief address of julia-side memory
     using Any = jl_value_t;
 
-    /// @brief address of julia-side memory that is callable as a Base.Function
+    /// @brief address of julia-side function
     using Function = jl_function_t;
-
-    /// @brief address of julia-side memory with the same layout as Base.Symbol
-    using Symbol = jl_sym_t;
-
-    /// @brief address of julia-side memory with the same layout as Base.Module
-    using Module = jl_module_t;
 }

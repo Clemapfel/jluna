@@ -4,7 +4,6 @@
 #include <.test/test.hpp>
 #include <.src/c_adapter.hpp>
 #include <include/julia_extension.hpp>
-
 #include <include/exceptions.hpp>
 
 using namespace jluna;
@@ -12,6 +11,35 @@ using namespace jluna::detail;
 int main()
 {
     State::initialize();
+    jl_datatype_t* test;
+    std::cout << jl_typename_str((jl_value_t*) test->name) << std::endl;
+    return 0;
+
+    /*
+    auto htable = jl_main_module->bindings;
+
+    for (size_t i = 0; i < htable.size / 2; ++i)
+    {
+        auto key = htable.table[2*i];
+        auto value = htable.table[2*i+1];
+
+        if ((size_t) key != 0x1)
+        {
+            std::cout << "" << jl_symbol_name((jl_sym_t*) key) << " : ";
+            std::cout << jl_to_string(jl_typeof((jl_value_t*) value)) << std::endl;
+        }
+    }*/
+
+    auto array = jl_main_module->usings;
+    for (size_t i = 0; i < array.len; ++i)
+    {
+        auto key = array.items[i];
+        std::cout << jl_to_string((jl_value_t*) key) << std::endl;
+    }
+
+    return 0;
+
+
     Test::initialize();
 
     Test::test("catch c exception", [](){

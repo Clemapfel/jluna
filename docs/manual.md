@@ -209,7 +209,7 @@ jl_function_t*           -> Function
 jl_sym_t*                -> Symbol
 
 Any*                     -> Any
-Symbol*                  -> Symbol
+jl_sym_t*                  -> Symbol
 
 bool                     -> Bool
 char                     -> Char
