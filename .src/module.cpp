@@ -25,17 +25,17 @@ namespace jluna
         return get();
     }
 
-    jl_sym_t* Module::name() const
+    jl_sym_t* Module::get_symbol() const
     {
         get()->name;
     }
 
-    Module Module::parent() const
+    Module Module::get_parent_module() const
     {
         return Module(get()->parent);
     }
 
-    size_t Module::build_id() const
+    size_t Module::get_build_id() const
     {
         return get()->build_id;
     }
@@ -50,21 +50,24 @@ namespace jluna
         return get()->istopmod;
     }
 
-    int8_t Module::optimization_level() const
+    int8_t Module::get_optimization_level() const
     {
         return get()->optlevel;
     }
 
-    int8_t Module::compile_status() const
+    int8_t Module::get_compile_status() const
     {
         return get()->compile;
     }
 
-    std::map<Symbol, Any*> Module::bindings() const
+    int8_t Module::get_type_inference_status() const
+    {
+        return get()->infer;
+    }
+
+    std::map<Symbol, Any*> Module::get_bindings() const
     {
         std::map<Symbol, Any*> out;
-
-        TODO: check to cast to jl_binding_t
 
         auto htable = get()->bindings;
         for (size_t i = 0; i < htable.size / 2; ++i)
@@ -73,15 +76,13 @@ namespace jluna
             auto value = htable.table[2*i+1];
 
             if ((size_t) key != 0x1)
-            {
-                out.push_back(Symbol((jl_sym_t*) key));
-            }
+                out.insert({Symbol((jl_sym_t*) key), (Any*) (reinterpret_cast<jl_binding_t*>(value)->value)});
         }
 
         return out;
     }
 
-    std::vector<Module> Module::usings() const
+    std::vector<Module> Module::get_usings() const
     {
         std::vector<Module> out;
 

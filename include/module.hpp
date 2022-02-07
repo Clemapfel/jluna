@@ -31,15 +31,15 @@ namespace jluna
 
             /// @brief wrap c-property name
             /// @returns name as symbol
-            jl_sym_t* name() const;
+            jl_sym_t* get_symbol() const;
 
             /// @brief wrap c-property parent
             /// @returns parent as module, nullptr if topmod
-            Module parent() const;
+            Module get_parent_module() const;
 
             /// @brief wrap hidden c-property build_id
             /// @returns size_t
-            size_t build_id() const;
+            size_t get_build_id() const;
 
             /// @brief wrap hidden c-property uuid
             /// @returns uuid where .first = hi; .second = lo;
@@ -51,28 +51,25 @@ namespace jluna
 
             /// @brief wrap hidden c-property optlevel
             /// @returns level as int
-            int8_t optimization_level() const;
+            int8_t get_optimization_level() const;
 
             /// @brief wrap hidden c-property compile
-            /// @returns status : -1, 0, 1
-            int8_t compile_status() const;
+            /// @returns status : -1, false, true
+            int8_t get_compile_status() const;
+
+            /// @brief wrap hidden c-property infer, is type inference enabled
+            /// @returns status: -1, false, true
+            int8_t get_type_inference_status() const;
 
             /// @brief wrap hidden c-property bindings
             /// @returns hashtable where keys are symbols and values are the memory symbols are bound to
-            std::map<Symbol, Any*> bindings() const;
+            [[nodiscard]] std::map<Symbol, Any*> get_bindings() const;
 
             /// @brief wrap hidden c-property usings
             /// @returns list of modules declared
-            std::vector<Module> usings() const;
+            [[nodiscard]] std::vector<Module> get_usings() const;
 
         private:
             jl_module_t* get() const;
-
-
-
-
-
-        private:
-            jl_module_t* any;
     };
 }
