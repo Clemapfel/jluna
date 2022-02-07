@@ -18,7 +18,10 @@
 
 namespace jluna
 {
+    // forward declarations
     class Proxy;
+    class Type;
+    class Symbol;
     template<Boxable, size_t>
     class Array;
 }

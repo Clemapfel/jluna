@@ -10,9 +10,11 @@ using namespace jluna;
 using namespace jluna::detail;
 int main()
 {
+
     State::initialize();
-    jl_datatype_t* test;
-    std::cout << jl_typename_str((jl_value_t*) test->name) << std::endl;
+    jl_datatype_t* test = jl_nothing_type;
+    jl_is_abstracttype()
+    std::cout << jl_symbol_name((jl_sym_t*) test->name->name) << std::endl;
     return 0;
 
     /*

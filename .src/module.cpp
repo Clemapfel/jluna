@@ -60,17 +60,22 @@ namespace jluna
         return get()->compile;
     }
 
-    std::vector<Symbol> Module::bindings() const
+    std::map<Symbol, Any*> Module::bindings() const
     {
-        std::vector<Symbol> out;
+        std::map<Symbol, Any*> out;
+
+        TODO: check to cast to jl_binding_t
 
         auto htable = get()->bindings;
         for (size_t i = 0; i < htable.size / 2; ++i)
         {
             auto key = htable.table[2*i];
+            auto value = htable.table[2*i+1];
 
             if ((size_t) key != 0x1)
+            {
                 out.push_back(Symbol((jl_sym_t*) key));
+            }
         }
 
         return out;
