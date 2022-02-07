@@ -72,4 +72,13 @@ namespace jluna
         private:
             jl_module_t* get() const;
     };
+
+    /// @brief Proxy of singleton Main, initialized by State::initialize
+    inline Proxy Main;
+
+    /// @brief Proxy of singleton Main.Base, initialized by State::initialize
+    inline Proxy Base;
+
+    /// @brief Proxy of singleton Main.Base.Core, initialized by State::initialize
+    inline Proxy Core;
 }
