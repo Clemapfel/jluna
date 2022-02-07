@@ -17,7 +17,7 @@
 
 namespace jluna
 {
-    /// @brief holds ownership of julia-side value, if attached to a symbol, can be made mutable so it also modifies a julia-side variable
+    /// @brief holds ownership of julia-side value. mutating named proxies mutate the corresponding variable, c.f docs/manual.md
     class Proxy
     {
         protected: class ProxyValue;
@@ -30,9 +30,9 @@ namespace jluna
             /// @param symbol
             Proxy(Any* value, Symbol* symbol = nullptr);
 
-            /// @brief construct with no owner, reserved for global temporaries and main
+            /// @brief construct with owner
             /// @param value
-            /// @param owner: shared pointer to owner, get's incremented
+            /// @param owner: shared pointer to owner
             /// @param symbol
             Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, Symbol* symbol);
 
@@ -50,12 +50,12 @@ namespace jluna
             template<Unboxable T>
             T operator[](const std::string& field);
 
-            /// @brief access via linear index, if array type returns getindex! result
+            /// @brief linear indexing, if array type, returns getindex result
             /// @param index
             /// @returns field as proxy
             Proxy operator[](size_t);
 
-            /// @brief access via linear index, if array type returns getindex! result
+            /// @brief linear indexing, if array type returns getindex result
             /// @param index
             /// @returns field as proxy
             template<Unboxable T>
@@ -83,6 +83,7 @@ namespace jluna
             T as();
 
             /// @brief get variable name, if any
+            /// @returns name as string
             std::string get_name() const;
 
             /// @brief if proxy is a value, get fieldnames of typeof(value), if proxy is a type, get fieldnames of itself
@@ -124,8 +125,8 @@ namespace jluna
             Proxy& operator=(T);
 
             /// @brief create a new unnamed proxy that holds the same value
-            /// @returns decltype(this)
-            Proxy value() const;
+            /// @returns new proxy by value
+            [[nodiscard]] Proxy value() const;
 
             /// @brief update value if proxy symbol was reassigned outside of operator=
             void update();

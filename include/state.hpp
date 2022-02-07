@@ -28,7 +28,7 @@ namespace jluna::State
     /// @brief initialize environment
     void initialize();
 
-    /// @brief initialize environment
+    /// @brief initialize environment from image
     /// @param absolute path to julia image
     void initialize(const std::string&);
 
