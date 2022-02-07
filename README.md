@@ -90,8 +90,6 @@ State::new_named_undef("lambda") = [](Any* x, Any* y) -> Any*
         out += x;
 
     return box(out);
-
-    return jl_nothing;
 };
 
 // now callable from julia
