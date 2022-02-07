@@ -24,5 +24,35 @@ namespace jluna
     {
         return ((jl_sym_t*) Proxy::operator const jl_value_t*())->hash;
     }
+
+    bool Symbol::operator==(const Symbol& other) const
+    {
+        return this->hash() == other.hash();
+    }
+
+    bool Symbol::operator!=(const Symbol& other) const
+    {
+        return not (*this == other);
+    }
+
+    bool Symbol::operator<(const Symbol& other) const
+    {
+        return this->hash() < other.hash();
+    }
+
+    bool Symbol::operator<=(const Symbol& other) const
+    {
+        return (*this == other) or (*this < other);
+    }
+
+    bool Symbol::operator>(const Symbol& other) const
+    {
+        return not (*this < other);
+    }
+
+    bool Symbol::operator>=(const Symbol& other) const
+    {
+        return (*this == other) or (*this > other);
+    }
 }
 
