@@ -15,6 +15,8 @@ namespace jluna
     class Module : public Proxy
     {
         public:
+            Module() = default;
+
             /// @brief ctor
             /// @param value
             /// @param name: symbol
@@ -28,6 +30,16 @@ namespace jluna
 
             /// @brief decay to C-type
             operator jl_module_t*();
+
+            /// @brief eval string in module scope without exception forwarding
+            /// @param code
+            /// @returns result of expression
+            Proxy eval(const std::string&);
+
+            /// @brief eval string in module scope with exception forwarding
+            /// @param code
+            /// @returns result of expression
+            Proxy safe_eval(const std::string&);
 
             /// @brief wrap c-property name
             /// @returns name as symbol
@@ -74,11 +86,11 @@ namespace jluna
     };
 
     /// @brief Proxy of singleton Main, initialized by State::initialize
-    inline Proxy Main;
+    inline Module Main;
 
     /// @brief Proxy of singleton Main.Base, initialized by State::initialize
-    inline Proxy Base;
+    inline Module Base;
 
     /// @brief Proxy of singleton Main.Base.Core, initialized by State::initialize
-    inline Proxy Core;
+    inline Module Core;
 }

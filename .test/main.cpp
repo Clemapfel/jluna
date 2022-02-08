@@ -12,20 +12,8 @@ int main()
 {
     State::initialize();
 
-    State::safe_script(R"(
-        struct Test <: Function
-            _field_01::Integer
-            _field_02::Function
-        end
-    )");
-
-    Type type = Main["Test"];
-
-    std::cout << type.is_subtype_of(Type(jl_function_type)) << std::endl;
-
-    for (auto& s : type.get_field_types())
-        std::cout << s.operator std::string() << std::endl;
-
+    Base.eval("print(xs...) = for x in xs println(x) end; return nothing");
+    Base["print"]("abc", "def");
     return 0;
 
 

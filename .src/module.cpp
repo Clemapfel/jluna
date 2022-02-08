@@ -4,6 +4,7 @@
 //
 
 #include <include/module.hpp>
+#include <include/state.hpp>
 
 namespace jluna
 {
@@ -23,6 +24,27 @@ namespace jluna
     Module::operator jl_module_t*()
     {
         return get();
+    }
+
+    Proxy Module::eval(const std::string& command)
+    {
+        throw_if_uninitialized();
+
+        static jl_function_t* unsafe_call = jl_find_function("jluna.exception_handler", "unsafe_call");
+        Any* expr = State::script(("return quote " + command + " end").c_str());
+        auto* res = jluna::call(unsafe_call, expr, (Any*) get());
+        return Proxy(res, nullptr);
+    }
+
+    Proxy Module::safe_eval(const std::string& command)
+    {
+        throw_if_uninitialized();
+
+        static jl_function_t* safe_call = jl_find_function("jluna.exception_handler", "safe_call");
+        Any* expr = State::safe_script(("return quote " + command + " end").c_str());
+        auto* res = jluna::safe_call(safe_call, expr, (Any*) get());
+        forward_last_exception();
+        return Proxy(res, nullptr);
     }
 
     jl_sym_t* Module::get_symbol() const
