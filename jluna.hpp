@@ -13,8 +13,8 @@
 #include <include/unbox.hpp>
 #include <include/state.hpp>
 #include <include/proxy.hpp>
-#include <include/utilities.hpp>
 #include <include/array.hpp>
 #include <include/cppcall.hpp>
 #include <include/type.hpp>
 #include <include/symbol.hpp>
+#include <include/module.hpp>
