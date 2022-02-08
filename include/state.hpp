@@ -387,6 +387,9 @@ namespace jluna::State
 
         void initialize_modules();
         void initialize_types();
+
+        template<Is<Any*>... Ts>
+        Proxy create_or_assign(const std::string& symbol, Ts... args);
     }
 }
 

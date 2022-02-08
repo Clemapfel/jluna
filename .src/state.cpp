@@ -12,7 +12,6 @@
 #include <include/exceptions.hpp>
 #include <include/julia_extension.hpp>
 #include <include/proxy.hpp>
-#include <include/utilities.hpp>
 #include <.src/include_julia.inl>
 #include <include/module.hpp>
 #include <include/type.hpp>
@@ -170,7 +169,7 @@ namespace jluna::State::detail
         jl_gc_enable(before);
     }
 
-    void initialize_modules()
+    void initialize_types()
     {
         AbstractArray_t = Type((jl_datatype_t*) jl_eval_string("return Core.AbstractArray"));
         AbstractChar_t = Type((jl_datatype_t*) jl_eval_string("return Core.AbstractChar"));
@@ -195,7 +194,7 @@ namespace jluna::State::detail
         Int32_t = Type((jl_datatype_t*) jl_eval_string("return Core.Int32"));
         Int64_t = Type((jl_datatype_t*) jl_eval_string("return Core.Int64"));
         Int8_t = Type((jl_datatype_t*) jl_eval_string("return Core.Int8"));
-        Integer_t = Type((jl_datatype_t*) jl_eval_string("return Core."));
+        Integer_t = Type((jl_datatype_t*) jl_eval_string("return Core.Integer"));
         LineNumberNode_t = Type((jl_datatype_t*) jl_eval_string("return Core.LineNumberNode"));
         Method_t = Type((jl_datatype_t*) jl_eval_string("return Core.Method"));
         Module_t = Type((jl_datatype_t*) jl_eval_string("return Core.Module"));
@@ -216,10 +215,10 @@ namespace jluna::State::detail
         Type_t = Type((jl_datatype_t*) jl_eval_string("return Core.Type"));
         TypeVar_t = Type((jl_datatype_t*) jl_eval_string("return Core.TypeVar"));
         UInt128_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt128"));
-        UInt16_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt16_t"));
-        UInt32_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt32_t"));
-        UInt64_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt64_t"));
-        UInt8_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt8_t"));
+        UInt16_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt16"));
+        UInt32_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt32"));
+        UInt64_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt64"));
+        UInt8_t = Type((jl_datatype_t*) jl_eval_string("return Core.UInt8"));
         UndefInitializer_t = Type((jl_datatype_t*) jl_eval_string("return Core.UndefInitializer"));
         Union_t = Type((jl_datatype_t*) jl_eval_string("return Core.Union"));
         UnionAll_t = Type((jl_datatype_t*) jl_eval_string("return Core.UnionAll"));
@@ -228,7 +227,7 @@ namespace jluna::State::detail
         WeakRef_t = Type((jl_datatype_t*) jl_eval_string("return Core.WeakRef"));
     }
 
-    void initialize_types()
+    void initialize_modules()
     {
         Main = Module(jl_main_module);
         Core = Module(jl_core_module);
