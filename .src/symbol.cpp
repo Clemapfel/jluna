@@ -15,9 +15,9 @@ namespace jluna
         : Proxy((jl_value_t*) value, owner, symbol)
     {}
 
-    Symbol::operator jl_sym_t*()
+    Symbol::operator jl_sym_t*() const
     {
-        return (jl_sym_t*) Proxy::operator jl_value_t*();
+        return (jl_sym_t*) Proxy::operator const jl_value_t*();
     }
 
     size_t Symbol::hash() const

@@ -118,6 +118,21 @@ namespace jluna
     template<IsTuple T>
     T unbox(Any* value);
 
+    /// @brief unbox to jluna::Symbol
+    class Symbol;
+    template<Is<Symbol> T>
+    T unbox(Any* value);
+
+    /// @brief unbox to jluna::Module
+    class Module;
+    template<Is<Module> T>
+    T unbox(Any* value);
+
+    /// @brief unbox to jluna::Type
+    class Type;
+    template<Is<Type> T>
+    T unbox(Any* value);
+
     /// @concept requires a value to be unboxed from a julia-side value
     template<typename T>
     concept Unboxable = requires(T t, jl_value_t* v)

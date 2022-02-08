@@ -93,4 +93,26 @@ namespace jluna
 
     /// @brief Proxy of singleton Main.Base.Core, initialized by State::initialize
     inline Module Core;
+
+    /// @brief unbox to module
+    template<Is<Module> T>
+    inline T unbox(Any* value)
+    {
+        jl_assert_type(value, "Module");
+        return Module((jl_module_t*) value);
+    }
+
+    /// @brief box jluna::Module to Base.Module
+    template<Is<Module> T>
+    inline Any* box(T value)
+    {
+        return value.operator Any*();
+    }
+
+    /// @brief type deduction
+    template<>
+    struct detail::to_julia_type_aux<Module>
+    {
+        static inline const std::string type_name = "Module";
+    };
 }

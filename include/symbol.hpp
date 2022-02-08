@@ -26,7 +26,7 @@ namespace jluna
             Symbol(jl_sym_t* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol);
 
             /// @brief decay to C-type
-            operator jl_sym_t*();
+            operator jl_sym_t*() const;
 
             /// @brief hash, constant runtime
             /// @returns hash
@@ -61,5 +61,27 @@ namespace jluna
             /// @param other
             /// @returns true if this.hash > other.hash
             bool operator>(const Symbol& other) const;
+    };
+
+    /// @brief unbox to module
+    template<Is<Symbol> T>
+    inline T unbox(Any* value)
+    {
+        jl_assert_type(value, "Symbol");
+        return Symbol((jl_sym_t*) value);
+    }
+
+    /// @brief box jluna::Module to Base.Module
+    template<Is<Symbol> T>
+    inline Any* box(T value)
+    {
+        return value.operator Any*();
+    }
+
+    /// @brief type deduction
+    template<>
+    struct detail::to_julia_type_aux<Symbol>
+    {
+        static inline const std::string type_name = "Symbol";
     };
 }

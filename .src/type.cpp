@@ -16,6 +16,11 @@ namespace jluna
         : Proxy(value, owner, symbol)
     {}
 
+    Type::operator _jl_datatype_t*()
+    {
+        return get();
+    }
+
     jl_datatype_t* Type::get() const
     {
         return (jl_datatype_t*) Proxy::operator const jl_value_t*();
@@ -33,30 +38,26 @@ namespace jluna
 
     size_t Type::get_n_fields() const
     {
-        return get()->layout->nfields;
+        static jl_function_t* get_n_fields = jl_find_function("jluna", "get_n_fields");
+        return unbox<size_t>(jluna::safe_call(get_n_fields, get()));
     }
 
-    const std::vector<Symbol>& Type::get_field_symbols() const
+    std::vector<std::pair<Symbol, Type>> Type::get_fields() const
     {
-        if (_field_symbols_initialized)
-            return _field_symbols;
-
-        auto svec = jl_field_names(get());
-        for (size_t i = 0; i < get_n_fields(); ++i)
-            _field_symbols.emplace_back((jl_sym_t*) jl_svecref(svec, i));
-
-        return _field_symbols;
+        static jl_function_t* get_fields = jl_find_function("jluna", "get_fields");
+        return unbox<std::vector<std::pair<Symbol, Type>>>(jluna::safe_call(get_fields, get()));
     }
 
-    const std::vector<Type>& Type::get_field_types() const
+    std::vector<std::pair<Symbol, Type>> Type::get_parameters() const
     {
-        if (_field_types_initialized)
-            return _field_types;
+        static jl_function_t* get_parameters = jl_find_function("jluna", "get_parameters");
+        return unbox<std::vector<std::pair<Symbol, Type>>>(jluna::safe_call(get_parameters, get()));
+    }
 
-        for (size_t i = 0; i < get_n_fields(); ++i)
-            _field_types.emplace_back((jl_datatype_t*) jl_field_type(get(), i));
-
-        return _field_types;
+    size_t Type::get_n_parameters() const
+    {
+        static jl_function_t* get_n_fields = jl_find_function("jluna", "get_n_parameters");
+        return unbox<size_t>(jluna::safe_call(get_n_fields, get()));
     }
 
     Any * Type::get_singleton_instance() const

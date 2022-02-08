@@ -155,6 +155,21 @@ namespace jluna
     template<LambdaType<std::vector<Any*>> T>
     Any* box(T lambda);
 
+    /// @brief box jluna::Symbol to Symbol
+    class Symbol;
+    template<Is<Symbol> T>
+    Any* box(T);
+
+    /// @brief box jluna::Module to Module
+    class Module;
+    template<Is<Module> T>
+    Any* box(T);
+
+    /// @brief unbox jluna::Type to Type
+    class Type;
+    template<Is<Type> T>
+    Any* box(T);
+
     /// @concept requires a value to be boxable into a julia-side value
     template<typename T>
     concept Boxable = requires(T t)

@@ -12,10 +12,20 @@ int main()
 {
     State::initialize();
 
-    Base.eval("print(xs...) = for x in xs println(x) end; return nothing");
-    Base["print"]("abc", "def");
-    return 0;
+    State::safe_script(R"(
+        struct Point{T, U}
+            x::T
+            y::U
+        end
 
+        test = Point{Float32, Int32}(1, 2)
+    )");
+
+    Type type = (jl_datatype_t*) jl_eval_string("return Point");
+
+    for (auto pair : type.get_parameters())
+        std::cout << pair.first.operator std::string() << " " << pair.second.operator std::string() << std::endl;
+    return 0;
 
     Test::initialize();
 

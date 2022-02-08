@@ -136,6 +136,11 @@ namespace jluna
             /// @brief update value if proxy symbol was reassigned outside of operator=
             void update();
 
+            /// @brief check if this <: type
+            /// @param type
+            /// @returns true if `*this isa type`, false otherwise
+            bool isa(const Type& type);
+
         protected:
             class ProxyValue
             {

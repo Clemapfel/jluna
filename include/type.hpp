@@ -12,6 +12,7 @@
 
 namespace jluna
 {
+    /// @brief forward declaration
     class Type : public Proxy
     {
         public:
@@ -27,23 +28,22 @@ namespace jluna
             /// @param symbol
             Type(Any* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol);
 
+            /// @brief decay to C-type
+            operator jl_datatype_t*();
+
             /// @brief get direct super type
             Type get_super_type() const;
 
             /// @brief get name
             Symbol get_symbol() const;
 
-            /// @brief get number of fields
+            /// @brief get number of parameters
             /// @returns size_t
             size_t get_n_parameters() const;
 
-            /// @brief get field names
+            /// @brief get parameter names
             /// @returns vector
-            const std::vector<Symbol>& get_parameter_symbols() const;
-
-            /// @brief get field types
-            /// @returns vector
-            const std::vector<Type>& get_parameter_types() const;
+            std::vector<std::pair<Symbol, Type>> get_parameters() const;
 
             /// @brief get number of fields
             /// @returns size_t
@@ -51,11 +51,7 @@ namespace jluna
 
             /// @brief get field names
             /// @returns vector
-            const std::vector<Symbol>& get_field_symbols() const;
-
-            /// @brief get field types
-            /// @returns vector
-            const std::vector<Type>& get_field_types() const;
+            std::vector<std::pair<Symbol, Type>> get_fields() const;
 
             /// @brief if type is singleton, get instance of that singleton
             /// @returns instance ptr if singleton-type, nullptr otherwise
@@ -154,12 +150,6 @@ namespace jluna
 
         private:
             jl_datatype_t* get() const;
-
-            bool _field_symbols_initialized = false;
-            mutable std::vector<Symbol> _field_symbols;
-
-            bool _field_types_initialized = false;
-            mutable std::vector<Type> _field_types;
     };
 
     inline Type AbstractArray_t;
@@ -218,4 +208,26 @@ namespace jluna
     inline Type Unsigned_t;
     inline Type VecElement_t;
     inline Type WeakRef_t;
+
+    /// @brief unbox to type
+    template<Is<Type> T>
+    inline T unbox(Any* value)
+    {
+        jl_assert_type(value, "Type");
+        return Type((jl_datatype_t*) value);
+    }
+
+    /// @brief box jluna::Type to Base.Type
+    template<Is<Type> T>
+    inline Any* box(T value)
+    {
+        return value.operator Any*();
+    }
+
+    /// @brief type deduction
+    template<>
+    struct detail::to_julia_type_aux<Type>
+    {
+        static inline const std::string type_name = "Type";
+    };
 }

@@ -288,32 +288,48 @@ module jluna
     dot(x::Any, field_name::Symbol) = return eval(:($x.$field_name))
 
     """
-    `unquote(::Expr) -> Expr`
+    `access_property(::Type, ::Symbol) -> Any`
 
-    remove all line number notes and the outer most :quote block from an expression
+    unroll type declaration, then access property
     """
-    macro unquote(expr::Expr)
+    function access_property(type::Type, symbol::Symbol) ::Any
 
-        function aux!(args::Vector{Any}) ::Nothing
-
-            to_delete = Vector{Integer}()
-            for (i, x) in enumerate(args)
-                if x isa LineNumberNode
-                    push!(to_delete, i)
-                elseif x isa Expr
-                    aux!(x.args)
-                end
-            end
-
-            n_deleted = 0;
-            for i in to_delete
-                deleteat!(args, i - n_deleted)
-                n_deleted += 1
-            end
+        while length(propertynames(type)) == 2
+            type = type.body
         end
 
-        aux!(expr.args)
-        return Expr(expr.head, :($(expr.args...)))
+        return getproperty(type, symbol)
+    end
+
+    """
+    `get_n_fields(::Type) -> Int64`
+    """
+    function get_n_fields(type::Type) ::Int64
+        return length(fieldnames(type))
+    end
+
+    """
+    `get_fields(::Type) -> Vector{Pair{Symbol, Type}}`
+
+    get field symbols and types, used by jluna::Type::get_fields
+    """
+    function get_parameters(type::Type) ::Vector{Pair{Symbol, Type}}
+
+        out = Vector{Pair{Symbol, Type}}();
+        parameters = access_property(type, :parameters)
+
+        for i in 1:(length(parameters))
+            push!(out, parameters[i].name => parameters[i].ub)
+        end
+
+        return out
+    end
+
+    """
+    `get_n_parameters(::Type) -> Int64`
+    """
+    function get_n_parameters(type::Type) ::Int64
+        return length(access_property(type, :parameters))
     end
 
     """

@@ -262,4 +262,10 @@ namespace jluna
         _content->_value_ref = jl_call3(safe_call, (Any*) set_reference, jl_box_uint64(_content->value_key()), new_value);
         forward_last_exception();
     }
+
+    bool Proxy::isa(const Type& type)
+    {
+        static jl_function_t* isa = jl_get_function(jl_base_module, "isa");
+        return unbox<bool>(jluna::safe_call(isa, this->operator const _jl_value_t *(), type.operator const _jl_value_t *()));
+    }
 }

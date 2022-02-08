@@ -118,6 +118,12 @@ namespace jluna
             static inline const std::string type_name = "Module";
         };
 
+        template<>
+        struct to_julia_type_aux<jl_datatype_t*>
+        {
+            static inline const std::string type_name = "Type";
+        };
+
         template<typename Value_t>
         struct to_julia_type_aux<std::complex<Value_t>>
         {
