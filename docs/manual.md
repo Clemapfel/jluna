@@ -780,7 +780,7 @@ Base["println"](our_module["variable"]);
 ```
 
 Where `eval` does not forward exceptions while `safe_eval` does, just like using the global `State::(safe_)eval`.<br>
-Equivalently, module proxies offer two functions `assign` and `create_or_assign` that assign a variable of the given name the given value. If the variable does not exist, `assign` will throw an `UndefVarError` while `create_or_assign` will create a new variable of that name and value in module-scope:
+Equivalently, module proxies offer two functions `assign` and `create_or_assign` that assign a variable of the given name the given value. If the variable does not exist, `assign` will throw an `UndefVarError`, while `create_or_assign` will create a new variable of that name and value in module-scope:
 
 ```cpp
 our_module.create_or_assign("new_variable", std::vector<size_t>{1, 2, 3, 4});
@@ -789,6 +789,90 @@ Base["println"](our_module["new_variable"]);
 ```
 [1, 2, 3, 4]
 ```
+
+### Module Properties
+
+A property, in julia, can be best though of as a "hidden" field. Some are accesible through `getproperty` in julia, however, some are only accesible through the C-API. `jluna` offers convenient member functions that directly access the following properties and return a C++ friendly type:
+
+```cpp
+// property :name
+jl_sym_t* get_symbol() const;
+
+// property :super
+Module get_parent_module() const;
+
+// hidden C-property: uuid
+std::pair<size_t, size_t> get_uuid() const;
+
+// hidden C-property: istopmod
+bool is_top_module() const;
+
+// hidden C-property: optlevel
+int8_t get_optimization_level() const;
+
+// hidden C-property: compile
+int8_t get_compile_status() const;
+
+// hidden C-property: infer
+int8_t get_type_inference_status() const;
+
+// hidden C-property: bindings
+[[nodiscard]] std::map<Symbol, Any*> get_bindings() const;
+
+// hidden C-property: usings
+[[nodiscard]] std::vector<Module> get_usings() const;
+```
+
+While some of these are more useful than other, we will for now focus on the latter two: `usings` and `bindings`.
+
+#### Usings
+
+Usings list all modules included with the `using` keyword:
+
+```cpp
+State::eval(R"(
+module OurModule
+    using Base
+    using Core
+    using Core #sic
+end
+)");
+
+Module our_module = Main["OurModule"];
+for (auto& module : our_module.get_usings())
+    std::cout << module.operator std::string() << std::endl;
+```
+```
+Core
+Base
+```
+
+#### Bindings
+
+Bindings are a little more relevant. `Module::get_bindings` returns a map (or `IdDict` in julia parlance). For each pair in the map, `.first` is the *name* (of type `jluna::Symbol`) of a variable, `.second` is the *value* of the variable.
+
+We will learn more about `Symbol` and `Type` in the [section on introspection](#introspection). For now, simply think of them as their julia-side equivalent `Base.Symbol` and `Base.Type{T}`:
+
+```cpp
+State::eval(R"(
+module OurModule
+    
+    var1 = 0
+    var2 = Int64(0)
+    
+    f(xs..) = println(xs)
+end
+)");
+
+Module our_module = Main["OurModule"];
+for (auto& pair : our_module.get_bindings())
+    std::cout << pair.first.operator std::string() << " => " << jl_to_string(pair.second) << std::endl;
+```
+```
+```
+
+Where `jl_to_string` calls `Base.string` on an `Any*` and returns the resulting string.
+
 
 
 

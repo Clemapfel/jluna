@@ -12,13 +12,20 @@ int main()
 {
     State::initialize();
 
-    State::safe_script(R"(
-    module OurModule
-        variable = 123
-    end
+State::safe_eval(R"(
+module OurModule
+
+    var1 = 0
+    var2 = Int64(0)
+
+    f(xs...) = println(xs)
+end
 )");
 
 Module our_module = Main["OurModule"];
+for (auto& pair : our_module.get_bindings())
+    std::cout << pair.first.operator std::string() << " => " << jl_to_string(pair.second) << std::endl;
+
 our_module.eval("variable = 456");
 Base["println"](our_module["variable"]);
 

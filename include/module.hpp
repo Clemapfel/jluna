@@ -103,7 +103,6 @@ namespace jluna
         private:
             jl_module_t* get() const;
     };
-
     /// @brief Proxy of singleton Main, initialized by State::initialize
     inline Module Main;
 

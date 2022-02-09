@@ -118,7 +118,7 @@ namespace jluna::State
         auto* result = jl_eval_string(str.str().c_str());
         if (jl_exception_occurred() or jl_unbox_bool(jl_eval_string("jluna.exception_handler.has_exception_occurred()")))
         {
-            std::cerr << "exception in jluna::State::safe_script for expression:\n\"" << command << "\"\n" << std::endl;
+            std::cerr << "exception in jluna::State::safe_eval for expression:\n\"" << command << "\"\n" << std::endl;
             forward_last_exception();
         }
         return Proxy(result, nullptr);

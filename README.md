@@ -31,7 +31,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 #### Access julia-Side Values/Functions
 ```cpp
 // execute arbitrary strings with exception forwarding
-State::safe_script(R"(
+State::safe_eval(R"(
     f(x) = x*x*x
     
     mutable struct MyStruct
@@ -44,7 +44,7 @@ State::safe_script(R"(
 
 // access and modify variables
 Main["instance"]["_field"] = 456;
-State::script(R"(println("instance._field is now: ", instance._field))");
+State::eval(R"(println("instance._field is now: ", instance._field))");
 
 // call julia-side functions with C++-side values
 int result = Main["f"](12);
@@ -57,7 +57,7 @@ instance._field is now: 456
 ---
 #### Multi-Dimensional Array Interface
 ```cpp
-State::script("array = collect(1:9)");
+State::eval("array = collect(1:9)");
 Array<size_t, 1> cpp_array = Main["array"];
 
 // julia style list indexing
@@ -68,7 +68,7 @@ Base["println"]((Any*) sub_array);
 for (auto e : cpp_array)
     e = e.operator size_t() + 10;
 
-State::script("println(array)");
+State::eval("println(array)");
 ```
 ```
 [7, 6, 5, 4, 3]
@@ -93,7 +93,7 @@ State::new_named_undef("lambda") = [](Any* x, Any* y) -> Any*
 };
 
 // now callable from julia
-State::safe_script(R"(
+State::safe_eval(R**"(
     println(Main.lambda("what julia handed it", Set([1, 2, 3, 3, 4])))  # non-c-types work!
 )");
 ```

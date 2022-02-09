@@ -97,8 +97,15 @@ namespace jluna
             auto key = htable.table[2*i];
             auto value = htable.table[2*i+1];
 
-            if ((size_t) key != 0x1)
-                out.insert({Symbol((jl_sym_t*) key), (Any*) (reinterpret_cast<jl_binding_t*>(value)->value)});
+            if ((size_t) key != 0x1 and (size_t) value != 0x1)
+            {
+                out.insert({
+                    Symbol((jl_sym_t*) key),
+                    (reinterpret_cast<size_t>(value) > 0x1) ?
+                        (Any*) (reinterpret_cast<jl_binding_t*>(value)->value) :
+                        jl_nothing
+                });
+            }
         }
 
         return out;
