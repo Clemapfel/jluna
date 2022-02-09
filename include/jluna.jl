@@ -351,6 +351,29 @@ module jluna
     end
 
     """
+    `assign_in_module(::Module, ::Symbol, ::T) -> T`
+
+    assign variable in other module, throws if variable does not exist
+    """
+    function assign_in_module(m::Module, variable_name::Symbol, value::T) ::T where T
+
+        if (!isdefined(m, variable_name))
+            throw(UndefVarError(Symbol(string(m) * "." * string(variable_name))))
+        end
+
+        return Base.eval(m, :($variable_name = $value))
+    end
+
+    """
+    `create_in_module(::Module, ::Symbol, ::T) -> T`
+
+    assign variable in other module, if variable does not exist, create then assign
+    """
+    function create_or_assign_in_module(m::Module, variable_name::Symbol, value::T) ::T where T
+        return Base.eval(m, :($variable_name = $value))
+    end
+
+    """
     offers verbose exception interface. Any call with safe_call will store
     the last exception and full stack trace as string in _last_exception and
     _last_message respectively
@@ -567,7 +590,6 @@ module jluna
                 as_string = string(n);
                 if as_string[1] == _ref_id_marker
                     if as_string[2] == '1' && length(as_string) == 2 # main
-                        in_main = true
                         continue
                     else
                         name *= "jluna.memory_handler._refs[][" * chop(string(n), head = 1, tail = 0) * "][]"
@@ -579,7 +601,7 @@ module jluna
                 end
             end
 
-            if in_main
+            if name[1] == '.'
                 name = chop(name, head = 1, tail = 0)   # remove first .
             end
 

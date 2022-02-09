@@ -9,12 +9,5 @@
 
 namespace jluna
 {
-    class Function : public Proxy
-    {
-        public:
-            // invokable with
-            // invoke result
-            // methods
-
-    };
+    // this feature is not yet implemented
 }

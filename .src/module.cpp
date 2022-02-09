@@ -12,8 +12,8 @@ namespace jluna
         : Proxy((jl_value_t*) value, value->name)
     {}
 
-    Module::Module(jl_module_t* value, std::shared_ptr<ProxyValue>& owner)
-        : Proxy((jl_value_t*) value, owner, value->name)
+    Module::Module(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* name)
+        : Proxy(value, owner, name)
     {}
 
     jl_module_t * Module::get() const
@@ -45,6 +45,22 @@ namespace jluna
         auto* res = jluna::safe_call(safe_call, expr, (Any*) get());
         forward_last_exception();
         return Proxy(res, nullptr);
+    }
+
+    template<Boxable T>
+    Proxy Module::assign(const std::string& variable_name, T value)
+    {
+        static jl_function_t* assign_in_module = jl_find_function("jluna", "assign_in_module");
+        jluna::safe_call(assign_in_module, jl_symbol(variable_name.c_str()), box<T>(value));
+        return this->operator[](variable_name);
+    }
+
+    template<Boxable T>
+    Proxy Module::create_or_assign(const std::string& variable_name, T value)
+    {
+        static jl_function_t* assign_in_module = jl_find_function("jluna", "create_or_assign_in_module");
+        jluna::safe_call(assign_in_module, jl_symbol(variable_name.c_str()), box<T>(value));
+        return this->operator[](variable_name);
     }
 
     jl_sym_t* Module::get_symbol() const
@@ -113,5 +129,11 @@ namespace jluna
             out.push_back(Module((jl_module_t*) array.items[i]));
 
         return out;
+    }
+
+    bool Module::is_defined(const std::string& name) const
+    {
+        static jl_function_t* isdefined = jl_get_function(jl_base_module, "isdefined");
+        return jluna::safe_call(isdefined, get(), jl_symbol(name.c_str()));
     }
 }

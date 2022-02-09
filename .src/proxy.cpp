@@ -179,7 +179,7 @@ namespace jluna
                 str << ".";
 
             if (sname.at(0) == State::detail::_id_marker)
-                if (sname.at(1) == '1')
+                if (sname.at(1) == '1' and sname.size() == 2)
                     str << "Main";
                 else
                     str << "<unnamed proxy " << jl_symbol_name(name.at(i)) << ">";

@@ -27,7 +27,7 @@ namespace jluna
     template<typename T, std::enable_if_t<std::is_base_of_v<Proxy, T>, bool>>
     T Proxy::as()
     {
-        return this->operator T();
+        return T(_content->value(), _content->_owner, (jl_sym_t*) _content->symbol());
     }
 
     template<Boxable T>

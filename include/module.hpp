@@ -26,10 +26,10 @@ namespace jluna
             /// @param value
             /// @param owner: internal proxy value owner
             /// @param name: symbol
-            Module(jl_module_t* value, std::shared_ptr<ProxyValue>& owner);
+            Module(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* name);
 
             /// @brief decay to C-type
-            operator jl_module_t*();
+            explicit operator jl_module_t*();
 
             /// @brief eval string in module scope without exception forwarding
             /// @param code
@@ -40,6 +40,20 @@ namespace jluna
             /// @param code
             /// @returns result of expression
             Proxy safe_eval(const std::string&);
+
+            /// @brief assign variable with given name in module, if variable does not exist, throw UndefVarError
+            /// @param name: variable name, should not contain "."
+            /// @param value
+            /// @returns jluna::Proxy to value after assignment
+            template<Boxable T>
+            Proxy assign(const std::string& variable_name, T value);
+
+            /// @brief assign variable with given name in module, if variable does not exist, create it
+            /// @param name: variable name, should not contain "."
+            /// @param value
+            /// @returns jluna::Proxy to value after assignment
+            template<Boxable T>
+            Proxy create_or_assign(const std::string& variable_name, T value);
 
             /// @brief wrap c-property name
             /// @returns name as symbol
@@ -80,6 +94,11 @@ namespace jluna
             /// @brief wrap hidden c-property usings
             /// @returns list of modules declared
             [[nodiscard]] std::vector<Module> get_usings() const;
+
+            /// @brief is variable defined
+            /// @param name: exact variable name
+            /// @returns Base.isdefined(this, :name)
+            bool is_defined(const std::string& variable_name) const;
 
         private:
             jl_module_t* get() const;

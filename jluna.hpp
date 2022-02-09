@@ -18,3 +18,4 @@
 #include <include/type.hpp>
 #include <include/symbol.hpp>
 #include <include/module.hpp>
+#include <include/function.hpp>

@@ -677,6 +677,95 @@ Which is, again, highly convenient.
 
 For proxies who are indexable (that is `getindex(::T, ::Integer)` is defined), `operator[](size_t)` is also provided, however we will learn more about Arrays and Vectors in [their own section](#arrays).
 
+## Module Proxies
+
+We've seen how proxies handler their value. While the general-purpose `jluna::Proxy` handles primitives and structtypes well, some julia classes provide additional functionality beyond what we've used so far. One of these more specialized proxy is `jluna::Module`. For the sake of brevity, henceforth, `jluna::Proxy` will be referred to as "general proxy" while `jluna::Module` will be called "module proxy".  
+
+A general proxy can hold any value, including that of a module, however, `jluna::Module`, the module proxy, can only hold a julia-side module. Furthermore, `Module` inherits from `Proxy` and thus retains all public member functions. Being more specialized just means that we have additional member functions to work with.
+
+### Constructing Module Proxies
+
+We can create a module proxy like so:
+    
+```cpp
+auto as_general = State::safe_script("return Base");
+
+// implicit cast
+Module as_module = as_general;
+
+// explicit cast
+auto as_module = as_general.operator Module();
+
+// using .as<T>
+auto as_module = as_general.as<Module>();
+```
+
+If the original proxy `as_general` was unnamed then the resulting module proxy will also be unnamed, if the original was named, the newly generated module proxy will be named. 
+
+`jluna` offers 3 already initialized module proxies that we've seen used in a previous section:
+
+```cpp
+// in module.hpp
+Module Main;
+Module Core;
+Module Base;
+```
+
+These proxies are named proxies holding the singleton instance of the correspondingly named module. They are initialized by `State::initialize` and are thus globally available. 
+
+Of course, just as before, we can access any named variable in a module by using `operator[]`:
+
+```cpp
+Module our_core = Main["Base"]["Core"];
+std::cout << (our_core == jluna::Core) << std::endl;
+```
+```
+1
+```
+
+### Creating or Assigning Variables in a Module
+
+For demonstration purposes, let's first create our own module julia-side and then create a module proxy of it:
+
+```cpp
+State::safe_script(R"(
+    module OurModule
+        variable = 123
+    end
+)");
+
+Module our_module = Main["OurModule"];
+```
+
+Obviously `OurModule.variable` is not const, so it is mutable variable. If we try to assign it. however:
+
+```cpp
+our_module["variable"] = 456;
+```
+```
+terminate called after throwing an instance of 'jluna::JuliaException'
+  what():  [JULIA][EXCEPTION] cannot assign variables in other modules
+Stacktrace:
+ [1] setproperty!(x::Module, f::Symbol, v::Int32)
+   @ Base ./Base.jl:36
+ [2] top-level scope
+   @ none:1
+ [3] eval
+   @ ./boot.jl:373 [inlined]
+ [4] eval
+   @ ./client.jl:453 [inlined]
+ [5] assign(::Int32, ::Symbol, ::Vararg{Symbol})
+   @ Main.jluna.memory_handler ~/Workspace/jluna/include/jluna.jl:586
+ [6] safe_call(::Function, ::Int32, ::Symbol, ::Vararg{Symbol})
+   @ Main.jluna.exception_handler ~/Workspace/jluna/include/jluna.jl:425
+
+signal (6): Aborted
+```
+
+We get an exception. This is expected as the same expression `OurModule.variable = 456` in julia would throw the same exception. 
+
+
+
 ## Functions
 
 Functions in julia are movable, reassignable objects just like any other type, however in C++ they are usually handled separately. `jluna` aims to bridge this gap through its function interface.

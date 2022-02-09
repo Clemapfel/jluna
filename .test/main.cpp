@@ -12,6 +12,24 @@ int main()
 {
     State::initialize();
 
+    State::script("variable = 123");
+    auto new_main = State::safe_script("return Main");
+    std::cout << new_main["variable"].operator size_t() << std::endl;
+
+
+    // verify pre initialized
+    Module our_core = Main["Base"]["Core"];
+    std::cout << (our_core == jluna::Core) << std::endl;
+
+    // conversion
+    auto as_general = State::safe_script("return Base");
+    auto as_module = as_general.as<Module>();
+    std::cout << "B: " << as_module.get_name() << std::endl;
+
+    auto m = Module(jl_base_module);
+    std::cout << "C: " << m.get_name() << std::endl;
+
+    return 0;
     Test::initialize();
 
     /*
