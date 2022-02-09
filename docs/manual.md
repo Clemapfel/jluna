@@ -23,35 +23,36 @@ Please navigate to the appropriate section by clicking the links below:
   5.5 [Unnamed Proxies](#unnamed-proxy)<br>
   5.6 [Detached Proxies](#detached-proxies)<br>
   5.7 [Making a Named Proxy Unnamed](#making-a-named-proxy-unnamed)<br>
-6. [Functions](#functions)<br>
-   6.1 [Accessing julia Functions from C++](#functions)<br>
-   6.2 [Calling julia Functions from C++](#functions)<br>
-   6.3 [Accessing C++ Functions from julia](#registering-functions)<br>
-   6.4 [Calling C++ Functions from julia](#calling-c-functions-from-julia)<br>
-   6.5 [Allowed Function Names](#allowed-function-names)<br>
-   6.6 [Allowed Function Signatures](#possible-signatures)<br>
-   6.7 [Using arbitrary Objects in julia Functions](#using-non-julia-objects-in-functions)<br>
-7. [Arrays](#arrays)<br>
-  7.1 [Constructing Arrays](#ctors)<br>
-  7.2 [Indexing](#indexing)<br>
-  7.3 [Iterating](#iterating)<br>
-  7.4 [Vectors](#vectors)<br>
-  7.5 [Matrices](#matrices)<br>
-8. [~~Expressions~~](#expressions)<br>
-9. [~~Usertypes~~](#usertypes)<br>
-10. [C-API](#c-api)<br>
-  10.1 [Meaning of C-Types](#meaning-of-c-types)<br>
-  10.2 [Executing Code](#executing-c-code)<br>
-  10.3 [Forwarding Exceptions](#forwarding-exceptions-in-c)<br>
-  10.4 [Accessing Values](#accessing-values-in-c)<br>
-  10.5 [Functions](#functions-in-c)<br>
-  10.5.1 [Accessing Functions](#accessing-functions-in-c)<br>
-  10.5.2 [Calling Functions](#calling-functions-in-c)<br>
-  10.6 [Arrays](#arrays-in-c)<br>
-  10.6.1 [Accessing & Indexing Arrays](#accessing--indexing-arrays-in-c)<br>
-  10.6.2 [Mutating Arrays](#mutating-arrays-in-c)<br>
-  10.7 [Strings](#accessing-strings-in-c)<br>
-  10.8 [Initialization & Shutdown](#initialization--shutdown-in-c)
+6. [Specialized Proxies: Modules]()<br>
+   6.1 [Eval]()<br>
+   6.2 [Bindings & Usings]()<br>
+   6.3 [Properties]()<br>
+7. [Specialized Proxies: Symbols]()<br>
+   7.1 [CTORs]()<br>
+   7.3 [Hashing & Comparisons]()<br>
+7. [Functions](#functions)<br>
+   7.1 [Accessing julia Functions from C++](#functions)<br>
+   7.2 [Calling julia Functions from C++](#functions)<br>
+   7.3 [Accessing C++ Functions from julia](#registering-functions)<br>
+   7.4 [Calling C++ Functions from julia](#calling-c-functions-from-julia)<br>
+   7.5 [Allowed Function Names](#allowed-function-names)<br>
+   7.6 [Allowed Function Signatures](#possible-signatures)<br>
+   7.7 [Using arbitrary Objects in julia Functions](#using-non-julia-objects-in-functions)<br>
+8. [Arrays](#arrays)<br>
+  8.1 [Constructing Arrays](#ctors)<br>
+  8.2 [Indexing](#indexing)<br>
+  8.3 [Iterating](#iterating)<br>
+  8.4 [Vectors](#vectors)<br>
+  8.5 [Matrices](#matrices)<br>
+9. [Introspection]()<br>
+  9.1 [Core Types]()<br>
+  9.2 [Fields]()<br>
+  9.3 [Parameters]()<br>
+  9.4 [Type Comparisons]()<br>
+  9.5 [Type Classification]()<br>
+  9.6 [Type Properties]()<br>
+X. [~~Expressions~~](#expressions)<br>
+X. [~~Usertypes~~](#usertypes)<br>
 
 ## Initialization
 
