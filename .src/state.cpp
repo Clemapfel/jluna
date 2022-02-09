@@ -99,6 +99,30 @@ namespace jluna::State
         }
         return Proxy(result, nullptr);
     }
+
+    Proxy eval(const std::string& command) noexcept
+    {
+        jluna::throw_if_uninitialized();
+
+        std::stringstream str;
+        str << "jluna.exception_handler.unsafe_call(quote " << command << " end)" << std::endl;
+        return Proxy(jl_eval_string(str.str().c_str()), nullptr);
+    }
+
+    Proxy safe_eval(const std::string& command)
+    {
+        jluna::throw_if_uninitialized();
+
+        std::stringstream str;
+        str << "jluna.exception_handler.safe_call(quote " << command << " end)" << std::endl;
+        auto* result = jl_eval_string(str.str().c_str());
+        if (jl_exception_occurred() or jl_unbox_bool(jl_eval_string("jluna.exception_handler.has_exception_occurred()")))
+        {
+            std::cerr << "exception in jluna::State::safe_script for expression:\n\"" << command << "\"\n" << std::endl;
+            forward_last_exception();
+        }
+        return Proxy(result, nullptr);
+    }
     
     template<typename T>
     T safe_return(const std::string& full_name)

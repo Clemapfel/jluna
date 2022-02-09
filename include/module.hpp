@@ -34,12 +34,12 @@ namespace jluna
             /// @brief eval string in module scope without exception forwarding
             /// @param code
             /// @returns result of expression
-            Proxy script(const std::string&);
+            Proxy eval(const std::string&);
 
             /// @brief eval string in module scope with exception forwarding
             /// @param code
             /// @returns result of expression
-            Proxy safe_script(const std::string&);
+            Proxy safe_eval(const std::string&);
 
             /// @brief assign variable with given name in module, if variable does not exist, throw UndefVarError
             /// @param name: variable name, should not contain "."

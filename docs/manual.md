@@ -86,8 +86,8 @@ Because of this, it is highly recommended to always air on the side of safety by
 
 ```cpp
 // without exception forwarding
-State::script("your unsafe inline code");
-State::script(R"(
+State::eval("your unsafe inline code");
+State::eval(R"(
     your
     multi-line
     code
@@ -95,8 +95,8 @@ State::script(R"(
 jl_eval_string("your unsafe code");
 
 // with exception forwarding
-State::safe_script("your safe inline code");
-State::safe_script(R"(
+State::safe_eval("your safe inline code");
+State::safe_eval(R"(
     your
     safe
     multi-line
@@ -104,7 +104,7 @@ State::safe_script(R"(
 )");
 ```
 
-`safe_` overloads have marginal overhead from try-catching execution and sanity checking inputs. If you want maximum performance and the correspondingly awful debug experience: `State::script` is identical to just calling the pure C-API `jl_eval_string`.
+`safe_` overloads have marginal overhead from try-catching execution and sanity checking inputs. If you want maximum performance and the correspondingly awful debug experience: `State::eval` is identical to just calling the pure C-API `jl_eval_string`.
 
 ## Garbage Collector (GC)
 
@@ -284,7 +284,7 @@ Now that we know we can (un)box values to move them from C++ to julia, we'll act
 Let's say we have a variable `var` julia-side:
 
 ```cpp
-State::script("var = 1234")
+State::eval("var = 1234")
 ```
 
 To access the value of this variable, we can use the C-API. We receive a pointer, to the memory `var` holds, using `jl_eval_string`. We then `unbox` that pointer:
@@ -316,11 +316,11 @@ While both ways get us the desired value, neither is a good way to actually mana
 A proxy holds two things: the **memory address of its value** and a **symbol**. We'll get to the symbol later, for now, let's focus on the memory:<br>
 Memory held by a proxy is safe from the julia garbage collector (GC) and assured to be valid. This means we don't have to worry about keeping a reference, or pausing the GC when modifying the variable. Any memory, be it temporary or something explicitly referenced by a julia-side variable or `Base.Ref`, is guaranteed to be safe to access as long as a C++-side proxy points to it
 
-We rarely create a proxy ourself, most of the time it will be generated for us by `State::(safe_)script` or similar functions:
+We rarely create a proxy ourself, most of the time it will be generated for us by `State::(safe_)eval` or similar functions:
 
 ```cpp
-State::script("var = 1234")
-auto proxy = State::script("return var")
+State::eval("var = 1234")
+auto proxy = State::eval("return var")
 ```
 Use of `auto` simplifies the declaration and is encouraged whenever possible.<br>
 
@@ -343,8 +343,8 @@ auto as_int = unbox<int>(proxy) // discouraged
 Where the first version is encouraged for style reasons. `jluna` handles implicit conversion behind the scenes. This makes it, so we don't have to worry what the actual type of the julia-value is. `jluna` will try it's hardest to make our declaration work:
 
 ```cpp
-State::script("var = 1234")
-auto proxy = State::script("return var")
+State::eval("var = 1234")
+auto proxy = State::eval("return var")
 
 // all of the following work by triggering julia-side conversion:
 size_t as_size_t = proxy;
@@ -385,12 +385,12 @@ As stated before, a proxy holds exactly one pointer to julia-side memory and exa
 
 The behavior of proxies changes, depending on wether their symbol is a name or not. A proxies whos symbol is a name is called a **named proxy**, a proxy whos symbol is an internal id is called an **unnamed proxy**. 
 
-To generate an unnamed proxy, we use `State::(safe_)script`, `State::safe_return` or `State::new_unnamed_<T>`.<br> To generate a named proxy we use `Proxy::operator[]` or `State::new_named_<T>`:
+To generate an unnamed proxy, we use `State::(safe_)eval`, `State::safe_return` or `State::new_unnamed_<T>`.<br> To generate a named proxy we use `Proxy::operator[]` or `State::new_named_<T>`:
 
 ```cpp
-State::safe_script("var = 1234");
+State::safe_eval("var = 1234");
 
-auto unnamed_proxy = State::safe_script("return var");
+auto unnamed_proxy = State::safe_eval("return var");
 auto named_proxy = Main["var"];
 
 // or, in one line:
@@ -416,18 +416,18 @@ We see that `unnamed_proxy`s symbol is `#9`, while `named_proxy`s symbol is `Mai
 If and only if a proxy is named, assigning it will change the corresponding variable julia-side:
 
 ```cpp
-State::safe_script("var = 1234")
+State::safe_eval("var = 1234")
 auto named_proxy = Main["var"];
 
 std::cout << "// before:" << std::endl;
 std::cout << "cpp   : " << named_proxy.operator int() << std::endl;
-State::safe_script("println(\"julia : \", Main.var)");
+State::safe_eval("println(\"julia : \", Main.var)");
 
 named_proxy = 5678; // assign
 
 std::cout << "// after:" << std::endl;
 std::cout << "cpp   : " << named_proxy.operator int() << std::endl;
-State::safe_script("println(\"julia : \", Main.var)");
+State::safe_eval("println(\"julia : \", Main.var)");
 ```
 ```
 // before:
@@ -441,7 +441,7 @@ julia : 5678
 We see that after assignment, both the value `named_proxy` is pointing to, and the variable of the same name "`Main.var`" were affected by the assignment. This is somewhat atypical for julia but familiar to C++-users. A named proxy acts like a reference to the julia-side variable. <br><br> While somewhat unusual, because of this behavior we are able to do things like:
 
 ```cpp
-State::safe_script("vector_var = [1, 2, 3, 4]")
+State::safe_eval("vector_var = [1, 2, 3, 4]")
 Main["vector_var"][0] = 999;   // indices are 0-based in C++
 Base["println"]("julia prints: ", Main["vector_var"]);
 ```
@@ -455,18 +455,18 @@ Which is highly convenient.
 
 Mutating an unnamed proxy will only mutate its value, **not** the value of any julia-side variable:
 ```cpp
-State::safe_script("var = 1234")
-auto unnamed_proxy = State::safe_script("return var");
+State::safe_eval("var = 1234")
+auto unnamed_proxy = State::safe_eval("return var");
 
 std::cout << "// before:" << std::endl;
 std::cout << "cpp   : " << named_proxy.operator int() << std::endl;
-State::safe_script("println(\"julia : \", Main.var)");
+State::safe_eval("println(\"julia : \", Main.var)");
 
 unnamed_proxy = 5678; // assign
 
 std::cout << "// after:" << std::endl;
 std::cout << "cpp   : " << named_proxy.operator int() << std::endl;
-State::safe_script("println(\"julia : \", Main.var)");
+State::safe_eval("println(\"julia : \", Main.var)");
 ```
 ```
 // before:
@@ -496,7 +496,7 @@ When we called `return var`, julia did not return the variable itself but the va
   - using `State::new_named_<T>`, `Proxy::operator[]`
   - Assigning a named proxy mutates its value and mutates the corresponding julia-side variable of the same name
 + We create an **unnamed proxy**
-  - using `State::new_unnamed_<T>`, `State::(safe_)script`, `State::safe_return`
+  - using `State::new_unnamed_<T>`, `State::(safe_)eval`, `State::safe_return`
   - Assigning an unnamed proxy mutates its value but does not mutate any julia-side variable
 
 This is important to realize and is the basis of much of `jluna`s syntax and functionality.
@@ -508,7 +508,7 @@ Consider the following code:
 ```cpp
 auto named_proxy = State::new_named_int("var", 1234);
 
-State::safe_script(R"(var = ["abc", "def"])");
+State::safe_eval(R"(var = ["abc", "def"])");
 
 std::cout << named_proxy.operator std::string() << std::endl;
 ```
@@ -535,7 +535,7 @@ This proxy is in what's called a *detached state*. Even though it is a named pro
 
 ```cpp
 auto named_proxy = State::new_int64("var", 1234);
-State::safe_script(R"(var = ["abc", "def"])");
+State::safe_eval(R"(var = ["abc", "def"])");
 
 std::cout << named_proxy[1].operator std::string() << std::endl;
 ```
@@ -557,13 +557,13 @@ Assigning a detached proxy will still mutate the corresponding variable:
 
 ```cpp
 auto named_proxy = State::new_int64("var", 1234);
-State::safe_script(R"(var = ["abc", "def"])");
+State::safe_eval(R"(var = ["abc", "def"])");
 
-State::safe_script("println(\"before:\", var)");
+State::safe_eval("println(\"before:\", var)");
 
 named_proxy = 5678; // assign cpp-side
 
-State::safe_script("println(\"after :\"var)");
+State::safe_eval("println(\"after :\"var)");
 ```
 ```
 before: ["abc", "def"]
@@ -576,7 +576,7 @@ While this behavior is internally consistent and does not lead to undefined beha
 
 ```cpp
 auto named_proxy = State::new_int64("var", 1234);
-State::safe_script(R"(var = ["abc", "def"])");
+State::safe_eval(R"(var = ["abc", "def"])");
 
 named_proxy.update();
 
@@ -592,7 +592,7 @@ While not necessary to do everytime an assignment happens, it is a convenient wa
 Sometimes it is desirable to stop a proxy from mutating the corresponding variable, even though it is a named proxy. While we cannot change a proxies name, we can generate a new unnamed proxy using the member function `Proxy::value()`. This functions returns an unnamed proxy pointing to a newly allocated deepcopy of the value of the original proxy. 
 
 ```cpp
-State::script("var = 1234");
+State::eval("var = 1234");
 auto named_proxy = Main["var"];
 
 auto value = named_proxy.value();   // create nameless deepcopy
@@ -625,7 +625,7 @@ Calling `.value()` on a proxy that is already unnamed simply creates another unn
 For a proxy whos value is a `structtype` or `<: Module`, we can access any field using `operator[]`:
 
 ```cpp
-State::safe_script(R"(
+State::safe_eval(R"(
     mutable struct StructType
         _field
     end
@@ -644,7 +644,7 @@ std::cout << instance["_field"].operator int() << std::endl;
 As before, `operator[]` returns a named proxy. Assigning a named proxy also assigns the corresponding variable. This means we can assign fields just like we assigned variables in module-scope before:
 
 ```cpp
-State::safe_script(R"(
+State::safe_eval(R"(
     mutable struct StructType
         _field
     end
@@ -657,7 +657,7 @@ auto instance_field = instance["_field"];
 
 instance_field = 5678;
 
-State::script("println(instance)");
+State::eval("println(instance)");
 ```
 ```
 StructType(5678)
@@ -667,7 +667,7 @@ Of course, we could also do the above inline:
 
 ```cpp
 Main["instance"]["_field"] = 9999;
-State::script("println(instance)");
+State::eval("println(instance)");
 ```
 ```
 StructType(9999)
@@ -688,7 +688,7 @@ A general proxy can hold any value, including that of a module, however, `jluna:
 We can create a module proxy like so:
     
 ```cpp
-auto as_general = State::safe_script("return Base");
+auto as_general = State::safe_eval("return Base");
 
 // implicit cast
 Module as_module = as_general;
@@ -728,7 +728,7 @@ std::cout << (our_core == jluna::Core) << std::endl;
 For demonstration purposes, let's first create our own module julia-side and then create a module proxy of it:
 
 ```cpp
-State::safe_script(R"(
+State::safe_eval(R"(
     module OurModule
         variable = 123
     end
@@ -762,24 +762,24 @@ Stacktrace:
 signal (6): Aborted
 ```
 
-We get an exception. This is expected as the same expression `OurModule.variable = 456` in the julia REPL would throw the same exception. The reason for this is that both `State::script` and `Proxy::operator[]` evaluate the expression containing assignment in `Main` scope. Thus, any variable that is not in `Main` cannot be assigned. `jluna::Module`, then, allows for exactly this through two familiar member functions `script` and `safe_script`:
+We get an exception. This is expected as the same expression `OurModule.variable = 456` in the julia REPL would throw the same exception. The reason for this is that both `State::eval` and `Proxy::operator[]` evaluate the expression containing assignment in `Main` scope. Thus, any variable that is not in `Main` cannot be assigned. `jluna::Module`, then, allows for exactly this through two familiar member functions `eval` and `safe_eval`:
 
 ```cpp
-State::safe_script(R"(
+State::safe_eval(R"(
     module OurModule
         variable = 123
     end
 )");
 
 Module our_module = Main["OurModule"];
-our_module.script("variable = 456");
+our_module.eval("variable = 456");
 Base["println"](our_module["variable"]);
 ```
 ```
 456
 ```
 
-Where `script` does not forward exceptions while `safe_script` does, just like using the global `State::(safe_)script`.<br>
+Where `eval` does not forward exceptions while `safe_eval` does, just like using the global `State::(safe_)eval`.<br>
 Equivalently, module proxies offer two functions `assign` and `create_or_assign` that assign a variable of the given name the given value. If the variable does not exist, `assign` will throw an `UndefVarError` while `create_or_assign` will create a new variable of that name and value in module-scope:
 
 ```cpp
@@ -802,13 +802,13 @@ Functions in julia are movable, reassignable objects just like any other type, h
 Proxies can hold any julia-side value. This includes functions:
 
 ```cpp
-State::safe_script("f(x) = sqrt(x^x^x)");
+State::safe_eval("f(x) = sqrt(x^x^x)");
 
 // with operator[]
 auto named_f = Main["f"];
 
 // or via return
-auto unnamed_f = State::safe_script("return f");
+auto unnamed_f = State::safe_eval("return f");
 ```
 
 If the proxy is a function, it will be callable via `operator()`, `.call` and `.safe_call`, where `operator()` simply forwards the arguments to `.safe_call`:
@@ -881,7 +881,7 @@ This means for the C++-code to be able to use your julia-only typed arguments, y
 Let's call our above example which takes an arbitrary vector of integers and adds 2 to each element, then returns it:
 
 ```cpp
-State::script(R"(
+State::eval(R"(
   result = cppcall(:add_2_to_vector, [1, 2, 3, 4])
   println("julia prints: ", result)
 )");
@@ -956,7 +956,7 @@ register_function("call_object", [instance_ref = std::ref(instance)](Any* in) ->
     instance_ref.operator()(unbox<size_t>(in));
 });
 
-State::safe_script("cppcall(:call_object, 456)");
+State::safe_eval("cppcall(:call_object, 456)");
 ```
 ```
 object called 456
@@ -1023,7 +1023,7 @@ Here, we first create an uninitialized variable named `Main.lambda` julia-side, 
 This proxy is then assigned a lambda of signature `() -> void`, which an allowed signature. Because the proxy is named and because the lambda is boxable, this operation is valid and also assigns `Main.lambda`. `Main.lambda` now has the following value:
 
 ```cpp
-State::script("println(Main.lambda)");
+State::eval("println(Main.lambda)");
 ```
 ```
 Main.jluna._cppcall.UnnamedFunctionProxy(
@@ -1035,7 +1035,7 @@ Main.jluna._cppcall.UnnamedFunctionProxy(
 We see that it is an unnamed function proxy with internal id `#1`. This type of object is callable, exactly like the lambda is C++ side, so we can use it just like any other function:
 
 ```cpp
-State::script("Main.lambda()");
+State::eval("Main.lambda()");
 ```
 ```
 cpp called
@@ -1063,10 +1063,10 @@ We can create an array proxy like so:
 
 ```cpp
 // make 3d array with values 1:27
-State::safe_script("array = Array{Int64, 3}(reshape(collect(1:(3*3*3)), 3, 3, 3))");
+State::safe_eval("array = Array{Int64, 3}(reshape(collect(1:(3*3*3)), 3, 3, 3))");
 
 // unnamed array proxy
-jluna::Array<Int64, 3> unnamed = State::script("return array");
+jluna::Array<Int64, 3> unnamed = State::eval("return array");
 
 // named array proxy
 jluna::Array<Int64, 3> named = Main["array"];
@@ -1074,7 +1074,7 @@ jluna::Array<Int64, 3> named = Main["array"];
 Note that instead of `auto`, we declared `unnamed` and `named` to be explicitly of type `jluna::Array<Int64, 3>`. This declaration induces a conversion from `jluna::Proxy` (the super class) to `jluna::Array` (the child class). A functonally equivalent way to do this would be:
 
 ```cpp
-auto array = State::script("return array").as<Array<Int64, 3>();
+auto array = State::eval("return array").as<Array<Int64, 3>();
 ```
 
 However, the latter is discouraged for style reasons.
@@ -1091,7 +1091,7 @@ using Array3d = Array<Any*, 3>;
 This is useful when the value type of the array is not know at the point of proxy declaration or if the actual value type of each element is non-homogenous, as this is a feature of julias array but not possible using `std::vector` or similar classes. 
 
 ```cpp
-State::script("hetero_array = [Int64(1), Float32(2), Char(3)]")
+State::eval("hetero_array = [Int64(1), Float32(2), Char(3)]")
 Array<UInt64, 1> as_uint64 = Main["hetero_array"]; // triggers cast to UInt64 (aka. size_t)
 Array1d as_any = Main["hetero_array"]; // triggers no cast
 ```
@@ -1126,7 +1126,7 @@ after [1 4 7; 2 5 8; 3 6 9;;; 10 9999 16; 11 14 17; 12 15 18;;; 19 9999 25; 20 2
 While it may be easy to remember to use 0 for `jluna` objects, make sure to be aware of when you're calling C++-functions and when you are calling julia-functions:
 
 ```cpp
-State::script("array = collect(1:9)");
+State::eval("array = collect(1:9)");
 Array<size_t, 1> cpp_array = Main["array"];
 
 size_t cpp_at_3 = cpp_array.at(3);                  // c++: 0-based
@@ -1170,7 +1170,7 @@ To closer illustrate the relationship between indexing in `jluna` and indexing i
 In `jluna`, arrays of any dimensionality are iterable in column-major order (just as in julia):
 
 ```cpp
-Array<size_t, 2> array = State::script("return [1:2 3:4 5:6]");
+Array<size_t, 2> array = State::eval("return [1:2 3:4 5:6]");
 Base["println"](array);
 
 // iterate using value type
@@ -1190,7 +1190,7 @@ for (size_t i : array)
 We can create an assignable iterator by doing the following (note the use of `auto` instead of `auto&`)
 
 ```cpp
-Array<size_t, 2> array = State::script("return [1:2 3:4 5:6]");
+Array<size_t, 2> array = State::eval("return [1:2 3:4 5:6]");
 Base["println"]("before: ", array);
 
 for (auto it : array)
@@ -1210,7 +1210,7 @@ Here, `auto` is deduced to a special iterator type that basically acts like a re
 Just like in julia, all vectors are array, however their 1-dimensionality gives them access to additional functions:
 
 ```cpp
-State::safe_script("vector = collect(1:10)");
+State::safe_eval("vector = collect(1:10)");
 jluna::Vector<size_t> = Main["vector"];
 
 vector.push_front(9999);

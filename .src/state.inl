@@ -23,7 +23,7 @@ namespace jluna::State
     
     inline Proxy new_named_undef(const std::string& name)
     {
-        State::safe_script("Main.eval(:(" + name + " = undef))");
+        State::safe_eval("Main.eval(:(" + name + " = undef))");
         return Main[name];
     }
 
@@ -156,7 +156,7 @@ namespace jluna::State
             (add(dims, ++i), ...);
         }
 
-        State::safe_script(str.str());
+        State::safe_eval(str.str());
         return Main[name];
     }
 
