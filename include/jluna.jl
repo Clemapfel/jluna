@@ -313,6 +313,24 @@ module jluna
 
     get field symbols and types, used by jluna::Type::get_fields
     """
+    function get_fields(type::Type) ::Vector{Pair{Symbol, Type}}
+
+        out = Vector{Pair{Symbol, Type}}();
+        names = fieldnames(type)
+        types = fieldtypes(type)
+
+        for i in 1:(length(names))
+            push!(out, names[i] => types[i])
+        end
+
+        return out
+    end
+
+    """
+    `get_parameter(::Type) -> Vector{Pair{Symbol, Type}}`
+
+    get parameter symbols and upper type limits, used by jluna::Type::get_parameters
+    """
     function get_parameters(type::Type) ::Vector{Pair{Symbol, Type}}
 
         out = Vector{Pair{Symbol, Type}}();

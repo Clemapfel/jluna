@@ -12,23 +12,9 @@ int main()
 {
     State::initialize();
 
-    State::safe_script(R"(
-        struct Point{T, U}
-            x::T
-            y::U
-        end
-
-        test = Point{Float32, Int32}(1, 2)
-    )");
-
-    Type type = (jl_datatype_t*) jl_eval_string("return Point");
-
-    for (auto pair : type.get_parameters())
-        std::cout << pair.first.operator std::string() << " " << pair.second.operator std::string() << std::endl;
-    return 0;
-
     Test::initialize();
 
+    /*
     Test::test("catch c exception", [](){
 
         Test::assert_that_throws<JuliaException>([](){
@@ -835,6 +821,7 @@ int main()
             Test::assert_that(thrown);
         }
     });
+     */
 
     Test::conclude();
 }

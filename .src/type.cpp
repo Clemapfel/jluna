@@ -16,7 +16,7 @@ namespace jluna
         : Proxy(value, owner, symbol)
     {}
 
-    Type::operator _jl_datatype_t*()
+    Type::operator jl_datatype_t*()
     {
         return get();
     }
@@ -60,7 +60,7 @@ namespace jluna
         return unbox<size_t>(jluna::safe_call(get_n_fields, get()));
     }
 
-    Any * Type::get_singleton_instance() const
+    Any* Type::get_singleton_instance() const
     {
         return get()->instance;
     }
