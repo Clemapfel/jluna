@@ -762,7 +762,34 @@ Stacktrace:
 signal (6): Aborted
 ```
 
-We get an exception. This is expected as the same expression `OurModule.variable = 456` in julia would throw the same exception. 
+We get an exception. This is expected as the same expression `OurModule.variable = 456` in the julia REPL would throw the same exception. The reason for this is that both `State::script` and `Proxy::operator[]` evaluate the expression containing assignment in `Main` scope. Thus, any variable that is not in `Main` cannot be assigned. `jluna::Module`, then, allows for exactly this through two familiar member functions `script` and `safe_script`:
+
+```cpp
+State::safe_script(R"(
+    module OurModule
+        variable = 123
+    end
+)");
+
+Module our_module = Main["OurModule"];
+our_module.script("variable = 456");
+Base["println"](our_module["variable"]);
+```
+```
+456
+```
+
+Where `script` does not forward exceptions while `safe_script` does, just like using the global `State::(safe_)script`.<br>
+Equivalently, module proxies offer two functions `assign` and `create_or_assign` that assign a variable of the given name the given value. If the variable does not exist, `assign` will throw an `UndefVarError` while `create_or_assign` will create a new variable of that name and value in module-scope:
+
+```cpp
+our_module.create_or_assign("new_variable", std::vector<size_t>{1, 2, 3, 4});
+Base["println"](our_module["new_variable"]);
+```
+```
+[1, 2, 3, 4]
+```
+
 
 
 

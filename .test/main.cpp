@@ -12,10 +12,18 @@ int main()
 {
     State::initialize();
 
-    State::script("variable = 123");
-    auto new_main = State::safe_script("return Main");
-    std::cout << new_main["variable"].operator size_t() << std::endl;
+    State::safe_script(R"(
+    module OurModule
+        variable = 123
+    end
+)");
 
+Module our_module = Main["OurModule"];
+our_module.eval("variable = 456");
+Base["println"](our_module["variable"]);
+
+our_module.create_or_assign("new_variable", std::vector<Int64>{1, 2, 3, 4});
+Base["println"](our_module["new_variable"]);
 
     // verify pre initialized
     Module our_core = Main["Base"]["Core"];

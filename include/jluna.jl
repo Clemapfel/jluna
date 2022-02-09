@@ -582,9 +582,6 @@ module jluna
             unnamed_to_index(s::Symbol) = tryparse(UInt64, chop(string(s), head = 1, tail = 0))
 
             name = "";
-
-            in_main = false;
-
             for n in names
 
                 as_string = string(n);

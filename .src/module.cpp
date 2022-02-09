@@ -26,7 +26,7 @@ namespace jluna
         return get();
     }
 
-    Proxy Module::eval(const std::string& command)
+    Proxy Module::script(const std::string& command)
     {
         throw_if_uninitialized();
 
@@ -36,7 +36,7 @@ namespace jluna
         return Proxy(res, nullptr);
     }
 
-    Proxy Module::safe_eval(const std::string& command)
+    Proxy Module::safe_script(const std::string& command)
     {
         throw_if_uninitialized();
 
@@ -45,22 +45,6 @@ namespace jluna
         auto* res = jluna::safe_call(safe_call, expr, (Any*) get());
         forward_last_exception();
         return Proxy(res, nullptr);
-    }
-
-    template<Boxable T>
-    Proxy Module::assign(const std::string& variable_name, T value)
-    {
-        static jl_function_t* assign_in_module = jl_find_function("jluna", "assign_in_module");
-        jluna::safe_call(assign_in_module, jl_symbol(variable_name.c_str()), box<T>(value));
-        return this->operator[](variable_name);
-    }
-
-    template<Boxable T>
-    Proxy Module::create_or_assign(const std::string& variable_name, T value)
-    {
-        static jl_function_t* assign_in_module = jl_find_function("jluna", "create_or_assign_in_module");
-        jluna::safe_call(assign_in_module, jl_symbol(variable_name.c_str()), box<T>(value));
-        return this->operator[](variable_name);
     }
 
     jl_sym_t* Module::get_symbol() const
