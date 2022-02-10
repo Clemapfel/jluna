@@ -24,7 +24,7 @@ end
 
 Module our_module = Main["OurModule"];
 for (auto& pair : our_module.get_bindings())
-    std::cout << pair.first.operator std::string() << " => " << jl_to_string(pair.second) << std::endl;
+    std::cout << pair.first.operator std::string() << " => " << Base["string"](pair.second).operator std::string() << std::endl;
 
 our_module.eval("variable = 456");
 Base["println"](our_module["variable"]);

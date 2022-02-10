@@ -87,28 +87,10 @@ namespace jluna
         return get()->infer;
     }
 
-    std::map<Symbol, Any*> Module::get_bindings() const
+    std::map<Symbol, Proxy> Module::get_bindings() const
     {
-        std::map<Symbol, Any*> out;
-
-        auto htable = get()->bindings;
-        for (size_t i = 0; i < htable.size / 2; ++i)
-        {
-            auto key = htable.table[2*i];
-            auto value = htable.table[2*i+1];
-
-            if ((size_t) key != 0x1 and (size_t) value != 0x1)
-            {
-                out.insert({
-                    Symbol((jl_sym_t*) key),
-                    (reinterpret_cast<size_t>(value) > 0x1) ?
-                        (Any*) (reinterpret_cast<jl_binding_t*>(value)->value) :
-                        jl_nothing
-                });
-            }
-        }
-
-        return out;
+        static jl_function_t* get_names = jl_find_function("jluna", "get_names");
+        return unbox<std::map<Symbol, Proxy>>(jluna::safe_call(get_names, get()));
     }
 
     std::vector<Module> Module::get_usings() const

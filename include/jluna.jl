@@ -374,6 +374,24 @@ module jluna
     end
 
     """
+    `get_names(::Module) -> IdDict{Symbol, Any}`
+
+    access all module members as dict
+    """
+    function get_names(m::Module) ::IdDict{Symbol, Any}
+
+        out = IdDict{Symbol, Any}()
+
+        for n in names(m; all = true)
+            if string(n)[1] != '#'
+                out[n] = m.eval(n)
+            end
+        end
+
+        return out
+    end
+
+    """
     offers verbose exception interface. Any call with safe_call will store
     the last exception and full stack trace as string in _last_exception and
     _last_message respectively

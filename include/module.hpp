@@ -89,7 +89,7 @@ namespace jluna
 
             /// @brief wrap hidden c-property bindings
             /// @returns hashtable where keys are symbols and values are the memory symbols are bound to
-            [[nodiscard]] std::map<Symbol, Any*> get_bindings() const;
+            [[nodiscard]] std::map<Symbol, Proxy> get_bindings() const;
 
             /// @brief wrap hidden c-property usings
             /// @returns list of modules declared

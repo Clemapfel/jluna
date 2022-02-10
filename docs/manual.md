@@ -849,9 +849,9 @@ Base
 
 #### Bindings
 
-Bindings are a little more relevant. `Module::get_bindings` returns a map (or `IdDict` in julia parlance). For each pair in the map, `.first` is the *name* (of type `jluna::Symbol`) of a variable, `.second` is the *value* of the variable.
+Bindings are a little more relevant. `Module::get_bindings` returns a map (or `IdDict` in julia parlance). For each pair in the map, `.first` is the *name* (of type `jluna::Symbol`) of a variable, `.second` is the *value* of the variable, as a `Any*`.
 
-We will learn more about `Symbol` and `Type` in the [section on introspection](#introspection). For now, simply think of them as their julia-side equivalent `Base.Symbol` and `Base.Type{T}`:
+We will learn more about `jluna::Symbol` in the [section on introspection](#introspection). For now, simply think of it as their julia-side equivalent `Base.Symbol`.
 
 ```cpp
 State::eval(R"(
@@ -866,12 +866,19 @@ end
 
 Module our_module = Main["OurModule"];
 for (auto& pair : our_module.get_bindings())
-    std::cout << pair.first.operator std::string() << " => " << jl_to_string(pair.second) << std::endl;
+    std::cout << pair.first.operator std::string() << " => " << Base["string"](pair.second).operator std::string() << std::endl;
+
 ```
 ```
+include => include
+f => f
+OurModule => Main.OurModule
+eval => eval
+var1 => 0
+var2 => 0
 ```
 
-Where `jl_to_string` calls `Base.string` on an `Any*` and returns the resulting string.
+`get_bindings` gives us a convenient way to save the current state of the module, and to iterate of all values bound.
 
 
 
