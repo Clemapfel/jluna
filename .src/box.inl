@@ -14,6 +14,12 @@ namespace jluna
         return (Any*) value;
     }
 
+    template<Is<bool> T>
+    Any* box(T value)
+    {
+        return jl_box_bool(value);
+    }
+
     template<Is<std::bool_constant<true>> T>
     Any* box(T value)
     {

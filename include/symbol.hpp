@@ -66,7 +66,7 @@ namespace jluna
             bool operator>(const Symbol& other) const;
     };
 
-    /// @brief unbox to module
+    /// @brief unbox symbol to symbol
     template<Is<Symbol> T>
     inline T unbox(Any* value)
     {
@@ -79,6 +79,12 @@ namespace jluna
     inline Any* box(T value)
     {
         return value.operator Any*();
+    }
+
+    template<Is<Symbol> T>
+    inline Any* box(const std::string& value)
+    {
+        return (Any*) jl_symbol(value.c_str());
     }
 
     /// @brief type deduction

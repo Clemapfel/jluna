@@ -17,7 +17,7 @@ namespace jluna
     {
         public:
             Type() = default;
-            
+
             /// @brief ctor
             /// @param value
             Type(jl_datatype_t* value);
@@ -44,6 +44,14 @@ namespace jluna
             /// @brief get parameter names
             /// @returns vector
             std::vector<std::pair<Symbol, Type>> get_parameters() const;
+
+            /// @brief get number of methods
+            /// @returns size_t
+            /// size_t get_n_methods() const;
+
+            /// @brief methods
+            /// @returns vector of jluna::Methods
+            /// std::vector<Method> get_methods() const;
 
             /// @brief get number of fields
             /// @returns size_t
@@ -102,7 +110,7 @@ namespace jluna
 
             /// @brief is mutable
             /// @returns bool
-            bool is_mutable() const;
+            bool is_declared_mutable() const;
 
             /// @brief is bits type
             /// @returns bool
@@ -170,7 +178,6 @@ namespace jluna
     inline Type Function_t;
     inline Type GlobalRef_t;
     inline Type IO_t;
-    inline Type Int_t;
     inline Type Int128_t;
     inline Type Int16_t;
     inline Type Int32_t;
@@ -196,7 +203,6 @@ namespace jluna
     inline Type Tuple_t;
     inline Type Type_t;
     inline Type TypeVar_t;
-    inline Type UInt_t;
     inline Type UInt128_t;
     inline Type UInt16_t;
     inline Type UInt32_t;

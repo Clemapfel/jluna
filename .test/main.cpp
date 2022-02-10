@@ -12,14 +12,37 @@ int main()
 {
     State::initialize();
 
-auto set = std::set<Symbol>();
-for (auto str : {"abc", "bcd", "cde", "def"})
-    set.insert(Symbol(str));
+    std::cout << Type(State::safe_eval("return Array")).is_array_type() << std::endl;
+    std::cout << Type(State::safe_eval("return Array{Int64, 3}")).is_array_type() << std::endl;
+    return 0;
 
-// print in order
-for (auto symbol : set)
-    std::cout << symbol.operator std::string() << " (" << symbol.hash() << ")" << std::endl;
+    State::eval("struct Singleton end");
+    Type singleton_type = Main["Singleton"];
+    Base["println"](singleton_type.is_singleton()); // true
+return 0;
 
+State::safe_eval(R"(
+    mutable struct MyType{T <: Integer, U}
+        _field1
+        _field2::T
+        _field3::U
+
+        function MyType(a::T, b::U) where {T, U}
+            return new{T, U}(undef, a, b)
+        end
+    end
+)");
+
+Type my_type = Main["MyType"];
+std::vector<std::pair<Symbol, Type>> parameters = my_type.get_parameters();
+
+for (auto& pair : parameters)
+    std::cout << pair.first.operator std::string() << " => " << pair.second.operator std::string() << std::endl;
+
+std::vector<std::pair<Symbol, Type>> fields = my_type.get_fields();
+
+for (auto& pair : fields)
+    std::cout << pair.first.operator std::string() << " => " << pair.second.operator std::string() << std::endl;
 return 0;
 
     // verify pre initialized

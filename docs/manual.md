@@ -32,29 +32,29 @@ Please navigate to the appropriate section by clicking the links below:
 7. [Specialized Proxies: Symbols](#symbol-proxies)<br>
    7.1 [CTORs](#symbol-proxies)<br>
    7.3 [Hashing & Comparisons](#symbol-hashing)<br>
-7. [Functions](#functions)<br>
-   7.1 [Accessing julia Functions from C++](#functions)<br>
-   7.2 [Calling julia Functions from C++](#functions)<br>
-   7.3 [Accessing C++ Functions from julia](#registering-functions)<br>
-   7.4 [Calling C++ Functions from julia](#calling-c-functions-from-julia)<br>
-   7.5 [Allowed Function Names](#allowed-function-names)<br>
-   7.6 [Allowed Function Signatures](#possible-signatures)<br>
-   7.7 [Using arbitrary Objects in julia Functions](#using-non-julia-objects-in-functions)<br>
-8. [Arrays](#arrays)<br>
-  8.1 [Constructing Arrays](#ctors)<br>
-  8.2 [Indexing](#indexing)<br>
-  8.3 [Iterating](#iterating)<br>
-  8.4 [Vectors](#vectors)<br>
-  8.5 [Matrices](#matrices)<br>
-9. [Introspection]()<br>
-  9.1 [Core Types]()<br>
-  9.2 [Fields]()<br>
-  9.3 [Parameters]()<br>
-  9.4 [Type Comparisons]()<br>
-  9.5 [Type Classification]()<br>
-  9.6 [Type Properties]()<br>
-X. [~~Expressions~~](#expressions)<br>
-X. [~~Usertypes~~](#usertypes)<br>
+8. [Functions](#functions)<br>
+   8.1 [Accessing julia Functions from C++](#functions)<br>
+   8.2 [Calling julia Functions from C++](#functions)<br>
+   8.3 [Accessing C++ Functions from julia](#registering-functions)<br>
+   8.4 [Calling C++ Functions from julia](#calling-c-functions-from-julia)<br>
+   8.5 [Allowed Function Names](#allowed-function-names)<br>
+   8.6 [Allowed Function Signatures](#possible-signatures)<br>
+   8.7 [Using arbitrary Objects in julia Functions](#using-non-julia-objects-in-functions)<br>
+9. [Arrays](#arrays)<br>
+  9.1 [Constructing Arrays](#ctors)<br>
+  9.2 [Indexing](#indexing)<br>
+  9.3 [Iterating](#iterating)<br>
+  9.4 [Vectors](#vectors)<br>
+  9.5 [Matrices](#matrices)<br>
+10. [Introspection]()<br>
+  10.1 [Core Types]()<br>
+  10.2 [Fields]()<br>
+  10.3 [Parameters]()<br>
+  10.4 [Type Comparisons]()<br>
+  10.5 [Type Classification]()<br>
+  10.6 [Type Properties]()<br>
+11. [~~Expressions~~](#expressions)<br>
+12. [~~Usertypes~~](#usertypes)<br>
 
 ## Initialization
 
@@ -212,7 +212,6 @@ jl_function_t*           -> Function
 jl_sym_t*                -> Symbol
 
 Any*                     -> Any
-jl_sym_t*                  -> Symbol
 
 bool                     -> Bool
 char                     -> Char
@@ -236,6 +235,7 @@ jluna::Vector<T>         -> Vector{T}       *
 jluna::JuliaException    -> Exception
 
 std::string              -> String
+std::string              -> Symbol
 std::complex<T>          -> Complex{T}      *
 std::vector<T>           -> Vector{T}       *
 std::array<T, R>         -> Vector{T}       *
@@ -899,6 +899,18 @@ auto symbol_proxy = general_proxy.as<Symbol>();
 
 Where, unlike with general proxy, the value the proxy is pointing to is asserted to be of type `Base.Symbol`.
 
+However, unlike `jluna::Module`, there is a fourth way for convenience:
+
+```cpp
+/// from string
+auto symbol = Symbol("abc");
+
+// equivalent to:
+auto symbol = box<Symbol>("abc")
+```
+
+This creates a julia-side symbol and binds it to an unnamed proxy, making it safe from the garbage collector.
+
 ### Symbol Hashing
 
 The main additional functionality `jluna::Symbol` brings, is that of *constant time hashing*.
@@ -1396,7 +1408,275 @@ Base["println"](vector);
 Note that `Array<T, R>::operator[](Range_t&&)` (linear indexing with a range) always returns a vector of the corresponding value type, regardless of the original arrays dimensionality.
 
 ## Matrices
+
 (this feature is not yet implemented, simply use `Array<T, 2>` until then)
+
+## Introspection
+
+The main advantage julia has over C++ is its introspection and meta features. 
+While introspection is technically possible in C++, it can be quite cumbersome and complicated. In julia, most things that require a meta template function in C++ are just a simple function. `jluna` aims to take advantage of this by giving a direct interface for this part of julias toolset.
+
+### Type Proxies
+
+We've seen specialized module-, symbol- and array-proxies. `jluna` currently has a fourth kind of proxy, `jluna::Type`, which is hugely valuable in introspection. While heavy overlap is present, `jluna::Type` is not a direct equivalent of `Base.Type{T}`. This section will introduce its many functionalities and how to best use them.
+
+There are three ways to construct a type proxy:
+
+```cpp
+// get type of proxy
+auto general_proxy = State::eval("return " + /* ... */);
+auto type = general_proxy.get_type();
+
+// implicit cast
+auto type_valued_proxy = State::eval("return Base.Vector");
+Type type = type_valued_proxy;
+
+// explicit cast with .as<T>
+auto type = type_valued_proxy.as<Type>();
+```
+
+Of whom the latter two will be familiar by now.B
+
+### Core Types 
+
+For convenience, `jluna` offers most of the `Core` types as pre-initialized global singletons, similar to how the module singletons `Main`, `Base` and `Core` are available globally after initialization. The following types are available this way:
+
+| `jluna` constant | julia-side |
+|-------------------|---------|
+| `AbstractArray_t` | `AbstractArray{T, N}` |
+| `AbstractChar_t` | `AbstractChar` |
+| `AbstractFloat_t`| `AbstractFloat` |
+| `AbstractString_t`| `AbstractString` |
+| `Any_t`| `Any` |
+| `Array_t`| `Array{T, N}` |
+| `Bool_t`| `Bool` |
+| `Char_t`| `Char` |
+| `DataType_t`| `DataType` |
+| `DenseArray_t`| `DenseArray{T, N}` |
+| `Exception_t`| `Exception` |
+| `Expr_t`| `Expr` |
+| `Float16_t`| `Float16` |
+| `Float32_t`| `Float32` |
+| `Float64_t`| `Float64` |
+| `Function_t`| `Function` |
+| `GlobalRef_t`| `GlobalRef` |
+| `IO_t`| `IO` |
+| `Int8_t`| `Int8` |
+| `Int16_t`| `Int16` |
+| `Int32_t`| `Int32` |
+| `Int64_t`| `Int64` |
+| `Int128_t`| `Int128` |
+| `Integer_t`| `Integer` |
+| `UInt8_t`| `UInt8` |
+| `UInt16_t`| `UInt16` |
+| `UInt32_t`| `UInt32` |
+| `UInt64_t`| `UInt64` |
+| `UInt128_t`| `UInt128` |
+| `Unsigned_t`| `Unsigned` |
+| `Signed_t`| `Signed` |
+| `LineNumberNode_t`| `LineNumberNode` |
+| `Method_t`| `Method` |
+| `Module_t`| `Module` |
+| `NTuple_t`| `NTuple{T, N}` |
+| `NamedTuple_t`| `NamedTuple` |
+| `Nothing_t`| `Nothing` |
+| `Number_t`| `Number` |
+| `Pair_t`| `Pair{T, U}` |
+| `Ptr_t`| `Ptr{T}` |
+| `QuoteNode_t`| `QuoteNode` |
+| `Real_t`| `Real` |
+| `Ref_t`| `Ref{T}` |
+| `String_t`| `String` |
+| `Symbol_t`| `Symbol` |
+| `Task_t`| `Task` |
+| `Tuple_t`| `Tuple{T...}` |
+| `Type_t`| `Type{T}` |
+| `TypeVar_t`| `TypeVar` |
+| `UndefInitializer_t`| `UndefInitializer` |
+| `Union_t`| `Union{T...}` |
+| `UnionAll_t`| `UnionAlll` |
+| `VecElement_t`| `VecElement{T}` |
+| `WeakRef_t`| `WeakRef` |
+
+Where `T`, `U` are arbitrary types, `N` is an Integer
+
+### Type Order
+
+Julia types can be ordered. This is best thought of as a type graph, where each node is a type and each edge is direct, where if the edge goes from A to B, the B <: A, that is, B is a subtype of A or, in C++ parlance, B inherits from A. 
+
+This relational nature is heavily used in multiple dispatch and type inference, however for now, it gives us a way to put types in relation to each other. `jluna::Type` offers multiple functions for this:
+
+```cpp
+// (*this) <: other
+bool is_subtype_of(const Type& other) const;
+
+// other <: (*this)
+bool is_supertype_of(const Type& other) const;
+
+// (*this) <: other && other <: (*this)
+bool is_same_as(const Type&) const;
+```
+
+Because we can assign an order to types in this way, `jluna::Type` also provides proper boolean comparison operators:
+
+```cpp
+// (*this) <: other
+bool operator<(const Type& other) const;
+
+// other <: (*this)
+bool operator>(const Type& other) const;
+
+// (*this) === other
+bool operator==(const Type& other) const;
+
+// !((*this) === other)
+bool operator!=(const Type& other) const;
+```
+
+For the sake of brevity, we will refer to type `B: A <: B` as `B` being "higher" or "more abstract" than `A` for the rest of the section.
+
+### Type Info
+
+When gathering information about types, it is important to understand the difference between a types *fields*, its *paramaters*, its *methods* and its *properties*. Consider the following type:
+
+```julia
+# in julia
+mutable struct MyType{T <: Integer, U}
+    _field1
+    _field2::T
+    _field3::U
+    
+    function MyType(a::T, b::U) where {T, U}
+        return new{T, U}(undef, a, b)
+    end
+end
+```
+
+This type is a parametric struct types. In C++-parlance, we would call it a templated type. Its (template) *parameters* are `T` and `U`. `T` is restricted to be a subtype of `Base.Integer`, while `U` is unrestricted, meaning it only has to be a subtype of `Base.Any`, which all types satisfy. 
+
+`MyType` has 3 *fields*: `_field1`, `_field2`, `_field3`. `_field1` is unrestricted in terms of types, any type (but not necessarily the type `Any`) can bind to it. `_field2` is restricted to be of type `T` which is declared as a parameter. Because the parameter `T` is restricted to be an Integer, `_field2`s type is restricted in the same way. `_field3` is of type `U`, which is also a parameter. While `U` can be any type, if we declare it using for example `MyType{Int64, Vector}` then `_field3` has to be a vector.
+
+This types properties are a little bit complicated so we will leave them for later. 
+
+#### Parameters
+
+We can access the name and types of the parameters of a type using `jluna::Type::get_parameters`:
+
+```cpp
+State::safe_eval(R"(
+    mutable struct MyType{T <: Integer, U}
+        _field1
+        _field2::T
+        _field3::U
+
+        function MyType(a::T, b::U) where {T, U}
+            return new{T, U}(undef, a, b)
+        end
+    end
+)");
+
+Type my_type = Main["MyType"];
+std::vector<std::pair<Symbol, Type>> parameters = my_type.get_parameters();
+
+for (auto& pair : parameters)
+    std::cout << pair.first.operator std::string() << " => " << pair.second.operator std::string() << std::endl;
+```
+```
+T => Integer
+U => Any
+```
+We see that `get_parameters` returns a vector of pairs where the first element in each pair is a symbol that is the name of the corresponding parameter, while the second element in the pair is the parameter most abstract allowed type. In case of `T`, this is `Base.Integer` because we restricted it as such. For `U` there is no restriction which is why the most abstract allowed type is `Any`.
+
+We can access the number of parameters directly using `get_n_parameters()`. This saves allocating the vector of pairs.
+
+
+#### Fields
+
+We can access the fields of a type in a similar way, using `jluna::Type::get_fields`:
+
+```cpp
+State::safe_eval(R"(
+    mutable struct MyType{T <: Integer, U}
+        _field1
+        _field2::T
+        _field3::U
+
+        function MyType(a::T, b::U) where {T, U}
+            return new{T, U}(undef, a, b)
+        end
+    end
+)");
+
+Type my_type = Main["MyType"];
+std::vector<std::pair<Symbol, Type>> fields = my_type.get_fields();
+
+for (auto& pair : fields)
+    std::cout << pair.first.operator std::string() << " => " << pair.second.operator std::string() << std::endl;
+```
+```
+_field1 => Any
+_field2 => Integer
+_field3 => Any
+```
+We again get a vector of pairs. The first elements are the expected names of the fields, while the types are as follows:
++ `_field1` is completely arbitrary which means the most abstract type of a variable that binds to it is `Any`
++ `_field2` is restricted by `T` which in turn is restricted by `Integer`. Because of this, `_field2` is deduced to be restricted by `Integer` as well
++ `_field3` is restricted by `U`, however `U` is unrestricted. Because of this, `_field3` is deducted to again be restricted by `Any`.
+
+#### Methods
+
+(this feature is not yet implemented)
+
+#### Properties
+
+(this documentation is not yet complete)
+
+### Type Classification
+
+To classify a type means evaluate a condition and ask wether it is true or false. `jluna` offers a vast array of convenient classifications, some of which are available as part of the julia core library, some of which are not. This section will list all of them along with their usage.
+
++ `is_primitive`: was the type declared using the keyword `primitive`
+    ```cpp
+    Bool_t.is_primitive()    // true
+    Module_t.is_primitive(); // false
+    ```
++ `is_struct_type`: was the type declared using the keyword `struct`
+    ```cpp
+    Bool_t.is_struct_type()    // false
+    Module_t.is_struct_type(); // true
+    ```
++ `is_declared_mutable`: was the type declared using `mutable struct`
+    ```cpp
+    Bool_t.is_declared_mutable()    // false
+    Module_t.is_declared_mutable(); // true
+    ```
++ `is_isbits`: is the type a `isbits` type, "meaning it is immutable and contains no references to other values, only primitive types and other isbitstype types" (quote, c.f. julia documentation)
+    ```cpp
+    Bool_t.is_declared_mutable()    // true
+    Module_t.is_declared_mutable(); // false
+    ```
++ `is_singleton`: a type `T` is a singleton iff:
+    - `T` is immutable and a structtype
+    - for types `A`, `B` if `A <: B` and `B <: A` then `A === B`
+    ```cpp
+    Bool_t.is_singleton()    // false
+    Module_t.is_singleton(); // false
+  
+    State.eval("struct Singleton end");
+    Type singleton_type = Main["Singleton"];
+    singleton_type.is_singleton(); // true
+    ```
++ `is_abstract_type`: was the type declared using the `abstract` keyword
+    ```cpp
+    Float32_t.is_abstract_type()          // false
+    AbstractFloat_t.is_abstract_type();   // true
+    ```
++ `is_abstract_ref_type`: is the type a reference whose value type is an abstract type. If it has a value, the type is deduced to the type of the value and thus not abstract anymore.
+    ```cpp
+    Type(State::safe_eval("return Ref{AbstractFloat}")).is_abstract_ref_type(); //true
+    Type(State::safe_eval("return Ref{AbstractFloat}(Float32(1))")).is_abstract_ref_type(); // false
+    ```
++ `is_array`
 
 ## Expressions
 

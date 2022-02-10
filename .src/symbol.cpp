@@ -8,7 +8,7 @@
 namespace jluna
 {
     Symbol::Symbol(const std::string& str)
-        : Proxy((Any*) jl_symbol(str.c_str()), nullptr)
+        : Proxy(box<Symbol>(str), nullptr)
     {}
 
     Symbol::Symbol(jl_sym_t* value, jl_sym_t* symbol)

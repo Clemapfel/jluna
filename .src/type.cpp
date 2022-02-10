@@ -165,7 +165,7 @@ namespace jluna
         return jl_is_unionall(get());
     }
 
-    bool Type::is_mutable() const
+    bool Type::is_declared_mutable() const
     {
         return jl_is_mutable_datatype(get());
     }

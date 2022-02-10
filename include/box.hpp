@@ -28,6 +28,10 @@ namespace jluna
     template<IsJuliaValuePointer T>
     Any* box(T value);
 
+    /// @brief box identity
+    template<Is<bool> T>
+    Any* box(T value);
+
     /// @brief box true to Bool
     template<Is<std::bool_constant<true>> T>
     Any* box(T value);
@@ -162,6 +166,10 @@ namespace jluna
 
     /// @brief box jluna::Symbol to Symbol
     class Symbol;
+    template<Is<Symbol> T>
+    Any* box(T);
+
+    /// @brief box string to symbol
     template<Is<Symbol> T>
     Any* box(T);
 
