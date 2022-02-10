@@ -23,13 +23,15 @@ Please navigate to the appropriate section by clicking the links below:
   5.5 [Unnamed Proxies](#unnamed-proxy)<br>
   5.6 [Detached Proxies](#detached-proxies)<br>
   5.7 [Making a Named Proxy Unnamed](#making-a-named-proxy-unnamed)<br>
-6. [Specialized Proxies: Modules]()<br>
-   6.1 [Eval]()<br>
-   6.2 [Bindings & Usings]()<br>
-   6.3 [Properties]()<br>
-7. [Specialized Proxies: Symbols]()<br>
-   7.1 [CTORs]()<br>
-   7.3 [Hashing & Comparisons]()<br>
+6. [Specialized Proxies: Modules](#module-proxies)<br>
+   6.1 [Constructing Module Proxies](#constructing-module-proxies)<br>
+   6.2 [Creating/Assigning new Variables](#creating-or-assigning-variables-in-a-module)<br>
+   6.3 [Properties](#module-properties)<br>
+   6.4 [Usings](#usings)<br>
+   6.5 [Bindings & Savestates](#bindings)<br>
+7. [Specialized Proxies: Symbols](#symbol-proxies)<br>
+   7.1 [CTORs](#symbol-proxies)<br>
+   7.3 [Hashing & Comparisons](#symbol-hashing)<br>
 7. [Functions](#functions)<br>
    7.1 [Accessing julia Functions from C++](#functions)<br>
    7.2 [Calling julia Functions from C++](#functions)<br>
@@ -679,7 +681,7 @@ For proxies who are indexable (that is `getindex(::T, ::Integer)` is defined), `
 
 ## Module Proxies
 
-We've seen how proxies handler their value. While the general-purpose `jluna::Proxy` handles primitives and structtypes well, some julia classes provide additional functionality beyond what we've used so far. One of these more specialized proxy is `jluna::Module`. For the sake of brevity, henceforth, `jluna::Proxy` will be referred to as "general proxy" while `jluna::Module` will be called "module proxy".  
+We've seen how proxies handle their value. While the general-purpose `jluna::Proxy` handles primitives and structtypes well, some julia classes provide additional functionality beyond what we've used so far. One of these more specialized proxy is `jluna::Module`. For the sake of brevity, henceforth, `jluna::Proxy` will be referred to as "general proxy" while `jluna::Module` will be called "module proxy".  
 
 A general proxy can hold any value, including that of a module, however, `jluna::Module`, the module proxy, can only hold a julia-side module. Furthermore, `Module` inherits from `Proxy` and thus retains all public member functions. Being more specialized just means that we have additional member functions to work with.
 
@@ -849,8 +851,7 @@ Base
 
 #### Bindings
 
-Bindings are a little more relevant. `Module::get_bindings` returns a map (or `IdDict` in julia parlance). For each pair in the map, `.first` is the *name* (of type `jluna::Symbol`) of a variable, `.second` is the *value* of the variable, as a `Any*`.
-
+Bindings are a little more relevant. `Module::get_bindings` returns a map (or `IdDict` in julia parlance). For each pair in the map, `.first` is the *name* (of type `jluna::Symbol`) of a variable, `.second` is the *value* of the variable, as an unnamed general proxy.
 We will learn more about `jluna::Symbol` in the [section on introspection](#introspection). For now, simply think of it as their julia-side equivalent `Base.Symbol`.
 
 ```cpp
@@ -866,8 +867,7 @@ end
 
 Module our_module = Main["OurModule"];
 for (auto& pair : our_module.get_bindings())
-    std::cout << pair.first.operator std::string() << " => " << Base["string"](pair.second).operator std::string() << std::endl;
-
+    std::cout << pair.first.operator std::string() << " => " << jl_to_string(pair.second).operator std::string() << std::endl;
 ```
 ```
 include => include
@@ -878,11 +878,86 @@ var1 => 0
 var2 => 0
 ```
 
-`get_bindings` gives us a convenient way to save the current state of the module, and to iterate of all values bound.
+where `jl_to_string` is a C-function that takes an `Any*` and calls `Base.string`, returning the resulting string.
 
+Because the proxies hold ownership of the bounds values and are unnamed, the result of `get_bindings` is independet of the state of the module. This means `get_bindings` gives us a way to save the current state of the module.
 
+## Symbol Proxies
 
+Another specialized type of proxy is the symbol proxy. It holds, of course, a julia-side `Base.Symbol`. We create a symbol proxy just like we did with module proxies:
 
+```
+Main.eval("symbol_var = Symbol("abc"));
+auto general_proxy = Main["symbol_var"];
+
+// implicit cast
+Symbol symbol_proxy = general_proxy
+
+// explicit cast using .as<T>
+auto symbol_proxy = general_proxy.as<Symbol>();
+```
+
+Where, unlike with general proxy, the value the proxy is pointing to is asserted to be of type `Base.Symbol`.
+
+### Symbol Hashing
+
+The main additional functionality `jluna::Symbol` brings, is that of *constant time hashing*.
+
+A hash is essentially a UInt64 we assign to things. In julia, hashes are unique and there a no hash collisions. This means if `A != B` then `hash(A) != hash(B)` and, furthermore, if `hash(A) == hash(B)` then `A == B`. Unlike with many other classes, `Base.Symbol` can be hashed in constant time. This is because the hash is precomputed at the time of construction. We access the hash of a symbol proxy using `.hash()`
+
+```
+auto symbol = Main["symbol_var"];
+std::cout << "name: " << symbol.operator std::string() << std::endl;
+std::cout << "hash: " << symbol.hash() << std::endl;
+```
+```
+name: abc
+hash: 16076289990349425027
+```
+
+In most cases, it is impossible to predict which number will be assigned to which symbol. This also means for Symbols `s1` and `s2` if `string(s1) < string(s2)` this **does not** mean `hash(s1) < hash(s2)`. This is very important to realize because `jluna::Symbol` other main functionality is being constant-time comparable.
+
+Symbol proxies provide the following comparison operators:
+
+```cpp
+/// (*this).hash() == other.hash()
+bool operator==(const Symbol& other) const;
+
+/// (*this).hash() != other.hash()
+bool operator!=(const Symbol& other) const;
+
+/// (*this).hash() < other.hash()
+bool operator<(const Symbol& other) const;
+
+/// (*this).hash() <= other.hash()
+bool operator<=(const Symbol& other) const;
+
+/// (*this).hash() >= other.hash()
+bool operator>=(const Symbol& other) const;
+
+/// (*this).hash() > other.hash()
+bool operator>(const Symbol& other) const;
+```
+
+To further illustrate the way symbols are compared, consider the following example using `std::set`, which orders its elements according to their comparison operators:
+
+```
+auto set = std::set<Symbol>();
+for (auto str : {"abc", "bcd", "cde", "def"})
+    set.insert(Symbol(str));
+
+// print in order
+for (auto symbol : set)
+    std::cout << symbol.operator std::string() << " (" << symbol.hash() << ")" << std::endl;
+```
+```
+cde (10387276483961993059)
+bcd (11695727471843261121)
+def (14299692412389864439)
+abc (16076289990349425027)
+```
+
+We see that lexicographically, the symbol are out of order. However, if we we compare their hashes we see that they are ordered properly.
 
 ## Functions
 

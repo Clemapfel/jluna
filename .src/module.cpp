@@ -10,11 +10,15 @@ namespace jluna
 {
     Module::Module(jl_module_t* value)
         : Proxy((jl_value_t*) value, value->name)
-    {}
+    {
+        jl_assert_type((Any*) value, "Module");
+    }
 
     Module::Module(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* name)
         : Proxy(value, owner, name)
-    {}
+    {
+        jl_assert_type(value, "Module");
+    }
 
     jl_module_t * Module::get() const
     {

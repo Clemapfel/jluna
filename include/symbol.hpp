@@ -14,6 +14,9 @@ namespace jluna
     class Symbol : public Proxy
     {
         public:
+            /// @param allocate symbol julia side
+            Symbol(const std::string&);
+
             /// @brief construct as unnamed proxy
             /// @param value
             /// @param name
@@ -23,7 +26,7 @@ namespace jluna
             /// @param value
             /// @param owner: internal proxy value owner
             /// @param name: symbol
-            Symbol(jl_sym_t* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol);
+            Symbol(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol);
 
             /// @brief decay to C-type
             operator jl_sym_t*() const;

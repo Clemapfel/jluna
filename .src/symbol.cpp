@@ -7,13 +7,21 @@
 
 namespace jluna
 {
-    Symbol::Symbol(jl_sym_t* value, jl_sym_t* symbol)
-        : Proxy((jl_value_t*) value, symbol)
+    Symbol::Symbol(const std::string& str)
+        : Proxy((Any*) jl_symbol(str.c_str()), nullptr)
     {}
 
-    Symbol::Symbol(jl_sym_t* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol)
-        : Proxy((jl_value_t*) value, owner, symbol)
-    {}
+    Symbol::Symbol(jl_sym_t* value, jl_sym_t* symbol)
+        : Proxy((jl_value_t*) value, symbol)
+    {
+       jl_assert_type((Any*) value, "Symbol");
+    }
+
+    Symbol::Symbol(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol)
+        : Proxy(value, owner, symbol)
+    {
+        jl_assert_type(value, "Symbol");
+    }
 
     Symbol::operator jl_sym_t*() const
     {

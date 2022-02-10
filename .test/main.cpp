@@ -12,25 +12,15 @@ int main()
 {
     State::initialize();
 
-State::safe_eval(R"(
-module OurModule
+auto set = std::set<Symbol>();
+for (auto str : {"abc", "bcd", "cde", "def"})
+    set.insert(Symbol(str));
 
-    var1 = 0
-    var2 = Int64(0)
+// print in order
+for (auto symbol : set)
+    std::cout << symbol.operator std::string() << " (" << symbol.hash() << ")" << std::endl;
 
-    f(xs...) = println(xs)
-end
-)");
-
-Module our_module = Main["OurModule"];
-for (auto& pair : our_module.get_bindings())
-    std::cout << pair.first.operator std::string() << " => " << Base["string"](pair.second).operator std::string() << std::endl;
-
-our_module.eval("variable = 456");
-Base["println"](our_module["variable"]);
-
-our_module.create_or_assign("new_variable", std::vector<Int64>{1, 2, 3, 4});
-Base["println"](our_module["new_variable"]);
+return 0;
 
     // verify pre initialized
     Module our_core = Main["Base"]["Core"];
