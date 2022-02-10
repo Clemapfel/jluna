@@ -178,12 +178,26 @@ namespace jluna
             std::deque<jl_sym_t*> assemble_name() const;
     };
 
-    /// @brief box proxy
+    /// @brief unbox to proxy
     template<Is<Proxy> T>
-    Any* box(T value)
+    inline T unbox(Any* value)
+    {
+        return Proxy(value, nullptr);
+    }
+
+    /// @brief box jluna::Proxy to Base.Any
+    template<Is<Proxy> T>
+    inline Any* box(T value)
     {
         return value.operator Any*();
     }
+
+    /// @brief type deduction
+    template<>
+    struct detail::to_julia_type_aux<Proxy>
+    {
+        static inline const std::string type_name = "Any";
+    };
 }
 
 #include ".src/proxy.inl"

@@ -156,6 +156,11 @@ namespace jluna
     Any* box(T lambda);
 
     /// @brief box jluna::Symbol to Symbol
+    class Proxy;
+    template<Is<Proxy> T>
+    Any* box(T);
+
+    /// @brief box jluna::Symbol to Symbol
     class Symbol;
     template<Is<Symbol> T>
     Any* box(T);

@@ -118,6 +118,11 @@ namespace jluna
     template<IsTuple T>
     T unbox(Any* value);
 
+    /// @brief unbox to jluna::Proxy
+    class Symbol;
+    template<Is<Proxy> T>
+    T unbox(Any* value);
+
     /// @brief unbox to jluna::Symbol
     class Symbol;
     template<Is<Symbol> T>
