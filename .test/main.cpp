@@ -12,6 +12,9 @@ int main()
 {
     State::initialize();
 
+    jl_method_t test;
+
+
     std::cout << Type(State::safe_eval("return Array")).is_array_type() << std::endl;
     std::cout << Type(State::safe_eval("return Array{Int64, 3}")).is_array_type() << std::endl;
     return 0;
