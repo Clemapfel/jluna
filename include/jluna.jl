@@ -117,6 +117,16 @@ module jluna
     end
 
     """
+    `make_vector(t::Type) -> Vector{t}`
+
+    create empty vector of given type
+    """
+    function make_vector(t::Type) ::Vector{t}
+
+        return Vector{t}()
+    end
+
+    """
     `make_vector(::Type{T}, ::Any...) -> Vector{T}`
 
     create vector by converting all elements to target type

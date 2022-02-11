@@ -214,6 +214,13 @@ namespace jluna
     class Vector : public Array<Value_t, 1>
     {
         public:
+            /// @param default ctor
+            Vector();
+
+            /// @brief ctor as unnamed proxy from vector
+            /// @param vector
+            Vector(const std::vector<Value_t>& vec);
+
             /// @brief ctor
             /// @param value
             /// @param owner

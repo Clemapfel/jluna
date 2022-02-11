@@ -253,6 +253,16 @@ namespace jluna
     // ###
 
     template<Boxable V>
+    Vector<V>::Vector()
+        : Array<V, 1>(box<std::vector<V>>(std::vector<V>()), nullptr)
+    {}
+
+    template<Boxable V>
+    Vector<V>::Vector(const std::vector<V>& vec)
+        : Array<V, 1>(box<std::vector<V>>(vec), nullptr)
+    {}
+
+    template<Boxable V>
     Vector<V>::Vector(jl_value_t* value, std::shared_ptr<typename Proxy::ProxyValue>& owner, jl_sym_t* symbol)
         : Array<V, 1>(value, owner, symbol)
     {

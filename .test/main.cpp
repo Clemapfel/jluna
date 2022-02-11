@@ -11,6 +11,10 @@ using namespace jluna::detail;
 int main()
 {
     State::initialize();
+
+    auto vec = Vector<int>();
+    return 0;
+
     Test::initialize();
 
     Test::test("catch c exception", [](){
@@ -516,6 +520,14 @@ int main()
         Vector<int> vec = Main["vector"];
 
         Test::assert_that(vec.at(0).operator int() == 999);
+
+        vec = Vector<int>({1234, 1, 1, 2});
+
+        Test::assert_that(vec.at(0).operator int() == 1234);
+
+        vec = Vector<int>();
+
+        Test::assert_that(vec.size() == 0);
     });
 
     Test::test("array: reject wrong type", []()
