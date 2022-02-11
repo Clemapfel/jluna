@@ -11,12 +11,9 @@ using namespace jluna::detail;
 int main()
 {
     State::initialize();
-
-    auto vec = Vector<int>();
-    return 0;
-
     Test::initialize();
 
+    /*
     Test::test("catch c exception", [](){
 
         Test::assert_that_throws<JuliaException>([](){
@@ -871,6 +868,76 @@ int main()
             Test::assert_that(a1 >= a2);
         }
     });
+     */
+
+    Test::test("Type: CTOR", []() {
+
+        auto type = Type(jl_nothing_type);
+        Test::assert_that(type.operator _jl_datatype_t *() == jl_nothing_type);
+    });
+    
+    auto test_type = []<typename T>(Type& a, T b) {
+        
+        std::string name = "Type Constant: ";
+        name += jl_to_string((Any*) a);
+        
+        Test::test(name, [&](){
+            return a.operator jl_datatype_t*() == reinterpret_cast<jl_datatype_t*>(b);
+        });
+    };
+    
+    test_type(AbstractArray_t, jl_abstractarray_type);
+    test_type(AbstractChar_t, jl_eval_string("return AbstractChar"));
+    test_type(AbstractFloat_t, jl_eval_string("return AbstractFloat"));
+    test_type(AbstractString_t, jl_abstractstring_type);
+    test_type(Any_t, jl_any_type);
+    test_type(Array_t, jl_array_type);
+    test_type(Bool_t, jl_bool_type);
+    test_type(Char_t, jl_char_type);
+    test_type(DataType_t, jl_datatype_type);
+    test_type(DenseArray_t, jl_densearray_type);
+    test_type(Exception_t, jl_eval_string("return Exception"));
+    test_type(Expr_t, jl_expr_type);
+    test_type(Float16_t, jl_float16_type);
+    test_type(Float32_t, jl_float32_type);
+    test_type(Float64_t, jl_float64_type);
+    test_type(Function_t, jl_function_type);
+    test_type(GlobalRef_t, jl_globalref_type);
+    test_type(IO_t, jl_eval_string("return IO"));
+    test_type(Int128_t, jl_eval_string("return Int128_t"));
+    test_type(Int16_t, jl_int16_type);
+    test_type(Int32_t, jl_int32_type);
+    test_type(Int64_t, jl_int64_type);
+    test_type(Integer_t, jl_eval_string("return Integer"));
+    test_type(LineNumberNode_t, jl_linenumbernode_type);
+    test_type(Method_t, jl_method_type);
+    test_type(Module_t, jl_module_type);
+    test_type(NTuple_t, jl_eval_string("return NTuple"));
+    test_type(NamedTuple_t, jl_namedtuple_type);
+    test_type(Nothing_t, jl_nothing_type);
+    test_type(Number_t, jl_number_type);
+    test_type(Pair_t, jl_pair_type);
+    test_type(Ptr_t, jl_pointer_type);
+    test_type(QuoteNode_t, jl_quotenode_type);
+    test_type(Real_t, jl_eval_string("return Real"));
+    test_type(Ref_t, jl_ref_type);
+    test_type(Signed_t, jl_signed_type);
+    test_type(String_t, jl_string_type);
+    test_type(Symbol_t, jl_symbol_type);
+    test_type(Task_t, jl_task_type);
+    test_type(Tuple_t, jl_tuple_type);
+    test_type(Type_t, jl_type_type);
+    test_type(TypeVar_t, jl_eval_string("return TypeVar"));
+    test_type(UInt128_t, jl_eval_string("return UInt128"));
+    test_type(UInt16_t, jl_uint16_type);
+    test_type(UInt32_t, jl_uint32_type);
+    test_type(UInt64_t, jl_uint64_type);
+    test_type(UndefInitializer_t, jl_eval_string("return UndefInitializer"));
+    test_type(Union_t, jl_eval_string("return Union"));
+    test_type(UnionAll_t, jl_unionall_type);
+    test_type(Unsigned_t, jl_eval_string("return Unsigned"));
+    test_type(VecElement_t, jl_eval_string("return VecElement"));
+    test_type(WeakRef_t, jl_weakref_type);
 
     Test::conclude();
 }
