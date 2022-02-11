@@ -29,20 +29,6 @@ namespace jluna
     };
 
     /// @brief object describing one method of a function
-    class Method
-    {
-        public:
-            /// @brief construct from function and method table index
-            /// @param function: hosting function
-            /// @param
-            Method(jl_function_t* function, size_t method_table_index);
-            TODO: deepcopy
-
-            Signature get_signature() const;
-
-        private:
-            Signature _signature;
-    };
-
-    // this feature is not yet implemented
+    class Method : public Proxy
+    {};
 }

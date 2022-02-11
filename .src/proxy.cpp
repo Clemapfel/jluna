@@ -107,6 +107,10 @@ namespace jluna
 
     /// ####################################################################
 
+    Proxy::Proxy()
+        : Proxy(jl_nothing, nullptr)
+    {}
+
     Proxy::Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol)
         : _content(new ProxyValue(value, owner, symbol))
     {}
@@ -138,12 +142,20 @@ namespace jluna
 
     Proxy::operator Any*()
     {
-        return _content->value();
+        auto* res = _content->value();
+        if (res == nullptr)
+            return jl_nothing;
+        else
+            return res;
     }
 
     Proxy::operator const Any*() const
     {
-        return _content->value();
+        auto* res = _content->value();
+        if (res == nullptr)
+            return jl_nothing;
+        else
+            return res;
     }
 
     Proxy::operator std::string() const

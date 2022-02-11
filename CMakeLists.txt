@@ -88,7 +88,7 @@ add_library(jluna SHARED
 
     include/expression.hpp
     .src/expression.cpp
-        include/module.hpp .src/module.cpp include/symbol.hpp .src/symbol.cpp include/type.hpp .src/type.cpp include/function.hpp .src/module.inl .src/function.cpp .src/method.cpp)
+        include/module.hpp .src/module.cpp include/symbol.hpp .src/symbol.cpp include/type.hpp .src/type.cpp include/function.hpp .src/module.inl .src/function.cpp)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C

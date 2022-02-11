@@ -14,6 +14,9 @@ namespace jluna
     class Symbol : public Proxy
     {
         public:
+            /// @brief default ctor
+            Symbol();
+
             /// @param allocate symbol julia side
             Symbol(const std::string&);
 

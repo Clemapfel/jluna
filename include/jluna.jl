@@ -392,6 +392,43 @@ module jluna
     end
 
     """
+    `get_nth_method(::Function, ::Integer) -> Method`
+
+    wrap method access, used by jlune::Method
+    """
+    function get_nth_method(f::Function, i::Integer) ::Method
+
+        return methods(f)[i]
+    end
+
+    """
+    `get_return_type_of_nth_method(::Function, ::Integer) -> Type`
+
+    used by jluna::Function to deduce method signature
+    """
+    function get_return_type_of_nth_method(f::Function, i::Integer) ::Type
+
+        return Base.return_types(test)[i]
+    end
+
+    """
+    `get_argument_type_of_nths_methods(::Function, ::Integer) -> Vector{Type}`
+
+    used by jluna::Function to deduce method signature
+    """
+    function get_argument_types_of_nth_method(f::Function, i::Integer) ::Vector{Type}
+
+        out = Vector{Type}()
+        types = methods(f)[i].sig.types
+
+        for i in 2:length(types)
+            push!(out, types[i])
+        end
+
+        return out
+    end
+
+    """
     offers verbose exception interface. Any call with safe_call will store
     the last exception and full stack trace as string in _last_exception and
     _last_message respectively
@@ -643,6 +680,10 @@ module jluna
                 else
                     name *= "." * string(n)
                 end
+            end
+
+            if name[1] == '.'
+                name = chop(name, head = 1, tail = 0)   # remove first .
             end
 
             return Main.eval(:($(Meta.parse(name))))

@@ -7,6 +7,10 @@
 
 namespace jluna
 {
+    Symbol::Symbol()
+        : Symbol("")
+    {}
+
     Symbol::Symbol(const std::string& str)
         : Proxy(box<Symbol>(str), nullptr)
     {}

@@ -11,59 +11,8 @@ using namespace jluna::detail;
 int main()
 {
     State::initialize();
-
-    jl_method_t test;
-
-
-    std::cout << Type(State::safe_eval("return Array")).is_array_type() << std::endl;
-    std::cout << Type(State::safe_eval("return Array{Int64, 3}")).is_array_type() << std::endl;
-    return 0;
-
-    State::eval("struct Singleton end");
-    Type singleton_type = Main["Singleton"];
-    Base["println"](singleton_type.is_singleton()); // true
-return 0;
-
-State::safe_eval(R"(
-    mutable struct MyType{T <: Integer, U}
-        _field1
-        _field2::T
-        _field3::U
-
-        function MyType(a::T, b::U) where {T, U}
-            return new{T, U}(undef, a, b)
-        end
-    end
-)");
-
-Type my_type = Main["MyType"];
-std::vector<std::pair<Symbol, Type>> parameters = my_type.get_parameters();
-
-for (auto& pair : parameters)
-    std::cout << pair.first.operator std::string() << " => " << pair.second.operator std::string() << std::endl;
-
-std::vector<std::pair<Symbol, Type>> fields = my_type.get_fields();
-
-for (auto& pair : fields)
-    std::cout << pair.first.operator std::string() << " => " << pair.second.operator std::string() << std::endl;
-return 0;
-
-    // verify pre initialized
-    Module our_core = Main["Base"]["Core"];
-    std::cout << (our_core == jluna::Core) << std::endl;
-
-    // conversion
-    auto as_general = State::safe_script("return Base");
-    auto as_module = as_general.as<Module>();
-    std::cout << "B: " << as_module.get_name() << std::endl;
-
-    auto m = Module(jl_base_module);
-    std::cout << "C: " << m.get_name() << std::endl;
-
-    return 0;
     Test::initialize();
 
-    /*
     Test::test("catch c exception", [](){
 
         Test::assert_that_throws<JuliaException>([](){
@@ -121,6 +70,8 @@ return 0;
 
     test_box_unbox("Pair", std::pair<size_t, std::string>(12, "abc"));
     test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(12, "abc", 0.01));
+    test_box_unbox("Proxy", Proxy((Any*) jl_main_module, nullptr));
+    test_box_unbox("Symbol", Symbol("abc"));
 
     auto test_box_unbox_iterable = []<typename T>(const std::string& name, T&& value){
 
@@ -363,7 +314,7 @@ return 0;
 
     Test::test("proxy reject as non-struct", [](){
 
-        State::safe_script(R"(
+        State::safe_eval(R"(
             struct NewStructType
                 _field
                 NewStructType() = new(true)
@@ -396,7 +347,7 @@ return 0;
 
     Test::test("proxy fieldnames", [](){
 
-        State::safe_script(R"(
+        State::safe_eval(R"(
 
             struct FieldStruct
                 _a
@@ -405,7 +356,7 @@ return 0;
             end
         )");
 
-        Proxy proxy = State::safe_script("return FieldStruct");
+        Proxy proxy = State::safe_eval("return FieldStruct");
         auto names = proxy.get_field_names();
 
         Test::assert_that(names.at(0) == "_a" and names.at(1) == "_b" and names.at(2) == "_☻");
@@ -424,7 +375,7 @@ return 0;
         Test::assert_that(jl_unbox_int64(jl_eval_string("variable[1]")) == 9999);
 
 
-        auto non_mutating_proxy = State::script("return variable");
+        auto non_mutating_proxy = State::eval("return variable");
         non_mutating_proxy = 8888;
 
         Test::assert_that(non_mutating_proxy.operator Int64() == 8888);
@@ -433,7 +384,7 @@ return 0;
 
     Test::test("proxy mutate unnamed member", [](){
 
-        State::safe_script(R"(
+        State::safe_eval(R"(
 
             mutable struct UnnamedMemberStruct
                 _field::Vector{Any}
@@ -443,14 +394,14 @@ return 0;
             instance = UnnamedMemberStruct([1, 2, 3, 4])
         )");
 
-        auto unnamed_vector = State::safe_script("return vector");
+        auto unnamed_vector = State::safe_eval("return vector");
         auto uv_a = unnamed_vector[0];
         auto uv_b = uv_a[0];
         uv_b = '?';
 
         Test::assert_that((char) unnamed_vector[0][0] == '?');
 
-        auto unnamed_instance = State::safe_script("return instance");
+        auto unnamed_instance = State::safe_eval("return instance");
         auto ui_a = unnamed_instance["_field"];
         auto ui_b = ui_a[0];
         ui_b = 999;
@@ -460,7 +411,7 @@ return 0;
 
     Test::test("proxy detach update", []()
     {
-        State::safe_script(R"(
+        State::safe_eval(R"(
 
         mutable struct Detach
 
@@ -472,7 +423,7 @@ return 0;
 
         auto proxy = Main["instance"];
 
-        State::script("instance = 9999");
+        State::safe_eval("instance = 9999");
 
         Test::assert_that((size_t) proxy["_field"] == 123);
 
@@ -483,21 +434,21 @@ return 0;
 
     Test::test("proxy make unnamed", [](){
 
-        State::script("var = [1, 2, 3, 4]");
+        State::eval("var = [1, 2, 3, 4]");
         auto named = Main["var"];
 
         named[0] = 9999;
-        Test::assert_that(State::script("return var[1]").operator int() == 9999);
+        Test::assert_that(State::eval("return var[1]").operator int() == 9999);
 
         named = named.value();
         named[0] = 0;
-        Test::assert_that(State::script("return var[1]").operator int() == 9999);
+        Test::assert_that(State::eval("return var[1]").operator int() == 9999);
         Test::assert_that(named[0].operator int() == 0);
     });
 
     Test::test("proxy reject immutable", [](){
 
-        auto string_proxy = State::script("return \"string\"");
+        auto string_proxy = State::eval("return \"string\"");
         auto first = string_proxy[0];
 
         Test::assert_that(first.operator char() == 's');
@@ -514,7 +465,7 @@ return 0;
 
         Test::assert_that(thrown);
 
-        State::safe_script(R"(
+        State::safe_eval(R"(
 
             struct ImmutableStructType
                 _field;
@@ -546,7 +497,7 @@ return 0;
 
     Test::test("proxy cast", []() {
 
-        State::safe_script(R"(
+        State::safe_eval(R"(
             symbol = Symbol("")
             array = [1, 2, 3, 4]
             type = Type
@@ -561,7 +512,7 @@ return 0;
 
      Test::test("array: ctor", [](){
 
-        State::safe_script("vector = [999, 2, 3, 4, 5]");
+        State::safe_eval("vector = [999, 2, 3, 4, 5]");
         Vector<int> vec = Main["vector"];
 
         Test::assert_that(vec.at(0).operator int() == 999);
@@ -572,7 +523,7 @@ return 0;
         //Test::assert_that(false);
         try
         {
-            Array<size_t, 1> arr = State::script(R"(return ["abc", "def"])");
+            Array<size_t, 1> arr = State::eval(R"(return ["abc", "def"])");
             arr.at(0) = "string";
         }
         catch(...)
@@ -581,21 +532,21 @@ return 0;
 
     Test::test("array: front/back", []()
     {
-        State::safe_script("vector = [999, 2, 3, 4, 666]");
+        State::safe_eval("vector = [999, 2, 3, 4, 666]");
         Array1d vec = Main["vector"];
         Test::assert_that(vec.front().operator int() == 999 and vec.back().operator int() == 666);
     });
 
     Test::test("array: empty", []()
     {
-        State::safe_script("vector = []");
+        State::safe_eval("vector = []");
         Array1d vec = Main["vector"];
         Test::assert_that(vec.empty());
     });
 
     Test::test("array: Nd at", [](){
 
-        State::safe_script("array = reshape(collect(1:27), 3, 3, 3)");
+        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d vec = Main["array"];
 
         static auto getindex = [&](size_t a, size_t b, size_t c) -> size_t
@@ -615,7 +566,7 @@ return 0;
     });
 
     Test::test("array: out of range", [](){
-        State::safe_script("array = reshape(collect(1:27), 3, 3, 3)");
+        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d arr = Main["array"];
 
         static auto test = [&](size_t a, size_t b, size_t c) -> bool
@@ -640,7 +591,7 @@ return 0;
 
     Test::test("array_iterator: +/-", [](){
 
-        State::safe_script("array = reshape(collect(1:27), 3, 3, 3)");
+        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d arr = Main["array"];
 
         auto it = arr.begin();
@@ -657,7 +608,7 @@ return 0;
         // check behavior if owner proxy gets reassigned during iteration
         // unlike proxy, should segfault
 
-        State::safe_script("vec =[1:20]");
+        State::safe_eval("vec =[1:20]");
         Array3d arr = Main["vec"];
 
         auto it = arr.begin();
@@ -669,7 +620,7 @@ return 0;
             }
         }
 
-        State::safe_script("vec = [1, 2, 3, 4, 5]");
+        State::safe_eval("vec = [1, 2, 3, 4, 5]");
 
         bool thrown = false;
         try
@@ -686,7 +637,7 @@ return 0;
 
     Test::test("array_iterator: comparison", []()
     {
-        State::safe_script("array = reshape(collect(1:27), 3, 3, 3)");
+        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d arr = Main["array"];
 
         auto a = arr.begin();
@@ -700,7 +651,7 @@ return 0;
 
     Test::test("array_iterator: cast to value", [](){
 
-        State::safe_script("array = reshape(collect(1:27), 3, 3, 3)");
+        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d arr = Main["array"];
 
         bool thrown = false;
@@ -720,7 +671,7 @@ return 0;
 
     Test::test("array_iterator: cast to proxy", [](){
 
-        State::safe_script("array = reshape(collect(1:27), 3, 3, 3)");
+        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d arr = Main["array"];
 
         auto it = arr.at(0, 0, 0);
@@ -731,7 +682,7 @@ return 0;
 
     Test::test("vector: insert", [](){
 
-        State::safe_script("vector = [1, 2, 3, 4]");
+        State::safe_eval("vector = [1, 2, 3, 4]");
         Vector<size_t> vec = Main["vector"];
 
         vec.insert(0, 16);
@@ -740,7 +691,7 @@ return 0;
 
     Test::test("vector: erase", [](){
 
-        State::safe_script("vector = [1, 99, 3, 4]");
+        State::safe_eval("vector = [1, 99, 3, 4]");
         Vector<size_t> vec = Main["vector"];
 
         vec.erase(0);
@@ -748,7 +699,7 @@ return 0;
     });
 
     Test::test("vector: append", [](){
-        State::safe_script("vector = [1, 1, 1, 1]");
+        State::safe_eval("vector = [1, 1, 1, 1]");
         Vector<size_t> vec = Main["vector"];
 
         vec.push_front(999);
@@ -806,7 +757,7 @@ return 0;
             return jl_box_int64(as_int);
         });
 
-        State::safe_script("@assert cppcall(:test, 100) == 111");
+        State::safe_eval("@assert cppcall(:test, 100) == 111");
     });
 
     Test::test("C: not registered", [](){
@@ -814,7 +765,7 @@ return 0;
         bool thrown = false;
         try
         {
-            State::safe_script("cppcall(:unnamed)");
+            State::safe_eval("cppcall(:unnamed)");
         }
         catch (...)
         {
@@ -835,7 +786,7 @@ return 0;
 
         try
         {
-            State::safe_script("cppcall(:test)");
+            State::safe_eval("cppcall(:test)");
         }
         catch (...)
         {
@@ -858,9 +809,9 @@ return 0;
             try
             {
                 if (e == "zero")
-                    State::safe_script("cppcall(:" + e + ", 123)");
+                    State::safe_eval("cppcall(:" + e + ", 123)");
                 else
-                    State::safe_script("cppcall(:" + e + ")");
+                    State::safe_eval("cppcall(:" + e + ")");
             }
             catch (JuliaException& e)
             {
@@ -870,7 +821,44 @@ return 0;
             Test::assert_that(thrown);
         }
     });
-     */
+
+    Test::test("Symbol: CTOR", [](){
+
+        auto proxy = Symbol("abc");
+
+        Test::assert_that(proxy.get_type() == Symbol_t);
+        Test::assert_that(proxy.operator std::string() == "abc");
+    });
+
+    Test::test("Symbol: Hash", [](){
+
+        auto proxy = Symbol("abc");
+
+        Test::assert_that(Base["hash"](proxy).operator size_t() == jluna::c_adapter::hash("abc"));
+    });
+
+    Test::test("Symbol: Comparison", [](){
+
+        auto a1 = Symbol("abc");
+        auto a2 = Symbol("abc");
+        auto b = Symbol("ß213");
+
+        Test::assert_that(a1 == a2);
+        Test::assert_that(a1 != b);
+
+        if (c_adapter::hash("abc") < c_adapter::hash("ß213"))
+        {
+            Test::assert_that(a1 < b);
+            Test::assert_that(a1 <= b);
+            Test::assert_that(a1 <= a2);
+        }
+        else
+        {
+            Test::assert_that(a1 > b);
+            Test::assert_that(a1 >= b);
+            Test::assert_that(a1 >= a2);
+        }
+    });
 
     Test::conclude();
 }
