@@ -28,7 +28,7 @@ namespace jluna
         {}
     };
 
-    /// @brief object describing one method of a function
+    /// @brief object describing one method of a function, returned by Type::get_methods and Function::get_methods
     class Method : public Proxy
     {};
 }

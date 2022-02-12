@@ -312,6 +312,15 @@ module jluna
     end
 
     """
+    `is_name_typename(::Type, ::Type) -> Bool`
+
+    unroll type declaration, then check if name is typename
+    """
+    function is_name_typename(type_in::Type, type_comparison::Type) ::Bool
+        return access_property(type_in, :name) == Base.typename(type_comparison)
+    end
+
+    """
     `get_n_fields(::Type) -> Int64`
     """
     function get_n_fields(type::Type) ::Int64

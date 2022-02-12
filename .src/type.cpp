@@ -130,47 +130,21 @@ namespace jluna
         return jl_is_abstract_ref_type((jl_value_t*) get());
     }
 
-    bool Type::is_array_type() const
-    {
-        return jl_is_array_type(get());
-    }
-
-    bool Type::is_opaque_closure_type() const
-    {
-        return jl_is_opaque_closure_type(get());
-    }
-
-    bool Type::is_tuple_type() const
-    {
-        return jl_is_tuple_type(get());
-    }
-
-    bool Type::is_named_tuple_type() const
-    {
-        return jl_is_namedtuple_type(get());
-    }
-
-    bool Type::is_type_type() const
-    {
-        return jl_is_type_type((jl_value_t*) get());
-    }
-
-    bool Type::is_union_type() const
-    {
-        return jl_is_uniontype(get());
-    }
-
-    bool Type::is_unionall_type() const
-    {
-        return jl_is_unionall(get());
-    }
-
     bool Type::is_declared_mutable() const
     {
         return jl_is_mutable_datatype(get());
     }
 
+    bool Type::is_typename(const Type& other)
+    {
+        static jl_function_t* is_name_typename = jl_find_function("jluna", "is_name_typename");
+        return unbox<bool>(jluna::safe_call(is_name_typename, get(), other.get()));
+    }
 
-
+    bool Type::is_typename(const std::string& symbol)
+    {
+        static jl_function_t* is_name_typename = jl_find_function("jluna", "is_name_typename");
+        return unbox<bool>(jluna::safe_call(is_name_typename, get(), jl_eval_string(("Main.eval(Symbol(\"" + symbol + "\"))").c_str())));
+    }
 }
 

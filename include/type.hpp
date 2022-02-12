@@ -47,11 +47,11 @@ namespace jluna
 
             /// @brief get number of methods
             /// @returns size_t
-            /// size_t get_n_methods() const;
+            //size_t get_n_methods() const;
 
             /// @brief methods
             /// @returns vector of jluna::Methods
-            /// std::vector<Method> get_methods() const;
+            //std::vector<Method> get_methods() const;
 
             /// @brief get number of fields
             /// @returns size_t
@@ -128,33 +128,15 @@ namespace jluna
             /// @returns bool
             bool is_abstract_ref_type() const;
 
-            /// @brief is array type
+            /// @brief check if .name property of unrolled type is equal to typename
+            /// @param symbol: name of type, evaluated to Main.eval(symbol)
             /// @returns bool
-            bool is_array_type() const;
+            bool is_typename(const std::string& symbol);
 
-            /// @brief is opaque closure type
+            /// @brief check if .name property of unrolled type is equal to typename
+            /// @param type
             /// @returns bool
-            bool is_opaque_closure_type() const;
-
-            /// @brief is tuple type
-            /// @returns bool
-            bool is_tuple_type() const;
-
-            /// @brief is tuple type
-            /// @returns bool
-            bool is_named_tuple_type() const;
-
-            /// @brief is type type
-            /// @returns bool
-            bool is_type_type() const;
-
-            /// @brief is type a union of types
-            /// @returns bool
-            bool is_union_type() const;
-
-            /// @brief is type a union all type
-            /// @returns bool
-            bool is_unionall_type() const;
+            bool is_typename(const Type& other);
 
         private:
             jl_datatype_t* get() const;

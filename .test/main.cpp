@@ -939,6 +939,110 @@ int main()
     test_type(VecElement_t, jl_eval_string("return VecElement"));
     test_type(WeakRef_t, jl_weakref_type);
 
+    Test::test("Type: (<:)", [](){
+        Test::assert_that(Char_t.is_subtype_of(Char_t));
+        Test::assert_that(Char_t.is_subtype_of(AbstractChar_t));
+        Test::assert_that(Char_t.is_supertype_of(Char_t));
+        Test::assert_that(AbstractChar_t.is_supertype_of(Char_t));
+        Test::assert_that(Char_t.is_same_as(Char_t));
+        Test::assert_that(Char_t == Type(jl_char_type));
+        Test::assert_that(not (Char_t != Type(jl_char_type)));
+    });
+
+    Test::test("Type: get_symbol", [](){
+        Test::assert_that(AbstractChar_t.get_symbol().operator jl_sym_t *() == jl_symbol("AbstractChar"));
+    });
+
+    Test::test("Type: get_parameters", [](){
+
+        State::safe_eval(R"(
+            struct aiszdbla{T <: Integer, U}
+            end
+        )");
+
+        Type type = Main["aiszdbla"];
+        Test::assert_that(type.get_n_parameters() == 2);
+
+        auto params = type.get_parameters();
+
+        Test::assert_that(params.at(0).first == Symbol("T"));
+        Test::assert_that(params.at(0).second == Integer_t);
+        Test::assert_that(params.at(1).first == Symbol("U"));
+        Test::assert_that(params.at(1).second == Any_t);
+    });
+
+    Test::test("Type: get_fields", [](){
+
+        State::safe_eval(R"(
+            struct aslaiu
+                _a::Integer
+                _b
+            end
+        )");
+
+        Type type = Main["aslaiu"];
+        Test::assert_that(type.get_n_fields() == 2);
+
+        auto fields = type.get_fields();
+
+        Test::assert_that(fields.at(0).first == Symbol("_a"));
+        Test::assert_that(fields.at(0).second == Integer_t);
+        Test::assert_that(fields.at(1).first == Symbol("_b"));
+        Test::assert_that(fields.at(1).second == Any_t);
+    });
+
+    Test::test("Type: is_primitive", [](){
+
+        State::safe_eval("primitive type PrimitiveType 16 end");
+        Type t = Main["PrimitiveType"];
+        Test::assert_that(t.is_primitive());
+        Test::assert_that(not Array_t.is_primitive());
+    });
+
+    Test::test("Type: is_struct_type", [](){
+        State::safe_eval("struct asidblasiu end");
+        Type t = Main["asidblasiu"];
+        Test::assert_that(t.is_struct_type());
+        Test::assert_that(not Bool_t.is_struct_type());
+    });
+
+    Test::test("Type: is_declared_mutable", [](){
+        State::safe_eval("mutable struct asdbas end");
+        Type t = Main["asdbas"];
+        Test::assert_that(t.is_declared_mutable());
+        Test::assert_that(not Bool_t.is_declared_mutable());
+    });
+
+    Test::test("Type: is_isbits", [](){
+       Test::assert_that(Bool_t.is_isbits());
+       Test::assert_that(not Module_t.is_isbits());
+    });
+
+    Test::test("Type: is_singleton", [](){
+        State::safe_eval("struct asdiubasldiba end");
+        Type t = Main["asdiubasldiba"];
+        Test::assert_that(t.is_singleton());
+        Test::assert_that(not Module_t.is_singleton());
+    });
+
+    Test::test("Type: is_abstract_type", [](){
+       Test::assert_that(AbstractChar_t.is_abstract_type());
+       Test::assert_that(not Bool_t.is_abstract_type());
+    });
+
+    Test::test("Type: is_abstract_ref_type", [](){
+
+        auto t = Type(State::safe_eval("return Ref{AbstractFloat}")).is_abstract_ref_type();
+        Test::assert_that(AbstractChar_t.is_abstract_type());
+        Test::assert_that(not Bool_t.is_abstract_type());
+    });
+
+    Test::test("Type: is_typename", [](){
+
+        Test::assert_that(Array_t.is_typename("Array"));
+        Test::assert_that(Array_t.is_typename(Array_t));
+    });
+
     Test::conclude();
 }
 
