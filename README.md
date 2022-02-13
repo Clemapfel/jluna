@@ -201,8 +201,7 @@ If errors appear at any point, head to the [step-by-step guide](./docs/installat
 
 ## License
 
-`jluna` is supplied under creative commons license, available [here](https://creativecommons.org/licenses/by-nc/3.0/legalcode). 
-
-It is freely available for non-commercial and educational use. For use in for-profit commercial applications, please [contact the developer](https://www.clemens-cords.com/contact).
+`jluna` is supplied under Open Software License 3.0, available [here](https://opensource.org/licenses/OSL-3.0).
+For collaboration or further questions, feel free to [contact the developer](https://www.clemens-cords.com/contact).
 
 ---
