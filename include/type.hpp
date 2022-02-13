@@ -37,6 +37,9 @@ namespace jluna
             /// @brief decay to C-type
             operator jl_datatype_t*();
 
+            /// @brief unroll type as much as possible
+            Type unroll() const;
+
             /// @brief get direct super type
             Type get_super_type() const;
 

@@ -18,6 +18,12 @@ namespace jluna
         : Proxy(value, owner, symbol)
     {}
 
+    Type Type::unroll() const
+    {
+        static jl_function_t* unroll = jl_find_function("jluna", "unroll_type");
+        return Type((jl_datatype_t*) jluna::safe_call(unroll, get()));
+    }
+
     Type::operator jl_datatype_t*()
     {
         return get();

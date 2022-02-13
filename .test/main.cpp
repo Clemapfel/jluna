@@ -13,9 +13,8 @@ int main()
     State::initialize();
     Test::initialize();
 
-    std::cout << Array_t.is_typename("Array") << std::endl;
-std::cout << Array_t.is() << std::endl;
-    return 0;
+
+return 0;
 
     /*
     Test::test("catch c exception", [](){
@@ -1051,5 +1050,4 @@ std::cout << Array_t.is() << std::endl;
 
     Test::conclude();
 }
-
 

@@ -298,17 +298,17 @@ module jluna
     dot(x::Any, field_name::Symbol) = return eval(:($x.$field_name))
 
     """
-    `access_property(::Type, ::Symbol) -> Any`
+    `unroll_type(::Type) -> Type`
 
-    unroll type declaration, then access property
+    unroll type declaration
     """
-    function access_property(type::Type, symbol::Symbol) ::Any
+    function unroll_type(type::Type) ::Type
 
-        while length(propertynames(type)) == 2
+        while hasproperty(type, :body)
             type = type.body
         end
 
-        return getproperty(type, symbol)
+        return type
     end
 
     """
@@ -317,7 +317,7 @@ module jluna
     unroll type declaration, then check if name is typename
     """
     function is_name_typename(type_in::Type, type_comparison::Type) ::Bool
-        return access_property(type_in, :name) == Base.typename(type_comparison)
+        return getproperty(type_in, :name) == Base.typename(type_comparison)
     end
 
     """
@@ -352,8 +352,10 @@ module jluna
     """
     function get_parameters(type::Type) ::Vector{Pair{Symbol, Type}}
 
+        type = unroll_type(type)
+
         out = Vector{Pair{Symbol, Type}}();
-        parameters = access_property(type, :parameters)
+        parameters = getproperty(type, :parameters)
 
         for i in 1:(length(parameters))
             push!(out, parameters[i].name => parameters[i].ub)
@@ -366,7 +368,10 @@ module jluna
     `get_n_parameters(::Type) -> Int64`
     """
     function get_n_parameters(type::Type) ::Int64
-        return length(access_property(type, :parameters))
+
+        type = unroll_type(type)
+
+        return length(getproperty(type, :parameters))
     end
 
     """
