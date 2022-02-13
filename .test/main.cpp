@@ -13,10 +13,6 @@ int main()
     State::initialize();
     Test::initialize();
 
-
-return 0;
-
-    /*
     Test::test("catch c exception", [](){
 
         Test::assert_that_throws<JuliaException>([](){
@@ -871,7 +867,6 @@ return 0;
             Test::assert_that(a1 >= a2);
         }
     });
-     */
 
     Test::test("Type: CTOR", []() {
 
