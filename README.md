@@ -1,6 +1,6 @@
 # jluna: A modern julia ⭤ C++ Wrapper (v0.5)
 
-![](./favicon.png)
+![](./header.png)
 
 Julia is a beautiful language, it is well-designed and well-documented. Julias C-API is also well-designed, less beautiful and much less... documented.
 
