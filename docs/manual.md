@@ -52,8 +52,8 @@ Please navigate to the appropriate section by clicking the links below:
   10.3 [Type Order](#type-order)<br>
   10.4 [Type Info: Parameters](#type-info)<br>
   10.5 [Type Info: Fields](#fields)<br>
-  10.6 [~~Type Info: Methods~~]()<br>
-  10.7 [~~Type Info: Properties~~]()<br>
+  10.6 [~~Type Info: Methods~~](#methods)<br>
+  10.7 [~~Type Info: Properties~~](#properties)<br>
   10.8 [Type Classification](#type-classification)<br>
 11. [~~Expressions~~](#expressions)<br>
 12. [~~Usertypes~~](#usertypes)<br>
@@ -860,7 +860,7 @@ Base
 #### Bindings
 
 Bindings are a little more relevant. `Module::get_bindings` returns a map (or `IdDict` in julia parlance). For each pair in the map, `.first` is the *name* (of type `jluna::Symbol`) of a variable, `.second` is the *value* of the variable, as an unnamed general proxy.
-We will learn more about `jluna::Symbol` in the [section on introspection](#introspection). For now, simply think of them as their julia-side equivalent `Base.Symbol`.
+We will learn more about `jluna::Symbol` soon. For now, simply think of them as their julia-side equivalent `Base.Symbol`.
 
 ```cpp
 State::eval(R"(
@@ -974,13 +974,13 @@ def (14299692412389864439)
 abc (16076289990349425027)
 ```
 
-We see that lexicographically, the symbol are out of order. They are, however, ordered properly according to their hashes.
+We see that, lexicographically, the symbol are out of order. They are, however, ordered properly according to their hashes.
 
 ---
 
 ## Functions
 
-Functions in julia are movable, reassignable objects just like any other type, however in C++ raw functions are usually handled separately. `jluna` aims to bridge this gap through its function interface.
+Functions in julia are movable, reassignable objects just like any other type. In C++, raw functions are usually handled separately and while object wrappers exist, they are very different from julia functions. `jluna` aims to bridge this gap through its own function interface.
 
 ### Calling julia Functions from C++
 
@@ -1015,12 +1015,11 @@ Base["println"](Base["typeof"](std::set<std::map<size_t, std::pair<size_t, std::
 Set{IdDict{UInt64, Pair{UInt64, Vector{Int32}}}}<T>
 ```
 
-As mentioned before, any boxable type, including proxies themself, can be used as arguments directly without manually having to call `box` or `unbox`. If an argument is not (un)boxable, a compile-time error is thrown which makes this way of calling functions much, much safer than the C-APIs `jl_call`.
+As mentioned before, any boxable type, including proxies themself, can be used as arguments directly without manually having to call `box` or `unbox`. If an argument is not (un)boxable, a compile-time error is thrown. This makes `jluna`s way of calling functions much, much safer than the C-APIs `jl_call`.
 
 ### Calling C++ Functions from julia
 
-The previous section dealt with calling julia-side functions from C++. We will now learn how to call C++-side functions from julia. To do this without using the C-API (which can call C-only functions directly but has no mechanism for calling C++-only functions), we need shift our understanding where with "Functions" we mean "Lambdas".
-
+The previous section dealt with calling julia-side functions from C++. We will now learn how to call C++-side functions from julia. To do this without using the C-API (which can call C-only functions directly but has no mechanism for calling C++-only functions), we need shift our vocabulary: From now on with "Functions", we mean "Lambdas".
 
 > It is vital that you are familiar with lambdas, their syntax (such as trailing return types), what capturing means and how templated lambdas work in C++20. If this is not the case, please consult the [official documentation](https://en.cppreference.com/w/cpp/language/lambda) before continuing.
 
@@ -1041,9 +1040,6 @@ register_function("add_2_to_vector", [](Any* in) -> Any* {
     // return vector to julia
     return vec.operator Any*(); // box or cast to Any*
 });
-
-result = cppcall(:add_2_to_vector, [1, 2, 3, 4])
-println("julia prints: ", result)
 ```
 
 Note the explicit trailing return type `-> Any*`. It is recommended to always specify it when using lambdas in `jluna` (and, for style reasons only, in C++ in general). Specifying `-> void` will make the function return `nothing` to julia, specifying `-> Any*` will make the return value available to julia, regardless of its type.
@@ -1063,11 +1059,22 @@ Unlike julias `ccall`, we do not supply return or argument types, all of these a
 + any `Boxable` can be used as return type
 + any `Unboxable` can be used as argument type
 
-We will learn more about how to make our own custom types compatible with this in the [~~section on usertypes~~](#usertypes).
+We will learn more about how to make our own custom types compatible with functions in the [~~section on usertypes~~](#usertypes).
 
 Let's call our above example function. It takes an arbitrary vector of integers and adds 2 to each element, then returns that vector:
 
 ```cpp
+register_function("add_2_to_vector", [](Any* in) -> Any* {
+
+    Vector<size_t> vec = in;
+
+    for (auto e : vec)
+        e = e.operator size_t() + 2;
+
+    return box(vec);
+});
+
+// call from julia
 State::eval(R"(
   result = cppcall(:add_2_to_vector, [1, 2, 3, 4])
   println("julia prints: ", result)
@@ -1094,7 +1101,7 @@ We are, however, restricted to only certain function *names*. While arbitrary ju
 "anything.withadot", "#123", "0012"
 ```
 
- See the [julia manual entry on variable names](https://docs.julialang.org/en/v1/manual/variables/#man-allowed-variable-names) for more information about strictly illegal names. Any name disallowed there is also illegal in `jluna`. Additionally, `jluna` disallows names starting with `#`, as they are reserved for internal IDs and names containing `.` as they can confuse expression parsing.
+ See the [julia manual entry on variable names](https://docs.julialang.org/en/v1/manual/variables/#man-allowed-variable-names) for more information about strictly illegal names. Any name disallowed there is also illegal in `jluna`. Additionally, `jluna` disallows names starting with `#`, as they are reserved for internal IDs, and names containing `.`, as they can confuse expression parsing.
 
 #### Possible Signatures
 
@@ -1116,14 +1123,14 @@ Only the following signatures for lambdas are allowed (this is enforced at compi
 (Any*, Any*, Any*, Any*) -> Any*
 ```
 
-Templated lambdas will be supported in a future version but are currently disallowed as of `jluna v0.5`
+Templated lambdas will be supported in a future version but are currently disallowed as of `jluna v0.5`. The correct signature is enforced at compile time.
 
 #### Using Non-julia Objects in Functions
 
-While this may seem limiting at first, as stated, it is not. We are restricted to `Any*` for **arguments**, however we can instead access arbitrary C++ objects by reference or by value through **captures**: 
+While this may seem limiting at first, as stated, it is not. We are restricted to `Any*` for **arguments**, however we can instead access arbitrary C++ objects by reference or by value through **captures** which are unrestricted: 
 
 ```cpp
-// a C++-object, uncompatible with julia
+// a C++-object, incompatible with julia
 struct IncompatibleObject
 {
     void operator()(size_t x) // not const
@@ -1149,7 +1156,7 @@ State::safe_eval("cppcall(:call_object, 456)");
 object called 456
 ```
 
-This makes it possible to call C++-only static and non-static member function and modify C++-side objects through their member functions. Through this capturing by reference, we can for example hand a julia-side object to a registered function, which then sets a member of a purely C++-side object.
+This makes it possible to call C++-only static and non-static member function and modify C++-side objects through their member functions. Through this capturing by reference, we can for example hand a julia-side object to a registered function, which then sets a member of a purely C++-side object. We could also capture other functions and other lambdas or even proxies, the possibilities are endless, hence why this system is able to call arbitrary C++ code.
 
 #### Calling Templated Lambda Functions
 
@@ -1228,7 +1235,9 @@ State::eval("Main.lambda()");
 cpp called
 ```
 
-For lambdas with different signature, they would of course expect 1, 2, etc. many arguments. The correct number of arguments is enforced at runtime.
+For lambdas with different signature, they would of course expect 1, 2, etc. many arguments. The correct number of arguments is enforced at runtime. 
+
+This exact same process of assigning lambdas to julia-side variables also works in module scope using `jluna::Module.assign` which makes it possible to construct entire modules consisting of only c++-side functionality.
 
 ## Arrays
 
@@ -1433,11 +1442,11 @@ Note that `Array<T, R>::operator[](Range_t&&)` (linear indexing with a range) al
 ## Introspection
 
 The main advantage julia has over C++ is its introspection and meta-level features. 
-While introspection is technically possible in C++, it can be quite cumbersome and complicated. In julia, things like deducing the signature of a function or classifying types is fairly straight-forward and accessible even to novice programmers. `jluna` aims to take advantage of this by giving a direct interface to this part of julias toolset through `jluna::Type`.
+While introspection is technically possible in C++, it can be quite cumbersome and complicated. In julia, things like deducing the signature of a function, or classifying types, is fairly straight-forward and accessible, even to a novice programmers. `jluna` aims to take advantage of this by giving a direct interface to that part of julias toolset: `jluna::Type`.
 
 ### Type Proxies
 
-We've seen specialized module-, symbol- and array-proxies. `jluna` currently has a fourth kind of proxy, `jluna::Type`, which is valuable in introspection. While heavy overlap is present, `jluna::Type` is not a direct equivalent of `Base.Type{T}`. This section will introduce its many functionalities and how to best use them.
+We've seen specialized module-, symbol- and array-proxies. `jluna` currently has a fourth kind of proxy, `jluna::Type`, which is valuable in introspection. While overlap is present, `jluna::Type` is not a direct equivalent of `Base.Type{T}`. This section will introduce its many functionalities and how to best use them.
 
 There are multiple ways to construct a type proxy:
 
@@ -1455,7 +1464,7 @@ auto type = type_valued_proxy.as<Type>();
 
 // deduce julia-side type from (Un)boxable C++ Type
 auto type = Type::construct_from<std::vector<int>>();
-    // is not Base.Vector<Int32> julia-side
+    // is now Base.Vector<Int32> julia-side
 ```
 
 Where the latter uses `to_julia_type<T>` to deduce which julia-side type to construct the type proxy from.
@@ -1593,7 +1602,7 @@ println(propertynames(MyType.body.body))
 ```
 (:name, :super, :parameters, :types, :instance, :layout, :size, :hash, :flags)
 ```
-These behave like fields but are not part of the declaration. We will learn more about what exactly each property means and how to access them later on.
+These behave like fields but are not part of the declaration. We will learn more about what exactly each property means, and how to access them later on.
 
 ### Parameters
 
@@ -1658,11 +1667,7 @@ _field1 => Any
 _field2 => Integer
 _field3 => Any
 ```
-We again get a vector of pairs where `.first` is the name, `.second` is the upper type bounds:
-
-+ `_field1` is completely arbitrary which means the most abstract type of a variable that binds to it is `Any`
-+ `_field2` is restricted by `T` which in turn is restricted by `Integer`. Because of this, `_field2` is deduced to be restricted by `Integer` as well
-+ `_field3` is restricted by `U`, however `U` is unrestricted. Because of this, `_field3` is deduced to, again, be restricted by `Any`.
+We, again, get a vector of pairs where `.first` is the name, `.second` is the upper type bound of the corresponding field.
 
 #### Methods
 
@@ -1674,7 +1679,7 @@ We again get a vector of pairs where `.first` is the name, `.second` is the uppe
 
 ### Type Classification
 
-To classify a type means to evaluate a condition based on a types attributes. `jluna` offers an array of convenient classifications, some of which are available as part of the julia core library, some of which are not. This section will list all, along with their meaning:
+To classify a type means to evaluate a condition based on a types attributes in order to get information about how similiar or different clusters of types are. `jluna` offers a number of convenient classifications, some of which are available as part of the julia core library, some of which are not. This section will list all, along with their meaning:
 
 + `is_primitive`: was the type declared using the keyword `primitive`
     ```cpp
@@ -1714,8 +1719,9 @@ To classify a type means to evaluate a condition based on a types attributes. `j
     Type(State::eval("return Ref{AbstractFloat}")).is_abstract_ref_type(); //true
     Type(State::eval("return Ref{AbstractFloat}(Float32(1))")).is_abstract_ref_type(); // false
     ```
-+ `is_typename(T)`: is the `.name` property of the type equal to `Base.typename(T)`
++ `is_typename(T)`: is the `.name` property of the type equal to `Base.typename(T)`. Can be thought of as "Is the type a T"
     ```cpp
+    // is the type an Array:
     Type(State::safe_eval("return Array")).is_typename("Array"); // true
     Type(State::safe_eval("return Array{Integer, 3}")).is_typename("Array"); // also true
     ```
@@ -1754,7 +1760,7 @@ Array{T, N}
 (:name, :super, :parameters, :types, :instance, :layout, :size, :hash, :flags)
 ```
 
-Once fully unrolled, we have access to the properties necessary for introspect. `jluna` does this unrolling automatically, meaning all parametric types held by a `jluna::Type` proxy are fully specialized.
+Once fully unrolled, we have access to the properties necessary for introspect. `jluna` does this unrolling automatically, meaning all parametric types held by a `jluna::Type` proxy are fully specialized. We can fully specialize a type using the member function `.unroll()`.
 
 ---
 

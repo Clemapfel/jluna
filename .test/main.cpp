@@ -11,6 +11,15 @@ using namespace jluna::detail;
 int main()
 {
     State::initialize();
+
+    Base.assign("println", []() -> void {
+    std::cout << "now only prints this in cpp" << std::endl;
+});
+
+// execute julia-side
+State::safe_eval("println(1234)");
+return 0;
+
     Test::initialize();
 
     Test::test("catch c exception", [](){

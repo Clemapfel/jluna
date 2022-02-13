@@ -125,6 +125,7 @@ Some of the many advantages `jluna` has over the C-API include:
 
 + 0-overhead performance versions of proxies and `cppcall`
 + linear algebra wrapper, matrices
++ usertypes, creating modules and struct completely C++-side
 + expression proxies
 + thread-safety, parallelization
 + multiple julia worlds, save-states: restoring a previous julia state
