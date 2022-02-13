@@ -250,6 +250,12 @@ namespace jluna
         return jl_unbox_bool(jl_call1(isempty, _content->value()));
     }
 
+    template<Boxable V, size_t R>
+    void* Array<V, R>::data()
+    {
+        return reinterpret_cast<jl_array_t*>(value())->data;
+    }
+
     // ###
 
     template<Boxable V>

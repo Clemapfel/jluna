@@ -126,6 +126,9 @@ namespace jluna
             /// @brief cast to Any*
             using Proxy::operator Any*;
 
+            /// @brief expose C-data
+            void* data();
+
         protected:
             using Proxy::_content;
 
