@@ -12,8 +12,9 @@
 #include <include/exceptions.hpp>
 #include <include/julia_extension.hpp>
 #include <include/proxy.hpp>
-#include <include/utilities.hpp>
 #include <.src/include_julia.inl>
+#include <include/module.hpp>
+#include <include/type.hpp>
 
 namespace jluna::detail
 {
@@ -42,6 +43,7 @@ namespace jluna::State
         jl_eval_string(jluna::detail::include);
         forward_last_exception();
 
+
         jl_eval_string(R"(
             begin
                 local version = tryparse(Float32, SubString(string(VERSION), 1, 3))
@@ -68,9 +70,8 @@ namespace jluna::State
         )");
         forward_last_exception();
 
-        jluna::Main = Proxy((Any*) jl_main_module, nullptr);
-        jluna::Base = Main["Base"];
-        jluna::Core = Main["Core"];
+        detail::initialize_modules();
+        detail::initialize_types();
 
         std::atexit(&jluna::detail::on_exit);
     }
@@ -94,6 +95,30 @@ namespace jluna::State
         if (jl_exception_occurred() or jl_unbox_bool(jl_eval_string("jluna.exception_handler.has_exception_occurred()")))
         {
             std::cerr << "exception in jluna::State::safe_script for expression:\n\"" << command << "\"\n" << std::endl;
+            forward_last_exception();
+        }
+        return Proxy(result, nullptr);
+    }
+
+    Proxy eval(const std::string& command) noexcept
+    {
+        jluna::throw_if_uninitialized();
+
+        std::stringstream str;
+        str << "jluna.exception_handler.unsafe_call(quote " << command << " end)" << std::endl;
+        return Proxy(jl_eval_string(str.str().c_str()), nullptr);
+    }
+
+    Proxy safe_eval(const std::string& command)
+    {
+        jluna::throw_if_uninitialized();
+
+        std::stringstream str;
+        str << "jluna.exception_handler.safe_call(quote " << command << " end)" << std::endl;
+        auto* result = jl_eval_string(str.str().c_str());
+        if (jl_exception_occurred() or jl_unbox_bool(jl_eval_string("jluna.exception_handler.has_exception_occurred()")))
+        {
+            std::cerr << "exception in jluna::State::safe_eval for expression:\n\"" << command << "\"\n" << std::endl;
             forward_last_exception();
         }
         return Proxy(result, nullptr);
@@ -166,6 +191,76 @@ namespace jluna::State::detail
         jl_gc_enable(false);
         jluna::safe_call(free_reference, jl_box_uint64(reinterpret_cast<size_t>(key)));
         jl_gc_enable(before);
+    }
+
+    void initialize_types()
+    {
+        auto unroll = [](const std::string& name) -> jl_datatype_t* 
+        {
+            return (jl_datatype_t*) jl_eval_string(("return jluna.unroll_type(" + name + ")").c_str());
+        };
+        
+        AbstractArray_t = Type(unroll("Core.AbstractArray"));
+        AbstractChar_t = Type(unroll("Core.AbstractChar"));
+        AbstractFloat_t = Type(unroll("Core.AbstractFloat"));
+        AbstractString_t = Type(unroll("Core.AbstractString"));
+        Any_t = Type(unroll("Core.Any"));
+        Array_t = Type(unroll("Core.Array"));
+        Bool_t = Type(unroll("Core.Bool"));
+        Char_t = Type(unroll("Core.Char"));
+        DataType_t = Type(unroll("Core.DataType"));
+        DenseArray_t = Type(unroll("Core.DenseArray"));
+        Exception_t = Type(unroll("Core.Exception"));
+        Expr_t = Type(unroll("Core.Expr"));
+        Float16_t = Type(unroll("Core.Float16"));
+        Float32_t = Type(unroll("Core.Float32"));
+        Float64_t = Type(unroll("Core.Float64"));
+        Function_t = Type(unroll("Core.Function"));
+        GlobalRef_t = Type(unroll("Core.GlobalRef"));
+        IO_t = Type(unroll("Core.IO"));
+        Int128_t = Type(unroll("Core.Int128"));
+        Int16_t = Type(unroll("Core.Int16"));
+        Int32_t = Type(unroll("Core.Int32"));
+        Int64_t = Type(unroll("Core.Int64"));
+        Int8_t = Type(unroll("Core.Int8"));
+        Integer_t = Type(unroll("Core.Integer"));
+        LineNumberNode_t = Type(unroll("Core.LineNumberNode"));
+        Method_t = Type(unroll("Core.Method"));
+        Module_t = Type(unroll("Core.Module"));
+        NTuple_t = Type(unroll("Core.NTuple"));
+        NamedTuple_t = Type(unroll("Core.NamedTuple"));
+        Nothing_t = Type(unroll("Core.Nothing"));
+        Number_t = Type(unroll("Core.Number"));
+        Pair_t = Type(unroll("Core.Pair"));
+        Ptr_t = Type(unroll("Core.Ptr"));
+        QuoteNode_t = Type(unroll("Core.QuoteNode"));
+        Real_t = Type(unroll("Core.Real"));
+        Ref_t = Type(unroll("Core.Ref"));
+        Signed_t = Type(unroll("Core.Signed"));
+        String_t = Type(unroll("Core.String"));
+        Symbol_t = Type(unroll("Core.Symbol"));
+        Task_t = Type(unroll("Core.Task"));
+        Tuple_t = Type(unroll("Core.Tuple"));
+        Type_t = Type(unroll("Core.Type"));
+        TypeVar_t = Type(unroll("Core.TypeVar"));
+        UInt128_t = Type(unroll("Core.UInt128"));
+        UInt16_t = Type(unroll("Core.UInt16"));
+        UInt32_t = Type(unroll("Core.UInt32"));
+        UInt64_t = Type(unroll("Core.UInt64"));
+        UInt8_t = Type(unroll("Core.UInt8"));
+        UndefInitializer_t = Type(unroll("Core.UndefInitializer"));
+        Union_t = Type(unroll("Core.Union"));
+        UnionAll_t = Type(unroll("Core.UnionAll"));
+        Unsigned_t = Type(unroll("Core.Unsigned"));
+        VecElement_t = Type(unroll("Core.VecElement"));
+        WeakRef_t = Type(unroll("Core.WeakRef"));
+    }
+
+    void initialize_modules()
+    {
+        Main = Module(jl_main_module);
+        Core = Module(jl_core_module);
+        Base = Module(jl_base_module);
     }
 }
 

@@ -126,6 +126,9 @@ namespace jluna
             /// @brief cast to Any*
             using Proxy::operator Any*;
 
+            /// @brief expose C-data
+            void* data();
+
         protected:
             using Proxy::_content;
 
@@ -214,6 +217,13 @@ namespace jluna
     class Vector : public Array<Value_t, 1>
     {
         public:
+            /// @param default ctor
+            Vector();
+
+            /// @brief ctor as unnamed proxy from vector
+            /// @param vector
+            Vector(const std::vector<Value_t>& vec);
+
             /// @brief ctor
             /// @param value
             /// @param owner

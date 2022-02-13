@@ -117,6 +117,16 @@ module jluna
     end
 
     """
+    `make_vector(t::Type) -> Vector{t}`
+
+    create empty vector of given type
+    """
+    function make_vector(t::Type) ::Vector{t}
+
+        return Vector{t}()
+    end
+
+    """
     `make_vector(::Type{T}, ::Any...) -> Vector{T}`
 
     create vector by converting all elements to target type
@@ -288,32 +298,158 @@ module jluna
     dot(x::Any, field_name::Symbol) = return eval(:($x.$field_name))
 
     """
-    `unquote(::Expr) -> Expr`
+    `unroll_type(::Type) -> Type`
 
-    remove all line number notes and the outer most :quote block from an expression
+    unroll type declaration
     """
-    macro unquote(expr::Expr)
+    function unroll_type(type::Type) ::Type
 
-        function aux!(args::Vector{Any}) ::Nothing
+        while hasproperty(type, :body)
+            type = type.body
+        end
 
-            to_delete = Vector{Integer}()
-            for (i, x) in enumerate(args)
-                if x isa LineNumberNode
-                    push!(to_delete, i)
-                elseif x isa Expr
-                    aux!(x.args)
-                end
-            end
+        return type
+    end
 
-            n_deleted = 0;
-            for i in to_delete
-                deleteat!(args, i - n_deleted)
-                n_deleted += 1
+    """
+    `is_name_typename(::Type, ::Type) -> Bool`
+
+    unroll type declaration, then check if name is typename
+    """
+    function is_name_typename(type_in::Type, type_comparison::Type) ::Bool
+        return getproperty(type_in, :name) == Base.typename(type_comparison)
+    end
+
+    """
+    `get_n_fields(::Type) -> Int64`
+    """
+    function get_n_fields(type::Type) ::Int64
+        return length(fieldnames(type))
+    end
+
+    """
+    `get_fields(::Type) -> Vector{Pair{Symbol, Type}}`
+
+    get field symbols and types, used by jluna::Type::get_fields
+    """
+    function get_fields(type::Type) ::Vector{Pair{Symbol, Type}}
+
+        out = Vector{Pair{Symbol, Type}}();
+        names = fieldnames(type)
+        types = fieldtypes(type)
+
+        for i in 1:(length(names))
+            push!(out, names[i] => types[i])
+        end
+
+        return out
+    end
+
+    """
+    `get_parameter(::Type) -> Vector{Pair{Symbol, Type}}`
+
+    get parameter symbols and upper type limits, used by jluna::Type::get_parameters
+    """
+    function get_parameters(type::Type) ::Vector{Pair{Symbol, Type}}
+
+        type = unroll_type(type)
+
+        out = Vector{Pair{Symbol, Type}}();
+        parameters = getproperty(type, :parameters)
+
+        for i in 1:(length(parameters))
+            push!(out, parameters[i].name => parameters[i].ub)
+        end
+
+        return out
+    end
+
+    """
+    `get_n_parameters(::Type) -> Int64`
+    """
+    function get_n_parameters(type::Type) ::Int64
+
+        type = unroll_type(type)
+
+        return length(getproperty(type, :parameters))
+    end
+
+    """
+    `assign_in_module(::Module, ::Symbol, ::T) -> T`
+
+    assign variable in other module, throws if variable does not exist
+    """
+    function assign_in_module(m::Module, variable_name::Symbol, value::T) ::T where T
+
+        if (!isdefined(m, variable_name))
+            throw(UndefVarError(Symbol(string(m) * "." * string(variable_name))))
+        end
+
+        return Base.eval(m, :($variable_name = $value))
+    end
+
+    """
+    `create_in_module(::Module, ::Symbol, ::T) -> T`
+
+    assign variable in other module, if variable does not exist, create then assign
+    """
+    function create_or_assign_in_module(m::Module, variable_name::Symbol, value::T) ::T where T
+        return Base.eval(m, :($variable_name = $value))
+    end
+
+    """
+    `get_names(::Module) -> IdDict{Symbol, Any}`
+
+    access all module members as dict
+    """
+    function get_names(m::Module) ::IdDict{Symbol, Any}
+
+        out = IdDict{Symbol, Any}()
+
+        for n in names(m; all = true)
+            if string(n)[1] != '#'
+                out[n] = m.eval(n)
             end
         end
 
-        aux!(expr.args)
-        return Expr(expr.head, :($(expr.args...)))
+        return out
+    end
+
+    """
+    `get_nth_method(::Function, ::Integer) -> Method`
+
+    wrap method access, used by jlune::Method
+    """
+    function get_nth_method(f::Function, i::Integer) ::Method
+
+        return methods(f)[i]
+    end
+
+    """
+    `get_return_type_of_nth_method(::Function, ::Integer) -> Type`
+
+    used by jluna::Function to deduce method signature
+    """
+    function get_return_type_of_nth_method(f::Function, i::Integer) ::Type
+
+        return Base.return_types(test)[i]
+    end
+
+    """
+    `get_argument_type_of_nths_methods(::Function, ::Integer) -> Vector{Type}`
+
+    used by jluna::Function to deduce method signature
+    """
+    function get_argument_types_of_nth_method(f::Function, i::Integer) ::Vector{Type}
+
+        out = Vector{Type}()
+        types = methods(f)[i].sig.types
+
+        for i in 2:length(types)
+            push!(out, types[i])
+        end
+
+        return out
     end
 
     """
@@ -525,15 +661,11 @@ module jluna
             unnamed_to_index(s::Symbol) = tryparse(UInt64, chop(string(s), head = 1, tail = 0))
 
             name = "";
-
-            in_main = false;
-
             for n in names
 
                 as_string = string(n);
                 if as_string[1] == _ref_id_marker
                     if as_string[2] == '1' && length(as_string) == 2 # main
-                        in_main = true
                         continue
                     else
                         name *= "jluna.memory_handler._refs[][" * chop(string(n), head = 1, tail = 0) * "][]"
@@ -545,7 +677,7 @@ module jluna
                 end
             end
 
-            if in_main
+            if name[1] == '.'
                 name = chop(name, head = 1, tail = 0)   # remove first .
             end
 
@@ -572,6 +704,10 @@ module jluna
                 else
                     name *= "." * string(n)
                 end
+            end
+
+            if name[1] == '.'
+                name = chop(name, head = 1, tail = 0)   # remove first .
             end
 
             return Main.eval(:($(Meta.parse(name))))

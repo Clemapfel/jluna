@@ -18,7 +18,10 @@
 
 namespace jluna
 {
+    // forward declarations
     class Proxy;
+    class Type;
+    class Symbol;
     template<Boxable, size_t>
     class Array;
 }
@@ -35,14 +38,14 @@ namespace jluna::State
     /// @brief execute line of code, evaluated in Main
     /// @param command
     /// @returns proxy to result, if any
-    /// @exceptions if an error occurs julia-side it will be ignore and the result of the call will be undefined
-    Proxy script(const std::string&) noexcept;
+    /// @exceptions if an error occurs julia-side, it will be ignored and the result of the call will be undefined
+    Proxy eval(const std::string&) noexcept;
 
     /// @brief execute line of code with exception handling
     /// @param command
     /// @returns proxy to result, if any
-    /// @exceptions if an error occurs julia-side a JuliaException will be thrown
-    Proxy safe_script(const std::string&);
+    /// @exceptions if an error occurs julia-side, a JuliaException will be thrown
+    Proxy safe_eval(const std::string&);
 
     /// @brief access a value, equivalent to unbox<T>(jl_eval_string("return " + name))
     /// @tparam T: type to be unboxed to
@@ -381,7 +384,16 @@ namespace jluna::State
         size_t create_reference(Any* in);
         Any* get_reference(size_t key);
         void free_reference(size_t key);
+
+        void initialize_modules();
+        void initialize_types();
+
+        template<Is<Any*>... Ts>
+        Proxy create_or_assign(const std::string& symbol, Ts... args);
     }
+
+    [[deprecated("use State::eval instead")]] Proxy script(const std::string&) noexcept;
+    [[deprecated("use State::safe_eval instead")]] Proxy safe_script(const std::string&);
 }
 
 #include ".src/state.inl"

@@ -18,6 +18,9 @@ extern "C"
     /// @returns c-string
     inline const char* jl_to_string(jl_value_t* value)
     {
+        if (value == nullptr)
+            return "nothing";
+
         static jl_function_t* tostring = jl_get_function(jl_base_module, "string");
         return jl_string_data(jl_call1(tostring, value));
     }

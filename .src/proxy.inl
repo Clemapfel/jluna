@@ -21,13 +21,13 @@ namespace jluna
     template<typename T, std::enable_if_t<std::is_base_of_v<Proxy, T>, bool>>
     Proxy::operator T()
     {
-        return T(_content->value(), _content->_owner, (Symbol*) _content->symbol());
+        return T(_content->value(), _content->_owner, (jl_sym_t*) _content->symbol());
     }
 
     template<typename T, std::enable_if_t<std::is_base_of_v<Proxy, T>, bool>>
     T Proxy::as()
     {
-        return this->operator T();
+        return T(_content->value(), _content->_owner, (jl_sym_t*) _content->symbol());
     }
 
     template<Boxable T>
@@ -39,7 +39,7 @@ namespace jluna
     template<Unboxable T>
     T Proxy::operator[](const std::string& field)
     {
-        Symbol* symbol = jl_symbol(field.c_str());
+        jl_sym_t* symbol = jl_symbol(field.c_str());
         return unbox<T>(_content.get()->get_field(symbol));
     }
 

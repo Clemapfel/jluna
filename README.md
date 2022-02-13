@@ -1,4 +1,4 @@
-# jluna: A modern julia ⭤ C++ Wrapper (v0.5)
+# jluna: A modern julia ⭤ C++ Wrapper (v0.5.4)
 
 ![](./header.png)
 
@@ -113,6 +113,7 @@ Some of the many advantages `jluna` has over the C-API include:
 + verbose exception forwarding from julia, compile-time assertions
 + wraps [most](./docs/quick_and_dirty.md#list-of-unboxables) of the relevant C++ `std` objects and types
 + multidimensional, iterable array interface with julia-style indexing
++ Deep, C++-side introspection functionalities for julia objects
 + manual written by a human for beginners
 + inline documentation for IDEs for both C++ and julia code 
 + freely mix `jluna` and the C-API
@@ -120,11 +121,14 @@ Some of the many advantages `jluna` has over the C-API include:
 
 ### Planned (but not yet implemented):
 
-+ `v0.6-0.7`: expression proxy, access to meta features via C++ including C-API-only introspection
-+ `v0.7-0.8`: linear algebra, matrices
-+ `v0.8-0.9`: thread-safety, parallelization
-+ `v0.9-1.0`: 0-overhead performance version of proxies and `cppcall`
-+ `v1.0+`: multiple julia worlds, save-states: restoring a previous julia state
+(in order of priority, highest first)
+
++ 0-overhead performance versions of proxies and `cppcall`
++ linear algebra wrapper, matrices
++ usertypes, creating modules and struct completely C++-side
++ expression proxies
++ thread-safety, parallelization
++ multiple julia worlds, save-states: restoring a previous julia state
 ---
 
 ## Documentation

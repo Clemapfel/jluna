@@ -28,6 +28,10 @@ namespace jluna
     template<IsJuliaValuePointer T>
     Any* box(T value);
 
+    /// @brief box identity
+    template<Is<bool> T>
+    Any* box(T value);
+
     /// @brief box true to Bool
     template<Is<std::bool_constant<true>> T>
     Any* box(T value);
@@ -154,6 +158,30 @@ namespace jluna
     /// @brief box lambda with signature (vector{Any}) -> Any
     template<LambdaType<std::vector<Any*>> T>
     Any* box(T lambda);
+
+    /// @brief box jluna::Symbol to Symbol
+    class Proxy;
+    template<Is<Proxy> T>
+    Any* box(T);
+
+    /// @brief box jluna::Symbol to Symbol
+    class Symbol;
+    template<Is<Symbol> T>
+    Any* box(T);
+
+    /// @brief box string to symbol
+    template<Is<Symbol> T>
+    Any* box(T);
+
+    /// @brief box jluna::Module to Module
+    class Module;
+    template<Is<Module> T>
+    Any* box(T);
+
+    /// @brief unbox jluna::Type to Type
+    class Type;
+    template<Is<Type> T>
+    Any* box(T);
 
     /// @concept requires a value to be boxable into a julia-side value
     template<typename T>

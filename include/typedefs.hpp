@@ -19,6 +19,12 @@ namespace jluna
         static inline const std::string type_name = detail::to_julia_type_aux<T>::type_name;
     };
 
+    template<typename T>
+    concept ToJuliaTypeConvertable = requires
+    {
+        to_julia_type<T>::type_name;
+    };
+
     /// @brief 1-bit bool interpreted as 8-bit Bool julia-side
     using Bool = bool;
 
@@ -58,12 +64,6 @@ namespace jluna
     /// @brief address of julia-side memory
     using Any = jl_value_t;
 
-    /// @brief address of julia-side memory that is callable as a Base.Function
+    /// @brief address of julia-side function
     using Function = jl_function_t;
-
-    /// @brief address of julia-side memory with the same layout as Base.Symbol
-    using Symbol = jl_sym_t;
-
-    /// @brief address of julia-side memory with the same layout as Base.Module
-    using Module = jl_module_t;
 }

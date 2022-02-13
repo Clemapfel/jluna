@@ -17,24 +17,27 @@
 
 namespace jluna
 {
+    class Type;
+
     /// @brief holds ownership of julia-side value. mutating named proxies mutate the corresponding variable, c.f docs/manual.md
     class Proxy
     {
         protected: class ProxyValue;
 
         public:
-            Proxy() = default;
+            /// @brief default ctor
+            Proxy();
 
             /// @brief construct with no owner, reserved for global temporaries and main
             /// @param value
             /// @param symbol
-            Proxy(Any* value, Symbol* symbol = nullptr);
+            Proxy(Any* value, jl_sym_t* symbol = nullptr);
 
             /// @brief construct with owner
             /// @param value
             /// @param owner: shared pointer to owner
             /// @param symbol
-            Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, Symbol* symbol);
+            Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol);
 
             /// @brief dtor
             ~Proxy();
@@ -64,6 +67,9 @@ namespace jluna
             /// @brief cast to Any
             operator Any*();
 
+            /// @brief cast to const Any
+            operator const Any*() const;
+
             /// @brief cast to string using julias Base.string
             virtual operator std::string() const;
 
@@ -92,7 +98,7 @@ namespace jluna
 
             /// @brief get type
             /// @returns proxy to singleton type
-            Proxy get_type() const;
+            Type get_type() const;
 
             /// @brief call with any arguments
             /// @tparams Args_t: types of arguments, need to be boxable
@@ -131,17 +137,22 @@ namespace jluna
             /// @brief update value if proxy symbol was reassigned outside of operator=
             void update();
 
+            /// @brief check if this <: type
+            /// @param type
+            /// @returns true if `*this isa type`, false otherwise
+            bool isa(const Type& type);
+
         protected:
             class ProxyValue
             {
                 friend class Proxy;
 
                 public:
-                    ProxyValue(Any*, Symbol*);
-                    ProxyValue(Any*, std::shared_ptr<ProxyValue>& owner, Symbol*);
+                    ProxyValue(Any*, jl_sym_t*);
+                    ProxyValue(Any*, std::shared_ptr<ProxyValue>& owner, jl_sym_t*);
                     ~ProxyValue();
 
-                    Any* get_field(Symbol*);
+                    Any* get_field(jl_sym_t*);
 
                     std::shared_ptr<ProxyValue> _owner;
 
@@ -165,15 +176,29 @@ namespace jluna
             };
 
             std::shared_ptr<ProxyValue> _content;
-            std::deque<Symbol*> assemble_name() const;
+            std::deque<jl_sym_t*> assemble_name() const;
     };
 
-    /// @brief box proxy
+    /// @brief unbox to proxy
     template<Is<Proxy> T>
-    Any* box(T value)
+    inline T unbox(Any* value)
+    {
+        return Proxy(value, nullptr);
+    }
+
+    /// @brief box jluna::Proxy to Base.Any
+    template<Is<Proxy> T>
+    inline Any* box(T value)
     {
         return value.operator Any*();
     }
+
+    /// @brief type deduction
+    template<>
+    struct detail::to_julia_type_aux<Proxy>
+    {
+        static inline const std::string type_name = "Any";
+    };
 }
 
 #include ".src/proxy.inl"

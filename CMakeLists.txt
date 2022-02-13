@@ -79,9 +79,6 @@ add_library(jluna SHARED
     .src/proxy.cpp
     .src/proxy.inl
 
-    include/utilities.hpp
-    .src/utilities.inl
-
     include/array.hpp
     .src/array.inl
     .src/array_iterator.inl
@@ -91,6 +88,20 @@ add_library(jluna SHARED
 
     include/expression.hpp
     .src/expression.cpp
+
+    include/module.hpp
+    .src/module.cpp
+    .src/module.inl
+
+    include/symbol.hpp
+    .src/symbol.cpp
+
+    include/type.hpp
+    .src/type.cpp
+    .src/type.inl
+
+    include/function.hpp
+    .src/function.cpp
 )
 
 set_target_properties(jluna PROPERTIES
