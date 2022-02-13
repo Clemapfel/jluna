@@ -1,6 +1,6 @@
 # jluna: A modern julia ⭤ C++ Wrapper (v0.5)
 
-![](./favicon.png)
+![](./header.png)
 
 Julia is a beautiful language, it is well-designed and well-documented. Julias C-API is also well-designed, less beautiful and much less... documented.
 
@@ -31,7 +31,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 #### Access julia-Side Values/Functions
 ```cpp
 // execute arbitrary strings with exception forwarding
-State::safe_eval(R"(
+State::safe_script(R"(
     f(x) = x*x*x
     
     mutable struct MyStruct
@@ -44,7 +44,7 @@ State::safe_eval(R"(
 
 // access and modify variables
 Main["instance"]["_field"] = 456;
-State::eval(R"(println("instance._field is now: ", instance._field))");
+State::script(R"(println("instance._field is now: ", instance._field))");
 
 // call julia-side functions with C++-side values
 int result = Main["f"](12);
@@ -57,7 +57,7 @@ instance._field is now: 456
 ---
 #### Multi-Dimensional Array Interface
 ```cpp
-State::eval("array = collect(1:9)");
+State::script("array = collect(1:9)");
 Array<size_t, 1> cpp_array = Main["array"];
 
 // julia style list indexing
@@ -68,7 +68,7 @@ Base["println"]((Any*) sub_array);
 for (auto e : cpp_array)
     e = e.operator size_t() + 10;
 
-State::eval("println(array)");
+State::script("println(array)");
 ```
 ```
 [7, 6, 5, 4, 3]
@@ -93,7 +93,7 @@ State::new_named_undef("lambda") = [](Any* x, Any* y) -> Any*
 };
 
 // now callable from julia
-State::safe_eval(R**"(
+State::safe_script(R"(
     println(Main.lambda("what julia handed it", Set([1, 2, 3, 3, 4])))  # non-c-types work!
 )");
 ```
@@ -201,8 +201,7 @@ If errors appear at any point, head to the [step-by-step guide](./docs/installat
 
 ## License
 
-`jluna` is supplied under creative commons license, available [here](https://creativecommons.org/licenses/by-nc/3.0/legalcode). 
-
-It is freely available for non-commercial and educational use. For use in for-profit commercial applications, please [contact the developer](https://www.clemens-cords.com/contact).
+`jluna` is supplied under Open Software License 3.0, available [here](https://opensource.org/licenses/OSL-3.0).
+For collaboration or further questions, feel free to [contact the developer](https://www.clemens-cords.com/contact).
 
 ---
