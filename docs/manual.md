@@ -1503,7 +1503,7 @@ Where `T`, `U` are arbitrary types, `N` is an Integer
 
 ### Type Order
 
-Julia types can be ordered. To conceptualize this, the relation of types is best thought of as a graph. Each node of the graph is a type, each edge is directed where if the edge goes from type A to type B, then `B <: A`, that is, B is a subtype of A or (equivalently) A is a supertype of B.
+Julia types can be ordered. To conceptualize this, the relation of types is best thought of as a directed graph. Each node of the graph is a type, each edge is directed, where, if the edge goes from type A to type B, then `B <: A`. That is, B is a subtype of A, or equivalently `A >: B`, A is a supertype of B.
 
 This relational nature is heavily used in multiple dispatch and type inference, for now, however, it gives us a way to put types in relation to each other. `jluna::Type` offers multiple functions for this:
 
