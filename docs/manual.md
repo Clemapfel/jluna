@@ -109,11 +109,11 @@ State::safe_eval(R"(
 )");
 ```
 
-`safe_` overloads have marginal overhead from try-catching execution and sanity checking inputs. If you want maximum performance and the correspondingly awful debug experience: `State::eval` is identical to just calling the pure C-API `jl_eval_string`.
+`safe_` overloads have marginal overhead from try-catching and sanity checking inputs. If you want maximum performance (and the corresponding debug experience),`State::eval` provides a 0-overhead solution instead.
 
 ## Garbage Collector (GC)
 
-The julia-side garbage collector operates completely independently, just like it would in a pure julia program. However, sometimes it is necessary to disable or control its behavior manually. To do this, `jluna::State` offers the following functions:
+The julia-side garbage collector operates completely independently, just like it would in a pure julia application. However, sometimes it is necessary to disable or control its behavior manually. To do this, `jluna::State` offers the following functions:
 
 #### Enabling/Disabling GC
 ```cpp
@@ -130,14 +130,14 @@ State::collect_garbage();
 bool State::is_garbage_collector_enabled();
 ```
 
-When using `jluna` and allocating memory specifically through it, objects are safe from being garbage collected. It is therefore almost never necessary to manually disable the GC. See the section on [proxies](#accessing-variables) for more information.
+When using `jluna` and allocating memory specifically through it, objects are safe from being garbage collected. It is therefore rarely necessary to manually disable the GC. See the section on [proxies](#accessing-variables) for more information.
 
 ## Boxing / Unboxing
 
 Julia and C++ do not share any memory. Objects that have the same conceptual type can have very different memory layouts. For example, `Char` in julia is a 32-bit value, while it is 8-bits in C++. Comparing `std::set` to `Base.set` will of course be even more of a difference on a bit-level.<br>
-Because of this, when transferring memory from one languages state to the others, we're not only moving memory but converting it by reformating its layout. 
+Because of this, when transferring memory from one languages state to the others, we're not only moving memory but *converting it* by reformating its layout. 
 
-**Boxing** is the process of taking C++-side memory, converting it and then allocating the now julia-compatible memory julia-side. Conversely, **unboxing** is the process of taking julia-side memory, converting it, then allocating the now C-compatible memory it C++-side. Boxing/Unboxing of any type are handled by an overload of the following functions:
+**Boxing** is the process of taking C++-side memory, converting it, then allocating the now julia-compatible memory julia-side. Conversely, **unboxing** is the process of taking julia-side memory, converting it, then allocating the now C-compatible memory C++-side. Boxing/Unboxing of any type is handled by an overload of the following functions:
 
 ```cpp
 template<typename T>
@@ -148,7 +148,7 @@ T unbox(Any*);
 ```
 where `Any*` is an address of julia-side memory of arbitrary type (but not necessarily of type `Base.Any`).
 
-All box/unbox functions have exactly this signature, ambiguity is resolved via [C++ concepts](https://en.cppreference.com/w/cpp/language/constraints), [SFINAE](https://en.cppreference.com/w/cpp/types/enable_if) and general template magic. Feel free to check the [source code](../.src/unbox.inl) to get a feel for how it is done behind the scenes.
+All box/unbox functions have exactly this signature, ambiguity is resolved via [C++ concepts](https://en.cppreference.com/w/cpp/language/constraints), [SFINAE](https://en.cppreference.com/w/cpp/types/enable_if) and general template magic. Feel free to check the [source code](../.src/unbox.inl) to get a feel for how it is done behind the scenes, for a more user-friendly overview, see the [section on usertypes](#usertypes).
 
 ### Concepts
 
@@ -188,7 +188,7 @@ std::cout << back_cpp_side << std::endl;
 1001
 ```
 
-Any type fulfilling the above requirements is accepted by most `jluna` functions. Usually, these functions will implicitly (un)box their arguments and return-types. This means, most of the time, we don't have to worry about manually calling `box`/`unbox<T>`. 
+Any type fulfilling the above requirements is accepted by most `jluna` functions. Usually, these functions will implicitly (un)box their arguments and return-types. which means, most of the time, we don't have to worry about manually calling `box`/`unbox<T>`. 
 
 This also means that for a 3rd party class `MyClass` to be compatible with `jluna`, one only needs to define:
 
@@ -200,7 +200,7 @@ template<Is<MyClass> T>
 T unbox(Any* value);
 ```
 
-Where `Is<T, U>` is a concept that resolves to true if `U` and `T` are the same type. We will learn more about making usertypes that are compatible with jluna in the [~~section on usertypes~~](#usertypes).
+Where `Is<T, U>` is a concept that resolves to true if `U` and `T` are the same type.
 
 ### List of (Un)Boxables
 
@@ -229,7 +229,6 @@ uint64_t                 -> UInt64
 float                    -> Float32
 double                   -> Float64
 
-jluna::Any               -> Any
 jluna::Proxy             -> /* value-type deduced during runtime */
 jluna::Symbol            -> Symbol
 jluna::Type              -> Type
@@ -267,18 +266,16 @@ std::function<Any*(std::vector<Any*>)>      -> function (::Vector{Any}) ::Any
 
 * where xs... is enforced to be of approriate size at runtime
 ```
-We will learn more on how to box/unbox functions in the [section on calling C++ functions from julia](#functions).
+We will learn more on how to box/unbox functions specifically in the [section on calling C++ functions from julia](#functions).
 
-The template meta function `to_julia_type` is provided to convert a C++ type into a julia-type:
+The template meta function `to_julia_type` is provided to convert a C++ type into a julia-type. `to_julia_type<T>::type_name` is the name of the type as a string.
 
 ```
-std::cout << to_julia_type<Array<size_t, 4>> std::endl;
+std::cout << to_julia_type<Array<size_t, 4>>::type_name << std::endl;
 ``` 
 ```
 Array{UInt64, 4}
 ```
-
-This can help remind user what type gets converted and can be used when generating julia code as it can be called statically.
 
 ---
 
@@ -1422,7 +1419,7 @@ While introspection is technically possible in C++, it can be quite cumbersome a
 
 We've seen specialized module-, symbol- and array-proxies. `jluna` currently has a fourth kind of proxy, `jluna::Type`, which is valuable in introspection. While heavy overlap is present, `jluna::Type` is not a direct equivalent of `Base.Type{T}`. This section will introduce its many functionalities and how to best use them.
 
-There are three ways to construct a type proxy:
+There are multiple ways to construct a type proxy:
 
 ```cpp
 // get type of proxy
@@ -1435,14 +1432,19 @@ Type type = type_valued_proxy;
 
 // explicit cast with .as<T>
 auto type = type_valued_proxy.as<Type>();
+
+// deduce julia-side type from (Un)boxable C++ Type
+auto type = Type::construct_from<std::vector<int>>();
 ```
+
+Where the latter uses `to_julia_type<T>` to deduce which julia-side type to construct the type proxy from.
 
 ### Core Types 
 
-For convenience, `jluna` offers most of the types `Core` and `Base` as pre-initialized global constants, similar to how the modules `Main`, `Base` and `Core` are available as module-proxies after initialization.<br><br>
-The following types are available this way:
+For convenience, `jluna` offers most of the types in `Core` and `Base` as pre-initialized global constants, similar to how the modules `Main`, `Base` and `Core` are available as module-proxies after initialization.<br><br>
+The following types can be accessed this way:
 
-| `jluna` constant | julia-side |
+| `jluna` constant name | julia-side name|
 |-------------------|---------|
 | `AbstractArray_t` | `AbstractArray{T, N}` |
 | `AbstractChar_t` | `AbstractChar` |
@@ -1629,11 +1631,11 @@ We again get a vector of pairs. The first elements are the expected names of the
 
 #### Methods
 
-(this feature is not yet implemented, until then, use the julia-side `Base.methods(::Type)`)
+(this feature is not yet implemented, until then, use `Base.methods(::Type)`)
 
 #### Properties
 
-(this feature is not yet implemented, until then, use the julia-side `getproperty(::Type, ::Symbol)`)
+(this feature is not yet implemented, until then, use `getproperty(::Type, ::Symbol)`)
 
 ### Type Classification
 
@@ -1685,8 +1687,54 @@ To classify a type means evaluate a condition and ask whether it is true or fals
     Type(State::safe_eval("return Array")).is_typename("Array"); // true
     Type(State::safe_eval("return Array{Integer, 3}")).is_typename("Array"); // also true
     ```
-  
-Using these various ways of classifying types 
+`jluna`s type introspection differs slightly from how it is done if we were to use only julia code. Consider the following:
+
+```julia
+# in julia
+function is_array_type(type::Type) 
+    return getproperty(type, :name) == Base.typename(Array)
+end
+
+println(is_array_type(Base.Array))
+```
+
+Some may expect this to print `true`, however this is not the case. The reason for this is that `Base.Array` is a parametric type, because of that `Array` is actually a `UnionAll`:
+
+```julia
+println(propertynames(Array))
+```
+```
+(:var, :body)
+```
+To access the property `:name` we need to first *unroll* the type. This means we need to specialize the parameter until the type seizes to be a `UnionAll`:
+
+```julia
+type = Array
+while (hasproperty(type, :body))
+    type = type.body
+end
+
+println(type)
+println(propertynames(type))
+```
+```
+Array{T, N}
+
+(:name, :super, :parameters, :types, :instance, :layout, :size, :hash, :flags)
+```
+
+Once fully unrolled, we have access to the properties necessary for introspect. `jluna` does this automatically:
+
+```cpp
+std::cout << Array_t.is_typename("Array") << std::endl;
+std::cout << Array_t.is_unionall_type() << std::endl;
+```
+
+
+
+
+
+Some may suspect this to 
 
 ## Expressions
 

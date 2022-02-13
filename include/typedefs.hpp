@@ -19,6 +19,12 @@ namespace jluna
         static inline const std::string type_name = detail::to_julia_type_aux<T>::type_name;
     };
 
+    template<typename T>
+    concept ToJuliaTypeConvertable = requires
+    {
+        to_julia_type<T>::type_name;
+    };
+
     /// @brief 1-bit bool interpreted as 8-bit Bool julia-side
     using Bool = bool;
 

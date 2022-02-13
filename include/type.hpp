@@ -16,7 +16,13 @@ namespace jluna
     class Type : public Proxy
     {
         public:
-            Type() = default;
+            /// @brief default ctor, construct as Nothing
+            Type();
+
+            /// @brief construct from C++ type
+            /// @param to_julia_type meta template
+            template<ToJuliaTypeConvertable T>
+            static Type construct_from();
 
             /// @brief ctor
             /// @param value
@@ -196,26 +202,6 @@ namespace jluna
     inline Type Unsigned_t;
     inline Type VecElement_t;
     inline Type WeakRef_t;
-
-    /// @brief unbox to type
-    template<Is<Type> T>
-    inline T unbox(Any* value)
-    {
-        jl_assert_type(value, "Type");
-        return Type((jl_datatype_t*) value);
-    }
-
-    /// @brief box jluna::Type to Base.Type
-    template<Is<Type> T>
-    inline Any* box(T value)
-    {
-        return value.operator Any*();
-    }
-
-    /// @brief type deduction
-    template<>
-    struct detail::to_julia_type_aux<Type>
-    {
-        static inline const std::string type_name = "Type";
-    };
 }
+
+#include ".src/type.inl"

@@ -8,6 +8,8 @@
 
 namespace jluna
 {
+    Type::Type() = default;
+
     Type::Type(jl_datatype_t* value)
         : Proxy((jl_value_t*) value, value->name->name)
     {}

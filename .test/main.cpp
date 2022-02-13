@@ -13,6 +13,10 @@ int main()
     State::initialize();
     Test::initialize();
 
+    std::cout << Array_t.is_typename("Array") << std::endl;
+std::cout << Array_t.is() << std::endl;
+    return 0;
+
     /*
     Test::test("catch c exception", [](){
 
@@ -874,6 +878,8 @@ int main()
 
         auto type = Type(jl_nothing_type);
         Test::assert_that(type.operator _jl_datatype_t *() == jl_nothing_type);
+
+        type = Type::construct_from<std::vector<int>>();
     });
     
     auto test_type = []<typename T>(Type& a, T b) {
