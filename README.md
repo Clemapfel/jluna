@@ -133,7 +133,7 @@ Some of the many advantages `jluna` has over the C-API include:
 
 ## Documentation
 
-A step-by-step introduction and reference guide intended is available [here](./docs/manual.md). Furthermore, all user-facing code has in-line documentation available through most IDEs (or the julia `help?` command). 
+A step-by-step introduction and reference guide is available [here](./docs/manual.md). Furthermore, all user-facing code has in-line documentation available through most IDEs (or the julia `help?` command). 
 
 Advanced users are encouraged to check the headers (available in `jluna/include/`) for implementation details. They are formatted specifically to be easily understood by 3rd parties. 
 
