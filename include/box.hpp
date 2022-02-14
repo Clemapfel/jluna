@@ -104,18 +104,20 @@ namespace jluna
         std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool> = true>
     Any* box(const T& value);
 
-    /// @brief box std::map<T, U> to IdDict{T, U}
+    /// @brief box std::multimap<T, U> to IdDict{T, U}
     template<typename T,
         typename Key_t = typename T::key_type,
         typename Value_t = typename T::mapped_type,
-        std::enable_if_t<std::is_same_v<T, std::map<Key_t, Value_t>>, bool> = true>
+        std::enable_if_t<std::is_same_v<T, std::multimap<Key_t, Value_t>>, bool> = true>
     Any* box(T value);
 
     /// @brief box std::unordered_map<T, U> to Dict{T, U}
     template<typename T,
         typename Key_t = typename T::key_type,
         typename Value_t = typename T::mapped_type,
-        std::enable_if_t<std::is_same_v<T, std::unordered_map<Key_t, Value_t>>, bool> = true>
+        std::enable_if_t<
+            std::is_same_v<T, std::unordered_map<Key_t, Value_t>> or
+            std::is_same_v<T, std::map<Key_t, Value_t>>, bool> = true>
     Any* box(T value);
 
     /// @brief box std::set<T> to Set{T}

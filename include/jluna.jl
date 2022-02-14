@@ -474,9 +474,10 @@ module jluna
         mutable struct State
             _last_exception
             _last_message::String
+            _exception_occurred::Bool
         end
 
-        const _state = Ref{State}(State(NoException(), ""));
+        const _state = Ref{State}(State(NoException(), "", false));
 
         """
         `safe_call(::Expr, ::Module = Main) -> Any`
@@ -544,6 +545,7 @@ module jluna
             try
             global _state[]._last_message = sprint(Base.showerror, exception, catch_backtrace())
             global _state[]._last_exception = exception
+            global _state[]._exception_occurred = true
             catch e end
             return nothing
         end
@@ -557,6 +559,7 @@ module jluna
 
             global _state[]._last_message = ""
             global _state[]._last_exception = NoException()
+            global _state[]._exception_occurred = false
             return nothing
         end
 
@@ -567,7 +570,7 @@ module jluna
         """
         function has_exception_occurred() ::Bool
 
-            return typeof(_state[]._last_exception) != NoException
+            return _state[]._exception_occurred
         end
 
         """
@@ -657,7 +660,7 @@ module jluna
             return key;
         end
 
-        create_reference(_::Nothing) ::Uint64 = return 0
+        create_reference(_::Nothing) ::UInt64 = return 0
 
         """
         `set_reference(::UInt64, ::T) -> Nothing`

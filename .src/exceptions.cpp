@@ -48,8 +48,8 @@ namespace jluna
         if (jl_c_exception != nullptr)
             throw JuliaException(jl_c_exception, jl_to_string(jl_c_exception));
 
-        auto jluna_exception_occurred = jl_unbox_bool(jl_eval_string("return jluna.exception_handler.has_exception_occurred()"));
-        if (jluna_exception_occurred)
+        static jl_function_t* exception_occurred = jl_find_function("jluna.exception_handler", "has_exception_occurred");
+        if (jl_unbox_bool(jl_call0(exception_occurred)))
         {
             throw JuliaException(
                     jl_eval_string("return jluna.exception_handler.get_last_exception()"),
@@ -57,6 +57,7 @@ namespace jluna
             );
             return;
         }
+
     }
 }
 

@@ -39,19 +39,44 @@ Number_t generate_number(
 int main()
 {
     jluna::State::initialize();
-
     Benchmark::initialize();
 
-    size_t count = 5000;
+    size_t count = 10000;
 
-    Benchmark::run("native vector", count, [](){
+    Benchmark::run("forward_last_exception positive:", count, []()
+    {
+        jl_eval_string("try throw(AssertionError(\"abc\")) catch e throw(e) end");
 
-        std::vector<size_t> in;
-        in.reserve(1000);
+        try
+        {
+            forward_last_exception();
+        }
+        catch (...)
+        {}
+    });
+
+    Benchmark::run("forward_last_exception negative:", count, []()
+    {
+        jl_eval_string("try throw(AssertionError(\"abc\")) catch e end");
+
+        try
+        {
+            forward_last_exception();
+        }
+        catch (...)
+        {}
+    });
+
+    Benchmark::conclude();
+    return 0;
+
+    Benchmark::run("box iddict", count, [](){
+
+        std::map<Int64, size_t> map;
         for (size_t i = 0; i < 1000; ++i)
-            in.push_back(i);
+            map.insert({i, i});
 
-        jl_eval_string("res = collect(1:1000)");
+        volatile auto* res = box(map);
     });
 
     Benchmark::run("box vector", count, [](){
@@ -63,6 +88,7 @@ int main()
 
         volatile auto* res = box(in);
     });
+
 
     /*
 

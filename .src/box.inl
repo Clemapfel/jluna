@@ -131,35 +131,38 @@ namespace jluna
         return (Any*) res;
     }
 
-    template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::map<Key_t, Value_t>>, bool>>
+    template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::multimap<Key_t, Value_t>>, bool>>
     Any* box(T value)
     {
         static jl_function_t* iddict = jl_get_function(jl_base_module, "IdDict");
+        static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
 
-        std::vector<jl_value_t*> args;
-        args.reserve(value.size());
+        std::vector<jl_value_t*> pairs;
+        pairs.reserve(value.size());
 
-        for (const std::pair<Key_t, Value_t>& pair : value)
-            args.push_back(box(pair));
+        for (auto& pair : value)
+            pairs.push_back(jl_call2(make_pair, box<Key_t>(pair.first), box<Value_t>(pair.second)));
 
-        auto* res = jl_call(iddict, args.data(), args.size());
-        forward_last_exception();
+        auto* res = jl_call(iddict, pairs.data(), pairs.size());
         return res;
     }
 
-    template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::unordered_map<Key_t, Value_t>>, bool>>
+    template<typename T, typename Key_t, typename Value_t, std::enable_if_t<
+            std::is_same_v<T, std::unordered_map<Key_t, Value_t>> or
+            std::is_same_v<T, std::map<Key_t, Value_t>>,
+            bool>>
     Any* box(T value)
     {
         static jl_function_t* dict = jl_get_function(jl_base_module, "Dict");
+        static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
 
-        std::vector<jl_value_t*> args;
-        args.reserve(value.size());
+        std::vector<jl_value_t*> pairs;
+        pairs.reserve(value.size());
 
-        for (const std::pair<Key_t, Value_t>& pair : value)
-            args.push_back(box(pair));
+        for (auto& pair : value)
+            pairs.push_back(jl_call2(make_pair, box<Key_t>(pair.first), box<Value_t>(pair.second)));
 
-        auto* res = jl_call(dict, args.data(), args.size());
-        forward_last_exception();
+        auto* res = jl_call(dict, pairs.data(), pairs.size());
         return res;
     }
 
