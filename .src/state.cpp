@@ -258,7 +258,7 @@ namespace jluna::State::detail
 
     void initialize_modules()
     {
-        Main = Module(jl_main_module);
+        Main = Proxy((Any*) jl_main_module, nullptr).as<Module>();
         Core = Module(jl_core_module);
         Base = Module(jl_base_module);
     }

@@ -56,7 +56,7 @@ int main()
     refs.reserve(count);
 
 
-
+    /*
     Benchmark::run("State: create_reference", count, [&](){
 
         static Function* create_reference = jl_find_function("jluna.memory_handler", "create_reference");
@@ -77,6 +77,23 @@ int main()
 
         // target:  0.365002ms
     });
+     */
+
+    {
+        Main["jluna"]["memory_handler"]["print_refs"]();
+
+        auto named_proxy = State::new_named_string("string_proxy", generate_string(16));
+        Benchmark::run("Proxy: assign named", count, [&]() {
+            named_proxy = generate_string(16);
+        });
+
+        auto unnamed_proxy = State::new_unnamed_string(generate_string(16));
+        Benchmark::run("Proxy: assign unnamed", count, [&]() {
+            unnamed_proxy = generate_string(16);
+        });
+
+
+    }
 
     Benchmark::conclude();
     Benchmark::save();

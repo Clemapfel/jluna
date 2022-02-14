@@ -620,17 +620,10 @@ module jluna
         """
         function create_reference(to_wrap::Any) ::UInt64
 
-            if (to_wrap == nothing)
-                return 0;
-            end
-
             global _current_id += 1;
-            key = _current_id;
-
-            #println("[JULIA] allocated " * string(key) * " (" * Base.string(to_wrap) * ")")
+            key::UInt64 = _current_id;
 
             if (haskey(_refs[], key))
-                @assert _refs[][key].x == to_wrap && typeof(to_wrap) == typeof(_refs[][key].x)
                 _ref_counter[][key] += 1
             else
                 _refs[][key] = Base.RefValue{Any}(to_wrap)
@@ -639,6 +632,8 @@ module jluna
 
             return key;
         end
+
+        create_reference(_::Nothing) ::Uint64 = return 0
 
         """
         `set_reference(::UInt64, ::T) -> Nothing`
@@ -681,8 +676,8 @@ module jluna
                 name = chop(name, head = 1, tail = 0)   # remove first .
             end
 
+
             expr = :($(Meta.parse(name)) = $new_value);
-            println(dump(expr))
             Main.eval(expr);
             return new_value;
         end
@@ -740,11 +735,8 @@ module jluna
                 return nothing;
             end
 
-            @assert haskey(_refs[], key)
-            #println("[JULIA] freed " * string(key) * " (" * Base.string(typeof(_refs[][key].x)) * ")")
-
             global _ref_counter[][key] -= 1
-            count = _ref_counter[][key]
+            count::UInt64 = _ref_counter[][key]
 
             if (count == 0)
                 delete!(_ref_counter[], key)
@@ -765,8 +757,6 @@ module jluna
                 delete!(_refs[], k)
                 delete!(_ref_counter[], k)
             end
-
-            @assert isempty(_refs) && isempty(_ref_counter)
 
             return nothing;
         end
