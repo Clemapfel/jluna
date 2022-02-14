@@ -590,6 +590,17 @@ module jluna
     end
 
     """
+    toolbag for assembling expressions in a performance-critical environment
+    """
+    module expressions
+
+        function assemble_dot(a::Symbol, b::Symbol) ::Expr
+
+            return Expr(:., a, QuoteNode(b))
+        end
+    end
+
+    """
     offers julia-side memory management for C++ jluna
     """
     module memory_handler

@@ -29,7 +29,7 @@ int main()
 
     Benchmark::initialize();
 
-    size_t count = 10000;
+    size_t count = 1000;
 
     /*
     Benchmark::run("Eval: C", count, []{
@@ -39,7 +39,6 @@ int main()
         jl_eval_string(str.str().c_str());
     });
 
-    /*
     Benchmark::run("Eval: jluna safe_eval no proxy", count, [](){
 
         std::stringstream str;
@@ -51,12 +50,10 @@ int main()
 
         volatile auto proxy = Proxy(res);
     });
-     */
+
     std::vector<size_t> refs;
     refs.reserve(count);
 
-
-    /*
     Benchmark::run("State: create_reference", count, [&](){
 
         static Function* create_reference = jl_find_function("jluna.memory_handler", "create_reference");
@@ -80,19 +77,17 @@ int main()
      */
 
     {
-        Main["jluna"]["memory_handler"]["print_refs"]();
-
-        auto named_proxy = State::new_named_string("string_proxy", generate_string(16));
-        Benchmark::run("Proxy: assign named", count, [&]() {
-            named_proxy = generate_string(16);
-        });
-
         auto unnamed_proxy = State::new_unnamed_string(generate_string(16));
         Benchmark::run("Proxy: assign unnamed", count, [&]() {
+            // target: 0.368181ms
             unnamed_proxy = generate_string(16);
         });
 
-
+        auto named_proxy = State::new_named_string("string_proxy", generate_string(16));
+        Benchmark::run("Proxy: assign named", count, [&]() {
+            // target: 1.37952ms
+            named_proxy = generate_string(16);
+        });
     }
 
     Benchmark::conclude();
