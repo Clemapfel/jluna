@@ -605,7 +605,7 @@ module jluna
     """
     module memory_handler
 
-        _current_id = UInt64(0);
+        const _current_id = Ref(UInt64(0));
         const _refs = Ref(Dict{UInt64, Base.RefValue{Any}}())
         const _ref_counter = Ref(Dict{UInt64, UInt64}())
 
@@ -631,8 +631,8 @@ module jluna
         """
         function create_reference(to_wrap::Any) ::UInt64
 
-            global _current_id += 1;
-            key::UInt64 = _current_id;
+            global _current_id[] += 1;
+            key::UInt64 = _current_id[];
 
             if (haskey(_refs[], key))
                 _ref_counter[][key] += 1
