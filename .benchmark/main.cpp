@@ -17,6 +17,8 @@ std::string generate_string(size_t size)
     static auto dist = std::uniform_int_distribution<char>(65, 90);
 
     std::string out;
+    out.reserve(size);
+
     for (size_t i = 0; i < size; ++i)
         out.push_back(dist(engine));
 
@@ -40,91 +42,48 @@ int main()
 
     Benchmark::initialize();
 
-    size_t count = 100000;
+    size_t count = 5000;
 
+    Benchmark::run("native vector", count, [](){
 
-    jl_eval_string("sym_dict = Dict{UInt64, Base.RefValue(Symbol)}()");
-    jl_eval_string("any_dict = Dict{UInt64, Base.RefValue(Any)}()");
+        std::vector<size_t> in;
+        in.reserve(1000);
+        for (size_t i = 0; i < 1000; ++i)
+            in.push_back(i);
 
-    auto* sym_dict = jl_eval_string("return sym_dict");
-    auto* any_dict = jl_eval_string("return any_dict");
+        jl_eval_string("res = collect(1:1000)");
+    });
 
-    static jl_function_t* setindex = jl_get_function(jl_base_module, "setindex!");
-    static jl_function_t* delete_ = jl_get_function(jl_base_module, "delete!");
-    size_t n = 100000;
-    for (size_t i = 0; i < 100000; ++i)
+    Benchmark::run("box vector", count, [](){
+
+        std::vector<size_t> in;
+        in.reserve(1000);
+        for (size_t i = 0; i < 1000; ++i)
+            in.push_back(i);
+
+        volatile auto* res = box(in);
+    });
+
+    /*
+
+    std::vector<size_t> refs;
+    refs.reserve(count);
+
     {
-        if (i < n/2)
-        {
-            jl_call3(setindex, sym_dict, (Any*) jl_symbol(generate_string(8).c_str()), jl_box_uint64(i));
-            jl_call3(setindex, any_dict, (Any*) jl_symbol(generate_string(8).c_str()), jl_box_uint64(i));
-        }
-        else
-        {
-            jl_call3(setindex, sym_dict, (Any*) jl_symbol(std::to_string(-1 * i).c_str()), jl_box_uint64(i));
-            jl_call3(setindex, any_dict, jl_box_int64(-1 * i), jl_box_uint64(i));
-        }
+        auto unnamed_proxy = State::new_unnamed_string(generate_string(16));
+        Benchmark::run("Proxy: assign unnamed", count, [&]() {
+            // target: 0.368181ms
+            unnamed_proxy = generate_string(16);
+        });
+
+        auto named_proxy = State::new_named_string("string_proxy", generate_string(16));
+        Benchmark::run("Proxy: assign named", count, [&]() {
+            // target: 1.37952ms
+            named_proxy = generate_string(16);
+        });
     }
 
-    Benchmark::run("setindex Dict{Any}", count, [&](){
-
-        jl_value_t* sym = (Any*) jl_symbol(generate_string(8).c_str());
-        jl_value_t* num = jl_box_uint64(generate_number<size_t>());
-
-        static size_t i = 0;
-
-        jl_call3(setindex, any_dict, num, jl_box_uint64(i));
-
-        i += 1;
-    });
-
-    Benchmark::run("setindex Dict{Symbol}", count, [&](){
-
-        jl_value_t* sym = (Any*) jl_symbol(generate_string(8).c_str());
-        jl_value_t* num = jl_box_uint64(generate_number<size_t>());
-
-        static size_t i = 0;
-
-        jl_call3(setindex, sym_dict, sym, jl_box_uint64(i));
-
-        i += 1;
-    });
-
-    return 0;
-
-     Benchmark::run("setindex Dict{Any}", count, [&](){
-
-        jl_value_t* sym = (Any*) jl_symbol(generate_string(8).c_str());
-        jl_value_t* num = jl_box_uint64(generate_number<size_t>());
-
-        static size_t i = 0;
-
-        jl_call3(setindex, any_dict, num, jl_box_uint64(i));
-
-        i += 1;
-    });
-
-    Benchmark::run("getindex Dict{Any}", count, [&](){
-
-        static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        static size_t i = 0;
-        volatile auto* res = jl_call2(getindex, any_dict, jl_box_uint64(i));
-    });
-
-    Benchmark::run("getindex Dict{Symbol}", count, [&](){
-
-        static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        static size_t i = 0;
-        volatile auto* res = jl_call2(getindex, sym_dict, jl_box_uint64(i));
-    });
-
-    jl_eval_string("println(length(sym_dict))");
-    jl_eval_string("println(length(any_dict))");
-
-    Benchmark::conclude();
-    return 0;
-
-    Benchmark::run("Eval: C", count, []{
+         Benchmark::run("Eval: C", count, []{
 
         std::stringstream str;
         str << "struct " << generate_string(16) << " end";
@@ -143,40 +102,6 @@ int main()
         volatile auto proxy = Proxy(res);
     });
 
-    std::vector<size_t> refs;
-    refs.reserve(count);
-
-    Benchmark::run("State: create_reference", count, [&](){
-
-        Any* value = box<std::string>(generate_string(16));
-        refs.push_back(State::detail::create_reference(value));
-        // target: 0.366586ms
-    });
-
-    Benchmark::run("State: get_reference", count, [&](){
-
-        static Function* get_reference = jl_find_function("jluna.memory_handler", "get_reference");
-        static size_t i = 0;
-        volatile auto* res = jluna::safe_call(get_reference, jl_box_uint64(reinterpret_cast<size_t>(refs.at(i++))));
-
-        // target:  0.365002ms
-    });
-
-
-    /*
-    {
-        auto unnamed_proxy = State::new_unnamed_string(generate_string(16));
-        Benchmark::run("Proxy: assign unnamed", count, [&]() {
-            // target: 0.368181ms
-            unnamed_proxy = generate_string(16);
-        });
-
-        auto named_proxy = State::new_named_string("string_proxy", generate_string(16));
-        Benchmark::run("Proxy: assign named", count, [&]() {
-            // target: 1.37952ms
-            named_proxy = generate_string(16);
-        });
-    }
      */
 
     Benchmark::conclude();

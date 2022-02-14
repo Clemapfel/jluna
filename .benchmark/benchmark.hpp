@@ -101,12 +101,14 @@ namespace jluna
                     exception_maybe
             };
 
+            /*
             std::cout << name << std::endl;
 
             for (size_t i = runs.size() - 20; i < runs.size(); ++i)
                     std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(runs.at(i)).count() << std::endl;
 
             std::cout << "----------------------------------------" << std::endl;
+            */
 
             if (log)
                 _results.push_back({name, res});

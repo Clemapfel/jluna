@@ -121,22 +121,14 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
     Any* box(const T& value)
     {
-        static jl_function_t* vector = jl_find_function("jluna", "make_vector");
+        static jl_function_t* vector = jl_get_function(jl_base_module, "Vector");
 
-        if (not value.empty())
-        {
-            std::vector<jl_value_t*> args;
-            args.reserve(value.size());
+        auto* res = (jl_array_t*) jl_call2(vector, jl_undef_initializer(), jl_box_uint64(value.size()));
 
-            for (auto& v : value)
-                args.push_back(box<Value_t>(v));
+        for (size_t i = 0; i < value.size(); ++i)
+            jl_arrayset(res, box(value.at(i)), i);
 
-            auto* res = jl_call(vector, args.data(), args.size());
-            forward_last_exception();
-            return res;
-        }
-        else
-            return safe_call(vector, jl_eval_string(to_julia_type<Value_t>::type_name.c_str()));
+        return (Any*) res;
     }
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::map<Key_t, Value_t>>, bool>>

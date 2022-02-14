@@ -598,6 +598,19 @@ module jluna
 
             return Expr(:., a, QuoteNode(b))
         end
+
+        assemble_dot(a::Symbol, b::Expr) ::Expr = return Expr(:., a, b)
+
+        function assemble_bracket(a::Symbol, i::Int64) ::Expr
+
+            return Expr(:ref, a, i);
+        end
+
+        assemble_bracket(a::Symbol, b::Expr) ::Expr = return Expr(:ref, a, b)
+
+        function assemble_dereference(a::Symbol) ::Expr
+            return Expr(:ref, a)
+        end
     end
 
     """
@@ -657,11 +670,6 @@ module jluna
             return _refs[][key]
         end
 
-        """
-        `assign(::T, ::Symbol) -> T`
-
-        assign variable using proxy name-chain
-        """
         function assign(new_value::T, names::Symbol...) ::T where T
 
             unnamed_to_index(s::Symbol) = tryparse(UInt64, chop(string(s), head = 1, tail = 0))
