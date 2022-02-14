@@ -596,7 +596,7 @@ module jluna
 
         _current_id = UInt64(0);
         const _refs = Ref(Dict{UInt64, Base.RefValue{Any}}())
-        const _ref_counter = Ref(IdDict{UInt64, UInt64}())
+        const _ref_counter = Ref(Dict{UInt64, UInt64}())
 
         const _ref_id_marker = '#'
 

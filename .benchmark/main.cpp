@@ -29,8 +29,9 @@ int main()
 
     Benchmark::initialize();
 
-    size_t count = 1000;
+    size_t count = 10000;
 
+    /*
     Benchmark::run("Eval: C", count, []{
 
         std::stringstream str;
@@ -63,7 +64,7 @@ int main()
         Any* value = box<std::string>(generate_string(16));
         refs.push_back(jl_unbox_uint64(jluna::safe_call(create_reference, value)));
 
-        // target: 0.37515ms
+        // target: 0.366586ms
     });
 
     Benchmark::run("State: get_reference", count, [&](){
@@ -74,7 +75,7 @@ int main()
         Any* value = box<std::string>(generate_string(16));
         volatile auto* res = jluna::safe_call(get_reference, jl_box_uint64(reinterpret_cast<size_t>(refs.at(i++))));
 
-        // target:  0.373514ms
+        // target:  0.365002ms
     });
 
     Benchmark::conclude();
