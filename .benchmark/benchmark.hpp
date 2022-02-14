@@ -44,7 +44,7 @@ namespace jluna::detail
             std::vector<Duration> runs;
             runs.reserve(count);
 
-            // pre-initialize
+            // pre-initialize to avoid allocation
             auto before = Benchmark::_clock.now();
             auto after = Benchmark::_clock.now();
             size_t n = 0;
@@ -94,21 +94,21 @@ namespace jluna::detail
                 auto med = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._median).count();
                 auto max = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._max).count();
 
-                std::cout << "__________________________________\n";
-                std::cout << "| " << pair.first << " (" << pair.second._n_loops << "): \n|\n";
-                std::cout << "| Min    : " << min << "ms" << std::endl;
-                std::cout << "| Average: " << avg << "ms" << std::endl;
-                std::cout << "| Median : " << med << "ms" << std::endl;
-                std::cout << "| Max    : " << max << "ms" << std::endl;
+                std::cout << "┌────────────────────────────────\n";
+                std::cout << "│ " << pair.first << " (" << pair.second._n_loops << "): \n│\n";
+                std::cout << "│ Min    : " << min << "ms" << std::endl;
+                std::cout << "│ Average: " << avg << "ms" << std::endl;
+                std::cout << "│ Median : " << med << "ms" << std::endl;
+                std::cout << "│ Max    : " << max << "ms" << std::endl;
 
                 if (pair.second._exception_maybe != "")
                 {
-                    std::cout << "| " << std::endl;
-                    std::cout << "| Exception at run " << pair.second._n_loops << ":" << std::endl;
-                    std::cout << "| " << pair.second._exception_maybe << std::endl;
+                    std::cout << "│ " << std::endl;
+                    std::cout << "│ Exception at run " << pair.second._n_loops << ":" << std::endl;
+                    std::cout << "│ " << pair.second._exception_maybe << std::endl;
                 }
 
-                std::cout << "|_________________________________\n\n" << std::endl;
+                std::cout << "└────────────────────────────────\n\n" << std::endl;
             }
         }
 
