@@ -13,8 +13,9 @@
 #include <fstream>
 #include <iomanip>
 #include <ctime>
+#include <cassert>
 
-namespace jluna::detail
+namespace jluna
 {
     /// @brief benchmark API, not intended for end-users
     struct Benchmark
@@ -30,6 +31,20 @@ namespace jluna::detail
 
             const size_t _n_loops;
             const std::string _exception_maybe;
+
+            [[nodiscard]] Result operator-(const Result& other)
+            {
+                assert(_exception_maybe == "");
+
+                return Result{
+                  this->_min - other._min,
+                  this->_max - other._max,
+                  this->_average - other._average,
+                  this->_median - other._median,
+                  std::min(this->_n_loops, other._n_loops),
+                  ""
+                };
+            }
         };
 
         static void initialize()
@@ -38,8 +53,8 @@ namespace jluna::detail
             _results.clear();
         }
 
-        template<typename Lambda_t, typename... Args_t>
-        static void run(const std::string& name, size_t count, Lambda_t lambda, Args_t... args)
+        template<typename Lambda_t>
+        static Benchmark::Result run(const std::string& name, size_t count, Lambda_t lambda, bool log = true)
         {
             if (count % 2 == 0)
                 count += 1;
@@ -59,7 +74,7 @@ namespace jluna::detail
                 for (; n < count; ++n)
                 {
                     before = Benchmark::_clock.now();
-                    lambda(args...);
+                    lambda();
                     after = Benchmark::_clock.now();
 
                     runs.push_back(after - before);
@@ -77,15 +92,24 @@ namespace jluna::detail
 
             avg = avg / (runs.size() != 0 ? runs.size() : 1);
 
-            _results.insert({name,
-                Result{
+            auto res = Result{
                     runs.front(),
                     runs.back(),
                     avg,
                     (runs.size() > 1 ? runs.at(runs.size() / 2) : Duration::zero() + Duration(-1)),
                     n,
                     exception_maybe
-            }});
+            };
+
+            if (log)
+                _results.push_back({name, res});
+
+            return _results.back().second;
+        }
+
+        static void add_results(const std::string name, Benchmark::Result result)
+        {
+            _results.push_back({name, result});
         }
 
         static void conclude()
@@ -101,8 +125,10 @@ namespace jluna::detail
                 std::cout << "│ " << pair.first << " (" << pair.second._n_loops << "): \n│\n";
                 std::cout << "│ Min    : " << min << "ms" << std::endl;
                 std::cout << "│ Average: " << avg << "ms" << std::endl;
-                std::cout << "│ Median : " << med << "ms" << std::endl;
                 std::cout << "│ Max    : " << max << "ms" << std::endl;
+                std::cout << "│ " << std::endl;
+                std::cout << "│ Median : " << med << "ms" << std::endl;
+
 
                 if (pair.second._exception_maybe != "")
                 {
@@ -137,7 +163,7 @@ namespace jluna::detail
                 auto med = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._median).count();
                 auto max = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._max).count();
 
-                file << pair.first << del;
+                file << "\"" << pair.first << "\"" << del;
                 file << pair.second._n_loops << del;
                 file << min << del;
                 file << max << del;
@@ -153,7 +179,7 @@ namespace jluna::detail
 
         private:
             static inline std::chrono::steady_clock _clock = std::chrono::steady_clock();
-            static inline std::map<std::string, Result> _results = {};
+            static inline std::vector<std::pair<std::string, Result>> _results = {};
     };
 
 }
