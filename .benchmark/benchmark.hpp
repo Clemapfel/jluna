@@ -10,6 +10,9 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <iomanip>
+#include <ctime>
 
 namespace jluna::detail
 {
@@ -31,7 +34,7 @@ namespace jluna::detail
 
         static void initialize()
         {
-            std::cout << "starting benchmarks...\n" << std::endl;
+            std::cout << "[C++][LOG] starting benchmarks...\n" << std::endl;
             _results.clear();
         }
 
@@ -108,8 +111,44 @@ namespace jluna::detail
                     std::cout << "│ " << pair.second._exception_maybe << std::endl;
                 }
 
-                std::cout << "└────────────────────────────────\n\n" << std::endl;
+                std::cout << "└────────────────────────────────\n" << std::endl;
             }
+        }
+
+        static void save(const std::string& path = "/home/clem/Workspace/jluna/.benchmark/results/")
+        {
+            auto t = std::time(nullptr);
+            auto tm = *std::localtime(&t);
+            std::stringstream str;
+            str << std::put_time(&tm, "%d-%m-%Y_%H:%M:%S") << std::endl;
+
+
+            std::ofstream file;
+            auto name = path + str.str() + ".csv";
+            file.open(name);
+
+            const std::string del = ",";
+            file << "name" << del << "count" << del << "min" << del << "max" << del << "average" << del << "median" << std::endl;
+
+            for (auto& pair : _results)
+            {
+                auto min = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._min).count();
+                auto avg = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._average).count();
+                auto med = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._median).count();
+                auto max = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._max).count();
+
+                file << pair.first << del;
+                file << pair.second._n_loops << del;
+                file << min << del;
+                file << max << del;
+                file << avg << del;
+                file << med << std::endl;
+            }
+
+            file << std::endl;
+            file.close();
+
+            std::cout << "[C++][LOG] Benchmark written to " << name << std::endl;
         }
 
         private:

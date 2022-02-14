@@ -24,6 +24,6 @@ int main()
     });
 
     Benchmark::conclude();
-
+    Benchmark::save();
 }
 
