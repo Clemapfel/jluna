@@ -16,8 +16,8 @@ namespace jluna::State
         Proxy create_or_assign(const std::string& symbol, Ts... args)
         {
             static jl_function_t* create_or_assign = jl_find_function("jluna", "create_or_assign");
-            safe_call(create_or_assign, (jl_value_t*) jl_symbol(symbol.c_str()), args...);
-            return Main[symbol];
+            auto* value = safe_call(create_or_assign, (jl_value_t*) jl_symbol(symbol.c_str()), args...);
+            return Proxy(value, jl_symbol(symbol.c_str()));
         }
     }
     
