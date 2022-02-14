@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(jluna)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
 
 ### JULIA ###
@@ -102,7 +102,9 @@ add_library(jluna SHARED
 
     include/function.hpp
     .src/function.cpp
-)
+
+
+        )
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C
@@ -122,7 +124,16 @@ set_target_properties(jluna_c_adapter PROPERTIES
 target_link_libraries(jluna_c_adapter ${JULIA_LIB})
 target_link_libraries(jluna jluna_c_adapter ${JULIA_LIB})
 
-### TEST EXECUTABLE ###
+### EXECUTABLES ###
 
-add_executable(JLUNA_TEST .test/main.cpp .test/test.hpp)
-target_link_libraries(JLUNA_TEST jluna)
+add_executable(JLUNA_TEST
+    .test/main.cpp
+    .test/test.hpp
+)
+target_link_libraries(JLUNA_TEST jluna ${JULIA_LIB})
+
+add_executable(JLUNA_BENCHMARK
+    .benchmark/main.cpp
+    .benchmark/benchmark.hpp
+)
+target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <julia.h>
+#include <ptrhash.h>
 #include <jluna.hpp>
 #include <.test/test.hpp>
 #include <.src/c_adapter.hpp>

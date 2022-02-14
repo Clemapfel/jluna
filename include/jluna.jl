@@ -681,7 +681,9 @@ module jluna
                 name = chop(name, head = 1, tail = 0)   # remove first .
             end
 
-            Main.eval(:($(Meta.parse(name)) = $new_value));
+            expr = :($(Meta.parse(name)) = $new_value);
+            println(dump(expr))
+            Main.eval(expr);
             return new_value;
         end
 
