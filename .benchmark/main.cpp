@@ -17,8 +17,10 @@ int main()
     Benchmark::initialize();
 
     Benchmark::run("test", 1000, []{
+
+        throw std::invalid_argument("test");
         for (size_t i = 0; i < 10000; ++i)
-            i = i;
+           i = i;
     });
 
     Benchmark::conclude();
