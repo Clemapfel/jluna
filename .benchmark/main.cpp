@@ -67,6 +67,16 @@ int main()
         {}
     });
 
+    Benchmark::run("box set", count, [](){
+        auto set = std::set<Int64>();
+
+        for (size_t i = 0; i < 1000; ++i)
+            set.insert(i);
+
+        volatile auto* res = box(set);
+        // 1.1393
+    });
+
     Benchmark::conclude();
     return 0;
 
