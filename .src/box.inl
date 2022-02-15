@@ -207,6 +207,7 @@ namespace jluna
         jl_pause_gc;
         auto* res = jl_call3(pair, box<T1>(value.first), box<T2>(value.second));
         jl_unpause_gc;
+        return res;
     }
 
     template<IsTuple T>
@@ -224,6 +225,8 @@ namespace jluna
 
         auto* res = jl_call(tuple, args.data(), args.size());
         jl_unpause_gc;
+
+        return res;
     }
 
     template<LambdaType<> T>

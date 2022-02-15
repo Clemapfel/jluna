@@ -43,10 +43,13 @@ int main()
 
     size_t count = 1000;
 
-    Benchmark::run("unbox set", count, [](){
-        Any* set = jl_eval_string("return Set{Int64}(collect(1:100))");
-        volatile auto res = unbox<std::set<Int64>>(set);
+    Benchmark::run("unbox map", count, [](){
+
+        // target: 19.1908
+        Any* in = jl_eval_string("return Dict{Int64, Int64}(Pair.(collect(1:100), collect(1:100)))");
+        auto val = unbox<std::map<Int64, Int64>>(in);
     });
+
 
     /*
     Benchmark::run("unbox vector", count, [](){

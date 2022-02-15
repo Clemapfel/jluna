@@ -101,6 +101,13 @@ namespace jluna
         std::enable_if_t<std::is_same_v<T, std::unordered_map<Key_t, Value_t>>, bool> = true>
     T unbox(Any* value);
 
+    /// @brief unbox to multi_map
+    template<typename T,
+        typename Key_t = typename T::key_type,
+        typename Value_t = typename T::mapped_type,
+        std::enable_if_t<std::is_same_v<T, std::multimap<Key_t, Value_t>>, bool> = true>
+    T unbox(Any* value);
+
     /// @brief unbox to set
     template<typename T,
         typename Value_t = typename T::value_type,

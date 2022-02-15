@@ -132,16 +132,22 @@ namespace jluna
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::map<Key_t, Value_t>>, bool>>
     T unbox(Any* value)
     {
+        static jl_function_t* iterate = jl_get_function(jl_base_module, "iterate");
+
         jl_pause_gc;
-        auto* res = jl_try_convert(to_julia_type<std::map<Key_t, Value_t>>::type_name.c_str(), value);
+        auto out = std::map<Key_t, Value_t>();
+        auto* it_res = jl_nothing;
 
-        static jl_function_t* serialize = jl_find_function("jluna", "serialize");
+        Any* next_i = jl_box_int64(1);
+        while(true)
+        {
+            it_res = jl_call2(iterate, value, next_i);
+            if (it_res == jl_nothing)
+                break;
 
-        jl_array_t* as_array = (jl_array_t*) safe_call(serialize, value);
-
-        T out;
-        for (size_t i = 0; i < jl_array_len(as_array); ++i)
-            out.insert(unbox<std::pair<Key_t, Value_t>>(jl_arrayref(as_array, i)));
+            out.insert(unbox<std::pair<Key_t, Value_t>>(jl_get_nth_field(it_res, 0)));
+            next_i = jl_get_nth_field(it_res, 1);
+        }
 
         jl_unpause_gc;
         return out;
@@ -150,16 +156,22 @@ namespace jluna
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::unordered_map<Key_t, Value_t>>, bool>>
     T unbox(Any* value)
     {
+        static jl_function_t* iterate = jl_get_function(jl_base_module, "iterate");
+
         jl_pause_gc;
-        auto* res = jl_try_convert(to_julia_type<std::unordered_map<Key_t, Value_t>>::type_name.c_str(), value);
+        auto out = std::unordered_map<Key_t, Value_t>();
+        auto* it_res = jl_nothing;
 
-        static jl_function_t* serialize = jl_find_function("jluna", "serialize");
+        Any* next_i = jl_box_int64(1);
+        while(true)
+        {
+            it_res = jl_call2(iterate, value, next_i);
+            if (it_res == jl_nothing)
+                break;
 
-        jl_array_t* as_array = (jl_array_t*) safe_call(serialize, value);
-
-        T out;
-        for (size_t i = 0; i < jl_array_len(as_array); ++i)
-            out.insert(unbox<std::pair<Key_t, Value_t>>(jl_arrayref(as_array, i)));
+            out.insert(unbox<std::pair<Key_t, Value_t>>(jl_get_nth_field(it_res, 0)));
+            next_i = jl_get_nth_field(it_res, 1);
+        }
 
         jl_unpause_gc;
         return out;
@@ -192,7 +204,7 @@ namespace jluna
         auto res = std::pair<T1, T2>(unbox<T1>(first), unbox<T2>(second));
         jl_unpause_gc;
 
-        r
+        return res;
     }
 
     namespace detail    // helper functions for tuple unboxing
@@ -226,6 +238,19 @@ namespace jluna
             return unbox_tuple<Ts...>(v);
         }
     }
+
+    class Symbol;
+    template<Is<Symbol> T>
+    T unbox(Any*);
+
+    class Module;
+    template<Is<Module> T>
+    T unbox(Any*);
+
+    class Type;
+    template<Is<Type> T>
+    T unbox(Any*);
+
 
     template<IsTuple T>
     T unbox(Any* value)
