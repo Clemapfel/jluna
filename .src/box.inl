@@ -15,25 +15,25 @@ namespace jluna
     Any* box(T value)
     {
         return (Any*) value;
-    }
+    } //°
 
     template<Is<bool> T>
     Any* box(T value)
     {
         return jl_box_bool(value);
-    }
+    } //°
 
     template<Is<std::bool_constant<true>> T>
     Any* box(T value)
     {
-        return jl_box_bool((bool) value);
-    }
+        return jl_box_bool(true);
+    } //°
 
     template<Is<std::bool_constant<false>> T>
     Any* box(T value)
     {
-        return jl_box_bool((bool) value);
-    }
+        return jl_box_bool(false);
+    } //°
     
     template<Is<char> T>
     Any* box(T value)
@@ -46,73 +46,81 @@ namespace jluna
     Any* box(T value)
     {
         return jl_box_uint8((uint8_t) value);
-    }
+    } //°
 
     template<Is<uint16_t> T>
     Any* box(T value)
     {
         return jl_box_uint16((uint16_t) value);
-    }
+    } //°
 
     template<Is<uint32_t> T>
     Any* box(T value)
     {
         return jl_box_uint32((uint32_t) value);
-    }
+    } //°
 
     template<Is<uint64_t> T>
     Any* box(T value)
     {
         return jl_box_uint64((uint64_t) value);
-    }
+    } //°
 
     template<Is<int8_t> T>
     Any* box(T value)
     {
         return jl_box_int8((int8_t) value);
-    }
+    } //°
 
     template<Is<int16_t> T>
     Any* box(T value)
     {
         return jl_box_int16((int16_t) value);
-    }
+    } //°
 
     template<Is<int32_t> T>
     Any* box(T value)
     {
         return jl_box_int32((int32_t) value);
-    }
+    } //°
 
     template<Is<int64_t> T>
     Any* box(T value)
     {
         return jl_box_int64((int64_t) value);
-    }
+    } //°
 
     template<Is<float> T>
     Any* box(T value)
     {
         return jl_box_float32((float) value);
-    }
+    } //°
 
     template<Is<double> T>
     Any* box(T value)
     {
         return jl_box_float64((double) value);
-    }
+    } //°
 
     template<Is<std::string> T>
     Any* box(T value)
     {
-        return jl_eval_string(("return \"" + value + "\"").c_str());
+        jl_pause_gc;
+        auto* res = jl_alloc_string(value.size());
+        auto* data = jl_string_data(res);
+
+        for (size_t i = 0; i < value.size(); ++i)
+            data[i] = value.at(i);
+
+        jl_unpause_gc;
+        return res;
     }
 
     template<Is<const char*> T>
     Any* box(T value)
     {
         return box<std::string>(std::string(value));
-    }
+    } //°
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
     Any* box(T value)
@@ -134,7 +142,7 @@ namespace jluna
 
         jl_unpause_gc;
         return (Any*) res;
-    }
+    } //°
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::multimap<Key_t, Value_t>>, bool>>
     Any* box(T value)
@@ -153,7 +161,7 @@ namespace jluna
 
         jl_unpause_gc;
         return res;
-    }
+    } //°
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<
             std::is_same_v<T, std::unordered_map<Key_t, Value_t>> or
@@ -177,7 +185,7 @@ namespace jluna
         auto* res = jl_call(dict, pairs.data(), pairs.size());
         jl_unpause_gc;
         return res;
-    }
+    } //°
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool>>
     Any* box(const T& value)
@@ -198,7 +206,7 @@ namespace jluna
         auto* out = jl_call1(set, (Any*) res);
         jl_unpause_gc;
         return out;
-    }
+    } //°
 
     template<typename T, typename T1, typename T2, std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool>>
     Any* box(T value)
@@ -208,7 +216,7 @@ namespace jluna
         auto* res = jl_call3(pair, box<T1>(value.first), box<T2>(value.second));
         jl_unpause_gc;
         return res;
-    }
+    } //°
 
     template<IsTuple T>
     Any* box(T value)

@@ -41,8 +41,53 @@ int main()
     jluna::State::initialize();
     Benchmark::initialize();
 
+    auto* boxed = box("works");
+    std::cout << unbox<std::string>(boxed) << std::endl;
+
     size_t count = 1000;
 
+    Benchmark::run("unbox string by to_string", count, [](){
+
+        auto str = generate_string(16);
+        auto* val = box(str);
+        volatile auto out = std::string(jl_to_string(val));
+    });
+
+    Benchmark::run("unbox string by unbox", count, [](){
+
+        auto str = generate_string(16);
+        auto* val = box(str);
+        volatile auto out = unbox<std::string>(val);
+    });
+
+    /*
+    Benchmark::run("box string by Eval", count, [](){
+
+        auto str = generate_string(32);
+        volatile auto* res = jl_eval_string(("return \"" + str + "\"").c_str());
+    });
+
+    Benchmark::run("box string from Symbol", count, [](){
+
+        static jl_function_t* to_string = jl_get_function(jl_base_module, "string");
+        auto str = generate_string(32);
+        volatile auto* res = jl_call1(to_string, (Any*) jl_symbol(str.c_str()));
+    });
+
+    Benchmark::run("box string as C Array", count, [](){
+
+        auto str = generate_string(32);
+
+        volatile auto* res = jl_alloc_string(str.size());
+        auto* data = jl_string_data(res);
+
+        for (size_t i = 0; i < 32; ++i)
+            data[i] = str.at(i);
+    });
+     */
+
+    Benchmark::conclude();
+    /*
     Benchmark::run("unbox map", count, [](){
 
         // target: 19.1908
@@ -51,7 +96,6 @@ int main()
     });
 
 
-    /*
     Benchmark::run("unbox vector", count, [](){
 
         Any* vec = jl_eval_string("return collect(1:100)");

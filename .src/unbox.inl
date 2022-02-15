@@ -9,7 +9,7 @@ namespace jluna
     T unbox(Any* in)
     {
         return in;
-    }
+    } //°
 
     template<Is<bool> T>
     T unbox(Any* value)
@@ -98,8 +98,8 @@ namespace jluna
     template<Is<std::string> T>
     T unbox(Any* value)
     {
-        return jl_to_string(value);
-    }
+        return std::string(jl_to_string(value));
+    } //°
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
     T unbox(Any* value)
@@ -127,7 +127,7 @@ namespace jluna
 
         jl_unpause_gc;
         return out;
-    }
+    } //°
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::map<Key_t, Value_t>>, bool>>
     T unbox(Any* value)
@@ -151,7 +151,7 @@ namespace jluna
 
         jl_unpause_gc;
         return out;
-    }
+    } //°
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::unordered_map<Key_t, Value_t>>, bool>>
     T unbox(Any* value)
@@ -175,7 +175,7 @@ namespace jluna
 
         jl_unpause_gc;
         return out;
-    }
+    } //°
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool>>
     T unbox(Any* value)
@@ -205,7 +205,7 @@ namespace jluna
         jl_unpause_gc;
 
         return res;
-    }
+    } //°
 
     namespace detail    // helper functions for tuple unboxing
     {
