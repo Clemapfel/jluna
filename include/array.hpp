@@ -135,8 +135,8 @@ namespace jluna
             using Proxy::_content;
 
         private:
-            void throw_if_index_out_of_range(int index, size_t dimension);
-            size_t get_dimension(int);
+            void throw_if_index_out_of_range(int index, size_t dimension) const;
+            size_t get_dimension(int) const;
 
             class ConstIterator
             {

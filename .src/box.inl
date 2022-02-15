@@ -105,14 +105,14 @@ namespace jluna
     template<Is<std::string> T>
     Any* box(T value)
     {
-        jl_pause_gc;
+        jl_gc_pause;
         auto* res = jl_alloc_string(value.size());
         auto* data = jl_string_data(res);
 
         for (size_t i = 0; i < value.size(); ++i)
             data[i] = value.at(i);
 
-        jl_unpause_gc;
+        jl_gc_unpause;
         return res;
     }
 
@@ -134,13 +134,13 @@ namespace jluna
     {
         static jl_function_t* vector = jl_get_function(jl_base_module, "Vector");
 
-        jl_pause_gc;
+        jl_gc_pause;
         auto* res = (jl_array_t*) jl_call2(vector, jl_undef_initializer(), jl_box_uint64(value.size()));
 
         for (size_t i = 0; i < value.size(); ++i)
             jl_arrayset(res, box(value.at(i)), i);
 
-        jl_unpause_gc;
+        jl_gc_unpause;
         return (Any*) res;
     } //°
 
@@ -150,7 +150,7 @@ namespace jluna
         static jl_function_t* iddict = jl_get_function(jl_base_module, "IdDict");
         static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
 
-        jl_pause_gc;
+        jl_gc_pause;
         std::vector<jl_value_t*> pairs;
         pairs.reserve(value.size());
 
@@ -159,7 +159,7 @@ namespace jluna
 
         auto* res = jl_call(iddict, pairs.data(), pairs.size());
 
-        jl_unpause_gc;
+        jl_gc_unpause;
         return res;
     } //°
 
@@ -172,7 +172,7 @@ namespace jluna
         static jl_function_t* dict = jl_get_function(jl_base_module, "Dict");
         static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
 
-        jl_pause_gc;
+        jl_gc_pause;
 
         std::vector<jl_value_t*> pairs;
         pairs.reserve(value.size());
@@ -183,7 +183,7 @@ namespace jluna
         jl_gc_enable(before);
 
         auto* res = jl_call(dict, pairs.data(), pairs.size());
-        jl_unpause_gc;
+        jl_gc_unpause;
         return res;
     } //°
 
@@ -193,7 +193,7 @@ namespace jluna
         static jl_function_t* vector = jl_get_function(jl_base_module, "Vector");
         static jl_function_t* set = jl_get_function(jl_base_module, "Set");
 
-        jl_pause_gc;
+        jl_gc_pause;
         auto* res = (jl_array_t*) jl_call2(vector, jl_undef_initializer(), jl_box_uint64(value.size()));
 
         size_t i = 0;
@@ -204,7 +204,7 @@ namespace jluna
         }
 
         auto* out = jl_call1(set, (Any*) res);
-        jl_unpause_gc;
+        jl_gc_unpause;
         return out;
     } //°
 
@@ -212,9 +212,9 @@ namespace jluna
     Any* box(T value)
     {
         static jl_function_t* pair = jl_get_function(jl_base_module, "Pair");
-        jl_pause_gc;
+        jl_gc_pause;
         auto* res = jl_call2(pair, box<T1>(value.first), box<T2>(value.second));
-        jl_unpause_gc;
+        jl_gc_unpause;
         return res;
     } //°
 
@@ -223,7 +223,7 @@ namespace jluna
     {
         static jl_function_t* tuple = jl_get_function(jl_core_module, "tuple");
 
-        jl_pause_gc;
+        jl_gc_pause;
         std::vector<jl_value_t*> args;
         args.reserve(std::tuple_size_v<T>);
 
@@ -232,7 +232,7 @@ namespace jluna
         }, value);
 
         auto* res = jl_call(tuple, args.data(), args.size());
-        jl_unpause_gc;
+        jl_gc_unpause;
 
         return res;
     }

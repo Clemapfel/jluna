@@ -29,14 +29,14 @@ namespace jluna
     }
 
     template<Boxable T, size_t Rank>
-    size_t Array<T, Rank>::get_dimension(int index)
+    size_t Array<T, Rank>::get_dimension(int index) const
     {
         static jl_function_t* size = jl_get_function(jl_base_module, "size");
         return jl_unbox_uint64(jl_call2(size, _content->value(), jl_box_int32(index + 1)));
     }
 
     template<Boxable T, size_t Rank>
-    void Array<T, Rank>::throw_if_index_out_of_range(int index, size_t dimension)
+    void Array<T, Rank>::throw_if_index_out_of_range(int index, size_t dimension) const
     {
         if (index < 0)
         {
@@ -85,21 +85,31 @@ namespace jluna
     Vector<V> Array<V, R>::operator[](const std::vector<size_t>& range) const
     {
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        static jl_function_t* make_vector = jl_get_function((jl_module_t*) jl_eval_string("return jluna"), "make_vector");
+        static jl_function_t* vector = jl_get_function(jl_base_module, "Vector");
 
-        std::vector<jl_value_t*> args;
+        jl_gc_pause;
 
-        for (auto e : range)
-            args.push_back(box(e + 1));
+        jl_array_t* out = (jl_array_t*) jl_call2(vector, jl_undef_initializer(), jl_box_uint64(range.size()));
 
-        return Vector<V>(jl_call2(getindex, _content->value(), jl_call(make_vector, args.data(), args.size())), nullptr);
+        for (size_t i = 0; i < range.size(); ++i)
+            jl_arrayset(out, jl_box_uint64(range.at(i)), i);
+
+        return Vector<V>(jl_call2(getindex, _content->value(), (Any*) out));
+
+        jl_gc_unpause;
     }
 
     template<Boxable V, size_t R>
     template<Boxable T>
     Vector<V> Array<V, R>::operator[](std::initializer_list<T>&& list) const
     {
-        return operator[](std::vector<T>(list));
+        // cast
+        std::vector<size_t> index;
+        index.reserve(list.size());
+        for (auto& e : list)
+            index.push_back(e);
+
+        return operator[](index);
     }
 
     template<Boxable V, size_t R>

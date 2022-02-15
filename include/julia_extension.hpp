@@ -146,8 +146,8 @@ extern "C"
     }
 
     /// @brief pause gc and save current state
-    #define jl_pause_gc bool before = jl_gc_is_enabled(); jl_gc_enable(false);
+    #define jl_gc_pause bool before = jl_gc_is_enabled(); jl_gc_enable(false);
 
     /// @brief restore previously saved state
-    #define jl_unpause_gc jl_gc_enable(before);
+    #define jl_gc_unpause jl_gc_enable(before);
 }

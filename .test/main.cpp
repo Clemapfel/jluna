@@ -527,6 +527,15 @@ int main()
         Test::assert_that(vec.size() == 0);
     });
 
+    Test::test("array: range index", [](){
+
+        auto vec = Array<Int64, 1>(State::safe_eval("return collect(1:100)"), nullptr);
+
+        const auto subvec = vec[{12, 19, 99, 2}];
+
+        Test::assert_that(subvec.at(0) == 11 and subvec.at(1) == 18 and subvec.at(2) == 98 and subvec.at(3) == 2);
+    });
+
     Test::test("array: reject wrong type", []()
     {
         //Test::assert_that(false);

@@ -115,7 +115,7 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
     T unbox(Any* value)
     {
-        jl_pause_gc;
+        jl_gc_pause;
 
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
 
@@ -125,7 +125,7 @@ namespace jluna
         for (size_t i = 0; i < jl_array_len(value); ++i)
             out.push_back(unbox<Value_t>(jl_call2(getindex, value, jl_box_uint64(i+1))));
 
-        jl_unpause_gc;
+        jl_gc_unpause;
         return out;
     } //°
 
@@ -134,7 +134,7 @@ namespace jluna
     {
         static jl_function_t* iterate = jl_get_function(jl_base_module, "iterate");
 
-        jl_pause_gc;
+        jl_gc_pause;
         auto out = std::map<Key_t, Value_t>();
         auto* it_res = jl_nothing;
 
@@ -149,7 +149,7 @@ namespace jluna
             next_i = jl_get_nth_field(it_res, 1);
         }
 
-        jl_unpause_gc;
+        jl_gc_unpause;
         return out;
     } //°
 
@@ -158,7 +158,7 @@ namespace jluna
     {
         static jl_function_t* iterate = jl_get_function(jl_base_module, "iterate");
 
-        jl_pause_gc;
+        jl_gc_pause;
         auto out = std::unordered_map<Key_t, Value_t>();
         auto* it_res = jl_nothing;
 
@@ -173,14 +173,14 @@ namespace jluna
             next_i = jl_get_nth_field(it_res, 1);
         }
 
-        jl_unpause_gc;
+        jl_gc_unpause;
         return out;
     } //°
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool>>
     T unbox(Any* value)
     {
-        jl_pause_gc;
+        jl_gc_pause;
 
         static jl_function_t* serialize = jl_find_function("jluna", "serialize");
         jl_array_t* as_array = (jl_array_t*) jl_call1(serialize, value);
@@ -189,20 +189,20 @@ namespace jluna
         for (size_t i = 0; i < jl_array_len(as_array); ++i)
             out.insert(unbox<Value_t>(jl_arrayref(as_array, i)));
 
-        jl_unpause_gc;
+        jl_gc_unpause;
         return out;
     }
 
     template<typename T, typename T1, typename T2, std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool>>
     T unbox(Any* value)
     {
-        jl_pause_gc;
+        jl_gc_pause;
 
         auto* first = jl_get_nth_field(value, 0);
         auto* second = jl_get_nth_field(value, 1);
 
         auto res = std::pair<T1, T2>(unbox<T1>(first), unbox<T2>(second));
-        jl_unpause_gc;
+        jl_gc_unpause;
 
         return res;
     } //°
