@@ -209,63 +209,62 @@ The following types are both boxable and unboxable out-of-the-box.
 ```cpp
 // cpp type              // julia-side type after boxing
 
-jl_value_t*              -> Any
-jl_module_t*             -> Module
-jl_function_t*           -> Function
-jl_sym_t*                -> Symbol
+jl_value_t*              => Any
+jl_module_t*             => Module
+jl_function_t*           => Function
+jl_sym_t*                => Symbol
 
-Any*                     -> Any
+Any*                     => Any
 
-bool                     -> Bool
-char                     -> Char
-int8_t                   -> Int8
-int16_t                  -> Int16
-int32_t                  -> Int32
-int64_t                  -> Int64
-uint8_t                  -> UInt8
-uint16_t                 -> UInt16
-uint32_t                 -> UInt32
-uint64_t                 -> UInt64
-float                    -> Float32
-double                   -> Float64
+bool                     => Bool
+char                     => Char
+int8_t                   => Int8
+int16_t                  => Int16
+int32_t                  => Int32
+int64_t                  => Int64
+uint8_t                  => UInt8
+uint16_t                 => UInt16
+uint32_t                 => UInt32
+uint64_t                 => UInt64
+float                    => Float32
+double                   => Float64
 
-jluna::Proxy             -> /* value-type deduced during runtime */
-jluna::Symbol            -> Symbol
-jluna::Type              -> Type
-jluna::Array<T, R>       -> Array{T, R}     * °
-jluna::Vector<T>         -> Vector{T}       *
-jluna::JuliaException    -> Exception
+jluna::Proxy             => /* value-type deduced during runtime */
+jluna::Symbol            => Symbol
+jluna::Type              => Type
+jluna::Array<T, R>       => Array{T, R}     * °
+jluna::Vector<T>         => Vector{T}       *
+jluna::JuliaException    => Exception
 
-std::string              -> String
-std::string              -> Symbol
-std::complex<T>          -> Complex{T}      *
-std::vector<T>           -> Vector{T}       *
-std::array<T, R>         -> Vector{T}       *
-std::pair<T, U>          -> Pair{T, U}      *
-std::tuple<Ts...>        -> Tuple{Ts...}    *
-std::map<T, U>           -> IdDict{T, U}    *
-std::unordered_map<T, U> -> Dict{T, U}      *
-std::set<T>              -> Set{T, U}       *
+std::string              => String
+std::string              => Symbol
+std::complex<T>          => Complex{T}      *
+std::vector<T>           => Vector{T}       *
+std::array<T, R>         => Vector{T}       *
+std::pair<T, U>          => Pair{T, U}      *
+std::tuple<Ts...>        => Tuple{Ts...}    *
+std::map<T, U>           => IdDict{T, U}    *
+std::unordered_map<T, U> => Dict{T, U}      *
+std::set<T>              => Set{T, U}       *
 
 * where T, U are also (Un)Boxables
 ° where R is the rank of the array
 
-std::function<void()>                       -> function ()      ::Nothing        
-std::function<void(Any*)>                   -> function (::Any) ::Nothing  
-std::function<void(Any*, Any*)>             -> function (xs...) ::Nothing  *
-std::function<void(Any*, Any*, Any*)>       -> function (xs...) ::Nothing  *
-std::function<void(Any*, Any*, Any*, Any*)> -> function (xs...) ::Nothing  *
-std::function<void(std::vector<Any*>)>      -> function (::Vector{Any}) ::Nothing
+std::function<void()>                       => function () -> Nothing     
+std::function<void(Any*)>                   => function (::Any) -> Nothing
+std::function<void(Any*, Any*)>             => function (::Any, ::Any) -> Nothing
+std::function<void(Any*, Any*, Any*)>       => function (::Any, ::Any, ::Any) -> Nothing
+std::function<void(Any*, Any*, Any*, Any*)> => function (::Any, ::Any, ::Any, ::Any) -> Nothing
+std::function<void(std::vector<Any*>)>      => function (::Vector{Any}) -> Nothing
 
-std::function<Any*()>                       -> function ()      ::Any        
-std::function<Any*(Any*)>                   -> function (::Any) ::Any
-std::function<Any*(Any*, Any*)>             -> function (xs...) ::Any      *
-std::function<Any*(Any*, Any*, Any*)>       -> function (xs...) ::Any      *
-std::function<Any*(Any*, Any*, Any*, Any*)> -> function (xs...) ::Any      *
-std::function<Any*(std::vector<Any*>)>      -> function (::Vector{Any}) ::Any
-
-* where xs... is enforced to be of approriate size at runtime
+std::function<Any*()>                       => function () -> Any  
+std::function<Any*(Any*)>                   => function (::Any) -> Any
+std::function<Any*(Any*, Any*)>             => function (::Any, ::Any) -> Any
+std::function<Any*(Any*, Any*, Any*)>       => function (::Any, ::Any, ::Any) -> Any
+std::function<Any*(Any*, Any*, Any*, Any*)> => function (::Any, ::Any, ::Any, ::Any) -> Any
+std::function<Any*(std::vector<Any*>)>      => function (::Vector{Any}) ::Any
 ```
+
 We will learn more on how to box/unbox functions specifically in the [section on calling C++ functions from julia](#functions).
 
 The template meta function `to_julia_type` is provided to convert a C++ type into a julia-type. `to_julia_type<T>::type_name` is the name of the type as a string.

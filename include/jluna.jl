@@ -800,18 +800,20 @@ module jluna
         """
         Wrapper object for unnamed functions, frees function once object is destroyed
         """
-        mutable struct UnnamedFunctionProxy
+        mutable struct UnnamedFunctionProxy{N, Return_t}
 
             _id::Symbol
             _call::Function
-            _n_arguments::Int64
+            _n_args::Int64
 
-            function UnnamedFunctionProxy(id::Symbol)
+            function UnnamedFunctionProxy{N, Return_t}(id::Symbol) where {N, Return_t}
+
+                @assert(-1 <= N <= 4)
 
                 _id = id
-                x = new(id, function (xs...) Main.cppcall(_id, xs...) end)
+                x = new{N, Return_t}(id, function (xs...) Main.cppcall(_id, xs...) end, N)
 
-                finalizer(function (t::UnnamedFunctionProxy)
+                finalizer(function (t::UnnamedFunctionProxy{N, Return_t})
                     ccall((:free_function, _cppcall._library_name), Cvoid, (Csize_t,), hash(t._id))
                 end, x)
 
@@ -819,11 +821,38 @@ module jluna
             end
         end
 
-        # make function proxy struct callable
-        (instance::UnnamedFunctionProxy)(args...) = instance._call(args...);
+        # call with signature (1x Any) -> [Any / Nothing]
+        function (instance::UnnamedFunctionProxy{0, T})() ::T where T
+            return instance._call();
+        end
+
+        # call with signature (1x Any) -> [Any / Nothing]
+        function (instance::UnnamedFunctionProxy{1, T})(arg1) ::T where T
+            return instance._call(arg1);
+        end
+
+        # call with signature (2x Any) -> [Any / Nothing]
+        function (instance::UnnamedFunctionProxy{2, T})(arg1, arg2) ::T where T
+            return instance._call(arg1, arg2);
+        end
+
+        # call with signature (3x Any) -> [Any / Nothing]
+        function (instance::UnnamedFunctionProxy{3, T})(arg1, arg2, arg3) ::T where T
+            return instance._call(arg1, arg2, arg3);
+        end
+
+        # call with signature (4x Any) -> [Any / Nothing]
+        function (instance::UnnamedFunctionProxy{4, T})(arg1, arg2, arg3, arg4) ::T where T
+            return instance._call(arg1, arg2, arg3, arg4);
+        end
+
+        # call with other signature
+        function (instance::UnnamedFunctionProxy{Int64(-1), T})(args::Vector) ::T where T
+            return instance._call(args...);
+        end
 
         # ctor wrapper for jluna
-        new_unnamed_function(s::Symbol) = return UnnamedFunctionProxy(s)
+        new_unnamed_function(s::Symbol, N::Integer, T::Type) = return UnnamedFunctionProxy{N, T}(s)
 
         """
         an exception thrown when trying to invoke cppcall with a function name that

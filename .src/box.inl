@@ -213,7 +213,7 @@ namespace jluna
     {
         static jl_function_t* pair = jl_get_function(jl_base_module, "Pair");
         jl_pause_gc;
-        auto* res = jl_call3(pair, box<T1>(value.first), box<T2>(value.second));
+        auto* res = jl_call2(pair, box<T1>(value.first), box<T2>(value.second));
         jl_unpause_gc;
         return res;
     } //°
