@@ -38,6 +38,9 @@ Number_t generate_number(
 
 size_t count = 1000;
 
+std::string operator""_gen(const char* in, size_t i) {
+    return "abcd";
+}
 
 void benchmark_lambda_call()
 {
@@ -65,6 +68,12 @@ void benchmark_lambda_call()
 
 int main()
 {
+
+    auto a = "test"_gen;
+    std::cout << a << std::endl;
+    return 0;
+
+
     jluna::State::initialize();
     Benchmark::initialize();
 
