@@ -267,6 +267,7 @@ module jluna
         for e in x
             push!(out, e)
         end
+
         return out;
     end
 

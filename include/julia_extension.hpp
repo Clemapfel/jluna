@@ -135,4 +135,19 @@ extern "C"
         static jl_function_t* hash = jl_get_function(jl_base_module, "hash");
         return jl_unbox_uint64(jl_call1(hash, (jl_value_t*) jl_symbol(str)));
     }
+
+    /// @brief get length of any
+    /// @param args
+    /// @returns length as int64
+    inline size_t jl_length(jl_value_t* value)
+    {
+        static jl_function_t* length = jl_get_function(jl_base_module, "length");
+        return jl_unbox_int64(jl_call1(length, value));
+    }
+
+    /// @brief pause gc and save current state
+    #define jl_pause_gc bool before = jl_gc_is_enabled(); jl_gc_enable(false);
+
+    /// @brief restore previously saved state
+    #define jl_unpause_gc jl_gc_enable(before);
 }

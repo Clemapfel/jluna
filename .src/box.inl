@@ -126,15 +126,13 @@ namespace jluna
     {
         static jl_function_t* vector = jl_get_function(jl_base_module, "Vector");
 
-        auto before = jl_gc_is_enabled();
-        jl_gc_enable(false);
-
+        jl_pause_gc;
         auto* res = (jl_array_t*) jl_call2(vector, jl_undef_initializer(), jl_box_uint64(value.size()));
 
         for (size_t i = 0; i < value.size(); ++i)
             jl_arrayset(res, box(value.at(i)), i);
 
-        jl_gc_enable(before);
+        jl_unpause_gc;
         return (Any*) res;
     }
 
@@ -144,9 +142,7 @@ namespace jluna
         static jl_function_t* iddict = jl_get_function(jl_base_module, "IdDict");
         static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
 
-        auto before = jl_gc_is_enabled();
-        jl_gc_enable(false);
-
+        jl_pause_gc;
         std::vector<jl_value_t*> pairs;
         pairs.reserve(value.size());
 
@@ -155,7 +151,7 @@ namespace jluna
 
         auto* res = jl_call(iddict, pairs.data(), pairs.size());
 
-        jl_gc_enable(before);
+        jl_unpause_gc;
         return res;
     }
 
@@ -168,8 +164,7 @@ namespace jluna
         static jl_function_t* dict = jl_get_function(jl_base_module, "Dict");
         static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
 
-        auto before = jl_gc_is_enabled();
-        jl_gc_enable(false);
+        jl_pause_gc;
 
         std::vector<jl_value_t*> pairs;
         pairs.reserve(value.size());
@@ -179,7 +174,9 @@ namespace jluna
 
         jl_gc_enable(before);
 
-        return jl_call(dict, pairs.data(), pairs.size());
+        auto* res = jl_call(dict, pairs.data(), pairs.size());
+        jl_unpause_gc;
+        return res;
     }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool>>
@@ -188,8 +185,7 @@ namespace jluna
         static jl_function_t* vector = jl_get_function(jl_base_module, "Vector");
         static jl_function_t* set = jl_get_function(jl_base_module, "Set");
 
-        auto before = jl_gc_is_enabled();
-        jl_gc_enable(false);
+        jl_pause_gc;
         auto* res = (jl_array_t*) jl_call2(vector, jl_undef_initializer(), jl_box_uint64(value.size()));
 
         size_t i = 0;
@@ -199,15 +195,18 @@ namespace jluna
             i += 1;
         }
 
-        jl_gc_enable(before);
-        return jl_call1(set, (Any*) res);
+        auto* out = jl_call1(set, (Any*) res);
+        jl_unpause_gc;
+        return out;
     }
 
     template<typename T, typename T1, typename T2, std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool>>
     Any* box(T value)
     {
         static jl_function_t* pair = jl_get_function(jl_base_module, "Pair");
-        return jl_call3(pair, box<T1>(value.first), box<T2>(value.second));
+        jl_pause_gc;
+        auto* res = jl_call3(pair, box<T1>(value.first), box<T2>(value.second));
+        jl_unpause_gc;
     }
 
     template<IsTuple T>
@@ -215,6 +214,7 @@ namespace jluna
     {
         static jl_function_t* tuple = jl_get_function(jl_core_module, "tuple");
 
+        jl_pause_gc;
         std::vector<jl_value_t*> args;
         args.reserve(std::tuple_size_v<T>);
 
@@ -222,7 +222,8 @@ namespace jluna
             (args.push_back(box<decltype(elements)>(elements)), ...);
         }, value);
 
-        return jl_call(tuple, args.data(), args.size());
+        auto* res = jl_call(tuple, args.data(), args.size());
+        jl_unpause_gc;
     }
 
     template<LambdaType<> T>

@@ -41,8 +41,21 @@ int main()
     jluna::State::initialize();
     Benchmark::initialize();
 
-    size_t count = 10000;
+    size_t count = 1000;
 
+    Benchmark::run("unbox set", count, [](){
+        Any* set = jl_eval_string("return Set{Int64}(collect(1:100))");
+        volatile auto res = unbox<std::set<Int64>>(set);
+    });
+
+    /*
+    Benchmark::run("unbox vector", count, [](){
+
+        Any* vec = jl_eval_string("return collect(1:100)");
+        volatile auto res = unbox<std::vector<Int64>>(vec);
+    });
+
+    /*
     Benchmark::run("forward_last_exception positive:", count, []()
     {
         jl_eval_string("try throw(AssertionError(\"abc\")) catch e throw(e) end");
