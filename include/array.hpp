@@ -10,6 +10,9 @@
 
 namespace jluna
 {
+    template<Boxable T>
+    class Vector;
+
     /// @brief wrapper for julia-side Array{Value_t, Rank}
     template<Boxable Value_t, size_t Rank>
     class Array : public Proxy
@@ -44,14 +47,13 @@ namespace jluna
             /// @brief julia-style list indexing
             /// @param range: iterable range with indices
             /// @returns new array result of Julia-side getindex(this, range)
-            template<Iterable Range_t>
-            auto operator[](const Range_t& range);
+            jluna::Vector<Value_t> operator[](const std::vector<size_t>& range) const;
 
             /// @brief julia-style list indexing
             /// @param initializer list with indices
             /// @returns new array result of Julia-side getindex(this, range)
             template<Boxable T>
-            auto operator[](std::initializer_list<T>&&);
+            jluna::Vector<Value_t> operator[](std::initializer_list<T>&&) const;
 
             /// @brief linear indexing, no bounds checking
             /// @tparam return type

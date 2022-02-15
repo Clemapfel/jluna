@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 Clemens Cords
 // Created on 13.02.22 by clem (mail@clemens-cords.com)
 //
@@ -36,29 +36,65 @@ Number_t generate_number(
     return dist(engine);
 }
 
+size_t count = 1000;
+
+
+void benchmark_lambda_call()
+{
+     auto a = Benchmark::run("Lambda: Create & Run Julia-Side", count, [&](){
+
+        auto* res = register_unnamed_function([]() -> void {
+            for (size_t i = 0; i < 100000; ++i)
+                volatile size_t j = i;
+        });
+
+        jl_call0(res);
+    });
+
+    auto b = Benchmark::run("Lambda: Create & Run C++-Side", count, [&](){
+
+        auto lambda = []() -> void {
+            for (size_t i = 0; i < 100000; ++i)
+                volatile size_t j = i;
+        };
+        lambda();
+    });
+
+    Benchmark::add_results("Lambda: Absolute Overhead",  a - b);
+}
+
 int main()
 {
     jluna::State::initialize();
     Benchmark::initialize();
 
-    auto* boxed = box("works");
-    std::cout << unbox<std::string>(boxed) << std::endl;
+    jl_eval_string("test = 1234");
 
-    size_t count = 1000;
+    Benchmark::run("Proxy: CTOR DTOR Unnamed", count, [](){
 
-    Benchmark::run("unbox string by to_string", count, [](){
-
-        auto str = generate_string(16);
-        auto* val = box(str);
-        volatile auto out = std::string(jl_to_string(val));
+        volatile auto* p = new Proxy(box(generate_string(1)));
+        delete p;
     });
 
-    Benchmark::run("unbox string by unbox", count, [](){
+    Benchmark::run("Proxy: CTOR DTOR Named", count, [](){
 
-        auto str = generate_string(16);
-        auto* val = box(str);
-        volatile auto out = unbox<std::string>(val);
+        volatile auto* p = new Proxy(Main["test"]);
+        delete p;
     });
+
+    Benchmark::run("Proxy: Control", count, [](){
+
+        volatile auto* p = box(generate_string(1));
+    });
+
+
+
+
+
+
+    Benchmark::conclude();
+    return 0;
+
 
     /*
     Benchmark::run("box string by Eval", count, [](){

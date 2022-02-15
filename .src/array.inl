@@ -19,11 +19,6 @@ namespace jluna
         : Proxy(value, owner, symbol)
     {
         jl_assert_type(value, "Array");
-
-        if (not empty())
-        {
-
-        }
     }
 
     template<Boxable V, size_t R>
@@ -32,14 +27,6 @@ namespace jluna
     {
         jl_assert_type(value, "Array");
     }
-
-    /*
-    template<Boxable V, size_t R>
-    template<Boxable T>
-    Array<V, R>::Array(const std::vector<T>& value, jl_sym_t* symbol)
-        : Proxy(box(value), symbol)
-    {}
-     */
 
     template<Boxable T, size_t Rank>
     size_t Array<T, Rank>::get_dimension(int index)
@@ -60,40 +47,26 @@ namespace jluna
 
         size_t dim = get_dimension(dimension);
 
-        std::string dim_id;
-
-        if (dimension == 0)
-            dim_id = "1st dimension";
-        else if (dimension == 1)
-            dim_id = "2nd dimension";
-        else if (dimension == 3)
-            dim_id = "3rd dimension";
-        else if (dimension < 11)
-            dim_id = std::to_string(dimension) + "th dimension";
-        else
-            dim_id = "dimension " + std::to_string(dimension);
-
         if (index >= dim)
         {
+            std::string dim_id;
+
+            if (dimension == 0)
+                dim_id = "1st dimension";
+            else if (dimension == 1)
+                dim_id = "2nd dimension";
+            else if (dimension == 3)
+                dim_id = "3rd dimension";
+            else if (dimension < 11)
+                dim_id = std::to_string(dimension) + "th dimension";
+            else
+                dim_id = "dimension " + std::to_string(dimension);
+
             std::stringstream str;
             str << "0-based index " << index << " out of range for array of length " << dim << " along " << dim_id << std::endl;
             throw std::out_of_range(str.str().c_str());
         }
-    }
-    
-    template<Boxable V, size_t R>
-    template<Unboxable T>
-    T Array<V, R>::operator[](size_t i) const
-    {
-        if (i >= get_n_elements())
-        {
-            std::stringstream str;
-            str << "0-based index " << i << " out of range for array of length " << get_n_elements() << std::endl;
-            throw std::out_of_range(str.str().c_str());
-        }
-
-        return unbox<T>(jl_arrayref((jl_array_t*) _content->value(), i));
-    }
+    } //°
 
     template<Boxable V, size_t R>
     auto Array<V, R>::operator[](size_t i)
@@ -109,8 +82,7 @@ namespace jluna
     }
 
     template<Boxable V, size_t R>
-    template<Iterable Range_t>
-    auto Array<V, R>::operator[](const Range_t& range)
+    Vector<V> Array<V, R>::operator[](const std::vector<size_t>& range) const
     {
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
         static jl_function_t* make_vector = jl_get_function((jl_module_t*) jl_eval_string("return jluna"), "make_vector");
@@ -125,9 +97,23 @@ namespace jluna
 
     template<Boxable V, size_t R>
     template<Boxable T>
-    auto Array<V, R>::operator[](std::initializer_list<T>&& list)
+    Vector<V> Array<V, R>::operator[](std::initializer_list<T>&& list) const
     {
         return operator[](std::vector<T>(list));
+    }
+
+    template<Boxable V, size_t R>
+    template<Unboxable T>
+    T Array<V, R>::operator[](size_t i) const
+    {
+        if (i >= get_n_elements())
+        {
+            std::stringstream str;
+            str << "0-based index " << i << " out of range for array of length " << get_n_elements() << std::endl;
+            throw std::out_of_range(str.str().c_str());
+        }
+
+        return unbox<T>(jl_arrayref((jl_array_t*) _content->value(), i));
     }
 
     template<Boxable V, size_t R>
@@ -150,7 +136,7 @@ namespace jluna
             mul *= dim;
         }
 
-        return operator[](index);
+        return operator[]<T>(index);
     }
 
     template<Boxable V, size_t R>
@@ -180,9 +166,8 @@ namespace jluna
     template<Boxable T>
     void Array<V, R>::set(size_t i, T value)
     {
-        jl_value_t* boxed = box(value);
-        jl_arrayset((jl_array_t*) _content->value(), box<V>(value), i);
-    }
+        jl_arrayset((jl_array_t*) _content->value(), box<T>(value), i);
+    } //°
 
     template<Boxable V, size_t R>
     auto Array<V, R>::front()
@@ -224,37 +209,33 @@ namespace jluna
     template<Boxable V, size_t R>
     auto Array<V, R>::back()
     {
-        static jl_function_t* length = jl_get_function(jl_base_module, "length");
-        return operator[](jl_unbox_uint64(jl_call1(length, _content->value())) - 1);
+        return operator[](get_n_elements() - 1);
     }
 
     template<Boxable V, size_t R>
     template<Unboxable T>
     T Array<V, R>::back() const
     {
-        static jl_function_t* length = jl_get_function(jl_base_module, "length");
-        return operator[]<T>(jl_unbox_uint64(jl_call1(length, _content->value())) - 1);
-    }
+        return operator[]<T>(get_n_elements() - 1);
+    } //°
 
     template<Boxable V, size_t R>
     size_t Array<V, R>::get_n_elements() const
     {
-        static jl_function_t* length = jl_get_function(jl_base_module, "length");
-        return jl_unbox_uint64(jl_call1(length, _content->value()));
-    }
+        reinterpret_cast<jl_array_t*>(_content->value())->length;
+    } //°
 
     template<Boxable V, size_t R>
     bool Array<V, R>::empty() const
     {
-        static jl_function_t* isempty = jl_get_function(jl_base_module, "isempty");
-        return jl_unbox_bool(jl_call1(isempty, _content->value()));
-    }
+        reinterpret_cast<jl_array_t*>(_content->value())->length == 0;
+    } //°
 
     template<Boxable V, size_t R>
     void* Array<V, R>::data()
     {
         return reinterpret_cast<jl_array_t*>(value())->data;
-    }
+    } //°
 
     // ###
 

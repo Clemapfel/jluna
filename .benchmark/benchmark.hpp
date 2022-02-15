@@ -37,10 +37,10 @@ namespace jluna
                 assert(_exception_maybe == "");
 
                 return Result{
-                  this->_min - other._min,
-                  this->_max - other._max,
-                  this->_average - other._average,
-                  this->_median - other._median,
+                  abs(this->_min - other._min),
+                  abs(this->_max - other._max),
+                  abs(this->_average - other._average),
+                  abs(this->_median - other._median),
                   std::min(this->_n_loops, other._n_loops),
                   ""
                 };
