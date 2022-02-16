@@ -93,7 +93,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto* res = jl_try_convert(to_julia_type<std::complex<Value_t>>::type_name.c_str(), value);
+        auto* res = jl_try_convert((jl_datatype_t*) jl_eval_string(("return " + to_julia_type<std::complex<Value_t>>::type_name).c_str()), value);
 
         auto* re = jl_get_nth_field(value, 0);
         auto* im = jl_get_nth_field(value, 1);
@@ -245,7 +245,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto out = detail::unbox_tuple_pre(jl_try_convert(to_julia_type<T>::type_name.c_str(), value), T());
+        auto out = detail::unbox_tuple_pre(jl_try_convert((jl_datatype_t*) jl_eval_string(("return " + to_julia_type<T>::type_name).c_str()), value), T());
         jl_gc_unpause;
         return out;
     }
