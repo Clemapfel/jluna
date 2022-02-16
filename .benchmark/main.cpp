@@ -38,8 +38,10 @@ Number_t generate_number(
 
 size_t count = 1000;
 
-std::string operator""_gen(const char* in, size_t i) {
-    return "abcd";
+
+
+Proxy operator""_gen(const char* in, size_t i) {
+    return Proxy(nullptr);
 }
 
 void benchmark_lambda_call()
