@@ -8,6 +8,22 @@
 
 namespace jluna
 {
+    GeneratorExpression operator""_gen(const char* in, size_t n)
+    {
+        std::stringstream str;
+        str << "Base.Generator";
+
+        if (in[0] != '(')
+            str << "(";
+
+        str << in;
+
+        if (in[n-1] != ')')
+            str << ")";
+
+        return GeneratorExpression(jl_eval_string(str.str().c_str()));
+    }
+
     GeneratorExpression::GeneratorExpression(Any* val)
     {
         if (_iterate == nullptr)
@@ -30,12 +46,12 @@ namespace jluna
     Int64 GeneratorExpression::length()
     {
         static jl_function_t* length = jl_get_function(jl_base_module, "length");
-        return jl_unbox_int64(jl_call1(length, get()));
+        return jl_unbox_int64(jl_call1(length, jl_get_nth_field(get(), 1)));
     }
 
     typename GeneratorExpression::ForwardIterator GeneratorExpression::begin()
     {
-        return ForwardIterator(this, 1);
+        return ForwardIterator(this, 0);
     }
 
     typename GeneratorExpression::ForwardIterator GeneratorExpression::end()
@@ -44,22 +60,29 @@ namespace jluna
     }
 
     GeneratorExpression::ForwardIterator::ForwardIterator(GeneratorExpression* owner, Int64 state)
-        : _owner(owner), _state(state)
+        : _owner(owner), _state(state), _is_end(_state)
     {}
 
-    Any * GeneratorExpression::ForwardIterator::operator*()
+    Any* GeneratorExpression::ForwardIterator::operator*()
     {
-        jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 1);
+        return jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 0);
     }
 
     void GeneratorExpression::ForwardIterator::operator++()
     {
-        _state = jl_unbox_int64(jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 1));
+        auto previous = _state;
+
+        auto* next = jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state));
+
+        if (jl_is_nothing(next))
+            _state = previous;
+        else
+            _state = jl_unbox_int64(jl_get_nth_field(next, 1));
     }
 
     void GeneratorExpression::ForwardIterator::operator++(int)
     {
-        _state = jl_unbox_int64(jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 1));
+        this->operator++();
     }
 
     bool GeneratorExpression::ForwardIterator::operator==(const GeneratorExpression::ForwardIterator& other) const

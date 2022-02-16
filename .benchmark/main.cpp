@@ -39,12 +39,6 @@ Number_t generate_number(
 
 size_t count = 1000;
 
-
-
-Proxy operator""_gen(const char* in, size_t i) {
-    return Proxy(nullptr);
-}
-
 void benchmark_lambda_call()
 {
      auto a = Benchmark::run("Lambda: Create & Run Julia-Side", count, [&](){
@@ -73,16 +67,10 @@ int main()
 {
     jluna::State::initialize();
 
-
-    auto* gen_value = jl_eval_string("return Base.Generator(i -> i*i, 1:10)");
-    forward_last_exception();
-    auto gen = GeneratorExpression(gen_value);
-
-    for (Any* e : gen)
-        std::cout << jl_to_string(e) << std::endl;
+    for (auto i : "i -> i*i, 1:10"_gen)
+        std::cout << unbox<Int64>(i) << std::endl;
 
     return 0;
-
 
 
     Benchmark::initialize();

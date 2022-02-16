@@ -42,6 +42,12 @@ namespace jluna
 
             Any* operator*();
 
+            template<Unboxable T>
+            operator T()
+            {
+                return unbox<T>(this->operator*());
+            }
+
             void operator++();
             void operator++(int);
 
@@ -51,5 +57,6 @@ namespace jluna
         private:
             GeneratorExpression* _owner;
             Int64 _state;
+            bool _is_end = false;
     };
 }
