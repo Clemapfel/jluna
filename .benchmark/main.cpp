@@ -65,8 +65,14 @@ void benchmark_lambda_call()
 
 int main()
 {
-    jluna::State::initialize();
-    Benchmark::conclude();
+using namespace jluna;
+State::initialize();
+
+for (auto i : "(i*i for i in 1:10)"_gen)
+    std::cout << unbox<Int32>(i) << std::endl;
+
+return 0;
+
 
     /*
     Benchmark::run("Generator Native", count, [](){
