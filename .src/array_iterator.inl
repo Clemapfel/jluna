@@ -94,7 +94,11 @@ namespace jluna
             throw std::out_of_range("In: jluna::Array::ConstIterator::operator=(): trying to assign value to past-the-end iterator");
 
         static jl_function_t* setindex = jl_get_function(jl_base_module, "setindex!");
+
+        jl_gc_pause;
         jl_call3(setindex, _owner->operator jl_value_t *(), box(value), box(_index + 1));
+        jl_gc_unpause;
+
         return *this;
     }
 }

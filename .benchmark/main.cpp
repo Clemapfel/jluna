@@ -37,7 +37,7 @@ Number_t generate_number(
     return dist(engine);
 }
 
-size_t count = 100;
+size_t count = 10000;
 
 void benchmark_lambda_call()
 {
@@ -66,6 +66,8 @@ void benchmark_lambda_call()
 int main()
 {
     jluna::State::initialize();
+
+    Benchmark::conclude();
 
     /*
     Benchmark::run("Generator Native", count, [](){

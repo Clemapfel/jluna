@@ -91,12 +91,15 @@ namespace jluna::State
 
         std::stringstream str;
         str << "jluna.exception_handler.safe_call(quote " << command << " end)" << std::endl;
+
+        jl_gc_pause;
         auto* result = jl_eval_string(str.str().c_str());
         if (jl_exception_occurred() or jl_unbox_bool(jl_eval_string("jluna.exception_handler.has_exception_occurred()")))
         {
             std::cerr << "exception in jluna::State::safe_script for expression:\n\"" << command << "\"\n" << std::endl;
             forward_last_exception();
         }
+        jl_gc_unpause;
         return Proxy(result, nullptr);
     }
 
@@ -115,20 +118,25 @@ namespace jluna::State
 
         std::stringstream str;
         str << "jluna.exception_handler.safe_call(quote " << command << " end)" << std::endl;
+
+        jl_gc_pause;
         auto* result = jl_eval_string(str.str().c_str());
         if (jl_exception_occurred() or jl_unbox_bool(jl_eval_string("jluna.exception_handler.has_exception_occurred()")))
         {
             std::cerr << "exception in jluna::State::safe_eval for expression:\n\"" << command << "\"\n" << std::endl;
             forward_last_exception();
         }
+        jl_gc_unpause;
         return Proxy(result, nullptr);
     }
     
     template<typename T>
     T safe_return(const std::string& full_name)
     {
+        jl_gc_pause;
         auto* res = jl_eval_string(("return " + full_name).c_str());
         forward_last_exception();
+        jl_gc_unpause;
         return unbox<T>(res);
     }
 
@@ -164,11 +172,11 @@ namespace jluna::State::detail
             return 0;
 
         size_t res = -1;
-        auto before = jl_gc_is_enabled();
-        jl_gc_enable(false);
+
+        jl_gc_pause;
         Any* value;
         res = jl_unbox_uint64(jluna::safe_call(create_reference, in));
-        jl_gc_enable(before);
+        jl_gc_unpause;
 
         return res;
     }
@@ -187,10 +195,9 @@ namespace jluna::State::detail
         jluna::throw_if_uninitialized();
         static Function* free_reference = jl_find_function("jluna.memory_handler", "free_reference");
 
-        auto before = jl_gc_is_enabled();
-        jl_gc_enable(false);
+        jl_gc_pause;
         jluna::safe_call(free_reference, jl_box_uint64(reinterpret_cast<size_t>(key)));
-        jl_gc_enable(before);
+        jl_gc_unpause;
     }
 
     void initialize_types()
@@ -199,7 +206,8 @@ namespace jluna::State::detail
         {
             return (jl_datatype_t*) jl_eval_string(("return jluna.unroll_type(" + name + ")").c_str());
         };
-        
+
+        jl_gc_pause;
         AbstractArray_t = Type(unroll("Core.AbstractArray"));
         AbstractChar_t = Type(unroll("Core.AbstractChar"));
         AbstractFloat_t = Type(unroll("Core.AbstractFloat"));
@@ -254,6 +262,7 @@ namespace jluna::State::detail
         Unsigned_t = Type(unroll("Core.Unsigned"));
         VecElement_t = Type(unroll("Core.VecElement"));
         WeakRef_t = Type(unroll("Core.WeakRef"));
+        jl_gc_unpause;
     }
 
     void initialize_modules()

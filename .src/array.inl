@@ -32,7 +32,10 @@ namespace jluna
     size_t Array<T, Rank>::get_dimension(int index) const
     {
         static jl_function_t* size = jl_get_function(jl_base_module, "size");
-        return jl_unbox_uint64(jl_call2(size, _content->value(), jl_box_int32(index + 1)));
+        jl_gc_pause;
+        auto out = jl_unbox_uint64(jl_call2(size, _content->value(), jl_box_int32(index + 1)));
+        jl_gc_unpause;
+        return out;
     }
 
     template<Boxable T, size_t Rank>
@@ -277,7 +280,10 @@ namespace jluna
     void Vector<V>::insert(size_t pos, V value)
     {
         static jl_value_t* insert = jl_get_function(jl_base_module, "insert!");
+
+        jl_gc_pause;
         jl_call3(insert, _content->value(), jl_box_uint64(pos + 1), box(value));
+        jl_gc_unpause;
         forward_last_exception();
     }
 
@@ -285,7 +291,10 @@ namespace jluna
     void Vector<V>::erase(size_t pos)
     {
         static jl_value_t* deleteat = jl_get_function(jl_base_module, "deleteat!");
+
+        jl_gc_pause;
         jl_call2(deleteat, _content->value(), jl_box_uint64(pos + 1));
+        jl_gc_unpause;
         forward_last_exception();
     }
 
@@ -294,7 +303,10 @@ namespace jluna
     void Vector<V>::push_front(T value)
     {
         static jl_value_t* pushfirst = jl_get_function(jl_base_module, "pushfirst!");
+
+        jl_gc_pause;
         jl_call2(pushfirst, _content->value(), box(value));
+        jl_gc_unpause;
         forward_last_exception();
     }
 
@@ -303,7 +315,10 @@ namespace jluna
     void Vector<V>::push_back(T value)
     {
         static jl_value_t* push = jl_get_function(jl_base_module, "push!");
+
+        jl_gc_pause;
         jl_call2(push, _content->value(), box(value));
+        jl_gc_unpause;
         forward_last_exception();
     }
 }
