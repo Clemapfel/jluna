@@ -107,6 +107,17 @@ namespace jluna
     }
 
     template<Boxable V, size_t R>
+    Vector<V> Array<V, R>::operator[](GeneratorExpression&& gen) const
+    {
+        std::vector<size_t> vec;
+        vec.reserve(gen.size());
+        for (auto it : gen)
+            vec.push_back(unbox<size_t>(it));
+
+        return operator[](vec);
+    }
+
+    template<Boxable V, size_t R>
     template<Boxable T>
     Vector<V> Array<V, R>::operator[](std::initializer_list<T>&& list) const
     {
@@ -279,6 +290,18 @@ namespace jluna
     {
         jl_assert_type(value, "Vector");
     }
+
+    template<Boxable V>
+    Vector<V>::Vector(GeneratorExpression&& gen)
+        : Vector([gen = std::ref(gen)]() -> std::vector<size_t> {
+
+            std::vector<size_t> vec;
+            vec.reserve(gen.size());
+            for (auto it : gen.get())
+                vec.push_back(unbox<size_t>(it));
+            return vec;
+        }())
+    {}
 
     template<Boxable V>
     void Vector<V>::insert(size_t pos, V value)

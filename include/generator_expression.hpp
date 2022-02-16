@@ -27,11 +27,14 @@ namespace jluna
 
             /// @brief get iterator to front of range
             /// @returns iterator
-            ForwardIterator begin();
+            ForwardIterator begin() const;
 
             /// @brief get iterator to past-the-end element
             /// @returns iterator
-            ForwardIterator end();
+            ForwardIterator end() const;
+
+            /// @brief get length of iterable component
+            size_t size() const;
 
         protected:
             /// @brief ctor
@@ -39,8 +42,8 @@ namespace jluna
             GeneratorExpression(Any*);
 
         private:
-            Any* get();
-            Int64 length();
+            Any* get() const;
+            Int64 length() const;
             size_t _value_key;
             Any* _value_ref;
 
@@ -54,7 +57,7 @@ namespace jluna
             /// @brief Ctor
             /// @param pointer
             /// @param state: state in Int64, for begin() set State 0, for end() set State GeneratorExpression.lenght()
-            ForwardIterator(GeneratorExpression*, Int64);
+            ForwardIterator(const GeneratorExpression*, Int64);
 
             /// @brief dereference to julia object
             Any* operator*();
@@ -83,7 +86,7 @@ namespace jluna
             bool operator!=(const GeneratorExpression::ForwardIterator& other) const;
 
         private:
-            GeneratorExpression* _owner;
+            const GeneratorExpression* _owner;
             Int64 _state;
             bool _is_end = false;
     };

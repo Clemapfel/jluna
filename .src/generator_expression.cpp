@@ -12,6 +12,10 @@ namespace jluna
     {
         std::stringstream str;
         jl_gc_pause;
+
+        if (in[0] != '(' or in[n] != ')')
+            std::cerr << "[C++][WARNING] generator expressions constructed via the _gen operator should *begin and end with rounds brackets*. Example: \"(i for i in 1:10)\"_gen" << std::endl;
+
         auto* res = jl_eval_string(in);
         forward_last_exception();
 
@@ -42,12 +46,12 @@ namespace jluna
         State::detail::free_reference(_value_key);
     }
 
-    Any* GeneratorExpression::get()
+    Any* GeneratorExpression::get() const
     {
         return jl_ref_value(_value_ref);
     }
 
-    Int64 GeneratorExpression::length()
+    Int64 GeneratorExpression::length() const
     {
         static jl_function_t* length = jl_get_function(jl_base_module, "length");
         jl_gc_pause;
@@ -56,17 +60,22 @@ namespace jluna
         return out;
     }
 
-    typename GeneratorExpression::ForwardIterator GeneratorExpression::begin()
+    typename GeneratorExpression::ForwardIterator GeneratorExpression::begin() const
     {
         return ForwardIterator(this, 0);
     }
 
-    typename GeneratorExpression::ForwardIterator GeneratorExpression::end()
+    typename GeneratorExpression::ForwardIterator GeneratorExpression::end() const
     {
         return ForwardIterator(this, length());
     }
 
-    GeneratorExpression::ForwardIterator::ForwardIterator(GeneratorExpression* owner, Int64 state)
+    size_t GeneratorExpression::size() const
+    {
+        return length();
+    }
+
+    GeneratorExpression::ForwardIterator::ForwardIterator(const GeneratorExpression* owner, Int64 state)
         : _owner(owner), _state(state), _is_end(_state)
     {}
 

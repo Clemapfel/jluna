@@ -7,6 +7,7 @@
 
 #include <include/concepts.hpp>
 #include <include/proxy.hpp>
+#include <include/generator_expression.hpp>
 
 namespace jluna
 {
@@ -43,6 +44,11 @@ namespace jluna
             /// @returns assignable iterator to element
             /// @note this function intentionally shadows Proxy::operator[](size_t) -> Proxy
             auto operator[](size_t);
+
+            /// @brief julia-style array comprehension indexing
+            /// @param generator_expression
+            /// @returns new array result of Julia-side getindex(this, range)
+            jluna::Vector<Value_t> operator[](GeneratorExpression&&) const;
 
             /// @brief julia-style list indexing
             /// @param range: iterable range with indices
@@ -225,6 +231,10 @@ namespace jluna
             /// @brief ctor as unnamed proxy from vector
             /// @param vector
             Vector(const std::vector<Value_t>& vec);
+
+            /// @brief ctor from generator expression. Only available for 1d arrays
+            /// @param generator_expression
+            Vector(GeneratorExpression&&);
 
             /// @brief ctor
             /// @param value

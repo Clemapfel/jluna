@@ -30,5 +30,4 @@ namespace jluna
         private:
             bool _state_before;
     };
-
 }
