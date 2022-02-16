@@ -235,13 +235,13 @@ namespace jluna
     template<Boxable V, size_t R>
     size_t Array<V, R>::get_n_elements() const
     {
-        reinterpret_cast<jl_array_t*>(_content->value())->length;
+        return reinterpret_cast<jl_array_t*>(_content->value())->length;
     } //°
 
     template<Boxable V, size_t R>
     bool Array<V, R>::empty() const
     {
-        reinterpret_cast<jl_array_t*>(_content->value())->length == 0;
+        return reinterpret_cast<jl_array_t*>(_content->value())->length == 0;
     } //°
 
     template<Boxable V, size_t R>

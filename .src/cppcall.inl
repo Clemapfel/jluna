@@ -135,6 +135,8 @@ namespace jluna
                 std::vector<jl_value_t*>>(
                     &lambda, wrapped
             );
+            jl_gc_unpause;
+            return out;
         });
     }
 
