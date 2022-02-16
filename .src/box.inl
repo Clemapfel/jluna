@@ -38,8 +38,7 @@ namespace jluna
     template<Is<char> T>
     Any* box(T value)
     {
-        auto* res = jl_box_int8((int8_t) value);
-        return jl_convert("Char", res);
+        return jl_convert(jl_char_type, jl_box_int8((int8_t) value));
     }
 
     template<Is<uint8_t> T>

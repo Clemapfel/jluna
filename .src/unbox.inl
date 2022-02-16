@@ -14,86 +14,74 @@ namespace jluna
     template<Is<bool> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("Bool", value);
-        return jl_unbox_bool(res);
-    }
+        return jl_unbox_bool(jl_try_convert(jl_bool_type, value));
+    } //°
 
     template<Is<char> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("UInt8", value);
-        return static_cast<char>(jl_unbox_uint8(res));
-    }
+        return static_cast<char>(jl_unbox_uint8(jl_try_convert(jl_uint8_type, value)));
+    } //°
 
     template<Is<uint8_t> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("UInt8", value);
-        return jl_unbox_uint8(res);
-    }
+        return jl_unbox_uint8(jl_try_convert(jl_uint8_type, value));
+    } //°
 
     template<Is<uint16_t> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("UInt16", value);
-        return jl_unbox_uint16(res);
-    }
+        return jl_unbox_uint16(jl_try_convert(jl_uint16_type, value));
+    } //°
 
     template<Is<uint32_t> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("UInt32", value);
-        return jl_unbox_uint32(res);
-    }
+        return jl_unbox_uint32(jl_try_convert(jl_uint32_type, value));
+    } //°
 
     template<Is<uint64_t> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("UInt64", value);
-        return jl_unbox_uint64(res);
-    }
+        return jl_unbox_uint64(jl_try_convert(jl_uint64_type, value));
+    } //°
 
     template<Is<int8_t> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("Int8", value);
-        return jl_unbox_int8(res);
-    }
+        return jl_unbox_int8(jl_try_convert(jl_int8_type, value));
+    } //°
 
     template<Is<int16_t> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("Int16", value);
-        return jl_unbox_int16(res);
-    }
+        return jl_unbox_int16(jl_try_convert(jl_int16_type, value));
+    } //°
 
     template<Is<int32_t> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("Int32", value);
-        return jl_unbox_int32(res);
-    }
+        return jl_unbox_int32(jl_try_convert(jl_int32_type, value));
+    } //°
 
     template<Is<int64_t> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("Int64", value);
-        return jl_unbox_int64(res);
-    }
+        return jl_unbox_int64(jl_try_convert(jl_int64_type, value));
+    } //°
 
     template<Is<float> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("Float32", value);
-        return jl_unbox_float32(res);
-    }
+        return jl_unbox_float32(jl_try_convert(jl_float32_type, value));
+    } //°
 
     template<Is<double> T>
     T unbox(Any* value)
     {
-        auto* res = jl_try_convert("Float64", value);
-        return jl_unbox_float64(res);
-    }
+        return jl_unbox_float64(jl_try_convert(jl_float64_type, value));
+    } //°
 
     template<Is<std::string> T>
     T unbox(Any* value)
@@ -104,12 +92,15 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
     T unbox(Any* value)
     {
+        jl_gc_pause;
         auto* res = jl_try_convert(to_julia_type<std::complex<Value_t>>::type_name.c_str(), value);
 
         auto* re = jl_get_nth_field(value, 0);
         auto* im = jl_get_nth_field(value, 1);
 
-        return std::complex<Value_t>(unbox<Value_t>(re), unbox<Value_t>(im));
+        auto out = std::complex<Value_t>(unbox<Value_t>(re), unbox<Value_t>(im));
+        jl_gc_unpause;
+        return out;
     }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
@@ -213,8 +204,7 @@ namespace jluna
         void unbox_tuple_aux_aux(Tuple_t& tuple, jl_value_t* value)
         {
             static jl_function_t* tuple_at = (jl_function_t*) jl_eval_string("jluna.tuple_at");
-            auto* v = safe_call(tuple_at, value, jl_box_uint64(i + 1));
-            std::get<i>(tuple) = unbox<std::tuple_element_t<i, Tuple_t>>(v);
+            std::get<i>(tuple) = unbox<std::tuple_element_t<i, Tuple_t>>(safe_call(tuple_at, value, jl_box_uint64(i + 1)));
         }
 
         template<typename Tuple_t, typename Value_t, std::size_t... is>
@@ -228,7 +218,6 @@ namespace jluna
         {
             std::tuple<Ts...> out;
             (unbox_tuple_aux<std::tuple<Ts...>, Ts>(out, value, std::index_sequence_for<Ts...>{}), ...);
-
             return out;
         }
 
@@ -255,8 +244,9 @@ namespace jluna
     template<IsTuple T>
     T unbox(Any* value)
     {
-        value = jl_try_convert(to_julia_type<T>::type_name.c_str(), value);
-
-        return detail::unbox_tuple_pre(value, T());
+        jl_gc_pause;
+        auto out = detail::unbox_tuple_pre(jl_try_convert(to_julia_type<T>::type_name.c_str(), value), T());
+        jl_gc_unpause;
+        return out;
     }
 }

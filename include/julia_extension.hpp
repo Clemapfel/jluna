@@ -58,20 +58,20 @@ extern "C"
     /// @param type_name
     /// @param value
     /// @returns julia-side value after conversion
-    inline jl_value_t* jl_convert(const char* type, jl_value_t* value)
+    inline jl_value_t* jl_convert(jl_datatype_t* type, jl_value_t* value)
     {
         static jl_function_t* convert = jl_get_function(jl_base_module, "convert");
-        return jl_call2(convert, jl_eval_string(("return " + std::string(type)).c_str()), value);
+        return jl_call2(convert, (jl_value_t*) type, value);
     }
 
     /// @brief wraps convert(Type, Value) with verbose exception forwarding
     /// @param type_name
     /// @param value
     /// @returns julia-side value after conversion
-    inline jl_value_t* jl_try_convert(const char* type, jl_value_t* value)
+    inline jl_value_t* jl_try_convert(jl_datatype_t* type, jl_value_t* value)
     {
         static jl_function_t* convert = jl_get_function(jl_base_module, "convert");
-        return jluna::safe_call(convert, jl_eval_string(("return " + std::string(type)).c_str()), value);
+        return jluna::safe_call(convert, (jl_value_t*) type, value);
     }
 
     /// @brief throw error if value is not of type named

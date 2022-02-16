@@ -11,17 +11,21 @@ namespace jluna
     GeneratorExpression operator""_gen(const char* in, size_t n)
     {
         std::stringstream str;
-        str << "Base.Generator";
+        jl_gc_pause;
+        auto* res = jl_eval_string(in);
+        forward_last_exception();
 
-        if (in[0] != '(')
-            str << "(";
+        static jl_datatype_t* generator_type = (jl_datatype_t*) jl_eval_string("Base.Generator");
+        if (not jl_isa(res, (Any*) generator_type))
+        {
+            std::stringstream error_str;
+            error_str << "[C++][Exception] When parsing generator expression from string \"" << in << "\": result is not a generator expression object" << std::endl;
+            throw std::invalid_argument(error_str.str());
+        }
 
-        str << in;
-
-        if (in[n-1] != ')')
-            str << ")";
-
-        return GeneratorExpression(jl_eval_string(str.str().c_str()));
+        auto out = GeneratorExpression(res);
+        jl_gc_unpause;
+        return out;
     }
 
     GeneratorExpression::GeneratorExpression(Any* val)
@@ -46,7 +50,10 @@ namespace jluna
     Int64 GeneratorExpression::length()
     {
         static jl_function_t* length = jl_get_function(jl_base_module, "length");
-        return jl_unbox_int64(jl_call1(length, jl_get_nth_field(get(), 1)));
+        jl_gc_pause;
+        auto out = jl_unbox_int64(jl_call1(length, jl_get_nth_field(get(), 1)));
+        jl_gc_unpause;
+        return out;
     }
 
     typename GeneratorExpression::ForwardIterator GeneratorExpression::begin()
@@ -65,19 +72,24 @@ namespace jluna
 
     Any* GeneratorExpression::ForwardIterator::operator*()
     {
-        return jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 0);
+        jl_gc_pause;
+        auto* out = jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 0);
+        jl_gc_unpause;
+        return out;
     }
 
     void GeneratorExpression::ForwardIterator::operator++()
     {
         auto previous = _state;
 
+        jl_gc_pause;
         auto* next = jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state));
 
         if (jl_is_nothing(next))
             _state = previous;
         else
             _state = jl_unbox_int64(jl_get_nth_field(next, 1));
+        jl_gc_unpause;
     }
 
     void GeneratorExpression::ForwardIterator::operator++(int)

@@ -37,7 +37,7 @@ Number_t generate_number(
     return dist(engine);
 }
 
-size_t count = 1000;
+size_t count = 100;
 
 void benchmark_lambda_call()
 {
@@ -67,11 +67,36 @@ int main()
 {
     jluna::State::initialize();
 
-    for (auto i : "i -> i*i, 1:10"_gen)
-        std::cout << unbox<Int64>(i) << std::endl;
+    /*
+    Benchmark::run("Generator Native", count, [](){
+
+        jl_eval_string(R"(
+            begin
+                local n = 0;
+                for i in (x for x in 1:10)
+                    n += i
+                end
+            end
+        )");
+    });
+     */
+
+    //jl_gc_pause;
+    Benchmark::run("Generator C++-Side", count, [](){
+
+        static size_t c = 0;
+        std::cout << c++ << std::endl;
+
+        // 3.53912ms
+        volatile size_t sum = 0;
+        for (auto i : " (x for x in 1:1000)"_gen)
+            sum = sum + unbox<size_t>(i);
+    });
+    //jl_gc_unpause;
+
+    Benchmark::conclude();
 
     return 0;
-
 
     Benchmark::initialize();
 
