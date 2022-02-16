@@ -3,6 +3,8 @@
 // Created on 12.01.22 by clem (mail@clemens-cords.com)
 //
 
+#include <include/gc_sentinel.hpp>
+
 namespace jluna
 {
     namespace detail
@@ -32,9 +34,11 @@ namespace jluna
     size_t Array<T, Rank>::get_dimension(int index) const
     {
         static jl_function_t* size = jl_get_function(jl_base_module, "size");
+
         jl_gc_pause;
         auto out = jl_unbox_uint64(jl_call2(size, _content->value(), jl_box_int32(index + 1)));
         jl_gc_unpause;
+
         return out;
     }
 

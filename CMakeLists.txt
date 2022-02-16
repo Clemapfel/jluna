@@ -106,7 +106,7 @@ add_library(jluna SHARED
     include/generator_expression.hpp
     .src/generator_expression.cpp
         #buffer
-        .src/symbol.inl)
+        .src/symbol.inl include/gc_sentinel.hpp .src/gc_sentinel.cpp)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C
