@@ -8,6 +8,7 @@
 #include <iostream>
 #include <jluna.hpp>
 #include <random>
+#include <include/generator_expression.hpp>
 
 using namespace jluna;
 
@@ -70,13 +71,20 @@ void benchmark_lambda_call()
 
 int main()
 {
+    jluna::State::initialize();
 
-    auto a = "test"_gen;
-    std::cout << a << std::endl;
+
+    auto* gen_value = jl_eval_string("return Base.Generator(i -> i*i, 1:10)");
+    forward_last_exception();
+    auto gen = GeneratorExpression(gen_value);
+
+    for (Any* e : gen)
+        std::cout << jl_to_string(e) << std::endl;
+
     return 0;
 
 
-    jluna::State::initialize();
+
     Benchmark::initialize();
 
     jl_eval_string("test = 1234");

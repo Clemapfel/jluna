@@ -19,10 +19,10 @@ namespace jluna
         public:
             class ForwardIterator;
 
-            auto begin();
-            auto end();
+            ForwardIterator begin();
+            ForwardIterator end();
 
-        protected:
+        //protected:
             GeneratorExpression(Any*);
             ~GeneratorExpression();
 

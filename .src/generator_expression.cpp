@@ -33,12 +33,12 @@ namespace jluna
         return jl_unbox_int64(jl_call1(length, get()));
     }
 
-    auto GeneratorExpression::begin()
+    typename GeneratorExpression::ForwardIterator GeneratorExpression::begin()
     {
         return ForwardIterator(this, 1);
     }
 
-    auto GeneratorExpression::end()
+    typename GeneratorExpression::ForwardIterator GeneratorExpression::end()
     {
         return ForwardIterator(this, length());
     }
@@ -54,12 +54,12 @@ namespace jluna
 
     void GeneratorExpression::ForwardIterator::operator++()
     {
-        _state = jl_unbox_int64(jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 2));
+        _state = jl_unbox_int64(jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 1));
     }
 
     void GeneratorExpression::ForwardIterator::operator++(int)
     {
-        _state = jl_unbox_int64(jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 2));
+        _state = jl_unbox_int64(jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 1));
     }
 
     bool GeneratorExpression::ForwardIterator::operator==(const GeneratorExpression::ForwardIterator& other) const

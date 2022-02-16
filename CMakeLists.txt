@@ -103,8 +103,10 @@ add_library(jluna SHARED
     include/function.hpp
     .src/function.cpp
 
-
-        include/generator_expression.hpp .src/generate_expression.cpp .src/generator_expression.cpp)
+    include/generator_expression.hpp
+    .src/generator_expression.cpp
+        #buffer
+)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C
