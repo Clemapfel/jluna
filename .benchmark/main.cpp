@@ -37,7 +37,7 @@ Number_t generate_number(
     return dist(engine);
 }
 
-size_t count = 10000;
+size_t count = 100;
 
 void benchmark_lambda_call()
 {
@@ -66,7 +66,6 @@ void benchmark_lambda_call()
 int main()
 {
     jluna::State::initialize();
-
     Benchmark::conclude();
 
     /*
@@ -85,9 +84,6 @@ int main()
 
     //jl_gc_pause;
     Benchmark::run("Generator C++-Side", count, [](){
-
-        static size_t c = 0;
-        std::cout << c++ << std::endl;
 
         // 3.53912ms
         volatile size_t sum = 0;

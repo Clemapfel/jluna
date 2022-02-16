@@ -154,25 +154,17 @@ int main()
         //jl_eval_string("test = undef");
     });
 
-
     Test::test("make_new_named_dict", []() {
 
         std::unordered_map<size_t, std::string> value = {{2, "abc"}};
         auto res = State::new_named_dict("test", value);
         Test::assert_that(res.operator  std::unordered_map<size_t, std::string>() == value);
 
+        std::map<size_t, std::string> value2 = {{2, "abc"}};
+        auto res2 = State::new_named_dict("test", value);
+        Test::assert_that(res2.operator std::map<size_t, std::string>() == value2);
         //jl_eval_string("test = undef");
     });
-
-    Test::test("make_new_named_iddict", []() {
-
-        std::map<size_t, std::string> value = {{2, "abc"}};
-        auto res = State::new_named_iddict("test", value);
-        Test::assert_that(res.operator std::map<size_t, std::string>() == value);
-
-        //jl_eval_string("test = undef");
-    });
-
 
     Test::test("make_new_pair", []() {
 
@@ -511,7 +503,7 @@ int main()
         Test::assert_that((int) a.at(0) == 1);
     });
 
-     Test::test("array: ctor", [](){
+    Test::test("array: ctor", [](){
 
         State::safe_eval("vector = [999, 2, 3, 4, 5]");
         Vector<int> vec = Main["vector"];
@@ -1051,6 +1043,27 @@ int main()
 
         Test::assert_that(Array_t.is_typename("Array"));
         Test::assert_that(Array_t.is_typename(Array_t));
+    });
+
+
+    Test::test("Generator Expression", [](){
+
+        Test::assert_that_throws<std::invalid_argument>([](){
+            volatile auto gen = "for i in 1:10 println(i) end"_gen;
+        });
+
+        Test::assert_that_throws<JuliaException>([](){
+            volatile auto gen = "aas a0 ()d"_gen;
+        });
+
+        auto gen = "(x for x in 1:10)"_gen;
+
+        size_t i = 1;
+        for (auto e : gen)
+        {
+            Test::assert_that(unbox<Int32>(e) == i);
+            i += 1;
+        }
     });
 
     Test::conclude();
