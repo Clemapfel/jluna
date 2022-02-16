@@ -19,3 +19,4 @@
 #include <include/symbol.hpp>
 #include <include/module.hpp>
 #include <include/function.hpp>
+#include <include/generator_expression.hpp>
