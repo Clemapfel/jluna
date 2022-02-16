@@ -57,7 +57,7 @@ namespace jluna
 
     jl_sym_t* Module::get_symbol() const
     {
-        get()->name;
+        return get()->name;
     }
 
     Module Module::get_parent_module() const
