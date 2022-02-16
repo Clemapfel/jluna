@@ -23,8 +23,7 @@ namespace jluna::State
     
     inline Proxy new_named_undef(const std::string& name)
     {
-        State::safe_eval("Main.eval(:(" + name + " = undef))");
-        return Main[name];
+        return detail::create_or_assign(name, jl_undef_initializer());
     }
 
     inline Proxy new_named_bool(const std::string& name, bool value)
@@ -110,7 +109,7 @@ namespace jluna::State
     }
 
     template<Boxable Key_t, Boxable Value_t>
-    Proxy new_named_iddict(const std::string& name, const std::map<Key_t, Value_t>& value)
+    Proxy new_named_dict(const std::string& name, const std::map<Key_t, Value_t>& value)
     {
         return detail::create_or_assign(name, box<std::map<Key_t, Value_t>>(value));
     }
