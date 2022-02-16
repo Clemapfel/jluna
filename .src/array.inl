@@ -199,7 +199,7 @@ namespace jluna
     template<Boxable V, size_t R>
     auto Array<V, R>::begin() const
     {
-        return ConstIterator(0, this);
+        return ConstIterator(0, const_cast<Array<V, R>>(this));
     }
 
     template<Boxable V, size_t R>
@@ -211,7 +211,7 @@ namespace jluna
     template<Boxable V, size_t R>
     auto Array<V, R>::end() const
     {
-        return ConstIterator(get_n_elements(), this);
+        return ConstIterator(get_n_elements(), const_cast<Array<V, R>>(this));
     }
 
     template<Boxable V, size_t R>
