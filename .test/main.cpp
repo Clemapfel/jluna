@@ -12,6 +12,18 @@ using namespace jluna::detail;
 int main()
 {
     State::initialize();
+
+    auto vec = Array<Int64, 1>(State::safe_eval("return collect(1:100)"), nullptr);
+
+        const auto subvec = vec[{12, 19, 99, 2}];
+
+        for (auto it : subvec)
+            std::cout << it.operator int() << std::endl;
+
+        Test::assert_that(subvec.at(0) == 11 and subvec.at(1) == 18 and subvec.at(2) == 98 and subvec.at(3) == 2);
+
+        return 0;
+
     Test::initialize();
 
     Test::test("catch c exception", [](){
@@ -690,6 +702,20 @@ int main()
         Test::assert_that(as_proxy.get_name() == "Main.array[1]");
     });
 
+    Test::test("array: comprehension", [](){
+
+        auto arr = Array<Int64, 1>(jl_eval_string("return collect(1:10)"));
+        auto vec = arr["(i for i in 1:10 if i % 2 == 0)"_gen];
+
+        for (auto it : vec)
+            Test::assert_that(it.operator int() % 2 == 0);
+
+        auto new_vec = Vector<Int64>("(i for i in 1:10 if i % 2 == 0)"_gen);
+
+        for (auto it : new_vec)
+            Test::assert_that(it.operator int() % 2 == 0);
+    });
+
     Test::test("vector: insert", [](){
 
         State::safe_eval("vector = [1, 2, 3, 4]");
@@ -1049,7 +1075,7 @@ int main()
     Test::test("Generator Expression", [](){
 
         Test::assert_that_throws<std::invalid_argument>([](){
-            volatile auto gen = "for i in 1:10 println(i) end"_gen;
+            volatile auto gen = "for i in 1:10 i = i end"_gen;
         });
 
         Test::assert_that_throws<JuliaException>([](){

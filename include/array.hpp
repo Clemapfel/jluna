@@ -48,7 +48,7 @@ namespace jluna
             /// @brief julia-style array comprehension indexing
             /// @param generator_expression
             /// @returns new array result of Julia-side getindex(this, range)
-            jluna::Vector<Value_t> operator[](GeneratorExpression&&) const;
+            jluna::Vector<Value_t> operator[](const GeneratorExpression&) const;
 
             /// @brief julia-style list indexing
             /// @param range: iterable range with indices
@@ -203,7 +203,7 @@ namespace jluna
 
                 using ConstIterator::operator*;
 
-                /// @brief assign value, also assign value of proxy, regardless of wether it is mutating
+                /// @brief assign value, also assign value of proxy, regardless of whether it is mutating
                 /// @param value
                 /// @returns reference to self
                 template<Boxable T = Value_t>
@@ -234,7 +234,7 @@ namespace jluna
 
             /// @brief ctor from generator expression. Only available for 1d arrays
             /// @param generator_expression
-            Vector(GeneratorExpression&&);
+            Vector(const GeneratorExpression&);
 
             /// @brief ctor
             /// @param value

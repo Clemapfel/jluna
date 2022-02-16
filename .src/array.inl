@@ -107,7 +107,7 @@ namespace jluna
     }
 
     template<Boxable V, size_t R>
-    Vector<V> Array<V, R>::operator[](GeneratorExpression&& gen) const
+    Vector<V> Array<V, R>::operator[](const GeneratorExpression& gen) const
     {
         std::vector<size_t> vec;
         vec.reserve(gen.size());
@@ -212,7 +212,7 @@ namespace jluna
     template<Boxable V, size_t R>
     auto Array<V, R>::begin() const
     {
-        return ConstIterator(0, this);
+        return ConstIterator(0, const_cast<Array<V, R>*>(this));
     }
 
     template<Boxable V, size_t R>
@@ -224,7 +224,7 @@ namespace jluna
     template<Boxable V, size_t R>
     auto Array<V, R>::end() const
     {
-        return ConstIterator(get_n_elements(), this);
+        return ConstIterator(get_n_elements(), const_cast<Array<V, R>*>(this));
     }
 
     template<Boxable V, size_t R>
@@ -292,13 +292,13 @@ namespace jluna
     }
 
     template<Boxable V>
-    Vector<V>::Vector(GeneratorExpression&& gen)
-        : Vector([gen = std::ref(gen)]() -> std::vector<size_t> {
+    Vector<V>::Vector(const GeneratorExpression& gen)
+        : Vector([gen = std::ref(gen)]() -> std::vector<V> {
 
-            std::vector<size_t> vec;
-            vec.reserve(gen.size());
+            std::vector<V> vec;
+            vec.reserve(gen.get().size());
             for (auto it : gen.get())
-                vec.push_back(unbox<size_t>(it));
+                vec.push_back(unbox<V>(it));
             return vec;
         }())
     {}

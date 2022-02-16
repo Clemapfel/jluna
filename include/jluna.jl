@@ -453,6 +453,25 @@ module jluna
         return out
     end
 
+
+    """
+    get_length_of_generator(::Base.Generator) -> Int64
+
+    deduce length of Base.Generator object
+    """
+    function get_length_of_generator(gen::Base.Generator) ::Int64
+
+        if gen.iter isa Base.UnitRange
+            return length(gen.iter)
+        else
+            iter = gen.iter
+            while !(iter isa Base.UnitRange)
+                iter = iter.itr
+            end
+            return length(iter)
+        end
+    end
+
     """
     offers verbose exception interface. Any call with safe_call will store
     the last exception and full stack trace as string in _last_exception and

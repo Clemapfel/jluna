@@ -13,7 +13,7 @@ namespace jluna
         std::stringstream str;
         jl_gc_pause;
 
-        if (in[0] != '(' or in[n] != ')')
+        if (in[0] != '(' or in[n-1] != ')')
             std::cerr << "[C++][WARNING] generator expressions constructed via the _gen operator should *begin and end with rounds brackets*. Example: \"(i for i in 1:10)\"_gen" << std::endl;
 
         auto* res = jl_eval_string(in);
@@ -53,9 +53,11 @@ namespace jluna
 
     Int64 GeneratorExpression::length() const
     {
-        static jl_function_t* length = jl_get_function(jl_base_module, "length");
+        static jl_function_t* length = jl_find_function("jluna", "get_length_of_generator");
         jl_gc_pause;
-        auto out = jl_unbox_int64(jl_call1(length, jl_get_nth_field(get(), 1)));
+        auto* res = jl_call1(length, get());
+        forward_last_exception();
+        auto out = jl_unbox_int64(res);
         jl_gc_unpause;
         return out;
     }
