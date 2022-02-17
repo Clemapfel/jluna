@@ -614,30 +614,6 @@ module jluna
     end
 
     """
-    toolbag for assembling expressions in a performance-critical environment
-    """
-    module expressions
-
-        function assemble_dot(a::Symbol, b::Symbol) ::Expr
-
-            return Expr(:., a, QuoteNode(b))
-        end
-
-        assemble_dot(a::Symbol, b::Expr) ::Expr = return Expr(:., a, b)
-
-        function assemble_bracket(a::Symbol, i::Int64) ::Expr
-
-            return Expr(:ref, a, i);
-        end
-
-        assemble_bracket(a::Symbol, b::Expr) ::Expr = return Expr(:ref, a, b)
-
-        function assemble_dereference(a::Symbol) ::Expr
-            return Expr(:ref, a)
-        end
-    end
-
-    """
     offers julia-side memory management for C++ jluna
     """
     module memory_handler
@@ -647,6 +623,21 @@ module jluna
         const _ref_counter = Ref(Dict{UInt64, UInt64}())
 
         const _ref_id_marker = '#'
+        const _refs_expression = Meta.parse("jluna.memory_handler._refs[]")
+
+        ProxyID = Union{Expr, Nothing}
+
+        # make as unnamed
+        make_unnamed_proxy_id(id::UInt64) = return Expr(:ref, _refs_expression, id)
+
+        # make as named with owner and symbol name
+        make_named_proxy_id(id::Symbol, owner_id::ProxyID) = return Expr(Symbol("."), owner_id, QuoteNode(id))
+
+        # make as named with main as owner and symbol name
+        make_named_proxy_id(id::Symbol, owner_id::ProxyID) = return Expr(Symbol("."), :Main, QuoteNode(id))
+
+        # make as named with owner and array index name
+        make_named_proxy_id(id::Number, owner_id::ProxyID) = return Expr(:ref, owner_id, id)
 
         """
         `print_refs() -> Nothing`
