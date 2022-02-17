@@ -12,24 +12,6 @@ using namespace jluna::detail;
 int main()
 {
     State::initialize();
-
-    for (auto it : "(i for i in 0:9 if i % 2 == 0)"_gen)
-        std::cout << unbox<size_t>(it) << std::endl;
-
-    return 0;
-
-    auto arr = Array<Int64, 1>(jl_eval_string("return collect(1:10)"));
-    auto vec = arr["(i for i in 0:9 if i % 2 == 0)"_gen];
-
-        for (auto it : vec)
-            Test::assert_that(it.operator int() % 2 == 0);
-
-        auto new_vec = Vector<Int64>("(i for i in 0:9 if i % 2 == 0)"_gen);
-
-        for (auto it : new_vec)
-            Test::assert_that(it.operator int() % 2 == 0);
-        return 0;
-
     Test::initialize();
 
     Test::test("catch c exception", [](){
@@ -710,17 +692,18 @@ int main()
 
     Test::test("array: comprehension", [](){
 
-        auto arr = Array<Int64, 1>(jl_eval_string("return collect(1:10)"));
-        auto vec = arr["(i for i in 1:10 if i % 2 == 0)"_gen];
+        auto arr = Array<Int64, 1>(jl_eval_string("return collect(0:10)"));
+        auto vec = arr["(i for i in 0:9 if i % 2 == 0)"_gen];
 
         for (auto it : vec)
             Test::assert_that(it.operator int() % 2 == 0);
 
-        auto new_vec = Vector<Int64>("(i for i in 1:10 if i % 2 == 0)"_gen);
+        auto new_vec = Vector<Int64>("(i for i in 0:9 if i % 2 == 0)"_gen);
 
         for (auto it : new_vec)
             Test::assert_that(it.operator int() % 2 == 0);
     });
+
 
     Test::test("vector: insert", [](){
 

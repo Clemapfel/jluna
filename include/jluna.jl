@@ -741,6 +741,8 @@ module jluna
                 name = chop(name, head = 1, tail = 0)   # remove first .
             end
 
+            print_refs();
+            println(name)
             return Main.eval(:($(Meta.parse(name))))
         end
 
@@ -767,6 +769,10 @@ module jluna
 
             if (key == 0)
                 return nothing;
+            end
+
+            if _refs[][key][] isa Module
+                return
             end
 
             global _ref_counter[][key] -= 1

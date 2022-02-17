@@ -37,7 +37,7 @@ Number_t generate_number(
     return dist(engine);
 }
 
-size_t count = 100;
+size_t count = 10000;
 
 void benchmark_lambda_call()
 {
@@ -65,14 +65,30 @@ void benchmark_lambda_call()
 
 int main()
 {
-using namespace jluna;
-State::initialize();
+    using namespace jluna;
+    State::initialize();
 
-for (auto i : "(i*i for i in 1:10)"_gen)
-    std::cout << unbox<Int32>(i) << std::endl;
+    jl_eval_string("module M1; module M2; module M3; end end end");
 
-return 0;
+    Benchmark::run("Old Proxy Eval", count, [](){
 
+        auto name = generate_string(8);
+        jl_eval_string(("M1.M2.M3.eval(:(" + name + " = \"" + generate_string(16) + "\"))").c_str());
+
+        volatile auto value = Main["M1"]["M2"]["M3"][name].operator std::string();
+    });
+
+    Benchmark::run("Old Proxy Assign", count, [](){
+
+        auto name = generate_string(8);
+        jl_eval_string(("M1.M2.M3.eval(:(" + name + " = undef))").c_str());
+
+        Main["M1"]["M2"]["M3"].as<Module>().assign(name, generate_string(16));
+    });
+
+    Benchmark::conclude();
+    Benchmark::save();
+    return 0;
 
     /*
     Benchmark::run("Generator Native", count, [](){

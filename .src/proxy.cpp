@@ -142,7 +142,7 @@ namespace jluna
         return Proxy(
                 jluna::safe_call(getindex, _content->value(), box(i + 1)),
                 _content,
-                jl_symbol(std::to_string(i).c_str())
+                jl_symbol(("[" + std::to_string(i + 1) + "]").c_str())
         );
     }
 
