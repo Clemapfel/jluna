@@ -28,7 +28,11 @@ extern "C"
         size_t hash(const std::string& str)
         {
             static jl_function_t* hash = jl_get_function(jl_base_module, "hash");
+
+            auto before = jl_gc_is_enabled();
+            jl_gc_enable(false);
             return jl_unbox_uint64(jl_call1(hash, (jl_value_t*) jl_symbol(str.data())));
+            jl_gc_enable(before);
         }
 
         void register_function(const std::string& name, size_t n_args, std::function<jl_value_t*(jl_value_t*)>&& lambda)
@@ -61,7 +65,6 @@ extern "C"
 
         void free_function(size_t id)
         {
-            //std::cout << "freed unnamed function with id #" << id << std::endl;
             _functions.erase(id);
         }
     }

@@ -7,9 +7,13 @@
 
 #include <include/concepts.hpp>
 #include <include/proxy.hpp>
+#include <include/generator_expression.hpp>
 
 namespace jluna
 {
+    template<Boxable T>
+    class Vector;
+
     /// @brief wrapper for julia-side Array{Value_t, Rank}
     template<Boxable Value_t, size_t Rank>
     class Array : public Proxy
@@ -41,17 +45,21 @@ namespace jluna
             /// @note this function intentionally shadows Proxy::operator[](size_t) -> Proxy
             auto operator[](size_t);
 
+            /// @brief julia-style array comprehension indexing
+            /// @param generator_expression
+            /// @returns new array result of Julia-side getindex(this, range)
+            jluna::Vector<Value_t> operator[](const GeneratorExpression&) const;
+
             /// @brief julia-style list indexing
             /// @param range: iterable range with indices
             /// @returns new array result of Julia-side getindex(this, range)
-            template<Iterable Range_t>
-            auto operator[](const Range_t& range);
+            jluna::Vector<Value_t> operator[](const std::vector<size_t>& range) const;
 
             /// @brief julia-style list indexing
             /// @param initializer list with indices
             /// @returns new array result of Julia-side getindex(this, range)
             template<Boxable T>
-            auto operator[](std::initializer_list<T>&&);
+            jluna::Vector<Value_t> operator[](std::initializer_list<T>&&) const;
 
             /// @brief linear indexing, no bounds checking
             /// @tparam return type
@@ -133,8 +141,8 @@ namespace jluna
             using Proxy::_content;
 
         private:
-            void throw_if_index_out_of_range(int index, size_t dimension);
-            size_t get_dimension(int);
+            void throw_if_index_out_of_range(int index, size_t dimension) const;
+            size_t get_dimension(int) const;
 
             class ConstIterator
             {
@@ -195,7 +203,7 @@ namespace jluna
 
                 using ConstIterator::operator*;
 
-                /// @brief assign value, also assign value of proxy, regardless of wether it is mutating
+                /// @brief assign value, also assign value of proxy, regardless of whether it is mutating
                 /// @param value
                 /// @returns reference to self
                 template<Boxable T = Value_t>
@@ -223,6 +231,10 @@ namespace jluna
             /// @brief ctor as unnamed proxy from vector
             /// @param vector
             Vector(const std::vector<Value_t>& vec);
+
+            /// @brief ctor from generator expression. Only available for 1d arrays
+            /// @param generator_expression
+            Vector(const GeneratorExpression&);
 
             /// @brief ctor
             /// @param value

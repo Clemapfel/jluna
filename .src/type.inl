@@ -30,7 +30,6 @@ namespace jluna
     template<ToJuliaTypeConvertable T>
     Type Type::construct_from()
     {
-        auto* type = jl_eval_string(("return " + to_julia_type<T>::type_name).c_str());
-        return Type((jl_datatype_t*) type);
+        return Type((jl_datatype_t*) jl_eval_string(("return " + to_julia_type<T>::type_name).c_str()));
     }
 }

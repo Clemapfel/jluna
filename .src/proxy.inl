@@ -39,8 +39,7 @@ namespace jluna
     template<Unboxable T>
     T Proxy::operator[](const std::string& field)
     {
-        jl_sym_t* symbol = jl_symbol(field.c_str());
-        return unbox<T>(_content.get()->get_field(symbol));
+        return unbox<T>(_content.get()->get_field(jl_symbol(field.c_str())));
     }
 
     template<Boxable... Args_t>

@@ -34,9 +34,11 @@ namespace jluna
     {
         throw_if_uninitialized();
 
+        jl_gc_pause;
         static jl_function_t* unsafe_call = jl_find_function("jluna.exception_handler", "unsafe_call");
         Any* expr = State::eval(("return quote " + command + " end").c_str());
         auto* res = jluna::call(unsafe_call, expr, (Any*) get());
+        jl_gc_unpause;
         return Proxy(res, nullptr);
     }
 
@@ -44,16 +46,18 @@ namespace jluna
     {
         throw_if_uninitialized();
 
+        jl_gc_pause;
         static jl_function_t* safe_call = jl_find_function("jluna.exception_handler", "safe_call");
         Any* expr = State::safe_eval(("return quote " + command + " end").c_str());
         auto* res = jluna::safe_call(safe_call, expr, (Any*) get());
         forward_last_exception();
+        jl_gc_unpause;
         return Proxy(res, nullptr);
     }
 
     jl_sym_t* Module::get_symbol() const
     {
-        get()->name;
+        return get()->name;
     }
 
     Module Module::get_parent_module() const

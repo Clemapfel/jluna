@@ -9,7 +9,9 @@ namespace jluna
     Proxy Module::assign(const std::string& variable_name, T value)
     {
         static jl_function_t* assign_in_module = jl_find_function("jluna", "assign_in_module");
+        jl_gc_pause;
         jluna::safe_call(assign_in_module, get(), jl_symbol(variable_name.c_str()), box<T>(value));
+        jl_gc_unpause;
         return this->operator[](variable_name);
     }
 
@@ -17,7 +19,9 @@ namespace jluna
     Proxy Module::create_or_assign(const std::string& variable_name, T value)
     {
         static jl_function_t* assign_in_module = jl_find_function("jluna", "create_or_assign_in_module");
+        jl_gc_pause;
         jluna::safe_call(assign_in_module, get(), jl_symbol(variable_name.c_str()), box<T>(value));
+        jl_gc_unpause;
         return this->operator[](variable_name);
     }
 }

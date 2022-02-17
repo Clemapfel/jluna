@@ -37,7 +37,7 @@ namespace jluna
 
     /// @concept: wrapper for std::is_same_v
     template<typename T, typename U>
-    concept Is = std::is_same<T, U>::value;
+    concept Is = std::is_same<T, U>::value or std::is_same_v<T, const U>;
 
     /// @concept: is tuple but not pair
     template<typename T>

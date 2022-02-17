@@ -267,6 +267,7 @@ module jluna
         for e in x
             push!(out, e)
         end
+
         return out;
     end
 
@@ -452,6 +453,26 @@ module jluna
         return out
     end
 
+
+    """
+    get_length_of_generator(::Base.Generator) -> Int64
+
+    deduce length of Base.Generator object
+    """
+    function get_length_of_generator(gen::Base.Generator) ::Int64
+
+        if (Base.haslength(gen))
+            return length(gen)
+        else
+            # heuristically deduce length
+            for i in Iterators.reverse(gen.iter.itr)
+                if gen.iter.flt(i)
+                    return i
+                end
+            end
+        end
+    end
+
     """
     offers verbose exception interface. Any call with safe_call will store
     the last exception and full stack trace as string in _last_exception and
@@ -474,9 +495,10 @@ module jluna
         mutable struct State
             _last_exception
             _last_message::String
+            _exception_occurred::Bool
         end
 
-        const _state = Ref{State}(State(NoException(), ""));
+        const _state = Ref{State}(State(NoException(), "", false));
 
         """
         `safe_call(::Expr, ::Module = Main) -> Any`
@@ -544,6 +566,7 @@ module jluna
             try
             global _state[]._last_message = sprint(Base.showerror, exception, catch_backtrace())
             global _state[]._last_exception = exception
+            global _state[]._exception_occurred = true
             catch e end
             return nothing
         end
@@ -557,6 +580,7 @@ module jluna
 
             global _state[]._last_message = ""
             global _state[]._last_exception = NoException()
+            global _state[]._exception_occurred = false
             return nothing
         end
 
@@ -567,7 +591,7 @@ module jluna
         """
         function has_exception_occurred() ::Bool
 
-            return typeof(_state[]._last_exception) != NoException
+            return _state[]._exception_occurred
         end
 
         """
@@ -594,11 +618,26 @@ module jluna
     """
     module memory_handler
 
-        _current_id = UInt64(0);
+        const _current_id = Ref(UInt64(0));
         const _refs = Ref(Dict{UInt64, Base.RefValue{Any}}())
-        const _ref_counter = Ref(IdDict{UInt64, UInt64}())
+        const _ref_counter = Ref(Dict{UInt64, UInt64}())
 
         const _ref_id_marker = '#'
+        const _refs_expression = Meta.parse("jluna.memory_handler._refs[]")
+
+        ProxyID = Union{Expr, Nothing}
+
+        # make as unnamed
+        make_unnamed_proxy_id(id::UInt64) = return Expr(:ref, _refs_expression, id)
+
+        # make as named with owner and symbol name
+        make_named_proxy_id(id::Symbol, owner_id::ProxyID) = return Expr(Symbol("."), owner_id, QuoteNode(id))
+
+        # make as named with main as owner and symbol name
+        make_named_proxy_id(id::Symbol, owner_id::ProxyID) = return Expr(Symbol("."), :Main, QuoteNode(id))
+
+        # make as named with owner and array index name
+        make_named_proxy_id(id::Number, owner_id::ProxyID) = return Expr(:ref, owner_id, id)
 
         """
         `print_refs() -> Nothing`
@@ -620,17 +659,10 @@ module jluna
         """
         function create_reference(to_wrap::Any) ::UInt64
 
-            if (to_wrap == nothing)
-                return 0;
-            end
-
-            global _current_id += 1;
-            key = _current_id;
-
-            #println("[JULIA] allocated " * string(key) * " (" * Base.string(to_wrap) * ")")
+            global _current_id[] += 1;
+            key::UInt64 = _current_id[];
 
             if (haskey(_refs[], key))
-                @assert _refs[][key].x == to_wrap && typeof(to_wrap) == typeof(_refs[][key].x)
                 _ref_counter[][key] += 1
             else
                 _refs[][key] = Base.RefValue{Any}(to_wrap)
@@ -639,6 +671,8 @@ module jluna
 
             return key;
         end
+
+        create_reference(_::Nothing) ::UInt64 = return 0
 
         """
         `set_reference(::UInt64, ::T) -> Nothing`
@@ -651,11 +685,6 @@ module jluna
             return _refs[][key]
         end
 
-        """
-        `assign(::T, ::Symbol) -> T`
-
-        assign variable using proxy name-chain
-        """
         function assign(new_value::T, names::Symbol...) ::T where T
 
             unnamed_to_index(s::Symbol) = tryparse(UInt64, chop(string(s), head = 1, tail = 0))
@@ -681,7 +710,9 @@ module jluna
                 name = chop(name, head = 1, tail = 0)   # remove first .
             end
 
-            Main.eval(:($(Meta.parse(name)) = $new_value));
+
+            expr = :($(Meta.parse(name)) = $new_value);
+            Main.eval(expr);
             return new_value;
         end
 
@@ -710,6 +741,8 @@ module jluna
                 name = chop(name, head = 1, tail = 0)   # remove first .
             end
 
+            print_refs();
+            println(name)
             return Main.eval(:($(Meta.parse(name))))
         end
 
@@ -738,11 +771,12 @@ module jluna
                 return nothing;
             end
 
-            @assert haskey(_refs[], key)
-            #println("[JULIA] freed " * string(key) * " (" * Base.string(typeof(_refs[][key].x)) * ")")
+            if _refs[][key][] isa Module
+                return
+            end
 
             global _ref_counter[][key] -= 1
-            count = _ref_counter[][key]
+            count::UInt64 = _ref_counter[][key]
 
             if (count == 0)
                 delete!(_ref_counter[], key)
@@ -764,8 +798,6 @@ module jluna
                 delete!(_ref_counter[], k)
             end
 
-            @assert isempty(_refs) && isempty(_ref_counter)
-
             return nothing;
         end
     end
@@ -785,18 +817,20 @@ module jluna
         """
         Wrapper object for unnamed functions, frees function once object is destroyed
         """
-        mutable struct UnnamedFunctionProxy
+        mutable struct UnnamedFunctionProxy{N, Return_t}
 
             _id::Symbol
             _call::Function
-            _n_arguments::Int64
+            _n_args::Int64
 
-            function UnnamedFunctionProxy(id::Symbol)
+            function UnnamedFunctionProxy{N, Return_t}(id::Symbol) where {N, Return_t}
+
+                @assert(-1 <= N <= 4)
 
                 _id = id
-                x = new(id, function (xs...) Main.cppcall(_id, xs...) end)
+                x = new{N, Return_t}(id, function (xs...) Main.cppcall(_id, xs...) end, N)
 
-                finalizer(function (t::UnnamedFunctionProxy)
+                finalizer(function (t::UnnamedFunctionProxy{N, Return_t})
                     ccall((:free_function, _cppcall._library_name), Cvoid, (Csize_t,), hash(t._id))
                 end, x)
 
@@ -804,11 +838,38 @@ module jluna
             end
         end
 
-        # make function proxy struct callable
-        (instance::UnnamedFunctionProxy)(args...) = instance._call(args...);
+        # call with signature (1x Any) -> [Any / Nothing]
+        function (instance::UnnamedFunctionProxy{0, T})() ::T where T
+            return instance._call();
+        end
+
+        # call with signature (1x Any) -> [Any / Nothing]
+        function (instance::UnnamedFunctionProxy{1, T})(arg1) ::T where T
+            return instance._call(arg1);
+        end
+
+        # call with signature (2x Any) -> [Any / Nothing]
+        function (instance::UnnamedFunctionProxy{2, T})(arg1, arg2) ::T where T
+            return instance._call(arg1, arg2);
+        end
+
+        # call with signature (3x Any) -> [Any / Nothing]
+        function (instance::UnnamedFunctionProxy{3, T})(arg1, arg2, arg3) ::T where T
+            return instance._call(arg1, arg2, arg3);
+        end
+
+        # call with signature (4x Any) -> [Any / Nothing]
+        function (instance::UnnamedFunctionProxy{4, T})(arg1, arg2, arg3, arg4) ::T where T
+            return instance._call(arg1, arg2, arg3, arg4);
+        end
+
+        # call with other signature
+        function (instance::UnnamedFunctionProxy{Int64(-1), T})(args::Vector) ::T where T
+            return instance._call(args...);
+        end
 
         # ctor wrapper for jluna
-        new_unnamed_function(s::Symbol) = return UnnamedFunctionProxy(s)
+        new_unnamed_function(s::Symbol, N::Integer, T::Type) = return UnnamedFunctionProxy{N, T}(s)
 
         """
         an exception thrown when trying to invoke cppcall with a function name that

@@ -168,7 +168,7 @@ namespace jluna::State
     /// @param map
     /// @returns *named* proxy to newly created value
     template<Boxable Key_t, Boxable Value_t>
-    [[nodiscard]] Proxy new_named_iddict(const std::string& name, const std::map<Key_t, Value_t>& = {});
+    [[nodiscard]] Proxy new_named_dict(const std::string& name, const std::map<Key_t, Value_t>& = {});
 
     /// @brief creates new variable in main, then returns named proxy to it
     /// @tparam Key_t: key type in Base.Dict{Key_t, Value_t}

@@ -41,7 +41,7 @@ namespace jluna
     template<Boxable V, size_t R>
     bool Array<V, R>::ConstIterator::operator==(const typename Array<V, R>::ConstIterator& other) const
     {
-        return (this->_owner->operator jl_value_t *()) == (other._owner->operator jl_value_t *()) and this->_index == other._index;
+        return (this->_owner->operator const jl_value_t *()) == (other._owner->operator const jl_value_t *()) and this->_index == other._index;
     }
 
     template<Boxable V, size_t R>
@@ -55,13 +55,13 @@ namespace jluna
     T Array<V, R>::ConstIterator::operator*() const
     {
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        return unbox<T>(jluna::safe_call(getindex, _owner->operator jl_value_t *(), box(_index + 1)));
+        return unbox<T>(jluna::safe_call(getindex, _owner->operator const jl_value_t *(), box(_index + 1)));
     }
 
     template<Boxable V, size_t R>
     auto Array<V, R>::ConstIterator::operator*()
     {
-        return Iterator(_index, _owner);
+        return Iterator(_index, const_cast<Array<V, R>*>(_owner));
     }
 
     template<Boxable V, size_t R>
@@ -94,7 +94,11 @@ namespace jluna
             throw std::out_of_range("In: jluna::Array::ConstIterator::operator=(): trying to assign value to past-the-end iterator");
 
         static jl_function_t* setindex = jl_get_function(jl_base_module, "setindex!");
+
+        jl_gc_pause;
         jl_call3(setindex, _owner->operator jl_value_t *(), box(value), box(_index + 1));
+        jl_gc_unpause;
+
         return *this;
     }
 }

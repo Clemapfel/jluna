@@ -1,5 +1,6 @@
 #include <iostream>
 #include <julia.h>
+#include <ptrhash.h>
 #include <jluna.hpp>
 #include <.test/test.hpp>
 #include <.src/c_adapter.hpp>
@@ -153,25 +154,17 @@ int main()
         //jl_eval_string("test = undef");
     });
 
-
     Test::test("make_new_named_dict", []() {
 
         std::unordered_map<size_t, std::string> value = {{2, "abc"}};
         auto res = State::new_named_dict("test", value);
         Test::assert_that(res.operator  std::unordered_map<size_t, std::string>() == value);
 
+        std::map<size_t, std::string> value2 = {{2, "abc"}};
+        auto res2 = State::new_named_dict("test", value);
+        Test::assert_that(res2.operator std::map<size_t, std::string>() == value2);
         //jl_eval_string("test = undef");
     });
-
-    Test::test("make_new_named_iddict", []() {
-
-        std::map<size_t, std::string> value = {{2, "abc"}};
-        auto res = State::new_named_iddict("test", value);
-        Test::assert_that(res.operator std::map<size_t, std::string>() == value);
-
-        //jl_eval_string("test = undef");
-    });
-
 
     Test::test("make_new_pair", []() {
 
@@ -510,7 +503,7 @@ int main()
         Test::assert_that((int) a.at(0) == 1);
     });
 
-     Test::test("array: ctor", [](){
+    Test::test("array: ctor", [](){
 
         State::safe_eval("vector = [999, 2, 3, 4, 5]");
         Vector<int> vec = Main["vector"];
@@ -524,6 +517,15 @@ int main()
         vec = Vector<int>();
 
         Test::assert_that(vec.size() == 0);
+    });
+
+    Test::test("array: range index", [](){
+
+        auto vec = Array<Int64, 1>(State::safe_eval("return collect(1:100)"), nullptr);
+
+        const auto subvec = vec[{12, 19, 99, 2}];
+
+        Test::assert_that(subvec.at(0) == 13 and subvec.at(1) == 20 and subvec.at(2) == 100 and subvec.at(3) == 3);
     });
 
     Test::test("array: reject wrong type", []()
@@ -687,6 +689,21 @@ int main()
 
         Test::assert_that(as_proxy.get_name() == "Main.array[1]");
     });
+
+    Test::test("array: comprehension", [](){
+
+        auto arr = Array<Int64, 1>(jl_eval_string("return collect(0:10)"));
+        auto vec = arr["(i for i in 0:9 if i % 2 == 0)"_gen];
+
+        for (auto it : vec)
+            Test::assert_that(it.operator int() % 2 == 0);
+
+        auto new_vec = Vector<Int64>("(i for i in 0:9 if i % 2 == 0)"_gen);
+
+        for (auto it : new_vec)
+            Test::assert_that(it.operator int() % 2 == 0);
+    });
+
 
     Test::test("vector: insert", [](){
 
@@ -1041,6 +1058,27 @@ int main()
 
         Test::assert_that(Array_t.is_typename("Array"));
         Test::assert_that(Array_t.is_typename(Array_t));
+    });
+
+
+    Test::test("Generator Expression", [](){
+
+        Test::assert_that_throws<std::invalid_argument>([](){
+            volatile auto gen = "for i in 1:10 i = i end"_gen;
+        });
+
+        Test::assert_that_throws<JuliaException>([](){
+            volatile auto gen = "aas a0 ()d"_gen;
+        });
+
+        auto gen = "(x for x in 1:10)"_gen;
+
+        size_t i = 1;
+        for (auto e : gen)
+        {
+            Test::assert_that(unbox<Int32>(e) == i);
+            i += 1;
+        }
     });
 
     Test::conclude();

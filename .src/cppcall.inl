@@ -33,9 +33,12 @@ namespace jluna
 
         c_adapter::register_function(name, 0, [lambda](jl_value_t* tuple) -> jl_value_t* {
 
-            return detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t>>(
+            jl_gc_pause;
+            auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t>>(
                     &lambda
             );
+            jl_gc_unpause;
+            return out;
         });
     }
 
@@ -46,10 +49,13 @@ namespace jluna
 
         c_adapter::register_function(name, 1, [lambda](jl_value_t* tuple) -> jl_value_t* {
 
-            return detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, jl_value_t*>, jl_value_t*>(
+            jl_gc_pause;
+            auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, jl_value_t*>, jl_value_t*>(
                     &lambda,
                     jl_tupleref(tuple, 0)
             );
+            jl_gc_unpause;
+            return out;
         });
     }
 
@@ -60,11 +66,14 @@ namespace jluna
 
         c_adapter::register_function(name, 2, [lambda](jl_value_t* tuple) -> jl_value_t* {
 
-            return detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, jl_value_t*, jl_value_t*>, jl_value_t*, jl_value_t*>(
+            jl_gc_pause;
+            auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, jl_value_t*, jl_value_t*>, jl_value_t*, jl_value_t*>(
                     &lambda,
                     jl_tupleref(tuple, 0),
                     jl_tupleref(tuple, 1)
             );
+            jl_gc_unpause;
+            return out;
         });
     }
 
@@ -75,12 +84,15 @@ namespace jluna
 
         c_adapter::register_function(name, 3, [lambda](jl_value_t* tuple) -> jl_value_t* {
 
-            return detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, jl_value_t*, jl_value_t*, jl_value_t*>, jl_value_t*, jl_value_t*, jl_value_t*>(
+            jl_gc_pause;
+            auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, jl_value_t*, jl_value_t*, jl_value_t*>, jl_value_t*, jl_value_t*, jl_value_t*>(
                     &lambda,
                     jl_tupleref(tuple, 0),
                     jl_tupleref(tuple, 1),
                     jl_tupleref(tuple, 2)
             );
+            jl_gc_unpause;
+            return out;
         });
     }
 
@@ -91,31 +103,16 @@ namespace jluna
 
         c_adapter::register_function(name, 4, [lambda](jl_value_t* tuple) -> jl_value_t* {
 
-            return detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*>, jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*>(
+            jl_gc_pause;
+            auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*>, jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*>(
                     &lambda,
                     jl_tupleref(tuple, 0),
                     jl_tupleref(tuple, 1),
                     jl_tupleref(tuple, 2),
                     jl_tupleref(tuple, 3)
             );
-        });
-    }
-
-    template<LambdaType<jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda)
-    {
-        throw_if_uninitialized();
-
-        c_adapter::register_function(name, 5, [lambda](jl_value_t* tuple) -> jl_value_t* {
-
-            return detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*>, jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*>(
-                    &lambda,
-                    jl_tupleref(tuple, 0),
-                    jl_tupleref(tuple, 1),
-                    jl_tupleref(tuple, 2),
-                    jl_tupleref(tuple, 3),
-                    jl_tupleref(tuple, 4)
-            );
+            jl_gc_unpause;
+            return out;
         });
     }
 
@@ -131,12 +128,15 @@ namespace jluna
             for (size_t i = 0; i < jl_tuple_len(tuple); ++i)
                 wrapped.push_back(jl_tupleref(tuple, i));
 
-            return detail::invoke_lambda<
+            jl_gc_pause;
+            auto out = detail::invoke_lambda<
                 Lambda_t,
                 std::invoke_result_t<Lambda_t, std::vector<jl_value_t*>>,
                 std::vector<jl_value_t*>>(
                     &lambda, wrapped
             );
+            jl_gc_unpause;
+            return out;
         });
     }
 
@@ -147,8 +147,16 @@ namespace jluna
         register_function(id, lambda);
 
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
-        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
-        forward_last_exception();
+
+        jl_gc_pause;
+
+        Any* res;
+        if (std::is_same_v<std::invoke_result_t<Lambda_t>, void>)
+            res = jl_call3(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()), jl_box_int64(0), (Any*) jl_nothing_type);
+        else
+            res = jl_call3(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()), jl_box_int64(0), (Any*) jl_any_type);
+
+        jl_gc_unpause;
         return res;
     }
 
@@ -159,8 +167,16 @@ namespace jluna
         register_function(id, lambda);
 
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
-        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
-        forward_last_exception();
+
+        jl_gc_pause;
+
+        Any* res;
+        if (std::is_same_v<std::invoke_result_t<Lambda_t, Any*>, void>)
+            res = jl_call3(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()), jl_box_int64(1), (Any*) jl_nothing_type);
+        else
+            res = jl_call3(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()), jl_box_int64(1), (Any*) jl_any_type);
+
+        jl_gc_unpause;
         return res;
     }
 
@@ -171,8 +187,16 @@ namespace jluna
         register_function(id, lambda);
 
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
-        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
-        forward_last_exception();
+
+        jl_gc_pause;
+
+        Any* res;
+        if (std::is_same_v<std::invoke_result_t<Lambda_t, Any*, Any*>, void>)
+            res = jl_call3(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()), jl_box_int64(2), (Any*) jl_nothing_type);
+        else
+            res = jl_call3(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()), jl_box_int64(2), (Any*) jl_any_type);
+
+        jl_gc_unpause;
         return res;
     }
 
@@ -183,8 +207,16 @@ namespace jluna
         register_function(id, lambda);
 
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
-        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
-        forward_last_exception();
+
+        jl_gc_pause;
+
+        Any* res;
+        if (std::is_same_v<std::invoke_result_t<Lambda_t, Any*, Any*, Any*>, void>)
+            res = jl_call3(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()), jl_box_int64(3), (Any*) jl_nothing_type);
+        else
+            res = jl_call3(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()), jl_box_int64(3), (Any*) jl_any_type);
+
+        jl_gc_unpause;
         return res;
     }
 
@@ -193,10 +225,17 @@ namespace jluna
     {
         std::string id = "#" + std::to_string(detail::_unnamed_function_id);
         register_function(id, lambda);
-
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
-        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
-        forward_last_exception();
+
+        jl_gc_pause;
+
+        Any* res;
+        if (std::is_same_v<std::invoke_result_t<Lambda_t, Any*, Any*, Any*, Any*>, void>)
+            res = jl_call3(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()), jl_box_int64(4), (Any*) jl_nothing_type);
+        else
+            res = jl_call3(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()), jl_box_int64(4), (Any*) jl_any_type);
+
+        jl_gc_unpause;
         return res;
     }
 
@@ -207,8 +246,10 @@ namespace jluna
         register_function(id, lambda);
 
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
-        auto* res = jl_call1(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()));
-        forward_last_exception();
+
+        jl_gc_pause;
+        auto* res = jl_call2(new_unnamed_function, (jl_value_t*) jl_symbol(id.c_str()), jl_box_int64(-1));
+        jl_gc_unpause;
         return res;
     }
 }
