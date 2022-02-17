@@ -99,7 +99,7 @@ namespace jluna
         jl_array_t* out = (jl_array_t*) jl_call2(vector, jl_undef_initializer(), jl_box_uint64(range.size()));
 
         for (size_t i = 0; i < range.size(); ++i)
-            jl_arrayset(out, jl_box_uint64(range.at(i)), i);
+            jl_arrayset(out, jl_box_uint64(range.at(i) TODO: -1), i);
 
         return Vector<V>(jl_call2(getindex, _content->value(), (Any*) out));
 

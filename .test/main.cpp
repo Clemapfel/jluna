@@ -15,7 +15,7 @@ int main()
 
     auto vec = Array<Int64, 1>(State::safe_eval("return collect(1:100)"), nullptr);
 
-        const auto subvec = vec[{12, 19, 99, 2}];
+        const auto subvec = vec[{12, 19, 67, 2}];
 
         for (auto it : subvec)
             std::cout << it.operator int() << std::endl;
