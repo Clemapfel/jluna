@@ -39,6 +39,14 @@ namespace jluna
 
         _value_key = State::detail::create_reference(val);
         _value_ref = State::detail::get_reference(_value_key);
+
+        static jl_function_t* length = jl_find_function("jluna", "get_length_of_generator");
+
+        jl_gc_pause;
+        _length = jl_unbox_int64(jl_call1(length, get()));
+        std::cout << _length << std::endl;
+        forward_last_exception();
+        jl_gc_unpause;
     }
 
     GeneratorExpression::~GeneratorExpression()
@@ -51,17 +59,6 @@ namespace jluna
         return jl_ref_value(_value_ref);
     }
 
-    Int64 GeneratorExpression::length() const
-    {
-        static jl_function_t* length = jl_find_function("jluna", "get_length_of_generator");
-        jl_gc_pause;
-        auto* res = jl_call1(length, get());
-        forward_last_exception();
-        auto out = jl_unbox_int64(res);
-        jl_gc_unpause;
-        return out;
-    }
-
     typename GeneratorExpression::ForwardIterator GeneratorExpression::begin() const
     {
         return ForwardIterator(this, 0);
@@ -69,12 +66,12 @@ namespace jluna
 
     typename GeneratorExpression::ForwardIterator GeneratorExpression::end() const
     {
-        return ForwardIterator(this, length());
+        return ForwardIterator(this, _length);
     }
 
     size_t GeneratorExpression::size() const
     {
-        return length();
+        return _length;
     }
 
     GeneratorExpression::ForwardIterator::ForwardIterator(const GeneratorExpression* owner, Int64 state)

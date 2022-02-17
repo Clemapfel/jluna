@@ -13,15 +13,21 @@ int main()
 {
     State::initialize();
 
-    auto vec = Array<Int64, 1>(State::safe_eval("return collect(1:100)"), nullptr);
+    for (auto it : "(i for i in 0:9 if i % 2 == 0)"_gen)
+        std::cout << unbox<size_t>(it) << std::endl;
 
-        const auto subvec = vec[{12, 19, 67, 2}];
+    return 0;
 
-        for (auto it : subvec)
-            std::cout << it.operator int() << std::endl;
+    auto arr = Array<Int64, 1>(jl_eval_string("return collect(1:10)"));
+    auto vec = arr["(i for i in 0:9 if i % 2 == 0)"_gen];
 
-        Test::assert_that(subvec.at(0) == 11 and subvec.at(1) == 18 and subvec.at(2) == 98 and subvec.at(3) == 2);
+        for (auto it : vec)
+            Test::assert_that(it.operator int() % 2 == 0);
 
+        auto new_vec = Vector<Int64>("(i for i in 0:9 if i % 2 == 0)"_gen);
+
+        for (auto it : new_vec)
+            Test::assert_that(it.operator int() % 2 == 0);
         return 0;
 
     Test::initialize();
@@ -537,7 +543,7 @@ int main()
 
         const auto subvec = vec[{12, 19, 99, 2}];
 
-        Test::assert_that(subvec.at(0) == 11 and subvec.at(1) == 18 and subvec.at(2) == 98 and subvec.at(3) == 2);
+        Test::assert_that(subvec.at(0) == 13 and subvec.at(1) == 20 and subvec.at(2) == 100 and subvec.at(3) == 3);
     });
 
     Test::test("array: reject wrong type", []()

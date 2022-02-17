@@ -14,6 +14,7 @@ namespace jluna
     GeneratorExpression operator""_gen(const char*, size_t);
 
     /// @brief wrapper for Base.Generator, only create by _gen
+    /// @note expression is evaluated lazily
     class GeneratorExpression
     {
         friend GeneratorExpression operator""_gen(const char*, size_t);
@@ -42,8 +43,9 @@ namespace jluna
             GeneratorExpression(Any*);
 
         private:
+            Int64 _length;
+
             Any* get() const;
-            Int64 length() const;
             size_t _value_key;
             Any* _value_ref;
 

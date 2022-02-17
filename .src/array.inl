@@ -99,7 +99,16 @@ namespace jluna
         jl_array_t* out = (jl_array_t*) jl_call2(vector, jl_undef_initializer(), jl_box_uint64(range.size()));
 
         for (size_t i = 0; i < range.size(); ++i)
-            jl_arrayset(out, jl_box_uint64(range.at(i) TODO: -1), i);
+        {
+            if (range.at(i)+1 > get_n_elements())
+            {
+                std::stringstream str;
+                str << "[C++][EXCEPTION] 0-based index " << range.at(i) << " out of range for array of length " << get_n_elements() << std::endl;
+                throw std::out_of_range(str.str());
+            }
+
+            jl_arrayset(out, jl_box_uint64(range.at(i)+1), i);
+        }
 
         return Vector<V>(jl_call2(getindex, _content->value(), (Any*) out));
 

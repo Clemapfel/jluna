@@ -461,14 +461,15 @@ module jluna
     """
     function get_length_of_generator(gen::Base.Generator) ::Int64
 
-        if gen.iter isa Base.UnitRange
-            return length(gen.iter)
+        if (Base.haslength(gen))
+            return length(gen)
         else
-            iter = gen.iter
-            while !(iter isa Base.UnitRange)
-                iter = iter.itr
+            # heuristically deduce length
+            for i in Iterators.reverse(gen.iter.itr)
+                if gen.iter.flt(i)
+                    return i
+                end
             end
-            return length(iter)
         end
     end
 
