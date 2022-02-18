@@ -68,11 +68,13 @@ namespace jluna
     Array<V, R>::ConstIterator::operator Proxy()
     {
         jl_gc_pause;
+
         auto res = Proxy(
-                jl_arrayref((jl_array_t*) _owner->_content->value(), _index),
-                _owner->_content,
-                jl_box_uint64(_index+1)
+            jl_arrayref((jl_array_t*) _owner->_content->value(), _index),
+            _owner->_content,
+            jl_box_uint64(_index+1)
         );
+
         jl_gc_unpause;
         return res;
     }

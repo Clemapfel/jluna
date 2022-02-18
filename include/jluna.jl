@@ -629,7 +629,7 @@ module jluna
         ProxyID = Union{Expr, Nothing}
 
         # make as unnamed
-        make_unnamed_proxy_id(id::UInt64) = return Expr(:ref, _refs_expression, id)
+        make_unnamed_proxy_id(id::UInt64) = return Expr(:ref, Expr(:ref, _refs_expression, id))
 
         # make as named with owner and symbol name
         make_named_proxy_id(id::Symbol, owner_id::ProxyID) ::ProxyID = return Expr(:(.), owner_id, QuoteNode(id))
