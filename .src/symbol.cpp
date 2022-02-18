@@ -21,7 +21,7 @@ namespace jluna
        jl_assert_type((Any*) value, "Symbol");
     }
 
-    Symbol::Symbol(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol)
+    Symbol::Symbol(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, Any* symbol)
         : Proxy(value, owner, symbol)
     {
         jl_assert_type(value, "Symbol");

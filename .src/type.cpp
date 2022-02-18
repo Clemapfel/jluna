@@ -14,7 +14,7 @@ namespace jluna
         : Proxy((jl_value_t*) value, value->name->name)
     {}
 
-    Type::Type(Any* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol)
+    Type::Type(Any* value, std::shared_ptr<ProxyValue>& owner, Any* symbol)
         : Proxy(value, owner, symbol)
     {}
 

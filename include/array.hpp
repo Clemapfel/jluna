@@ -32,7 +32,7 @@ namespace jluna
             /// @param value
             /// @param owner
             /// @param symbol
-            Array(Any* value, std::shared_ptr<typename Proxy::ProxyValue>&, jl_sym_t*);
+            Array(Any* value, std::shared_ptr<typename Proxy::ProxyValue>&, Any*);
 
             /// @brief ctor unowned proxy
             /// @param value
@@ -240,7 +240,7 @@ namespace jluna
             /// @param value
             /// @param owner
             /// @param symbol
-            Vector(Any* value, std::shared_ptr<typename Proxy::ProxyValue>&, jl_sym_t*);
+            Vector(Any* value, std::shared_ptr<typename Proxy::ProxyValue>&, Any*);
 
             /// @brief ctor
             /// @param value

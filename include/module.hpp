@@ -26,7 +26,7 @@ namespace jluna
             /// @param value
             /// @param owner: internal proxy value owner
             /// @param name: symbol
-            Module(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* name);
+            Module(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, Any* name);
 
             /// @brief decay to C-type
             explicit operator jl_module_t*();

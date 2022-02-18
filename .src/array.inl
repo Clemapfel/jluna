@@ -17,14 +17,14 @@ namespace jluna
     }
 
     template<Boxable V, size_t R>
-    Array<V, R>::Array(jl_value_t* value, std::shared_ptr<typename Proxy::ProxyValue>& owner, jl_sym_t* symbol)
+    Array<V, R>::Array(Any* value, std::shared_ptr<typename Proxy::ProxyValue>& owner, Any* symbol)
         : Proxy(value, owner, symbol)
     {
         jl_assert_type(value, "Array");
     }
 
     template<Boxable V, size_t R>
-    Array<V, R>::Array(jl_value_t* value, jl_sym_t* symbol)
+    Array<V, R>::Array(Any* value, jl_sym_t* symbol)
         : Proxy(value, symbol)
     {
         jl_assert_type(value, "Array");
@@ -287,7 +287,7 @@ namespace jluna
     {}
 
     template<Boxable V>
-    Vector<V>::Vector(jl_value_t* value, std::shared_ptr<typename Proxy::ProxyValue>& owner, jl_sym_t* symbol)
+    Vector<V>::Vector(jl_value_t* value, std::shared_ptr<typename Proxy::ProxyValue>& owner, Any* symbol)
         : Array<V, 1>(value, owner, symbol)
     {
         jl_assert_type(value, "Vector");

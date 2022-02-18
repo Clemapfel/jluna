@@ -625,19 +625,26 @@ module jluna
         const _ref_id_marker = '#'
         const _refs_expression = Meta.parse("jluna.memory_handler._refs[]")
 
+        # proxy id that is actually an expression, the ID of topmodule Main is
         ProxyID = Union{Expr, Nothing}
 
         # make as unnamed
         make_unnamed_proxy_id(id::UInt64) = return Expr(:ref, _refs_expression, id)
 
         # make as named with owner and symbol name
-        make_named_proxy_id(id::Symbol, owner_id::ProxyID) = return Expr(Symbol("."), owner_id, QuoteNode(id))
+        make_named_proxy_id(id::Symbol, owner_id::ProxyID) ::ProxyID = return Expr(:(.), owner_id, QuoteNode(id))
 
         # make as named with main as owner and symbol name
-        make_named_proxy_id(id::Symbol, owner_id::ProxyID) = return Expr(Symbol("."), :Main, QuoteNode(id))
+        make_named_proxy_id(id::Symbol, owner_id::Nothing) ::ProxyID = return Expr(:(.), :Main, QuoteNode(id))
 
         # make as named with owner and array index name
-        make_named_proxy_id(id::Number, owner_id::ProxyID) = return Expr(:ref, owner_id, id)
+        make_named_proxy_id(id::Number, owner_id::ProxyID) ::ProxyID = return Expr(:ref, owner_id, id)
+
+        # assign to proxy id
+        assign(new_value::T, name::ProxyID) where {T} = return Main.eval(Expr(:(=), name, new_value))
+
+        # eval proxy id
+        evaluate(name::ProxyID) ::Any = return Main.eval(name)
 
         """
         `print_refs() -> Nothing`

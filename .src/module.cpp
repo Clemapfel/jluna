@@ -14,7 +14,7 @@ namespace jluna
         jl_assert_type((Any*) value, "Module");
     }
 
-    Module::Module(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* name)
+    Module::Module(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, Any* name)
         : Proxy(value, owner, name)
     {
         jl_assert_type(value, "Module");

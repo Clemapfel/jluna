@@ -5,6 +5,27 @@
 
 namespace jluna
 {
+    /// @brief unbox to proxy
+    template<Is<Proxy> T>
+    inline T unbox(Any* value)
+    {
+        return Proxy(value, nullptr);
+    }
+
+    /// @brief box jluna::Proxy to Base.Any
+    template<Is<Proxy> T>
+    inline Any* box(T value)
+    {
+        return value.operator Any*();
+    }
+
+    /// @brief type deduction
+    template<>
+    struct detail::to_julia_type_aux<Proxy>
+    {
+        static inline const std::string type_name = "Any";
+    };
+
     template<Unboxable T>
     T Proxy::operator[](size_t i)
     {
@@ -21,13 +42,13 @@ namespace jluna
     template<typename T, std::enable_if_t<std::is_base_of_v<Proxy, T>, bool>>
     Proxy::operator T()
     {
-        return T(_content->value(), _content->_owner, (jl_sym_t*) _content->symbol());
+        return T(_content->value(), _content->_owner, _content->id());
     }
 
     template<typename T, std::enable_if_t<std::is_base_of_v<Proxy, T>, bool>>
     T Proxy::as()
     {
-        return T(_content->value(), _content->_owner, (jl_sym_t*) _content->symbol());
+        return T(_content->value(), _content->_owner, _content->id());
     }
 
     template<Boxable T>

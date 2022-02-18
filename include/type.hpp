@@ -32,7 +32,7 @@ namespace jluna
             /// @param value
             /// @param owner
             /// @param symbol
-            Type(Any* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol);
+            Type(Any* value, std::shared_ptr<ProxyValue>& owner, Any* symbol);
 
             /// @brief decay to C-type
             operator jl_datatype_t*();
