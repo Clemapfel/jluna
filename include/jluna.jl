@@ -647,6 +647,35 @@ module jluna
         evaluate(name::ProxyID) ::Any = return Main.eval(name)
 
         """
+        `get_name(::ProxyID) -> String`
+
+        parse name from proxy id
+        """
+        function get_name(id::ProxyID) ::String
+
+            current = id
+            while current.args[1] isa Expr && length(current.args) >= 2
+
+                if current.args[2] isa UInt64
+                    current.args[2] = convert(Int64, current.args[2])
+                end
+
+                current = current.args[1]
+            end
+
+            # modifying Base.string() result instead of parsing the expression is super slow but Proxy::get_name is a debug feature anyway
+            out = string(id)
+            if out[1:5] == "Main."
+                chop(string(id), head = length("Main."), tail = 0)
+            end
+
+            out = replace(out, "(jluna.memory_handler._refs[])[" => "[unnamed proxy #")
+            return out;
+        end
+
+        get_name(::Nothing) ::String = return "Main"
+
+        """
         `print_refs() -> Nothing`
 
         pretty print _ref state, for debugging

@@ -70,7 +70,7 @@ int main()
 
     jl_eval_string("module M1; module M2; module M3; end end end");
 
-    Benchmark::run("Old Proxy Eval", count, [](){
+    Benchmark::run("New Proxy Eval", count, [](){
 
         auto name = generate_string(8);
         jl_eval_string(("M1.M2.M3.eval(:(" + name + " = \"" + generate_string(16) + "\"))").c_str());
@@ -78,7 +78,7 @@ int main()
         volatile auto value = Main["M1"]["M2"]["M3"][name].operator std::string();
     });
 
-    Benchmark::run("Old Proxy Assign", count, [](){
+    Benchmark::run("New Proxy Assign", count, [](){
 
         auto name = generate_string(8);
         jl_eval_string(("M1.M2.M3.eval(:(" + name + " = undef))").c_str());

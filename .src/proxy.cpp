@@ -98,7 +98,7 @@ namespace jluna
     {}
 
     Proxy::Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, Any* symbol)
-        : _content(new ProxyValue(value, owner, symbol))
+        : _content((owner.get() == nullptr ? new ProxyValue(value, (jl_sym_t*) symbol) : new ProxyValue(value, owner, symbol)))
     {}
 
     Proxy::Proxy(Any* value, jl_sym_t* symbol)
@@ -156,7 +156,9 @@ namespace jluna
 
     std::string Proxy::get_name() const
     {
-        return "TODO";
+        static jl_function_t* get_name = jl_find_function("jluna.memory_handler", "get_name");
+
+        return unbox<std::string>(jluna::safe_call(get_name, _content->id()));
     }
 
     std::vector<std::string> Proxy::get_field_names() const

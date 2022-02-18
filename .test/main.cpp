@@ -12,17 +12,6 @@ using namespace jluna::detail;
 int main()
 {
     State::initialize();
-
-    jl_eval_string(R"(
-        module M
-            test = [1, 2, 3, 4]
-        end
-    )");
-
-    auto proxy = Main["M"];
-    std::cout << proxy.operator std::string() << std::endl;
-
-    return 0;
     Test::initialize();
 
     Test::test("catch c exception", [](){
