@@ -32,12 +32,11 @@ namespace jluna
             /// @param value
             /// @param owner
             /// @param symbol
-            Array(Any* value, std::shared_ptr<typename Proxy::ProxyValue>&, Any*);
+            Array(Proxy*);
 
-            /// @brief ctor unowned proxy
-            /// @param value
-            /// @param name or nulltpr
-            Array(Any*, jl_sym_t* = nullptr);
+            /// @brief ctor from proxy
+            /// @param proxy
+            Array(Any* value, jl_sym_t* = nullptr);
 
             /// @brief linear indexing, no bounds checking
             /// @param index, 0-based
@@ -236,11 +235,9 @@ namespace jluna
             /// @param generator_expression
             Vector(const GeneratorExpression&);
 
-            /// @brief ctor
-            /// @param value
-            /// @param owner
-            /// @param symbol
-            Vector(Any* value, std::shared_ptr<typename Proxy::ProxyValue>&, Any*);
+            /// @brief ctor from proxy
+            /// @param proxy
+            Vector(Proxy*);
 
             /// @brief ctor
             /// @param value

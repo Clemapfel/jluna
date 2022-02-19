@@ -25,11 +25,9 @@ namespace jluna
             /// @param name
             Symbol(jl_sym_t* value, jl_sym_t* symbol = nullptr);
 
-            /// @brief ctor as owned
-            /// @param value
-            /// @param owner: internal proxy value owner
-            /// @param name: symbol
-            Symbol(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, Any* symbol);
+            /// @brief ctor from proxy
+            /// @param proxy
+            Symbol(Proxy*);
 
             /// @brief decay to C-type
             operator jl_sym_t*() const;

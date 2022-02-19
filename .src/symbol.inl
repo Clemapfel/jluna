@@ -9,7 +9,8 @@ namespace jluna
     template<Is<Symbol> T>
     inline T unbox(Any* value)
     {
-        jl_assert_type(value, "Symbol");
+        static Any* symbol_t = jl_eval_string("return Symbol");
+        jl_assert_type(value, symbol_t);
         return Symbol((jl_sym_t*) value);
     }
 

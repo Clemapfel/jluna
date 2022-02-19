@@ -11,13 +11,13 @@ namespace jluna
     Module::Module(jl_module_t* value)
         : Proxy((jl_value_t*) value, value->name)
     {
-        jl_assert_type((Any*) value, "Module");
+        jl_assert_type((Any*) value, (Any*) jl_module_type);
     }
 
-    Module::Module(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, Any* name)
-        : Proxy(value, owner, name)
+    Module::Module(Proxy* owner)
+        : Proxy(*owner)
     {
-        jl_assert_type(value, "Module");
+        jl_assert_type(owner->value(), (Any*) jl_module_type);
     }
 
     jl_module_t * Module::get() const

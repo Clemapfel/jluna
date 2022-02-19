@@ -42,13 +42,13 @@ namespace jluna
     template<typename T, std::enable_if_t<std::is_base_of_v<Proxy, T>, bool>>
     Proxy::operator T()
     {
-        return T(_content->value(), _content->_owner, _content->id());
+        return as<T>();
     }
 
     template<typename T, std::enable_if_t<std::is_base_of_v<Proxy, T>, bool>>
     T Proxy::as()
     {
-        return T(_content->value(), _content->_owner, _content->id());
+        return T(this);
     }
 
     template<Boxable T>

@@ -22,11 +22,9 @@ namespace jluna
             /// @param name: symbol
             Module(jl_module_t*);
 
-            /// @brief ctor as owned
-            /// @param value
-            /// @param owner: internal proxy value owner
-            /// @param name: symbol
-            Module(jl_value_t* value, std::shared_ptr<ProxyValue>& owner, Any* name);
+            /// @brief ctor from proxy
+            /// @param proxy
+            Module(Proxy*);
 
             /// @brief decay to C-type
             explicit operator jl_module_t*();
@@ -116,7 +114,8 @@ namespace jluna
     template<Is<Module> T>
     inline T unbox(Any* value)
     {
-        jl_assert_type(value, "Module");
+        static Any* module_t = jl_eval_string("return Module");
+        jl_assert_type(value, module_t);
         return Module((jl_module_t*) value);
     }
 

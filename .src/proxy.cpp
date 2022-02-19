@@ -41,24 +41,18 @@ namespace jluna
 
     // with owner
     Proxy::ProxyValue::ProxyValue(Any* value, std::shared_ptr<ProxyValue>& owner, Any* id)
-        : _owner(nullptr), _is_mutating(id != nullptr)
     {
-        if (value == nullptr)
-            return;
+        jl_gc_pause;
 
         static jl_function_t* make_unnamed_proxy_id = jl_find_function("jluna.memory_handler", "make_unnamed_proxy_id");
         static jl_function_t* make_named_proxy_id = jl_find_function("jluna.memory_handler", "make_named_proxy_id");
 
-        jl_gc_pause;
+        _owner = owner;
 
         _value_key = State::detail::create_reference(value);
         _value_ref = State::detail::get_reference(_value_key);
 
-        if (id == nullptr)
-            _id_key = State::detail::create_reference(jl_call1(make_unnamed_proxy_id, jl_box_uint64(_value_key)));
-        else
-            _id_key = State::detail::create_reference(jl_call2(make_named_proxy_id, id, owner->id()));
-
+        _id_key = State::detail::create_reference(jl_call2(make_named_proxy_id, id, owner->id()));
         _id_ref = State::detail::get_reference(_id_key);
 
         jl_gc_unpause;
@@ -98,7 +92,7 @@ namespace jluna
     {}
 
     Proxy::Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, Any* symbol)
-        : _content((owner.get() == nullptr ? new ProxyValue(value, (jl_sym_t*) symbol) : new ProxyValue(value, owner, symbol)))
+        : _content(new ProxyValue(value, owner, symbol))
     {}
 
     Proxy::Proxy(Any* value, jl_sym_t* symbol)
@@ -157,7 +151,6 @@ namespace jluna
     std::string Proxy::get_name() const
     {
         static jl_function_t* get_name = jl_find_function("jluna.memory_handler", "get_name");
-
         return unbox<std::string>(jluna::safe_call(get_name, _content->id()));
     }
 

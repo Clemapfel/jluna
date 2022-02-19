@@ -13,17 +13,17 @@ int main()
 {
     State::initialize();
 
-
-
-        Array<size_t, 3> arr = State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
-        std::cout << arr.get_name() << std::endl;
+    State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
+        Array3d arr = Main["array"];
 
         auto it = arr.at(0, 0, 0);
         Proxy as_proxy = it;
 
+        std::cout << as_proxy.get_name() << std::endl;
+
         Test::assert_that(as_proxy.get_name() == "Main.array[1]");
 
-        return 0;
+    return 0;
     Test::initialize();
 
     Test::test("catch c exception", [](){
@@ -33,6 +33,7 @@ int main()
             forward_last_exception();
         });
     });
+
 
     Test::test("jl_find_function", [](){
 
