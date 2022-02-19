@@ -72,10 +72,7 @@ namespace jluna
     Any * Proxy::ProxyValue::id() const
     {
         if (value() == (Any*) jl_main_module)
-        {
-            std::cout << "nothing" << std::endl;
             return jl_nothing;
-        }
 
         return jl_ref_value(_id_ref);
     }

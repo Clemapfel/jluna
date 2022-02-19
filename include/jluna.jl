@@ -641,7 +641,7 @@ module jluna
         const _refs_expression = Meta.parse("jluna.memory_handler._refs[]")
 
         # proxy id that is actually an expression, the ID of topmodule Main is
-        ProxyID = Union{Expr, Nothing}
+        ProxyID = Union{Expr, Symbol, Nothing}
 
         # make as unnamed
         make_unnamed_proxy_id(id::UInt64) = return Expr(:ref, Expr(:ref, _refs_expression, id))
@@ -650,17 +650,13 @@ module jluna
         make_named_proxy_id(id::Symbol, owner_id::ProxyID) ::ProxyID = return Expr(:(.), owner_id, QuoteNode(id))
 
         # make as named with main as owner and symbol name
-        make_named_proxy_id(id::Symbol, owner_id::Nothing) ::ProxyID = return QuoteNode(id)
+        make_named_proxy_id(id::Symbol, owner_id::Nothing) ::ProxyID = return id
 
         # make as named with owner and array index name
-        make_named_proxy_id(id::Number, owner_id::ProxyID) ::ProxyID = return Expr(:ref, owner_id, id)
+        make_named_proxy_id(id::Number, owner_id::ProxyID) ::ProxyID = return Expr(:ref, owner_id, convert(Int64, id))
 
         # assign to proxy id
-        function assign(new_value::T, name::ProxyID) where {T}
-
-            println(string(Expr(:(=), name, new_value)))
-            return Main.eval(Expr(:(=), name, new_value));
-         end
+        assign(new_value::T, name::ProxyID) where T = return Main.eval(Expr(:(=), name, new_value));
 
         # eval proxy id
         evaluate(name::ProxyID) ::Any = return Main.eval(name)
@@ -689,10 +685,6 @@ module jluna
 
             # modifying Base.string() result instead of parsing the expression is super slow but Proxy::get_name is a debug feature anyway
             out = string(id)
-
-            if out[1:5] == "Main."
-                out = chop(string(id), head = length("Main."), tail = 0)
-            end
 
             reg = r"\Q((jluna.memory_handler._refs[])[\E(.*)\Q])[]\E"
             captures = match(reg, out)

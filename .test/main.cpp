@@ -12,19 +12,6 @@ using namespace jluna::detail;
 int main()
 {
     State::initialize();
-
-    jl_eval_string("module M1; module M2; module M3; end end end");
-    std::string name = "name";
-    jl_eval_string(("M1.M2.M3.eval(:(" + name + " = undef))").c_str());
-
-    auto m1 = Main["M1"];
-    auto m2 = m1["M2"];
-    auto m3 = m2["M3"];
-    auto as_module = m3.as<Module>();
-
-    as_module.assign(name, "alszdblasi");
-    return 0;
-
     Test::initialize();
 
     Test::test("catch c exception", [](){
@@ -699,8 +686,8 @@ int main()
 
         auto it = arr.at(0, 0, 0);
         Proxy as_proxy = it;
-
-        Test::assert_that(as_proxy.get_name() == "Main.array[1]");
+        as_proxy = 999;
+        Test::assert_that(State::eval("return array")[0].operator int() == 999);
     });
 
     Test::test("array: comprehension", [](){

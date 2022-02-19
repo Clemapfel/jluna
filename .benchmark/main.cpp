@@ -37,7 +37,7 @@ Number_t generate_number(
     return dist(engine);
 }
 
-size_t count = 10000;
+size_t count = 1000;
 
 void benchmark_lambda_call()
 {
@@ -68,23 +68,22 @@ int main()
     using namespace jluna;
     State::initialize();
 
-    std::string name = "name_var";
-    jl_eval_string((name + " = undef").c_str());
+    jl_eval_string("module M1; module M2; module M3; end end end");
 
-    std::cout << Main[name].get_name() << std::endl;
+    Benchmark::run("Old Proxy Eval", count, [](){
 
-    Main[name] = generate_string(16);
+        auto name = generate_string(8);
+        jl_eval_string(("M1.M2.M3.eval(:(" + name + " = \"" + generate_string(16) + "\"))").c_str());
 
-    return 0;
-
-    Benchmark::run("Proxy assign baseline", count, [&](){
-
-        jl_eval_string((name + " = " + generate_string(16)).c_str());
+        volatile auto value = Main["M1"]["M2"]["M3"][name].operator std::string();
     });
 
-    Benchmark::run("New Proxy Assign", count, [&](){
+    Benchmark::run("Old Proxy Assign", count, [](){
 
-        Main[name] = generate_string(16);
+        auto name = generate_string(8);
+        jl_eval_string(("M1.M2.M3.eval(:(" + name + " = undef))").c_str());
+
+        Main["M1"]["M2"]["M3"].as<Module>().assign(name, generate_string(16));
     });
 
     Benchmark::conclude();
