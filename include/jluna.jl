@@ -136,6 +136,24 @@ module jluna
     end
 
     """
+    `new_vector(::Integer, ::T) -> Vector{T}`
+
+    create vector by deducing argument type
+    """
+    function new_vector(size::Integer, _::T) where T
+        return Vector{T}(undef, size)
+    end
+
+    """
+    `new_vector(::Integer, ::T) -> Vector{T}`
+
+    create vector by deducing argument type
+    """
+    function new_vector(size::Integer, type::Type)
+        return Vector{type}(undef, size)
+    end
+
+    """
     `make_set(::T...) -> Set{T}`
 
     wrap set ctor in varargs argument, used by box/unbox

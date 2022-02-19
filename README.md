@@ -60,19 +60,24 @@ instance._field is now: 456
 State::script("array = collect(1:9)");
 Array<size_t, 1> cpp_array = Main["array"];
 
-// julia style list indexing
-auto sub_array = cpp_array[{6, 5, 4, 3, 2}];
-Base["println"]((Any*) sub_array);
-
 // iterable and assignable
 for (auto e : cpp_array)
     e = e.operator size_t() + 10;
 
 State::script("println(array)");
+
+// julia style list indexing
+auto sub_array = cpp_array[{6, 5, 4, 3, 2}];
+Base["println"]((Any*) sub_array);
+
+// even supports comprehension
+auto comprehended_vec = Vector<Int64>("(i for i in 1:10 if i % 2 == 0)"_gen);
+    Base["println"](comprehended_vec);
 ```
 ```
-[7, 6, 5, 4, 3]
 [11, 12, 13, 14, 15, 16, 17, 18, 19]
+[17, 16, 15, 14, 13]
+[2, 4, 6, 8, 10]
 ```
 ---
 #### Call C++ Functions from julia
