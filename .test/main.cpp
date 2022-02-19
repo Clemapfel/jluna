@@ -13,10 +13,18 @@ int main()
 {
     State::initialize();
 
-    auto arr = State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
-    std::cout << arr.get_name() << std::endl;
+    jl_eval_string("module M1; module M2; module M3; end end end");
+    std::string name = "name";
+    jl_eval_string(("M1.M2.M3.eval(:(" + name + " = undef))").c_str());
 
+    auto m1 = Main["M1"];
+    auto m2 = m1["M2"];
+    auto m3 = m2["M3"];
+    auto as_module = m3.as<Module>();
+
+    as_module.assign(name, "alszdblasi");
     return 0;
+
     Test::initialize();
 
     Test::test("catch c exception", [](){
@@ -439,7 +447,7 @@ int main()
         named[0] = 9999;
         Test::assert_that(State::eval("return var[1]").operator int() == 9999);
 
-        named = named.value();
+        named = named.as_unnamed();
         named[0] = 0;
         Test::assert_that(State::eval("return var[1]").operator int() == 9999);
         Test::assert_that(named[0].operator int() == 0);

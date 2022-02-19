@@ -132,7 +132,7 @@ namespace jluna
 
             /// @brief create a new unnamed proxy that holds the same value
             /// @returns new proxy by value
-            [[nodiscard]] Proxy value() const;
+            [[nodiscard]] Proxy as_unnamed() const;
 
             /// @brief update value if proxy symbol was reassigned outside of operator=
             void update();

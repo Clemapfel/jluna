@@ -114,8 +114,7 @@ namespace jluna
     template<Is<Module> T>
     inline T unbox(Any* value)
     {
-        static Any* module_t = jl_eval_string("return Module");
-        jl_assert_type(value, module_t);
+        jl_assert_type(value, jl_module_type);
         return Module((jl_module_t*) value);
     }
 

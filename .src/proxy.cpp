@@ -126,7 +126,9 @@ namespace jluna
 
     Proxy::operator Any*()
     {
+        jl_gc_pause;
         auto* res = _content->value();
+        jl_gc_unpause;
         if (res == nullptr)
             return jl_nothing;
         else
@@ -135,7 +137,9 @@ namespace jluna
 
     Proxy::operator const Any*() const
     {
+        jl_gc_pause;
         auto* res = _content->value();
+        jl_gc_unpause;
         if (res == nullptr)
             return jl_nothing;
         else
@@ -192,7 +196,7 @@ namespace jluna
         return *this;
     }
 
-    Proxy Proxy::value() const
+    Proxy Proxy::as_unnamed() const
     {
         return Proxy(jl_deepcopy(_content->value()), nullptr);
     }

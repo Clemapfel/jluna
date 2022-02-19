@@ -9,7 +9,7 @@ namespace jluna
     template<Is<Type> T>
     inline T unbox(Any* value)
     {
-        static Any* type_t = jl_eval_string("return Type");
+        static jl_datatype_t* type_t = (jl_datatype_t*) jl_eval_string("return Type");
         jl_assert_type(value, type_t);
         return Type((jl_datatype_t*) value);
     }

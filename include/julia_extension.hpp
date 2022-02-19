@@ -77,7 +77,7 @@ extern "C"
     /// @brief throw error if value is not of type named
     /// @param value
     /// @param types_name
-    inline void jl_assert_type(jl_value_t* value, jl_value_t* type)
+    inline void jl_assert_type(jl_value_t* value, jl_datatype_t* type)
     {
         static jl_function_t* assert_isa = jl_find_function("jluna", "assert_isa");
         jluna::safe_call(assert_isa, value, type);
