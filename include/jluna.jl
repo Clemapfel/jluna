@@ -650,13 +650,17 @@ module jluna
         make_named_proxy_id(id::Symbol, owner_id::ProxyID) ::ProxyID = return Expr(:(.), owner_id, QuoteNode(id))
 
         # make as named with main as owner and symbol name
-        make_named_proxy_id(id::Symbol, owner_id::Nothing) ::ProxyID = return Expr(:(.), :Main, QuoteNode(id))
+        make_named_proxy_id(id::Symbol, owner_id::Nothing) ::ProxyID = return QuoteNode(id)
 
         # make as named with owner and array index name
         make_named_proxy_id(id::Number, owner_id::ProxyID) ::ProxyID = return Expr(:ref, owner_id, id)
 
         # assign to proxy id
-        assign(new_value::T, name::ProxyID) where {T} = return Main.eval(Expr(:(=), name, new_value))
+        function assign(new_value::T, name::ProxyID) where {T}
+
+            println(string(Expr(:(=), name, new_value)))
+            return Main.eval(Expr(:(=), name, new_value));
+         end
 
         # eval proxy id
         evaluate(name::ProxyID) ::Any = return Main.eval(name)
@@ -668,6 +672,10 @@ module jluna
         parse name from proxy id
         """
         function get_name(id::ProxyID) ::String
+
+            if length(id.args) == 0
+                return "Main"
+            end
 
             current = id
             while current.args[1] isa Expr && length(current.args) >= 2
@@ -687,7 +695,11 @@ module jluna
             end
 
             reg = r"\Q((jluna.memory_handler._refs[])[\E(.*)\Q])[]\E"
-            out = replace(out, reg => "<unnamed function proxy #" * string(tryparse(Int64, match(reg, out).captures[1])) * ">")
+            captures = match(reg, out)
+
+            if captures != nothing
+                out = replace(out, reg => "<unnamed function proxy #" * string(tryparse(Int64, captures.captures[1])) * ">")
+            end
 
             return out;
         end

@@ -71,6 +71,12 @@ namespace jluna
 
     Any * Proxy::ProxyValue::id() const
     {
+        if (value() == (Any*) jl_main_module)
+        {
+            std::cout << "nothing" << std::endl;
+            return jl_nothing;
+        }
+
         return jl_ref_value(_id_ref);
     }
 
@@ -110,7 +116,7 @@ namespace jluna
         return Proxy(
             _content.get()->get_field(symbol),
             _content,
-            (Any*) (_content->id() == nullptr ? nullptr : symbol)
+            (Any*) symbol
         );
     }
 

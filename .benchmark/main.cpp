@@ -68,22 +68,23 @@ int main()
     using namespace jluna;
     State::initialize();
 
-    jl_eval_string("module M1; module M2; module M3; end end end");
+    std::string name = "name_var";
+    jl_eval_string((name + " = undef").c_str());
 
-    Benchmark::run("New Proxy Eval", count, [](){
+    std::cout << Main[name].get_name() << std::endl;
 
-        auto name = generate_string(8);
-        jl_eval_string(("M1.M2.M3.eval(:(" + name + " = \"" + generate_string(16) + "\"))").c_str());
+    Main[name] = generate_string(16);
 
-        volatile auto value = Main["M1"]["M2"]["M3"][name].operator std::string();
+    return 0;
+
+    Benchmark::run("Proxy assign baseline", count, [&](){
+
+        jl_eval_string((name + " = " + generate_string(16)).c_str());
     });
 
-    Benchmark::run("New Proxy Assign", count, [](){
+    Benchmark::run("New Proxy Assign", count, [&](){
 
-        auto name = generate_string(8);
-        jl_eval_string(("M1.M2.M3.eval(:(" + name + " = undef))").c_str());
-
-        Main["M1"]["M2"]["M3"].as<Module>().assign(name, generate_string(16));
+        Main[name] = generate_string(16);
     });
 
     Benchmark::conclude();
