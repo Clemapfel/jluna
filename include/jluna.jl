@@ -686,7 +686,9 @@ module jluna
                 out = chop(string(id), head = length("Main."), tail = 0)
             end
 
-            out = replace(out, "(jluna.memory_handler._refs[])[" => "[unnamed proxy #")
+            reg = r"\Q((jluna.memory_handler._refs[])[\E(.*)\Q])[]\E"
+            out = replace(out, reg => "<unnamed function proxy #" * string(tryparse(Int64, match(reg, out).captures[1])) * ">")
+
             return out;
         end
 
