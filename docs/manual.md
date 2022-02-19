@@ -46,6 +46,7 @@ Please navigate to the appropriate section by clicking the links below:
   9.3 [Iterating](#iterating)<br>
   9.4 [Vectors](#vectors)<br>
   9.5 [Matrices](#matrices)<br>
+  9.6 [Generator Expressions](#generator-expressions)
 10. [**Introspection**](#introspection)<br>
   10.1 [Type Proxies](#type-proxies)<br>
   10.2 [Core Type Constants](#core-types)<br>
@@ -243,7 +244,7 @@ std::vector<T>           => Vector{T}       *
 std::array<T, R>         => Vector{T}       *
 std::pair<T, U>          => Pair{T, U}      *
 std::tuple<Ts...>        => Tuple{Ts...}    *
-std::map<T, U>           => IdDict{T, U}    *
+std::map<T, U>           => Dict{T, U}      *
 std::unordered_map<T, U> => Dict{T, U}      *
 std::set<T>              => Set{T, U}       *
 
@@ -1438,6 +1439,63 @@ Note that `Array<T, R>::operator[](Range_t&&)` (linear indexing with a range) al
 
 (this feature is not yet implemented, simply use `Array<T, 2>` until then)
 
+## Generator Expressions
+
+One of julias most convenient features are [**generator expressions**](https://docs.julialang.org/en/v1/manual/arrays/#man-comprehensions) (also called list/array comprehensions). These are is a special kind of syntax that creates an iterable range. For example, the following expressions are equivalent:
+
+```julia
+# comprehension
+[i*i for i in 1:10 if i % 2 == 0]
+
+# mostly equivalent to
+out = Vector()
+f = i -> i*i
+for i in 1:10
+    if i % 2 == 0
+        push!(out, f(i))
+    end
+end
+```
+
+In julia, we use `[]` when we want the expression to be vectorized and `()` when we want the expression to stay an object of type `Base.Generator`. The latter has the significant advantage that iterating and accessing its values is lazy-eval, meaning that we only do the any computation only when actually accessing the value. 
+
+In `jluna`, we can create a generator expression using the postfix literal operator `_gen` on a c-string:
+
+```cpp
+// in julia:
+(i for i in 1:10 if i % 2 == 0)
+
+// in cpp:
+"(i for i in 1:10 if i % 2 == 0)"_gen
+```
+Note that when using `_gen`, **only round brackets are allowed**. Every generator expression has to be in round brackets.
+
+We can iterate a generator expression like so:
+
+```cpp
+for (auto i : "(i for i in 1:10 if i % 2 == 0)"_gen)
+    std::cout << unbox<size_t>(i) << std::endl;
+```
+```
+2
+4
+6
+8
+10
+```
+
+Where `i` needs to be unboxed manually and behaves exactly like an `Any*`. While this is convenient, the true power of generator expressions comes in its usaged along with `jluna::Vector`. We can:
+
+```cpp
+// ...initialize a vector from a generator expression
+auto vec = Vector<size_t>("i*i for i in 1:99"_gen);
+
+// ...use a generator expressions just like a list index
+vec["i for i in 1:99 if i < 50"_gen];
+```
+
+Using generator expressions like this, we can imitate julia syntax very closely, despite being in a language that does not have list comprehension. 
+
 ## Introspection
 
 The main advantage julia has over C++ is its introspection and meta-level features. 
@@ -1771,149 +1829,10 @@ Once fully unrolled, we have access to the properties necessary for introspect. 
 
 (this feature is not yet implemented)
 
-## C-API
+## Performance
 
-(this section is not fully formatted yet. Code examples are given, however)
+As of version 0.7, `jluna` went through extensive optimization, meaning it is finally decently fast. This section will give some pointers on how to achieve the best performance using its methods. 
 
-```cpp
-#include <julia.h>
-#include <include/julia_extension.hpp>
-```
+When evaluating `jluna`s performance, we first need to decide what to compare it to. When compared to native julia, `jluna` is objectively slower in almost every way. The best `jluna` can do is match julias performance. because all `jluna` does is be an interface to the julia state. This means it is not a very fair comparison, much more useful is comparing `jluna` to the native C-API. 
 
-### Meaning of C-Types
-
-+ `jl_value_t*`: address julia-side value of arbitrary type
-+ `jl_function_t*`: address of julia-side function
-+ `jl_sym_t*`: address of julia-side symbol
-+ `jl_module_t*`: address of julia-side singleton module
-    - `jl_main_module`: Main
-    - `jl_base_module`: Base
-    - `jl_core_module`: Core
-+ `jl_datatype_t*`: address of julia-side singleton type
-    - `jl_any_type`: Any
-    - `jl_type_type`: Type
-    - `jl_module_type`: Module
-    - `jl_integer_type`: Integer
-    - etc.
-    
-### Executing C Code
-
-```cpp
-jl_eval_string("your code goes here")
-jl_eval_string(R"(
-    your 
-    multi-line
-    code
-    goes
-    here
-)");
-```
-
-### Forwarding Exceptions in C
-```cpp
-jl_eval_string("sqrt(-1)"); 
-// nothing happens
-
-jluna::forward_last_exception();
-// exception thrown
-```
-```
-terminate called after throwing an instance of 'jluna::juliaException'
-  what():  DomainError(-1.0, "sqrt will only return a complex result if called with a complex argument. Try sqrt(Complex(x)).")
-Stacktrace: <no stacktrace available>
-```
-
-### Accessing Values in C
-
-```cpp
-// by address:
-Any* address = jl_eval_string("return value_name");
-
-// by value
-T value = unbox<T>(jl_eval_string("return value_name"));
-
-// there is no memory-safe, GC-safe way to modify variables from within C only
-```
-### Functions in C
-
-#### Accessing Functions in C
-
-```cpp
-jl_function_t* println = jl_get_function((jl_module_t*) jl_eval_string("return Main.Base")), "println");
-```
-
-#### Calling Functions in C
-
-```cpp
-std::vector<T> cpp_arguments = /* ... */ // T is any boxable type
-
-auto* function = jl_get_function(jl_base_module, "println");
-std::vector<Any*> args;
-
-for (auto a : cpp_arguments)
-    args.push_back(box(a));
-    
-Any* res = jl_call(function, args, args.size());
-```
-
-### Arrays in C
-#### Accessing & Indexing Arrays in C
-
-```cpp
-jl_array_t* array = (jl_array_t*) jl_eval_string("return [[1, 2, 3]; [2, 3, 4]; [3, 4, 5]]");
-
-for (size_t i = 0; i < jl_array_len(array); ++i)    // 0-based
-    std::cout << unbox<jluna::Int64>(jl_arrayref(array, i));    
-
-// only linear indexing is available through the C-API
-```
-```
-1 2 3 2 3 4 3 4 5
-```
-
-#### Mutating Arrays in C
-```cpp
-jl_array_t* array = (jl_array_t*) jl_eval_string("return [1, 2, 3, 4]");
-
-jl_arrayset(array, box<Int64>(999), 0); 
-// box<T> with exact equivalent of T julia
-// jluna does fuzzy conversion behind the scenes, C doesn't
-
-jl_function_t* println = jl_get_function(jl_base_module, "println");
-jl_call1(println, (Any*) array);
-```
-
-### Strings in C
-#### Accessing Strings in C
-```cpp
-Any* jl_string = jl_eval_string("return \"abcdef\"");
-std::string std_string = std::string(jl_string_data(jl_string));
-std::cout << std_string << std::endl;
-```
-```
-abcdef
-```
-To modify strings, we need to cast them `jl_array_t` and modify them like arrays
-
-### Initialization & Shutdown in C
-
-```cpp
-#include <julia.h>
-
-int main() 
-{
-    jl_init();
-    // or
-    jl_init_with_image("path/to/your/image", NULL);
-    
-    // all your application
-    
-    jl_atexit_hook(0);
-}
-```
-
-
-
-
-
-
+The main overhead when dealing with proxies is that of reference allocation. To keep C++-side values allocated through the C-API safe from being immediately garbage collected, `jluna` needs to create a reference to them and store them in a julia-side datastructure. Anytime a proxy is created, a reference is created, a name for that proxy is created and both are stored in the global `jluna` state. 

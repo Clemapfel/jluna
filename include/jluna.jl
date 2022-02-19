@@ -683,9 +683,7 @@ module jluna
                 current = current.args[1]
             end
 
-            # modifying Base.string() result instead of parsing the expression is super slow but Proxy::get_name is a debug feature anyway
             out = string(id)
-
             reg = r"\Q((jluna.memory_handler._refs[])[\E(.*)\Q])[]\E"
             captures = match(reg, out)
 
