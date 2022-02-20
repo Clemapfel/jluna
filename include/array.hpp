@@ -32,12 +32,11 @@ namespace jluna
             /// @param value
             /// @param owner
             /// @param symbol
-            Array(Any* value, std::shared_ptr<typename Proxy::ProxyValue>&, jl_sym_t*);
+            Array(Proxy*);
 
-            /// @brief ctor unowned proxy
-            /// @param value
-            /// @param name or nulltpr
-            Array(Any*, jl_sym_t* = nullptr);
+            /// @brief ctor from proxy
+            /// @param proxy
+            Array(Any* value, jl_sym_t* = nullptr);
 
             /// @brief linear indexing, no bounds checking
             /// @param index, 0-based
@@ -209,6 +208,11 @@ namespace jluna
                 template<Boxable T = Value_t>
                 auto& operator=(T value);
 
+                /// @brief decay into unboxed value
+                /// @tparam value-type, not necessarily the same as declared in the array type
+                template<Unboxable T = Value_t, std::enable_if_t<not std::is_same_v<T, Proxy>, bool> = true>
+                operator T() const;
+
                 protected:
                     using ConstIterator::_owner;
                     using ConstIterator::_index;
@@ -236,11 +240,9 @@ namespace jluna
             /// @param generator_expression
             Vector(const GeneratorExpression&);
 
-            /// @brief ctor
-            /// @param value
-            /// @param owner
-            /// @param symbol
-            Vector(Any* value, std::shared_ptr<typename Proxy::ProxyValue>&, jl_sym_t*);
+            /// @brief ctor from proxy
+            /// @param proxy
+            Vector(Proxy*);
 
             /// @brief ctor
             /// @param value

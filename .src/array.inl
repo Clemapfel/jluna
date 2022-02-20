@@ -3,8 +3,6 @@
 // Created on 12.01.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/gc_sentinel.hpp>
-
 namespace jluna
 {
     namespace detail
@@ -17,17 +15,19 @@ namespace jluna
     }
 
     template<Boxable V, size_t R>
-    Array<V, R>::Array(jl_value_t* value, std::shared_ptr<typename Proxy::ProxyValue>& owner, jl_sym_t* symbol)
-        : Proxy(value, owner, symbol)
+    Array<V, R>::Array(Any* value, jl_sym_t* symbol)
+        : Proxy(value, symbol)
     {
-        jl_assert_type(value, "Array");
+        static jl_datatype_t* array_t = (jl_datatype_t*) jl_eval_string("return Base.Array");
+        jl_assert_type(value, array_t);
     }
 
     template<Boxable V, size_t R>
-    Array<V, R>::Array(jl_value_t* value, jl_sym_t* symbol)
-        : Proxy(value, symbol)
+    Array<V, R>::Array(Proxy* proxy)
+        : Proxy(*proxy)
     {
-        jl_assert_type(value, "Array");
+        static jl_datatype_t* array_t = (jl_datatype_t*) jl_eval_string("return Base.Array");
+        jl_assert_type(proxy->operator Any*(), array_t);
     }
 
     template<Boxable T, size_t Rank>
@@ -259,19 +259,19 @@ namespace jluna
     template<Boxable V, size_t R>
     size_t Array<V, R>::get_n_elements() const
     {
-        return reinterpret_cast<jl_array_t*>(_content->value())->length;
+        return reinterpret_cast<const jl_array_t*>(this->operator const Any*())->length;
     } //°
 
     template<Boxable V, size_t R>
     bool Array<V, R>::empty() const
     {
-        return reinterpret_cast<jl_array_t*>(_content->value())->length == 0;
+        return reinterpret_cast<const jl_array_t*>(this->operator const Any*())->length == 0;
     } //°
 
     template<Boxable V, size_t R>
     void* Array<V, R>::data()
     {
-        return reinterpret_cast<jl_array_t*>(value())->data;
+        return reinterpret_cast<jl_array_t*>(this->operator Any*())->data;
     } //°
 
     // ###
@@ -287,17 +287,19 @@ namespace jluna
     {}
 
     template<Boxable V>
-    Vector<V>::Vector(jl_value_t* value, std::shared_ptr<typename Proxy::ProxyValue>& owner, jl_sym_t* symbol)
-        : Array<V, 1>(value, owner, symbol)
+    Vector<V>::Vector(Proxy* owner)
+        : Array<V, 1>(owner)
     {
-        jl_assert_type(value, "Vector");
+        static jl_datatype_t* vector_t = (jl_datatype_t*) jl_eval_string("return Vector");
+        jl_assert_type(owner->operator Any*(), vector_t);
     }
 
     template<Boxable V>
     Vector<V>::Vector(jl_value_t* value, jl_sym_t* symbol)
         : Array<V, 1>(value, symbol)
     {
-        jl_assert_type(value, "Vector");
+        static jl_datatype_t* vector_t = (jl_datatype_t*) jl_eval_string("return Vector");
+        jl_assert_type(value, vector_t);
     }
 
     template<Boxable V>
@@ -308,6 +310,7 @@ namespace jluna
             vec.reserve(gen.get().size());
             for (auto it : gen.get())
                 vec.push_back(unbox<V>(it));
+
             return vec;
         }())
     {}

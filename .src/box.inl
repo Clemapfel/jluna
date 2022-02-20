@@ -131,10 +131,14 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
     Any* box(const T& value)
     {
-        static jl_function_t* vector = jl_get_function(jl_base_module, "Vector");
+        static jl_function_t* new_vector = jl_find_function("jluna", "new_vector");
 
         jl_gc_pause;
-        auto* res = (jl_array_t*) jl_call2(vector, jl_undef_initializer(), jl_box_uint64(value.size()));
+        auto* res = (jl_array_t*) jl_call2(
+            new_vector,
+            jl_box_uint64(value.size()),
+            value.empty() ? jl_eval_string(to_julia_type<Value_t>::type_name.c_str()) : box<Value_t>(value.front())
+        );
 
         for (size_t i = 0; i < value.size(); ++i)
             jl_arrayset(res, box(value.at(i)), i);
@@ -179,8 +183,6 @@ namespace jluna
         for (auto& pair : value)
             pairs.push_back(jl_call2(make_pair, box<Key_t>(pair.first), box<Value_t>(pair.second)));
 
-        jl_gc_enable(before);
-
         auto* res = jl_call(dict, pairs.data(), pairs.size());
         jl_gc_unpause;
         return res;
@@ -189,18 +191,19 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool>>
     Any* box(const T& value)
     {
-        static jl_function_t* vector = jl_get_function(jl_base_module, "Vector");
+        static jl_function_t* new_vector = jl_find_function("jluna", "new_vector");
         static jl_function_t* set = jl_get_function(jl_base_module, "Set");
 
         jl_gc_pause;
-        auto* res = (jl_array_t*) jl_call2(vector, jl_undef_initializer(), jl_box_uint64(value.size()));
+        auto* res = (jl_array_t*) jl_call2(
+            new_vector,
+            jl_box_uint64(value.size()),
+            value.empty() ? jl_eval_string(to_julia_type<Value_t>::type_name.c_str()) : box<Value_t>(*value.begin())
+        );
 
         size_t i = 0;
-        for (const auto& s : value)
-        {
-            jl_arrayset(res, box<Value_t>(s), i);
-            i += 1;
-        }
+        for (auto s : value)
+            jl_arrayset(res, box(s), i++);
 
         auto* out = jl_call1(set, (Any*) res);
         jl_gc_unpause;

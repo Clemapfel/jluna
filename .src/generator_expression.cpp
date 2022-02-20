@@ -44,7 +44,6 @@ namespace jluna
 
         jl_gc_pause;
         _length = jl_unbox_int64(jl_call1(length, get()));
-        std::cout << _length << std::endl;
         forward_last_exception();
         jl_gc_unpause;
     }

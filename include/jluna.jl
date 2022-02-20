@@ -136,6 +136,24 @@ module jluna
     end
 
     """
+    `new_vector(::Integer, ::T) -> Vector{T}`
+
+    create vector by deducing argument type
+    """
+    function new_vector(size::Integer, _::T) where T
+        return Vector{T}(undef, size)
+    end
+
+    """
+    `new_vector(::Integer, ::T) -> Vector{T}`
+
+    create vector by deducing argument type
+    """
+    function new_vector(size::Integer, type::Type)
+        return Vector{type}(undef, size)
+    end
+
+    """
     `make_set(::T...) -> Set{T}`
 
     wrap set ctor in varargs argument, used by box/unbox
@@ -179,10 +197,7 @@ module jluna
 
     throw assertion if x is not of named type
     """
-    function assert_isa(x::Any, type_name::Symbol) ::Nothing
-
-        type = Main.eval(type_name);
-        @assert type isa Type
+    function assert_isa(x::Any, type::Type) ::Nothing
 
         if !(x isa type)
             throw(AssertionError("expected " * string(type) * " but got an object of type " * string(typeof(x))));
@@ -625,19 +640,63 @@ module jluna
         const _ref_id_marker = '#'
         const _refs_expression = Meta.parse("jluna.memory_handler._refs[]")
 
-        ProxyID = Union{Expr, Nothing}
+        # proxy id that is actually an expression, the ID of topmodule Main is
+        ProxyID = Union{Expr, Symbol, Nothing}
 
         # make as unnamed
-        make_unnamed_proxy_id(id::UInt64) = return Expr(:ref, _refs_expression, id)
+        make_unnamed_proxy_id(id::UInt64) = return Expr(:ref, Expr(:ref, _refs_expression, id))
 
         # make as named with owner and symbol name
-        make_named_proxy_id(id::Symbol, owner_id::ProxyID) = return Expr(Symbol("."), owner_id, QuoteNode(id))
+        make_named_proxy_id(id::Symbol, owner_id::ProxyID) ::ProxyID = return Expr(:(.), owner_id, QuoteNode(id))
 
         # make as named with main as owner and symbol name
-        make_named_proxy_id(id::Symbol, owner_id::ProxyID) = return Expr(Symbol("."), :Main, QuoteNode(id))
+        make_named_proxy_id(id::Symbol, owner_id::Nothing) ::ProxyID = return id
 
         # make as named with owner and array index name
-        make_named_proxy_id(id::Number, owner_id::ProxyID) = return Expr(:ref, owner_id, id)
+        make_named_proxy_id(id::Number, owner_id::ProxyID) ::ProxyID = return Expr(:ref, owner_id, convert(Int64, id))
+
+        # assign to proxy id
+        assign(new_value::T, name::ProxyID) where T = return Main.eval(Expr(:(=), name, new_value));
+
+        # eval proxy id
+        evaluate(name::ProxyID) ::Any = return Main.eval(name)
+        evaluate(name::Symbol) ::Any = return Main.eval(:($name))
+
+        """
+        `get_name(::ProxyID) -> String`
+
+        parse name from proxy id
+        """
+        function get_name(id::ProxyID) ::String
+
+            if length(id.args) == 0
+                return "Main"
+            end
+
+            current = id
+            while current.args[1] isa Expr && length(current.args) >= 2
+
+                if current.args[2] isa UInt64
+                    current.args[2] = convert(Int64, current.args[2])
+                end
+
+                current = current.args[1]
+            end
+
+            out = string(id)
+            reg = r"\Q((jluna.memory_handler._refs[])[\E(.*)\Q])[]\E"
+            captures = match(reg, out)
+
+            if captures != nothing
+                out = replace(out, reg => "<unnamed function proxy #" * string(tryparse(Int64, captures.captures[1])) * ">")
+            end
+
+            return out;
+        end
+
+        get_name(::Nothing) ::String = return "Main"
+        get_name(s::Symbol) ::String = return string(s)
+        get_name(i::Integer) ::String = return "[" * string(i) * "]"
 
         """
         `print_refs() -> Nothing`
@@ -683,67 +742,6 @@ module jluna
 
             _refs[][key] = Base.RefValue{Any}(new_value)
             return _refs[][key]
-        end
-
-        function assign(new_value::T, names::Symbol...) ::T where T
-
-            unnamed_to_index(s::Symbol) = tryparse(UInt64, chop(string(s), head = 1, tail = 0))
-
-            name = "";
-            for n in names
-
-                as_string = string(n);
-                if as_string[1] == _ref_id_marker
-                    if as_string[2] == '1' && length(as_string) == 2 # main
-                        continue
-                    else
-                        name *= "jluna.memory_handler._refs[][" * chop(string(n), head = 1, tail = 0) * "][]"
-                    end
-                elseif as_string[1] == '['
-                    name *= string(n)
-                else
-                    name *= "." * string(n)
-                end
-            end
-
-            if name[1] == '.'
-                name = chop(name, head = 1, tail = 0)   # remove first .
-            end
-
-
-            expr = :($(Meta.parse(name)) = $new_value);
-            Main.eval(expr);
-            return new_value;
-        end
-
-        """
-        `evaluate(::Symbol) -> Any`
-
-        evaluate variable value using proxy name-chain
-        """
-        function evaluate(names::Symbol...) ::Any
-
-            name = "";
-
-            for n in names
-
-                as_string = string(n);
-                if as_string[1] == _ref_id_marker
-                    name *= "jluna.memory_handler._refs[][" * chop(string(n), head = 1, tail = 0) * "][]"
-                elseif as_string[1] == '['
-                    name *= string(n)
-                else
-                    name *= "." * string(n)
-                end
-            end
-
-            if name[1] == '.'
-                name = chop(name, head = 1, tail = 0)   # remove first .
-            end
-
-            print_refs();
-            println(name)
-            return Main.eval(:($(Meta.parse(name))))
         end
 
         """

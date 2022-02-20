@@ -67,11 +67,16 @@ namespace jluna
     template<Boxable V, size_t R>
     Array<V, R>::ConstIterator::operator Proxy()
     {
-        return Proxy(
-                jl_arrayref((jl_array_t*) _owner->_content->value(), _index),
-                _owner->_content,
-                jl_symbol(("[" + std::to_string(_index+1) + "]").c_str())
+        jl_gc_pause;
+
+        auto res = Proxy(
+            jl_arrayref((jl_array_t*) _owner->_content->value(), _index),
+            _owner->_content,
+            jl_box_uint64(_index+1)
         );
+
+        jl_gc_unpause;
+        return res;
     }
 
     template<Boxable V, size_t R>
@@ -100,5 +105,12 @@ namespace jluna
         jl_gc_unpause;
 
         return *this;
+    }
+
+    template<Boxable V, size_t R>
+    template<Unboxable T, std::enable_if_t<not std::is_same_v<T, Proxy>, bool>>
+    Array<V, R>::Iterator::operator T() const
+    {
+        return ConstIterator::operator T();
     }
 }

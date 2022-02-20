@@ -14,9 +14,12 @@ namespace jluna
         : Proxy((jl_value_t*) value, value->name->name)
     {}
 
-    Type::Type(Any* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol)
-        : Proxy(value, owner, symbol)
-    {}
+    Type::Type(Proxy* owner)
+        : Proxy(*owner)
+    {
+        static jl_datatype_t* type_t = (jl_datatype_t*) jl_eval_string("return Type");
+        jl_assert_type(owner->operator Any*(), type_t);
+    }
 
     Type Type::unroll() const
     {

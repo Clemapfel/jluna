@@ -47,6 +47,17 @@ namespace jluna::State
     /// @exceptions if an error occurs julia-side, a JuliaException will be thrown
     Proxy safe_eval(const std::string&);
 
+    /// @brief execute file
+    /// @param path to file
+    /// @returns proxy to result, if any
+    Proxy eval_file(const std::string& path) noexcept;
+
+    /// @brief execute file
+    /// @param path to file
+    /// @returns proxy to result, if any
+    Proxy safe_eval_file(const std::string& path) noexcept;
+
+
     /// @brief access a value, equivalent to unbox<T>(jl_eval_string("return " + name))
     /// @tparam T: type to be unboxed to
     /// @param full name of the value, e.g. Main.variable._field[0]

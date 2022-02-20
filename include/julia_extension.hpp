@@ -77,10 +77,10 @@ extern "C"
     /// @brief throw error if value is not of type named
     /// @param value
     /// @param types_name
-    inline void jl_assert_type(jl_value_t* value, const std::string& type_str)
+    inline void jl_assert_type(jl_value_t* value, jl_datatype_t* type)
     {
         static jl_function_t* assert_isa = jl_find_function("jluna", "assert_isa");
-        jluna::safe_call(assert_isa, value, jl_symbol(type_str.c_str()));
+        jluna::safe_call(assert_isa, value, type);
     }
 
     /// @brief get value of reference
@@ -146,8 +146,9 @@ extern "C"
     }
 
     /// @brief pause gc and save current state
-    #define jl_gc_pause bool before = jl_gc_is_enabled(); jl_gc_enable(false);
+    #define jl_gc_pause bool _b_e_f_o_r_e_ = jl_gc_is_enabled(); jl_gc_enable(false);
+                             // weird naming to avoid potential name-collision when used in C++
 
     /// @brief restore previously saved state
-    #define jl_gc_unpause jl_gc_enable(before);
+    #define jl_gc_unpause jl_gc_enable(_b_e_f_o_r_e_);
 }

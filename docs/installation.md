@@ -1,6 +1,6 @@
 # Creating a Project with jluna
 
-The following is a step-by-step guide to creating an application using `jluna` from scratch
+The following is a step-by-step guide to creating an application using `jluna` from scratch.
 
 ### Table of Contents
 1. [Creating the Project](#creating-the-project)
@@ -58,7 +58,7 @@ And copy-paste the resulting output to assign `JULIA_PATH` in bash like so:
 export JULIA_PATH=/path/to/your/julia/bin/..
 ```
 
-We can now continue to compiling `jluna` using cmake, being sure to stay in the same bash session where we set `JULIA_PATH`. To set `JULIA_PATH` globally, consider consulting [this guide](https://unix.stackexchange.com/questions/117467/how-to-permanently-set-environmental-variables). That way we don't have to re-set `JULIA_PATH` anytime we log out.
+We can now continue to compiling `jluna` using cmake, being sure to stay in the same bash session where we set `JULIA_PATH`. To set `JULIA_PATH` globally, consider consulting [this guide](https://unix.stackexchange.com/questions/117467/how-to-permanently-set-environmental-variables). This way, it does not have to re-set anytime a bash session ends.
 
 ### Building `jluna`
 
@@ -68,11 +68,13 @@ With `JULIA_PATH` set correctly, we navigate into `~/my_project/jluna/` and crea
 cd ~/my_project/jluna
 mkdir build
 cd build
-cmake -D CMAKE_CXX_COMPILER=g++-11 ..
+cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang-12
 make
 ```
 
-The following warnings may appear:
+You may need to specify the absolute path to `g++-11` / `clang-12` if their respective executables are not available in the default search paths.
+
+When compiling, warnings of the following type may appear:
 
 ```
 (...)
@@ -81,7 +83,9 @@ The following warnings may appear:
 (...)
 ```
 
-This is because the official julia header `julia.h` is slightly out of date. The warning is unrelated to `jluna`s codebase. `jluna` itself should report no warnings or errors. If this is not the case, head to [troubleshooting](#troubleshooting).
+This is because the official julia header `julia.h` is slightly out of date. The warning is unrelated to `jluna`s codebase, `jluna` itself should report no warnings or errors. If this is not the case, head to [troubleshooting](#troubleshooting).
+
+> `jluna` is being developed using g++-11. Because of this, any specific release may issue warnings when using a different compiler. Compilation should never fail with an error, regardless which of the supported compiler is used by the end-user.
 
 We verify everything works by running `JLUNA_TEST` which we just compiled:
 
@@ -155,11 +159,17 @@ cmake_minimum_required(VERSION 3.16)
 project(MyProject)
 
 # cmake and cpp settings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
 set(CMAKE_CXX_STANDARD 20)
-
-# build type
 set(CMAKE_BUILD_TYPE Debug)
+
+# compiler
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
+else()
+    message(FATAL_ERROR "only g++11 or clang-12 are supported")
+endif()
 
 # julia
 if (NOT DEFINED ENV{JULIA_PATH})
@@ -183,7 +193,7 @@ add_executable(MY_EXECUTABLE ${CMAKE_SOURCE_DIR}/main.cpp)
 target_link_libraries(MY_EXECUTABLE ${JLUNA_LIB} ${JLUNA_C_ADAPTER_LIB} ${JULIA_LIB})
 ```
 
-We again safe and close the file, then create our own build folder and run cmake, just like we did with `jluna` before
+We again save and close the file, then create our own build folder and run cmake, just like we did with `jluna` before
 
 ```bash
 # in ~/my_project
@@ -193,7 +203,7 @@ cmake -D CMAKE_CXX_COMPILER=g++-11 ..
 make
 ```
 
-If errors appear, be sure `JULIA_PATH` is still set correctly as it is needed to find `julia.h`. Otherwise head to [troubleshooting](#troubleshooting).
+If errors appear, be sure `JULIA_PATH` is still set correctly, as it is needed to find `julia.h`. Otherwise, head to [troubleshooting](#troubleshooting).
 
 After compilation succeeded, the directory should now have the following layout:
 
@@ -225,6 +235,8 @@ hello julia
 
 `State::initialize()` may fail. If this is the case, head to [troubleshooting](#troubleshooting). Otherwise, congratulations! We are done and can now start developing our own application with the aid of julia and `jluna`.
 
+---
+
 ## Troubleshooting
 
 ### Cannot determine location of julia image
@@ -252,10 +264,6 @@ This is because `JULIA_PATH` is not properly set. Repeat the section on [setting
 
 When building `jluna`, the following warnings may appear:
 
-```
-CMake Warning at CMakeLists.txt:37 (message):
-  Cannot find library header julia.h in (...)
-```
 ```
 CMake Warning at CMakeLists.txt:37 (message):
   Cannot find library header julia.h in (...)
@@ -306,7 +314,7 @@ fatal error: jluna.hpp: No such file or directory
 compilation terminated.
 ```
 
-This means the the `include_directories` in cmake where set improperly. Make sure the following lines are present in your `CMakeLists.txt`:
+This means the `include_directories` in cmake where set improperly. Make sure the following lines are present in your `CMakeLists.txt`:
 
 ```
 include_directories("${CMAKE_SOURCE_DIR}/jluna")
@@ -369,7 +377,7 @@ If C is true, replace `State::initialize()` with its overload:
 ```cpp
 State::initialize("/path/to/(...)/julia/bin")
 ```
-Where `/path/to/(...)` is replaced with the absolute path to your image of julia. This will tell the C-API to load julia from that image, rather from the default system image.
+Where `/path/to/(...)` is replaced with the absolute path to your image of julia. This will tell the C-API to load julia from that image, rather than from the default system image.
 
 ## Creating an Issue
 
@@ -383,6 +391,7 @@ If your problem still persists, it may be appropriate to open a github issue. Fi
 + when building with cmake, you specified `-D CMAKE_CXX_COMPILER=g++-11` correctly
     - cmake is able to find the executable `g++-11` in the default search paths
     - the same applies to `-D CMAKE_C_COMPILER=gcc-9` as well
+    - any given issue may be compiler specific, consider trying `clang-12` instead
 + `~/my_project/CMakeLists.txt` is identical to the code in [installation](#linking-jluna)
 + `State::initialize` and `JULIA_PATH` are modified as outlined [above](#stateinitialize-fails)
 + `jluna` was freshly pulled from the git repo and recompiled
@@ -392,8 +401,10 @@ If your problem still persists, it may be appropriate to open a github issue. Fi
 
 If and only if all of the above apply, head to the [issues tab](https://github.com/Clemapfel/jluna/issues). There, please create an issue and
 + describe your problem
-+ state your operating system and distro
++ state your operating system, distro and compiler version
 + copy-paste the output of `JLUNA_TEST` (even if all tests are `OK`)
-+ provide a minimum working example that recreates the bug
++ provide a minimum working example of your project that recreates the bug
 
 We will try to resolve your problem as soon as possible and are thankful for your input and collaboration.
+
+---

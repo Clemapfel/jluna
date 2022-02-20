@@ -22,6 +22,7 @@ int main()
         });
     });
 
+
     Test::test("jl_find_function", [](){
 
         auto* expected = jl_get_function(jl_base_module, "println");
@@ -433,7 +434,7 @@ int main()
         named[0] = 9999;
         Test::assert_that(State::eval("return var[1]").operator int() == 9999);
 
-        named = named.value();
+        named = named.as_unnamed();
         named[0] = 0;
         Test::assert_that(State::eval("return var[1]").operator int() == 9999);
         Test::assert_that(named[0].operator int() == 0);
@@ -675,7 +676,6 @@ int main()
         }
 
         Test::assert_that(thrown);
-
         Test::assert_that(arr.begin().operator Int64() == 1);
     });
 
@@ -686,8 +686,8 @@ int main()
 
         auto it = arr.at(0, 0, 0);
         Proxy as_proxy = it;
-
-        Test::assert_that(as_proxy.get_name() == "Main.array[1]");
+        as_proxy = 999;
+        Test::assert_that(State::eval("return array")[0].operator int() == 999);
     });
 
     Test::test("array: comprehension", [](){

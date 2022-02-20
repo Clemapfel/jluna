@@ -37,7 +37,7 @@ namespace jluna
             /// @param value
             /// @param owner: shared pointer to owner
             /// @param symbol
-            Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, jl_sym_t* symbol);
+            Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, Any* name_or_index);
 
             /// @brief dtor
             ~Proxy();
@@ -49,9 +49,21 @@ namespace jluna
 
             /// @brief access field
             /// @param field_name
+            /// @returns field as proxy
+            template<typename T, std::enable_if_t<std::is_same_v<T, char>, Bool> = true>
+            Proxy operator[](const T* field);
+
+            /// @brief access field
+            /// @param field_name
             /// @returns unboxed value
             template<Unboxable T>
             T operator[](const std::string& field);
+
+            /// @brief access field
+            /// @param field_name
+            /// @returns unboxed value
+            template<Unboxable T, typename U, std::enable_if_t<std::is_same_v<U, char>, Bool> = true>
+            T operator[](const U* field);
 
             /// @brief linear indexing, if array type, returns getindex result
             /// @param index
@@ -132,7 +144,7 @@ namespace jluna
 
             /// @brief create a new unnamed proxy that holds the same value
             /// @returns new proxy by value
-            [[nodiscard]] Proxy value() const;
+            [[nodiscard]] Proxy as_unnamed() const;
 
             /// @brief update value if proxy symbol was reassigned outside of operator=
             void update();
@@ -143,61 +155,55 @@ namespace jluna
             bool isa(const Type& type);
 
         protected:
-            class ProxyValue
-            {
-                friend class Proxy;
-
-                public:
-                    ProxyValue(Any*, jl_sym_t*);
-                    ProxyValue(Any*, std::shared_ptr<ProxyValue>& owner, jl_sym_t*);
-                    ~ProxyValue();
-
-                    Any* get_field(jl_sym_t*);
-
-                    std::shared_ptr<ProxyValue> _owner;
-
-                    Any* value();
-                    Any* symbol();
-
-                    size_t value_key();
-                    size_t symbol_key();
-
-                    const Any* value() const;
-                    const Any* symbol() const;
-
-                    const bool _is_mutating = true;
-
-                private:
-                    size_t _symbol_key;
-                    size_t _value_key;
-
-                    Any* _symbol_ref;
-                    Any* _value_ref;
-            };
-
             std::shared_ptr<ProxyValue> _content;
-            std::deque<jl_sym_t*> assemble_name() const;
     };
 
-    /// @brief unbox to proxy
-    template<Is<Proxy> T>
-    inline T unbox(Any* value)
+    /// @brief internal proxy value, not intended to be interfaced with by end-users
+    class Proxy::ProxyValue
     {
-        return Proxy(value, nullptr);
-    }
+        friend class Proxy;
 
-    /// @brief box jluna::Proxy to Base.Any
-    template<Is<Proxy> T>
-    inline Any* box(T value)
-    {
-        return value.operator Any*();
-    }
+        public:
+            /// @brief dtor
+            ~ProxyValue();
 
-    /// @brief type deduction
-    template<>
-    struct detail::to_julia_type_aux<Proxy>
-    {
-        static inline const std::string type_name = "Any";
+            /// @brief get value
+            /// @returns pointer to value
+            Any* value() const;
+
+            /// @brief get id
+            /// @returns pointer to jluna.memory_handler.ProxyID
+            Any* id() const;
+
+        protected:
+            /// @brief ctor without owner
+            /// @param value: pointer to value
+            /// @param id: jluna.memory_handler.ProxyID object
+            ProxyValue(Any* value, jl_sym_t* id);
+
+            /// @brief ctor with owner and proper name
+            /// @param value: pointer to value
+            /// @param id: jluna.memory_handler.ProxyID object
+            ProxyValue(Any* value, std::shared_ptr<ProxyValue>& owner, Any* symbol_or_index);
+
+            ProxyValue(const ProxyValue&);
+
+            /// @brief access field
+            /// @param symbol: name of field
+            /// @returns pointer to field data
+            Any* get_field(jl_sym_t*);
+
+            /// @brief owner
+            std::shared_ptr<ProxyValue> _owner;
+
+            /// @brief points to julia-side variable
+            const bool _is_mutating = true;
+
+            size_t _id_key;
+            size_t _value_key;
+
+            mutable Any* _id_ref;
+            mutable Any* _value_ref;
     };
 }
 

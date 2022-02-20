@@ -2,8 +2,16 @@ cmake_minimum_required(VERSION 3.16)
 project(jluna)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
+set(CMAKE_BUILD_TYPE Release)
+
+# compiler support
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "10.0.0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
+else()
+    message(FATAL_ERROR "Currently, the only supported compilers are G++10, G++11 (recommended) and Clang-12")
+endif()
 
 ### JULIA ###
 
@@ -95,6 +103,7 @@ add_library(jluna SHARED
 
     include/symbol.hpp
     .src/symbol.cpp
+    .src/symbol.inl
 
     include/type.hpp
     .src/type.cpp
@@ -105,8 +114,7 @@ add_library(jluna SHARED
 
     include/generator_expression.hpp
     .src/generator_expression.cpp
-        #buffer
-        .src/symbol.inl include/gc_sentinel.hpp .src/gc_sentinel.cpp)
+)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C
@@ -134,8 +142,8 @@ add_executable(JLUNA_TEST
 )
 target_link_libraries(JLUNA_TEST jluna ${JULIA_LIB})
 
-add_executable(JLUNA_BENCHMARK
-    .benchmark/main.cpp
-    .benchmark/benchmark.hpp
-)
-target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})
+#add_executable(JLUNA_BENCHMARK
+#   .benchmark/main.cpp
+#   .benchmark/benchmark.hpp
+#)
+#target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})

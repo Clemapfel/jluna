@@ -1,10 +1,10 @@
-# jluna: A modern julia ⭤ C++ Wrapper (v0.5.4)
+# jluna: A modern julia ⭤ C++ Wrapper (v0.7.0)
 
 ![](./header.png)
 
 Julia is a beautiful language, it is well-designed and well-documented. Julias C-API is also well-designed, less beautiful and much less... documented.
 
-Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API and replace it in usage in C++ projects, by making accessing julias unique strengths through C++ safe, hassle-free and just as beautiful.
+Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API, replacing it in usage in C++ projects by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
 
 ---
 
@@ -20,7 +20,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
     4.3 [🔗 Troubleshooting](./docs/installation.md#troubleshooting)<br>
 5. [Dependencies](#dependencies)<br>
    5.1 [julia 1.7.0+](#dependencies)<br>
-   5.2 [g++10](#dependencies)<br>
+   5.2 [Supported Compilers: g++11, clang12](#dependencies)<br>
    5.3 [cmake 3.19+](#dependencies)<br>
    5.4 [Linux / Mac OS](#dependencies)
 6. [License](#license)
@@ -28,7 +28,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 ---
 
 ### Showcase
-#### Access julia-Side Values/Functions
+#### Access Julia-Side Values/Functions
 ```cpp
 // execute arbitrary strings with exception forwarding
 State::safe_script(R"(
@@ -60,19 +60,24 @@ instance._field is now: 456
 State::script("array = collect(1:9)");
 Array<size_t, 1> cpp_array = Main["array"];
 
-// julia style list indexing
-auto sub_array = cpp_array[{6, 5, 4, 3, 2}];
-Base["println"]((Any*) sub_array);
-
 // iterable and assignable
 for (auto e : cpp_array)
     e = e.operator size_t() + 10;
 
 State::script("println(array)");
+
+// julia style list indexing
+auto sub_array = cpp_array[{6, 5, 4, 3, 2}];
+Base["println"]((Any*) sub_array);
+
+// even supports comprehension
+auto comprehended_vec = Vector<Int64>("(i for i in 1:10 if i % 2 == 0)"_gen);
+    Base["println"](comprehended_vec);
 ```
 ```
-[7, 6, 5, 4, 3]
 [11, 12, 13, 14, 15, 16, 17, 18, 19]
+[17, 16, 15, 14, 13]
+[2, 4, 6, 8, 10]
 ```
 ---
 #### Call C++ Functions from julia
@@ -109,13 +114,14 @@ Some of the many advantages `jluna` has over the C-API include:
 + expressive generic syntax
 + call C++ functions from julia using any julia-type
 + assigning C++-side proxies also mutates the corresponding variable with the same name julia-side
-+ julia-side values, including temporaries, are kept safe from the garbage collector while they are in use C++-side
-+ verbose exception forwarding from julia, compile-time assertions
++ julia-side values, including temporaries, are kept safe from the garbage collector
++ verbose exception forwarding, compile-time assertions
 + wraps [most](./docs/quick_and_dirty.md#list-of-unboxables) of the relevant C++ `std` objects and types
 + multidimensional, iterable array interface with julia-style indexing
-+ Deep, C++-side introspection functionalities for julia objects
-+ manual written by a human for beginners
-+ inline documentation for IDEs for both C++ and julia code 
++ deep, C++-side introspection functionalities for julia objects
++ fast! All code is considered performance-critical and was optimized for minimal overhead compared to the C-API
++ manual written by a human
++ inline documentation for IDEs for both C++ and Julia code 
 + freely mix `jluna` and the C-API
 + And more!
 
@@ -123,11 +129,11 @@ Some of the many advantages `jluna` has over the C-API include:
 
 (in order of priority, highest first)
 
-+ 0-overhead performance versions of proxies and `cppcall`
-+ linear algebra wrapper, matrices
-+ usertypes, creating modules and struct completely C++-side
-+ expression proxies
++ windows / MSVC support
 + thread-safety, parallelization
++ usertypes, creating modules and struct completely C++-side
++ linear algebra wrapper, matrices
++ expression proxies
 + multiple julia worlds, save-states: restoring a previous julia state
 ---
 
@@ -145,18 +151,21 @@ Advanced users are encouraged to check the headers (available in `jluna/include/
 
 For `jluna` you'll need:
 + [**Julia 1.7.0**](https://julialang.org/downloads/#current_stable_release) (or higher)
-+ [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04) (or higher)
-  - including `-fconcepts`
 + [**cmake 3.16**](https://cmake.org/download/) (or higher)
++  C++ Compiler (see below)
 + unix-based, 64-bit operating system
 
-Currently, only g++10 and g++11 are supported, clang support is planned in the future.
+Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are supported. g++-11 is the primary compiler used for development of `jluna` and is thus recommended.
+
+Windows and MSVC support is planned in the near future.
+
+
 
 ---
 
 ## [Installation & Troubleshooting](./docs/installation.md)
 
-A step-by-step tutorial on how to create, compile and link a new C++ Project with `jluna` can be found [here](./docs/installation.md). It is recommended that you follow this guide closely instead of trying to resolve issues on your own.
+A step-by-step tutorial on how to create, compile and link a new C++ Project with `jluna` can be found [here](./docs/installation.md). It is recommended that you follow this guide closely, instead of trying to resolve issues on your own.
 
 ### For Advanced Users Only
 
@@ -164,7 +173,7 @@ Users familiar with C++ and cmake can go through the following steps:
 
 Install:
 
-+ `g++-11`
++ `g++-11` (or `clang-12`)
 + `julia 1.7+`
 + `cmake 3.16+`
 
@@ -177,7 +186,7 @@ export JULIA_PATH=$(julia -e "println(joinpath(Sys.BINDIR, \"..\"))")
 
 mkdir build
 cd build
-cmake -D CMAKE_CXX_COMPILER=g++-11 ..
+cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang-12
 make
 
 ./JLUNA_TEST
