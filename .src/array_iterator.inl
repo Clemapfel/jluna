@@ -106,4 +106,11 @@ namespace jluna
 
         return *this;
     }
+
+    template<Boxable V, size_t R>
+    template<Unboxable T, std::enable_if_t<not std::is_same_v<T, Proxy>, bool>>
+    Array<V, R>::Iterator::operator T() const
+    {
+        return ConstIterator::operator T();
+    }
 }

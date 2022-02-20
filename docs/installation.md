@@ -85,7 +85,7 @@ When compiling, warnings of the following type may appear:
 
 This is because the official julia header `julia.h` is slightly out of date. The warning is unrelated to `jluna`s codebase, `jluna` itself should report no warnings or errors. If this is not the case, head to [troubleshooting](#troubleshooting).
 
-> `jluna` is being developed using g++-11. Because of this, any specific release may issue warnings when using a different compiler. Compilation should never fail with an error, regardless of which compiler is used by the end-user.
+> `jluna` is being developed using g++-11. Because of this, any specific release may issue warnings when using a different compiler. Compilation should never fail with an error, regardless which of the supported compiler is used by the end-user.
 
 We verify everything works by running `JLUNA_TEST` which we just compiled:
 

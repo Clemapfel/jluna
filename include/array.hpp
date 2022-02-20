@@ -208,6 +208,11 @@ namespace jluna
                 template<Boxable T = Value_t>
                 auto& operator=(T value);
 
+                /// @brief decay into unboxed value
+                /// @tparam value-type, not necessarily the same as declared in the array type
+                template<Unboxable T = Value_t, std::enable_if_t<not std::is_same_v<T, Proxy>, bool> = true>
+                operator T() const;
+
                 protected:
                     using ConstIterator::_owner;
                     using ConstIterator::_index;
