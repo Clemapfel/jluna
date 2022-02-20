@@ -1,10 +1,10 @@
-# jluna: A modern julia ⭤ C++ Wrapper (v0.5.4)
+# jluna: A modern julia ⭤ C++ Wrapper (v0.7.0)
 
 ![](./header.png)
 
 Julia is a beautiful language, it is well-designed and well-documented. Julias C-API is also well-designed, less beautiful and much less... documented.
 
-Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API and replace it in usage in C++ projects, by making accessing julias unique strengths through C++ safe, hassle-free and just as beautiful.
+Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API, replacing it in usage in C++ projects by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
 
 ---
 
@@ -28,7 +28,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 ---
 
 ### Showcase
-#### Access julia-Side Values/Functions
+#### Access Julia-Side Values/Functions
 ```cpp
 // execute arbitrary strings with exception forwarding
 State::safe_script(R"(
@@ -114,13 +114,14 @@ Some of the many advantages `jluna` has over the C-API include:
 + expressive generic syntax
 + call C++ functions from julia using any julia-type
 + assigning C++-side proxies also mutates the corresponding variable with the same name julia-side
-+ julia-side values, including temporaries, are kept safe from the garbage collector while they are in use C++-side
-+ verbose exception forwarding from julia, compile-time assertions
++ julia-side values, including temporaries, are kept safe from the garbage collector
++ verbose exception forwarding, compile-time assertions
 + wraps [most](./docs/quick_and_dirty.md#list-of-unboxables) of the relevant C++ `std` objects and types
 + multidimensional, iterable array interface with julia-style indexing
-+ Deep, C++-side introspection functionalities for julia objects
-+ manual written by a human for beginners
-+ inline documentation for IDEs for both C++ and julia code 
++ deep, C++-side introspection functionalities for julia objects
++ fast! All code is considered performance-critical and was optimized for minimal overhead compared to the C-API
++ manual written by a human
++ inline documentation for IDEs for both C++ and Julia code 
 + freely mix `jluna` and the C-API
 + And more!
 
@@ -128,11 +129,11 @@ Some of the many advantages `jluna` has over the C-API include:
 
 (in order of priority, highest first)
 
-+ 0-overhead performance versions of proxies and `cppcall`
-+ linear algebra wrapper, matrices
-+ usertypes, creating modules and struct completely C++-side
-+ expression proxies
++ windows / MSVC support
 + thread-safety, parallelization
++ usertypes, creating modules and struct completely C++-side
++ linear algebra wrapper, matrices
++ expression proxies
 + multiple julia worlds, save-states: restoring a previous julia state
 ---
 
@@ -156,11 +157,15 @@ For `jluna` you'll need:
 
 Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are supported. g++-11 is the primary compiler used for development of `jluna` and is thus recommended.
 
+Windows and MSVC support is planned in the near future.
+
+
+
 ---
 
 ## [Installation & Troubleshooting](./docs/installation.md)
 
-A step-by-step tutorial on how to create, compile and link a new C++ Project with `jluna` can be found [here](./docs/installation.md). It is recommended that you follow this guide closely instead of trying to resolve issues on your own.
+A step-by-step tutorial on how to create, compile and link a new C++ Project with `jluna` can be found [here](./docs/installation.md). It is recommended that you follow this guide closely, instead of trying to resolve issues on your own.
 
 ### For Advanced Users Only
 
