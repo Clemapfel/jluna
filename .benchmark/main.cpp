@@ -65,6 +65,9 @@ void benchmark_lambda_call()
 
 int main()
 {
+    std::cerr << "This executable is not intended for end-users and should not be used. To verify jluna works, instead execute \"./JLUNA_TEST\"" << std::endl;
+    return 1;
+
     using namespace jluna;
     State::initialize();
 

@@ -1,6 +1,6 @@
 # Creating a Project with jluna
 
-The following is a step-by-step guide to creating an application using `jluna` from scratch
+The following is a step-by-step guide to creating an application using `jluna` from scratch.
 
 ### Table of Contents
 1. [Creating the Project](#creating-the-project)
@@ -58,7 +58,7 @@ And copy-paste the resulting output to assign `JULIA_PATH` in bash like so:
 export JULIA_PATH=/path/to/your/julia/bin/..
 ```
 
-We can now continue to compiling `jluna` using cmake, being sure to stay in the same bash session where we set `JULIA_PATH`. To set `JULIA_PATH` globally, consider consulting [this guide](https://unix.stackexchange.com/questions/117467/how-to-permanently-set-environmental-variables). That way we don't have to re-set `JULIA_PATH` anytime we log out.
+We can now continue to compiling `jluna` using cmake, being sure to stay in the same bash session where we set `JULIA_PATH`. To set `JULIA_PATH` globally, consider consulting [this guide](https://unix.stackexchange.com/questions/117467/how-to-permanently-set-environmental-variables). This way, it does not have to re-set anytime a bash session ends.
 
 ### Building `jluna`
 
@@ -72,7 +72,9 @@ cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang-12
 make
 ```
 
-Warnings of the following type may appear:
+You may need to specify the absolute path to `g++-11` / `clang-12` if their respective executables are not available in the default search paths.
+
+When compiling, warnings of the following type may appear:
 
 ```
 (...)
@@ -82,6 +84,8 @@ Warnings of the following type may appear:
 ```
 
 This is because the official julia header `julia.h` is slightly out of date. The warning is unrelated to `jluna`s codebase, `jluna` itself should report no warnings or errors. If this is not the case, head to [troubleshooting](#troubleshooting).
+
+> `jluna` is being developed using g++-11. Because of this, any specific release may issue warnings when using a different compiler. Compilation should never fail with an error, regardless of which compiler is used by the end-user.
 
 We verify everything works by running `JLUNA_TEST` which we just compiled:
 
@@ -231,6 +235,8 @@ hello julia
 
 `State::initialize()` may fail. If this is the case, head to [troubleshooting](#troubleshooting). Otherwise, congratulations! We are done and can now start developing our own application with the aid of julia and `jluna`.
 
+---
+
 ## Troubleshooting
 
 ### Cannot determine location of julia image
@@ -258,10 +264,6 @@ This is because `JULIA_PATH` is not properly set. Repeat the section on [setting
 
 When building `jluna`, the following warnings may appear:
 
-```
-CMake Warning at CMakeLists.txt:37 (message):
-  Cannot find library header julia.h in (...)
-```
 ```
 CMake Warning at CMakeLists.txt:37 (message):
   Cannot find library header julia.h in (...)
@@ -312,7 +314,7 @@ fatal error: jluna.hpp: No such file or directory
 compilation terminated.
 ```
 
-This means the the `include_directories` in cmake where set improperly. Make sure the following lines are present in your `CMakeLists.txt`:
+This means the `include_directories` in cmake where set improperly. Make sure the following lines are present in your `CMakeLists.txt`:
 
 ```
 include_directories("${CMAKE_SOURCE_DIR}/jluna")
@@ -375,7 +377,7 @@ If C is true, replace `State::initialize()` with its overload:
 ```cpp
 State::initialize("/path/to/(...)/julia/bin")
 ```
-Where `/path/to/(...)` is replaced with the absolute path to your image of julia. This will tell the C-API to load julia from that image, rather from the default system image.
+Where `/path/to/(...)` is replaced with the absolute path to your image of julia. This will tell the C-API to load julia from that image, rather than from the default system image.
 
 ## Creating an Issue
 
@@ -404,3 +406,5 @@ If and only if all of the above apply, head to the [issues tab](https://github.c
 + provide a minimum working example of your project that recreates the bug
 
 We will try to resolve your problem as soon as possible and are thankful for your input and collaboration.
+
+---
