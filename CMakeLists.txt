@@ -3,7 +3,9 @@ project(jluna)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
+
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++") #clang-11
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts") #g++11
 
 ### JULIA ###
 
@@ -106,7 +108,7 @@ add_library(jluna SHARED
     include/generator_expression.hpp
     .src/generator_expression.cpp
         #buffer
-        .src/symbol.inl include/gc_sentinel.hpp .src/gc_sentinel.cpp)
+        .src/symbol.inl)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C

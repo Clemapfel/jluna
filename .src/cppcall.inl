@@ -11,15 +11,15 @@ namespace jluna
 {
     namespace detail
     {
-        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<std::is_same_v<Return_t, void>, Bool> = true>
-        jl_value_t* detail::invoke_lambda(const Lambda_t* func, Args_t... args)
+        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<std::is_same_v<Return_t, void>, Bool>>
+        jl_value_t* invoke_lambda(const Lambda_t* func, Args_t... args)
         {
             (*func)(args...);
             return jl_nothing;
         }
 
-        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<std::is_same_v<Return_t, jl_value_t*>, Bool> = true>
-        jl_value_t* detail::invoke_lambda(const Lambda_t* func, Args_t... args)
+        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<std::is_same_v<Return_t, jl_value_t*>, Bool>>
+        jl_value_t* invoke_lambda(const Lambda_t* func, Args_t... args)
         {
             jl_value_t* res = (*func)(args...);
             return res;

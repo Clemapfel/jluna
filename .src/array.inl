@@ -3,8 +3,6 @@
 // Created on 12.01.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/gc_sentinel.hpp>
-
 namespace jluna
 {
     namespace detail

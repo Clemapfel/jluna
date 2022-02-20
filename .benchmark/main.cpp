@@ -68,6 +68,8 @@ int main()
     using namespace jluna;
     State::initialize();
 
+    auto test = Main["abc"];
+
     jl_eval_string("module M1; module M2; module M3; end end end");
 
     Benchmark::run("Old Proxy Eval", count, [](){
@@ -75,7 +77,7 @@ int main()
         auto name = generate_string(8);
         jl_eval_string(("M1.M2.M3.eval(:(" + name + " = \"" + generate_string(16) + "\"))").c_str());
 
-        volatile auto value = Main["M1"]["M2"]["M3"][name].operator std::string();
+        //auto value = Main["M1"]["M2"]["M3"][name].operator std::string();
     });
 
     Benchmark::run("Old Proxy Assign", count, [](){
@@ -83,7 +85,7 @@ int main()
         auto name = generate_string(8);
         jl_eval_string(("M1.M2.M3.eval(:(" + name + " = undef))").c_str());
 
-        Main["M1"]["M2"]["M3"].as<Module>().assign(name, generate_string(16));
+        //Main["M1"]["M2"]["M3"].as<Module>().assign(name, generate_string(16));
     });
 
     Benchmark::conclude();
@@ -130,7 +132,7 @@ int main()
 
     Benchmark::run("Proxy: CTOR DTOR Named", count, [](){
 
-        volatile auto* p = new Proxy(Main["test"]);
+        volatile auto* p = new Proxy(Main[std::string("test")]);
         delete p;
     });
 

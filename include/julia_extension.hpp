@@ -150,5 +150,5 @@ extern "C"
                              // weird naming to avoid potential name-collision when used in C++
 
     /// @brief restore previously saved state
-    #define jl_gc_unpause jl_gc_enable(before);
+    #define jl_gc_unpause jl_gc_enable(_b_e_f_o_r_e_);
 }

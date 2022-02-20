@@ -49,9 +49,21 @@ namespace jluna
 
             /// @brief access field
             /// @param field_name
+            /// @returns field as proxy
+            template<typename T, std::enable_if_t<std::is_same_v<T, char>, Bool> = true>
+            Proxy operator[](const T* field);
+
+            /// @brief access field
+            /// @param field_name
             /// @returns unboxed value
             template<Unboxable T>
             T operator[](const std::string& field);
+
+            /// @brief access field
+            /// @param field_name
+            /// @returns unboxed value
+            template<Unboxable T, typename U, std::enable_if_t<std::is_same_v<U, char>, Bool> = true>
+            T operator[](const U* field);
 
             /// @brief linear indexing, if array type, returns getindex result
             /// @param index

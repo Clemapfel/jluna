@@ -183,8 +183,6 @@ namespace jluna
         for (auto& pair : value)
             pairs.push_back(jl_call2(make_pair, box<Key_t>(pair.first), box<Value_t>(pair.second)));
 
-        jl_gc_enable(before);
-
         auto* res = jl_call(dict, pairs.data(), pairs.size());
         jl_gc_unpause;
         return res;
