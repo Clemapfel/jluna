@@ -58,7 +58,7 @@ Please navigate to the appropriate section by clicking the links below:
   10.8 [Type Classification](#type-classification)<br>
 11. [~~Expressions~~](#expressions)<br>
 12. [~~Usertypes~~](#usertypes)<br>
-13. [~~C-API~~](#c-api)<br>
+13. [Performance](#performance)<br>
 
 ## Initialization
 
@@ -1827,6 +1827,57 @@ Once fully unrolled, we have access to the properties necessary for introspect. 
 
 (this feature is not yet implemented)
 
+---
+
 ## Usertypes
 
 (this feature is not yet implemented)
+
+---
+
+## Performance
+
+This section will give some tips on how to achieve the best performance in `jluna`. As of release 0.7, `jluna` went through extensive optimization to minimize the amount of overhead as much as possible. Still, when compared to pure julia, `jluna` will always loose. Comparing `jluna` to the C-library however, `jluna` does much better.
+
+### Stay Julia-Side
+
+The most important tip is to do as much of the taxing computation as possible julia-side. Julia is a race-car of a language and unless our C++-library is similarly optimized, it is usually a better idea to do things with julia. To do this, we write performance critical code in a `.jl` file, then call that file from C++. Recall that proxies do not actually own any C++-side memory, thuse calling julia functions on proxies actually triggers no significant computation C++-side. Taxing work is only being done once the proxies value changes from one languages state to the other.
+
+### Avoid Changing States
+
+By far the easiest way to completely tank a programs performance is to unnecessarily box/unbox values constantly. If our program requires operation A, B, C julia side and X, Y, Z C++ side, it's very important to execute everything like: `ABC <unbox> XYZ <box>` rather than `A <unbox> X <box> B <unbox> Y <box>`, etc.. Furthermore it's important to be aware of what we're boxing. If we were to give each box/unbox call a grade from 1 - 5 where 1 is 0 overhead and 5 is the most amount of overhead, box/unbox calls would be graded like so:
+
+```
+// type                     // grade, 1 ist fastest, 5 is slowest
+int, size_t, float, etc     1
+const char*                 1
+Proxy                       2
+vector                      2
+Pair                        3
+Set                         3
+Tuple                       4
+(unordered) map             4
+lambda                      5
+```
+
+It's easy to remember these grades by simply considering, how different an object C++-side and julia-side representations are. Obviously to wrap a C+-side lambda into a julia-side object, a lot of things have to happen behind the scenes while a vector pretty much transfers directly between languages.
+
+### Minimize Proxy Construction
+
+The main overhead incurred by `jluna`s safety is that of proxy allocation. Anytime a proxy is constructed, its value and name have to be added to an internal state that protects them from the garbage collector. Consider the following:
+
+```cpp
+/// constructs 5 proxies
+auto a = Main["Module1"]["Module2"][vector_var][1]["field"];
+
+/// constructs 1 proxy
+auto b = State::safe_script("return Main.Module1.Module2.vector_var[1].field");
+``` 
+
+It is no exaggeration that the second call is about 5 times faster. What we loose for that speedup is the convenience of being able to mutate the julia variable, as proxy `b` is unnamed.
+
+### Use the C-Library
+
+When performance needs to be optimal, that is not *good*, not *extremely good* but the absolute best it could possible be, we might need to resort to the C-library.Values are hard to manage, the syntax is very clunky and the garbage collector will probably steal many of our values from under our nose when we're not looking and segfault the program, but one thing C has is optimal speed. Luckily, the C-library and `jluna` are freely mixable, though remember to `.update` any proxies whos julia-side value was modified by the C-library.
+
+---
