@@ -7,6 +7,7 @@
 
 #include <sstream>
 #include <iostream>
+#include <fstream>
 
 #include <include/state.hpp>
 #include <include/exceptions.hpp>
@@ -15,6 +16,7 @@
 #include <.src/include_julia.inl>
 #include <include/module.hpp>
 #include <include/type.hpp>
+
 
 namespace jluna::detail
 {
@@ -128,6 +130,30 @@ namespace jluna::State
         }
         jl_gc_unpause;
         return Proxy(result, nullptr);
+    }
+
+    Proxy eval_file(const std::string& path) noexcept
+    {
+        std::fstream file;
+        file.open(path);
+
+        std::stringstream str;
+        str << file.rdbuf();
+
+        file.close();
+        return eval(str.str());
+    }
+
+    Proxy safe_eval_file(const std::string& path) noexcept
+    {
+        std::fstream file;
+        file.open(path);
+
+        std::stringstream str;
+        str << file.rdbuf();
+
+        file.close();
+        return safe_eval(str.str());
     }
     
     template<typename T>

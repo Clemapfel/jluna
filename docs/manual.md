@@ -110,7 +110,9 @@ State::safe_eval(R"(
 )");
 ```
 
-`safe_` overloads have marginal overhead from try-catching and sanity checking inputs. If you want maximum performance (and the corresponding debug experience),`State::eval` provides a 0-overhead solution instead.
+`safe_` overloads have marginal overhead from try-catching and sanity checking inputs. If you want maximum performance (and the corresponding debug experience),`State::eval` provides a 0-overhead solution instead. 
+
+To run an entire julia file, we can either trigger `Base.include` julia-side or we can call `State::(safe_)eval_file`. This function simply reads the file as a string and call `State::(safe_)eval`. 
 
 ## Garbage Collector (GC)
 
@@ -1828,11 +1830,3 @@ Once fully unrolled, we have access to the properties necessary for introspect. 
 ## Usertypes
 
 (this feature is not yet implemented)
-
-## Performance
-
-As of version 0.7, `jluna` went through extensive optimization, meaning it is finally decently fast. This section will give some pointers on how to achieve the best performance using its methods. 
-
-When evaluating `jluna`s performance, we first need to decide what to compare it to. When compared to native julia, `jluna` is objectively slower in almost every way. The best `jluna` can do is match julias performance. because all `jluna` does is be an interface to the julia state. This means it is not a very fair comparison, much more useful is comparing `jluna` to the native C-API. 
-
-The main overhead when dealing with proxies is that of reference allocation. To keep C++-side values allocated through the C-API safe from being immediately garbage collected, `jluna` needs to create a reference to them and store them in a julia-side datastructure. Anytime a proxy is created, a reference is created, a name for that proxy is created and both are stored in the global `jluna` state. 
