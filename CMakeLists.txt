@@ -4,8 +4,14 @@ project(jluna)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_BUILD_TYPE Debug)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++") #clang-11
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts") #g++11
+# compiler support
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "10.0.0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
+else()
+    message(FATAL_ERROR "The only currently supported compilers are G++10, G++11 (recommended) and Clang-12")
+endif()
 
 ### JULIA ###
 

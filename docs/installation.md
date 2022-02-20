@@ -68,7 +68,7 @@ With `JULIA_PATH` set correctly, we navigate into `~/my_project/jluna/` and crea
 cd ~/my_project/jluna
 mkdir build
 cd build
-cmake -D CMAKE_CXX_COMPILER=g++-11 ..
+cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang-12
 make
 ```
 

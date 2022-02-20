@@ -20,7 +20,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
     4.3 [🔗 Troubleshooting](./docs/installation.md#troubleshooting)<br>
 5. [Dependencies](#dependencies)<br>
    5.1 [julia 1.7.0+](#dependencies)<br>
-   5.2 [g++10](#dependencies)<br>
+   5.2 [Supported Compilers: g++11, clang12](#dependencies)<br>
    5.3 [cmake 3.19+](#dependencies)<br>
    5.4 [Linux / Mac OS](#dependencies)
 6. [License](#license)
@@ -150,12 +150,11 @@ Advanced users are encouraged to check the headers (available in `jluna/include/
 
 For `jluna` you'll need:
 + [**Julia 1.7.0**](https://julialang.org/downloads/#current_stable_release) (or higher)
-+ [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04) (or higher)
-  - including `-fconcepts`
 + [**cmake 3.16**](https://cmake.org/download/) (or higher)
++  C++ Compiler (see below)
 + unix-based, 64-bit operating system
 
-Currently, only g++10 and g++11 are supported, clang support is planned in the future.
+Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are supported. g++-11 is the primary compiler used for development of `jluna` and is thus recommended.
 
 ---
 
@@ -169,7 +168,7 @@ Users familiar with C++ and cmake can go through the following steps:
 
 Install:
 
-+ `g++-11`
++ `g++-11` (or `clang-12`)
 + `julia 1.7+`
 + `cmake 3.16+`
 
@@ -182,7 +181,7 @@ export JULIA_PATH=$(julia -e "println(joinpath(Sys.BINDIR, \"..\"))")
 
 mkdir build
 cd build
-cmake -D CMAKE_CXX_COMPILER=g++-11 ..
+cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang-12
 make
 
 ./JLUNA_TEST
