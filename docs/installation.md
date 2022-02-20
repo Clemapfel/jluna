@@ -72,7 +72,7 @@ cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang-12
 make
 ```
 
-The following warnings may appear:
+Warnings of the following type may appear:
 
 ```
 (...)
@@ -81,7 +81,7 @@ The following warnings may appear:
 (...)
 ```
 
-This is because the official julia header `julia.h` is slightly out of date. The warning is unrelated to `jluna`s codebase. `jluna` itself should report no warnings or errors. If this is not the case, head to [troubleshooting](#troubleshooting).
+This is because the official julia header `julia.h` is slightly out of date. The warning is unrelated to `jluna`s codebase, `jluna` itself should report no warnings or errors. If this is not the case, head to [troubleshooting](#troubleshooting).
 
 We verify everything works by running `JLUNA_TEST` which we just compiled:
 
@@ -155,11 +155,17 @@ cmake_minimum_required(VERSION 3.16)
 project(MyProject)
 
 # cmake and cpp settings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
 set(CMAKE_CXX_STANDARD 20)
-
-# build type
 set(CMAKE_BUILD_TYPE Debug)
+
+# compiler
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
+else()
+    message(FATAL_ERROR "only g++11 or clang-12 are supported")
+endif()
 
 # julia
 if (NOT DEFINED ENV{JULIA_PATH})
@@ -183,7 +189,7 @@ add_executable(MY_EXECUTABLE ${CMAKE_SOURCE_DIR}/main.cpp)
 target_link_libraries(MY_EXECUTABLE ${JLUNA_LIB} ${JLUNA_C_ADAPTER_LIB} ${JULIA_LIB})
 ```
 
-We again safe and close the file, then create our own build folder and run cmake, just like we did with `jluna` before
+We again save and close the file, then create our own build folder and run cmake, just like we did with `jluna` before
 
 ```bash
 # in ~/my_project
@@ -193,7 +199,7 @@ cmake -D CMAKE_CXX_COMPILER=g++-11 ..
 make
 ```
 
-If errors appear, be sure `JULIA_PATH` is still set correctly as it is needed to find `julia.h`. Otherwise head to [troubleshooting](#troubleshooting).
+If errors appear, be sure `JULIA_PATH` is still set correctly, as it is needed to find `julia.h`. Otherwise, head to [troubleshooting](#troubleshooting).
 
 After compilation succeeded, the directory should now have the following layout:
 
@@ -383,6 +389,7 @@ If your problem still persists, it may be appropriate to open a github issue. Fi
 + when building with cmake, you specified `-D CMAKE_CXX_COMPILER=g++-11` correctly
     - cmake is able to find the executable `g++-11` in the default search paths
     - the same applies to `-D CMAKE_C_COMPILER=gcc-9` as well
+    - any given issue may be compiler specific, consider trying `clang-12` instead
 + `~/my_project/CMakeLists.txt` is identical to the code in [installation](#linking-jluna)
 + `State::initialize` and `JULIA_PATH` are modified as outlined [above](#stateinitialize-fails)
 + `jluna` was freshly pulled from the git repo and recompiled
@@ -392,8 +399,8 @@ If your problem still persists, it may be appropriate to open a github issue. Fi
 
 If and only if all of the above apply, head to the [issues tab](https://github.com/Clemapfel/jluna/issues). There, please create an issue and
 + describe your problem
-+ state your operating system and distro
++ state your operating system, distro and compiler version
 + copy-paste the output of `JLUNA_TEST` (even if all tests are `OK`)
-+ provide a minimum working example that recreates the bug
++ provide a minimum working example of your project that recreates the bug
 
 We will try to resolve your problem as soon as possible and are thankful for your input and collaboration.

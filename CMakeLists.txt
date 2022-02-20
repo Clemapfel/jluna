@@ -103,6 +103,7 @@ add_library(jluna SHARED
 
     include/symbol.hpp
     .src/symbol.cpp
+    .src/symbol.inl
 
     include/type.hpp
     .src/type.cpp
@@ -113,8 +114,7 @@ add_library(jluna SHARED
 
     include/generator_expression.hpp
     .src/generator_expression.cpp
-        #buffer
-        .src/symbol.inl)
+)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C
