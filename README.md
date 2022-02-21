@@ -71,7 +71,7 @@ Base["println"]((Any*) sub_array);
 
 // even supports comprehension
 auto comprehended_vec = Vector<Int64>("(i for i in 1:10 if i % 2 == 0)"_gen);
-    Base["println"](comprehended_vec);
+Base["println"](comprehended_vec);
 ```
 ```
 [11, 12, 13, 14, 15, 16, 17, 18, 19]
