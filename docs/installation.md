@@ -251,7 +251,7 @@ hello julia
 
 ## Troubleshooting
 
-> **Windows**: Currently, no troubleshooting tips are available for windows-users
+> **Windows**: Currently, no troubleshooting tips are available for windows-users. The following all assumes a unix-based OS.
 
 ### Cannot determine location of julia image
 
