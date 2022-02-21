@@ -60,6 +60,14 @@ export JULIA_PATH=/path/to/your/julia/bin/..
 
 We can now continue to compiling `jluna` using cmake, being sure to stay in the same bash session where we set `JULIA_PATH`. To set `JULIA_PATH` globally, consider consulting [this guide](https://unix.stackexchange.com/questions/117467/how-to-permanently-set-environmental-variables). This way, it does not have to re-set anytime a bash session ends.
 
+> **Windows**: We can set the environment either through the cmake GUI or by copy-pasting the result of `julia -e "println(joinpath(Sys.BINDIR, \"..\"))"` into the following command executed in the windows command line:
+
+> ```
+> set JULIA_PATH="C:\copy\paste\path\here\bin\.."
+> ```
+> Be sure that this environment variable is set correctly before triggering compilation in the same command-line session.
+> 
+
 ### Building `jluna`
 
 With `JULIA_PATH` set correctly, we navigate into `~/my_project/jluna/` and create a new build directory, then call cmake from within that directory:
@@ -68,7 +76,7 @@ With `JULIA_PATH` set correctly, we navigate into `~/my_project/jluna/` and crea
 cd ~/my_project/jluna
 mkdir build
 cd build
-cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang-12
+cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang++-12
 make
 ```
 
@@ -85,7 +93,7 @@ When compiling, warnings of the following type may appear:
 
 This is because the official julia header `julia.h` is slightly out of date. The warning is unrelated to `jluna`s codebase, `jluna` itself should report no warnings or errors. If this is not the case, head to [troubleshooting](#troubleshooting).
 
-> `jluna` is being developed using g++-11. Because of this, any specific release may issue warnings when using a different compiler. Compilation should never fail with an error, regardless which of the supported compiler is used by the end-user.
+> **Windows**: Users can try using MSVC instead of clang, however, compiling `jluna` this way is experimental and may lead to warnings or unintended behavior at compile time.
 
 We verify everything works by running `JLUNA_TEST` which we just compiled:
 
@@ -112,7 +120,9 @@ rm -r build
 
 We have now compiled and verified `jluna` and are left with a shiny new `libjluna.so` and `libjluna_c_adapter.so` in `~/my_project/jluna/`. These are the shared libraries that contain `jluna`s functionality. 
 
-Advanced users can stop this tutorial now and simply link their library against `libjluna.so`, `libjluna_c_adapter.so` (both in '`~/my_project/jluna/`) and against `libjulia.so`, which is in the directory `$ENV{JULIA_PATH}/include/julia`.
+Advanced users can stop this tutorial now and simply link their library against `libjluna.so`, `libjluna_c_adapter.so` (both in '`~/my_project/jluna/`) and against `libjulia.so`, which is in the directory `$ENV{JULIA_PATH}/lib/`.
+
+> **Windows**: The corresponding library files will be `.lib` or `.dll` files instead. Apart from this, linking them in your `CMakeLists.txt` follows the same syntax as above. Similarly, `libjulia.so` is instead called `libjulia.dll`. 
 
 For people who aren't yet as familiar with cmake and linking, let's continue:
 
@@ -193,6 +203,8 @@ add_executable(MY_EXECUTABLE ${CMAKE_SOURCE_DIR}/main.cpp)
 target_link_libraries(MY_EXECUTABLE ${JLUNA_LIB} ${JLUNA_C_ADAPTER_LIB} ${JULIA_LIB})
 ```
 
+> **Windows**: User may have to reformat all paths above so they are valid on windows (such as replacing `/` with `\`). Further modifications to the `CMakeLists.txt` may be necessary.
+
 We again save and close the file, then create our own build folder and run cmake, just like we did with `jluna` before
 
 ```bash
@@ -239,9 +251,11 @@ hello julia
 
 ## Troubleshooting
 
+> **Windows**: Currently, no troubleshooting tips are available for windows-users
+
 ### Cannot determine location of julia image
 
-When compiling `jluna`, the following error may occurr:
+When compiling `jluna`, the following error may occur:
 
 ```
  Cannot determine location of julia image.  Before running cmake, please

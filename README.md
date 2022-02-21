@@ -2,7 +2,7 @@
 
 ![](./header.png)
 
-Julia is a beautiful language, it is well-designed and well-documented. Julias C-API is also well-designed, less beautiful and much less... documented.
+Julia is a beautiful language, it is well-designed, and well-documented. Julias C-API is also well-designed, less beautiful, and much less... documented.
 
 Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API, replacing it in usage in C++ projects by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
 
@@ -15,14 +15,13 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 2. [Features](#features)<br>
 3. [Planned Features](#planned-but-not-yet-implemented)<br>
 4. [Documentation](#documentation)<br>
-    4.1 [🔗 Manual](./docs/manual.md)<br>
-    4.2 [🔗 Installation](./docs/installation.md)<br>
-    4.3 [🔗 Troubleshooting](./docs/installation.md#troubleshooting)<br>
+    4.1 [Manual](./docs/manual.md)<br>
+    4.2 [Installation](./docs/installation.md)<br>
+    4.3 [Troubleshooting](./docs/installation.md#troubleshooting)<br>
 5. [Dependencies](#dependencies)<br>
    5.1 [julia 1.7.0+](#dependencies)<br>
-   5.2 [Supported Compilers: g++11, clang12](#dependencies)<br>
-   5.3 [cmake 3.19+](#dependencies)<br>
-   5.4 [Linux / Mac OS](#dependencies)
+   5.2 [Supported Compilers: gcc10, gcc11, clang12](#dependencies)<br>
+   5.3 [cmake 3.16+](#dependencies)<br>
 6. [License](#license)
    
 ---
@@ -116,11 +115,11 @@ Some of the many advantages `jluna` has over the C-API include:
 + assigning C++-side proxies also mutates the corresponding variable with the same name julia-side
 + julia-side values, including temporaries, are kept safe from the garbage collector
 + verbose exception forwarding, compile-time assertions
-+ wraps [most](./docs/quick_and_dirty.md#list-of-unboxables) of the relevant C++ `std` objects and types
-+ multidimensional, iterable array interface with julia-style indexing
++ wraps [most](./docs/manual.md#list-of-unboxables) of the relevant C++ `std` objects and types
++ multi-dimensional, iterable array interface with julia-style indexing
 + deep, C++-side introspection functionalities for julia objects
 + fast! All code is considered performance-critical and was optimized for minimal overhead compared to the C-API
-+ manual written by a human
++ verbose manual, written by a human
 + inline documentation for IDEs for both C++ and Julia code 
 + freely mix `jluna` and the C-API
 + And more!
@@ -130,8 +129,8 @@ Some of the many advantages `jluna` has over the C-API include:
 (in order of priority, highest first)
 
 + windows / MSVC support
-+ thread-safety, parallelization
 + usertypes, creating modules and struct completely C++-side
++ thread-safety, parallelization
 + linear algebra wrapper, matrices
 + expression proxies
 + multiple julia worlds, save-states: restoring a previous julia state
@@ -152,14 +151,12 @@ Advanced users are encouraged to check the headers (available in `jluna/include/
 For `jluna` you'll need:
 + [**Julia 1.7.0**](https://julialang.org/downloads/#current_stable_release) (or higher)
 + [**cmake 3.16**](https://cmake.org/download/) (or higher)
-+  C++ Compiler (see below)
-+ unix-based, 64-bit operating system
++ C++ Compiler (see below)
++ unix-based* 64-bit operating system
 
-Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are supported. g++-11 is the primary compiler used for development of `jluna` and is thus recommended.
+Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang++-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are fully supported. g++-11 is the primary compiler used for development of `jluna` and is thus recommended. MSVC is untested but may work.
 
-Windows and MSVC support is planned in the near future.
-
-
+> *Building on Windows is currently untested, however no part of `jluna`, julia, or cmake is explicitly unix-dependent. This suggests, compilation may work without problem using either clang (recommended) or MSVC
 
 ---
 
@@ -167,13 +164,15 @@ Windows and MSVC support is planned in the near future.
 
 A step-by-step tutorial on how to create, compile and link a new C++ Project with `jluna` can be found [here](./docs/installation.md). It is recommended that you follow this guide closely, instead of trying to resolve issues on your own.
 
+> Windows-only users are encouraged to follow the guide, replacing the bash syntax with windows commandline syntax. While windows-support is currently experimental and untested, the step-by-step guide does include some tips addressed to windows-users specifically.
+
 ### For Advanced Users Only
 
-Users familiar with C++ and cmake can go through the following steps:
+Users familiar with C++ and cmake can go through the following steps (on unix-based operating systems):
 
 Install:
 
-+ `g++-11` (or `clang-12`)
++ `g++-11` (or `clang++-12`)
 + `julia 1.7+`
 + `cmake 3.16+`
 
@@ -186,7 +185,7 @@ export JULIA_PATH=$(julia -e "println(joinpath(Sys.BINDIR, \"..\"))")
 
 mkdir build
 cd build
-cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang-12
+cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang++-12
 make
 
 ./JLUNA_TEST
