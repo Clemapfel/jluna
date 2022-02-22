@@ -22,6 +22,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
    5.1 [julia 1.7.0+](#dependencies)<br>
    5.2 [Supported Compilers: gcc10, gcc11, clang12](#dependencies)<br>
    5.3 [cmake 3.16+](#dependencies)<br>
+   5.4 [unix-based OS](#dependencies)<br>
 6. [License](#license)
    
 ---
