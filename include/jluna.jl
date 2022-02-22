@@ -489,6 +489,46 @@ module jluna
     end
 
     """
+    `has_method_with_signature(::Function, return_type::Type, argument_types::Type...) -> Bool`
+
+    returns true if and only if:
+        a) there exists a methods with return type `T` such that `return_type <: T`
+        b) that method m is also invokable with via `m(argument_types...)`
+    """
+    function has_method_with_signature(f::Function, return_type::Type, argument_types::Type...) ::Bool
+
+        type_match(a::Type, b::TypeVar) = return a <: b.ub
+        type_match(a::Type, b::Type) = return a <: b
+        type_match(a::Type, b::Core.TypeofVararg) = return a <: b.T
+
+        return_ts = Base.return_types(f)
+        methods = Base.methods(f)
+
+        for i in 1:length(methods)
+
+            if !(type_match(return_type, return_ts[i]))
+                continue;
+            end
+
+            sig = methods[i].sig
+            while hasproperty(sig, :body)
+                sig = sig.body
+            end
+
+            for j in 2:length(sig.types)
+                if !(type_match(argument_types[j-1], sig.types[j]))
+                    @goto skip
+                end
+            end
+
+            return true
+            @label skip
+        end
+
+        return false
+    end
+
+    """
     offers verbose exception interface. Any call with safe_call will store
     the last exception and full stack trace as string in _last_exception and
     _last_message respectively
@@ -626,46 +666,7 @@ module jluna
         function get_last_exception() ::Exception
             return _state[]._last_exception
         end
-
-        """
-        `has_method_with_signature(::Function, return_type::Type, argument_types::Type...) -> Bool`
-
-        returns true if and only if:
-            a) there exists a methods with return type `T` such that `return_type <: T`
-            b) that method m is also invokable with via `m(argument_types...)`
-        """
-        function has_method_with_signature(f::Function, return_type::Type, argument_types::Type...) ::Bool
-
-            type_match(a::Type, b::TypeVar) = return a <: b.ub
-            type_match(a::Type, b::Type) = return a <: b
-            type_match(a::Type, b::Core.TypeofVararg) = return a <: b.T
-
-            return_ts = Base.return_types(f)
-            methods = Base.methods(f)
-
-            for i in 1:length(methods)
-
-                if !(type_match(return_type, return_ts[i]))
-                    continue;
-                end
-
-                sig = methods[i].sig
-                while hasproperty(sig, :body)
-                    sig = sig.body
-                end
-
-                for j in 2:length(sig.types)
-                    if !(type_match(argument_types[j-1], sig.types[j]))
-                        @goto skip
-                    end
-                end
-
-                return true
-                @label skip
-            end
-
-            return false
-        end
+    end
 
     """
     offers julia-side memory management for C++ jluna

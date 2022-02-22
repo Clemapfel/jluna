@@ -69,23 +69,3 @@ namespace jluna
 }
 
 #include ".src/symbol.inl"
-
-struct Foo
-    _f::Function
-
-    function Foo(f::Function)
-
-        found = false
-        for method in methods(f)
-            if method.sig.types[2] == Float32
-                found = true
-                break
-            end
-        end
-
-        @assert found
-        new(f)
-    end
-end
-
-function assert
