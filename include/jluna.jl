@@ -631,7 +631,7 @@ module jluna
         `has_method_with_signature(::Function, return_type::Type, argument_types::Type...) -> Bool`
 
         returns true if and only if:
-            a) there exists a methods with return type `T` such that `T <: return_type`
+            a) there exists a methods with return type `T` such that `return_type <: T`
             b) that method m is also invokable with via `m(argument_types...)`
         """
         function has_method_with_signature(f::Function, return_type::Type, argument_types::Type...) ::Bool
