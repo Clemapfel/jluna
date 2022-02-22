@@ -128,6 +128,7 @@ Some of the many advantages `jluna` has over the C-API include:
 
 (in order of priority, highest first)
 
++ windows / MSVC support
 + usertypes, creating modules and struct completely C++-side
 + thread-safety, parallelization
 + linear algebra wrapper, matrices
@@ -155,12 +156,15 @@ For `jluna` you'll need:
 
 Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang++-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are fully supported. g++-11 is the primary compiler used for development of `jluna` and is thus recommended. MSVC is untested but may work.
 
-> *Building on Windows is currently untested, however no part of `jluna`, julia, or cmake is explicitly unix-dependent. This suggests, compilation may work without problem using either clang (recommended) or MSVC. If someone wants to open a PR that guides users on how to install jluna on windows, I'd be happy to accept it.
+> *Building on Windows is currently untested, however no part of `jluna`, julia, or cmake is explicitly unix-dependent. This suggests, compilation may work without problem using either clang (recommended) or MSVC
+
 ---
 
 ## [Installation & Troubleshooting](./docs/installation.md)
 
 A step-by-step tutorial on how to create, compile and link a new C++ Project with `jluna` can be found [here](./docs/installation.md). It is recommended that you follow this guide closely, instead of trying to resolve issues on your own.
+
+> Windows-only users are encouraged to follow the guide, replacing the bash syntax with windows commandline syntax. While windows-support is currently experimental and untested, the step-by-step guide does include some tips addressed to windows-users specifically.
 
 ### For Advanced Users Only
 
