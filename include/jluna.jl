@@ -951,6 +951,68 @@ module jluna
             return false
         end
     end
+
+    module usertype
+
+        """
+        `new_struct(::Symbol) -> Expr`
+        """
+        function new_struct(name::Symbol) ::Expr
+            return Expr(:struct, false, name, Expr(:block))
+        end
+
+        """
+        `set_mutable!(::Expr, ::Bool = true) -> Nothing`
+
+        modify struct expressions mutability
+        """
+        function set_mutable!(expr::Expr, is_mutable::Bool = true) ::Nothing
+
+            expr.args[1] = is_mutable
+            return nothing
+        end
+
+        """
+        `add_field!(::Expr, ::Symbol, ::Type = Any) -> Nothing`
+
+        add explicitly types field to struct expression
+        """
+        function add_field!(expr::Expr, field_name::Symbol, type::Type = Any) ::Nothing
+
+            push!(expr.args[3].args, Expr(:(::), field_name, Symbol(type)))
+            return nothing
+        end
+
+        # overload to be used with symbols such as parameter names
+        function add_field!(expr::Expr, field_name::Symbol, type::Symbol) ::Nothing
+
+            push!(expr.args[3].args, Expr(:(::), field_name, type))
+            return nothing
+        end
+
+        """
+        `add_parameter(::Expr, ::Symbol, ::Type = Any) -> Nothing`
+
+        add parameters to struct expression
+        """
+        function add_parameter!(expr::Expr, param_name::Symbol, type::Type = Any) ::Nothing
+
+            if !(expr.args[2] isa Expr)
+                expr.args[2] = Expr(:curly, expr.args[2], Expr(:(<:), param_name, Symbol(Type)))
+            else
+                push!(expr.args[2].args, Expr(:(<:), param_name, Symbol(Type)))
+            end
+
+            return nothing;
+        end
+
+        """
+        """
+        function add_constructor!(expr::Expr, f::Function) ::Nothing
+            push!(expr.args[3].args, Expr(:(=), Expr(:call, :Test, )))
+        end
+
+    end
 end
 
 """

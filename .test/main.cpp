@@ -9,9 +9,13 @@
 
 using namespace jluna;
 using namespace jluna::detail;
+
 int main()
 {
     State::initialize();
+
+    auto a = "test"_a;
+    return 0;
     Test::initialize();
 
     Test::test("catch c exception", [](){
