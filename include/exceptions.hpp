@@ -71,6 +71,15 @@ namespace jluna
     /// @returns result
     template<typename... Args_t>
     Any* safe_call(Function* function, Args_t... args);
+
+    /// @brief evaluate string with exception forwarding
+    /// @param string
+    /// @returns result
+    Any* safe_eval(const char*);
+
+    /// @brief literal operator for prettier syntax
+    /// @returns result of safe_eval
+    Any* operator""_eval(const char*, size_t);
 }
 
 #include ".src/exceptions.inl"

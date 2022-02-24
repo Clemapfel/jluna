@@ -15,6 +15,7 @@ namespace jluna
     class Usertype
     {
         public:
+            Usertype(const std::string& name);
 
 
         private:

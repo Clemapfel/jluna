@@ -954,64 +954,106 @@ module jluna
 
     module usertype
 
+        # template that can still be modified, transformed into actual type with `implement`
+        struct UserTypeTemplate
+
+            _expr::Expr
+            _member_functions::Dict{Symbol, Union{Function, jluna._cppcall.UnnamedFunctionProxy}}
+
+            UserTypeTemplate(expr::Expr) = new(expr, Vector{Function}())
+        end
+
+
+        mutable struct UserType
+
+            _name::Symbol
+            _members::Dict{Symbol, Any}
+        end
+
+        struct ImmutableUserType <: UserType
+        end
+
+        mutable struct MutableUserType <: UserType
+        end
+
+
         """
         `new_struct(::Symbol) -> Expr`
         """
-        function new_struct(name::Symbol) ::Expr
-            return Expr(:struct, false, name, Expr(:block))
+        function new_usertype(name::Symbol) ::UserTypeTemplate
         end
 
         """
-        `set_mutable!(::Expr, ::Bool = true) -> Nothing`
+        `set_mutable!(::UserTypeTemplate, ::Bool = true) -> Nothing`
 
         modify struct expressions mutability
         """
-        function set_mutable!(expr::Expr, is_mutable::Bool = true) ::Nothing
+        function set_mutable!(proto::UserTypeTemplate, is_mutable::Bool = true) ::Nothing
 
-            expr.args[1] = is_mutable
+            proto._expr.args[1] = is_mutable
             return nothing
         end
 
         """
-        `add_field!(::Expr, ::Symbol, ::Type = Any) -> Nothing`
+        `add_field!(::UserTypeTemplate, ::Symbol, ::Type = Any) -> Nothing`
 
         add explicitly types field to struct expression
         """
-        function add_field!(expr::Expr, field_name::Symbol, type::Type = Any) ::Nothing
+        function add_field!(proto::UserTypeTemplate, field_name::Symbol, type::Type = Any) ::Nothing
 
-            push!(expr.args[3].args, Expr(:(::), field_name, Symbol(type)))
+            push!(proto._expr.args[3].args, Expr(:(::), field_name, Symbol(type)))
             return nothing
         end
 
         # overload to be used with symbols such as parameter names
-        function add_field!(expr::Expr, field_name::Symbol, type::Symbol) ::Nothing
+        function add_field!(proto::UserTypeTemplate, field_name::Symbol, type::Symbol) ::Nothing
 
-            push!(expr.args[3].args, Expr(:(::), field_name, type))
+            push!(proto._expr.args[3].args, Expr(:(::), field_name, type))
             return nothing
         end
 
         """
-        `add_parameter(::Expr, ::Symbol, ::Type = Any) -> Nothing`
+        `add_parameter(::UserTypeTemplate, ::Symbol, ::Type = Any) -> Nothing`
 
         add parameters to struct expression
         """
-        function add_parameter!(expr::Expr, param_name::Symbol, type::Type = Any) ::Nothing
+        function add_parameter!(proto::UserTypeTemplate, param_name::Symbol, type::Type = Any) ::Nothing
 
-            if !(expr.args[2] isa Expr)
-                expr.args[2] = Expr(:curly, expr.args[2], Expr(:(<:), param_name, Symbol(Type)))
+            proto._expr.args[2].args[1] =
+
+            if !(proto._expr.args[2] isa Expr)
+                proto._expr.args[2] = Expr(:curly, proto._expr.args[2], Expr(:(<:), param_name, Symbol(Type)))
             else
-                push!(expr.args[2].args, Expr(:(<:), param_name, Symbol(Type)))
+                push!(proto._expr.args[2].args, Expr(:(<:), param_name, Symbol(Type)))
             end
 
             return nothing;
         end
-
+        
         """
+        `add_member_function(::UserTypeTemplate, <:Function) -> Nothing`
+        
+        add member function
         """
-        function add_constructor!(expr::Expr, f::Function) ::Nothing
-            push!(expr.args[3].args, Expr(:(=), Expr(:call, :Test, )))
+        function add_member_function!(proto::UserTypeTemplate, f::Function) ::Nothing
+           proto._member_functions[Symbol(f)] = f
+           return nothing;
         end
 
+        function add_member_function!(proto::UserTypeTemplate, name::Symbol, f::jluna._cppcall.UnnamedFunctionProxy) ::Nothing
+            proto._member_functions[name] = f
+            return nothing;
+        end
+
+        """
+        `implement(::UserTypeTemplate) -> UserType`
+
+        evaluate usertype template and create an actual type from it
+        """
+        function implement(template::UserTypeTemplate) ::UserType
+
+
+        end
     end
 end
 
@@ -1045,3 +1087,12 @@ function cppcall(function_name::Symbol, xs...) ::Any
     return jluna._cppcall.get_result()
 end
 export cppcall
+
+"""
+`(:)(::UserType, ::Symbol) -> Any`
+
+call member function of cpp usertype
+"""
+function (:)(type::jluna.usertype.UserType, function_name, xs...) #::Auto
+    return UserType._member_functions[function_name](xs...)
+end

@@ -14,8 +14,8 @@ int main()
 {
     State::initialize();
 
-    auto a = "test"_a;
-    return 0;
+                jluna::safe_eval("throw(ErrorException(\"abc\"))");
+return 0;
     Test::initialize();
 
     Test::test("catch c exception", [](){
@@ -25,7 +25,6 @@ int main()
             forward_last_exception();
         });
     });
-
 
     Test::test("jl_find_function", [](){
 
@@ -44,6 +43,12 @@ int main()
     Test::test("safe_call", [](){
         Test::assert_that_throws<JuliaException>([]() {
             safe_call(jl_find_function("Base", "throw"), jl_eval_string("return ErrorException(\"\")"));
+        });
+    });
+
+    Test::test("safe_eval", [](){
+        Test::assert_that_throws<JuliaException>([]() {
+            safe_eval("throw(ErrorException(\"abc\"))");
         });
     });
 
