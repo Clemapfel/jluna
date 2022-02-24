@@ -129,7 +129,7 @@ Some of the many advantages `jluna` has over the C-API include:
 
 (in order of priority, highest first)
 
-+ usertypes, creating modules and struct completely C++-side
++ usertypes, interface for (un)boxing arbitrary types
 + thread-safety, parallelization
 + linear algebra wrapper, matrices
 + expression proxies
