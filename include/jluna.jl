@@ -959,7 +959,6 @@ module jluna
             _name::Symbol
 
             _fields::Dict{Symbol, Any}
-            _const_fields::Dict{Symbol, Any}
             _functions::Dict{Symbol, Union{Function}}#, jluna._cppcall.UnnamedFunctionProxy}}
             _which::Dict{Symbol, Int8}
 
@@ -968,7 +967,6 @@ module jluna
 
             UserType(name::Symbol) = new(
                 name,
-                Dict{Symbol, Any}(),
                 Dict{Symbol, Any}(),
                 Dict{Symbol, Union{Function}}(),
                 Dict{Symbol, Int8}(),
@@ -1009,14 +1007,6 @@ module jluna
             return nothing
         end
         export add_field!
-
-        # add const field
-        function add_const_field!(type::UserType, symbol::Symbol, value) ::Nothing
-            type._fields[symbol] = value
-            type._which[symbol] = 2
-            return nothing
-        end
-        export add_const_field!
 
         # add member function
         function add_member_function!(type::UserType, symbol::Symbol, f) ::Nothing
@@ -1080,24 +1070,34 @@ module jluna
         export call_member_function
 
         # implement
-        function implement(type::UserType, m::Module = Main) ::Type
+        function implement(type::UserType, m::Module = Main) ::Expr
 
-            curly = Expr(:curly, type._name)
+            parameters = Expr(:curly, type._name)
             for tv in type._parameters
-                push!(curly.args, Expr(:comparison, Symbol(tv.lb), :(<:), tv.name, :(<:), Symbol(tv.ub)))
+                if tv.lb == Union{}
+                    if tv.ub == Any
+                        push!(param.args, tv.name)
+                    else
+                        push!(parameters.args, Expr(:(<:), tv.name, Symbol(tv.ub)))
+                    end
+                else
+                    push!(parameters.args, Expr(:comparison, Symbol(tv.lb), :(<:), tv.name, :(<:), Symbol(tv.ub)))
+                end
             end
 
+            block = Expr(:block)
+            for (s, t) in type._fields
+                push!(block.args, Expr(:(::), s, t))
+            end
 
+            for (s, t) in type._functions
+                push!(block.args, Expr(:(::), s, Symbol("Function")))
+            end
 
+            out::Expr = :(mutable struct $(parameters) end)
+            out.args[3] = block
 
-
-            println(dump(:(
-                mutable struct $(curly)
-
-                    #__ut::UserType
-                    #$(type.name)(x::UserType) = new
-                end
-            )))
+            return out
         end
         export implement
     end
@@ -1140,3 +1140,94 @@ export cppcall
 ut = jluna.new_usertype(:test)
 jluna.add_parameter!(ut, :T, Any)
 jluna.add_parameter!(ut, :U, AbstractFloat, Int)
+jluna.add_field!(ut, :_field01, Any)
+jluna.add_field!(ut, :_field02, Integer)
+jluna.add_member_function!(ut, :f, x -> println(x))
+
+mutable struct UserType
+
+    _name::Symbol
+    _is_mutable::Bool
+    _fields::Dict{Symbol, Any}
+    _parameters::Vector{TypeVar}
+
+    UserType(name::Symbol, is_mutable::Bool = true) = new(
+        name,
+        is_mutable,
+        Dict{Symbol, Any}(),
+        Vector{TypeVar}()
+    )
+end
+
+function new_usertype(name::Symbol)
+     return UserType(name)
+end
+
+function set_mutable!(x::UserType, value::Bool) ::Nothing
+    x._is_mutable = value
+    return nothing
+end
+
+function add_field!(x::UserType, name::Symbol, value) ::Nothing
+    x._fields[name] = value
+end
+
+function add_parameter!(x::UserType, name::Symbol, ub::Type = Any, lb::Type = Union{})
+   push!(x._parameters[name], TypeVar(name, lb, ub))
+end
+
+function implement(type::UserType)
+
+    # params and name
+    parameters = Expr(:curly, type._name)
+    for tv in type._parameters
+        if tv.lb == Union{}
+            if tv.ub == Any
+                push!(param.args, tv.name)
+            else
+                push!(parameters.args, Expr(:(<:), tv.name, Symbol(tv.ub)))
+            end
+        else
+            push!(parameters.args, Expr(:comparison, Symbol(tv.lb), :(<:), tv.name, :(<:), Symbol(tv.ub)))
+        end
+    end
+
+    block = Expr(:block)
+
+    # fields
+    for (field_name, field_type) in type._fields
+        push!(block.args, Expr(:(::), field_name, field_type))
+    end
+
+    # ctor
+
+
+
+    out::Expr = :(mutable struct $(parameters) end)
+    out.args[3] = block
+
+    return out
+end
+
+struct MyType
+
+    _field01
+    _field02
+
+    MyType(base::UserType) = new(
+        base._fields[:_field01],
+        base._fields[:_field02]
+    )
+end
+
+instance = UserType()
+instance.set_field(instance, :_field01, 1234)
+instance.set_field(instance, :_field02, 4567)
+instance.set_field(instance, :f, x -> println(x))
+
+
+
+
+
+
+
