@@ -954,107 +954,148 @@ module jluna
 
     module usertype
 
-        # template that can still be modified, transformed into actual type with `implement`
-        struct UserTypeTemplate
-
-            _expr::Expr
-            _member_functions::Dict{Symbol, Union{Function, jluna._cppcall.UnnamedFunctionProxy}}
-
-            UserTypeTemplate(expr::Expr) = new(expr, Vector{Function}())
-        end
-
-
         mutable struct UserType
 
             _name::Symbol
-            _members::Dict{Symbol, Any}
+
+            _fields::Dict{Symbol, Any}
+            _const_fields::Dict{Symbol, Any}
+            _functions::Dict{Symbol, Union{Function}}#, jluna._cppcall.UnnamedFunctionProxy}}
+            _which::Dict{Symbol, Int8}
+
+            _parameters::Vector{TypeVar}
+
+
+            UserType(name::Symbol) = new(
+                name,
+                Dict{Symbol, Any}(),
+                Dict{Symbol, Any}(),
+                Dict{Symbol, Union{Function}}(),
+                Dict{Symbol, Int8}(),
+                Vector{TypeVar}()
+            )
         end
 
-        struct ImmutableUserType <: UserType
+        # exception when modifying const
+        mutable struct MutatingConstException <: Exception
+            _field_name::Symbol
         end
+        Base.showerror(io::IO, e::MutatingConstException) = print(io, "jluna.MutatingConstException: Trying to modify field :" * string(e._field_name) * " which was declared const")
 
-        mutable struct MutableUserType <: UserType
+        # exception when field does not exist
+        mutable struct MemberUndefinedException <: Exception
+            _type_name::Symbol
+            _field_name::Symbol
         end
+        Base.showerror(io::IO, e::MemberUndefinedException) = print(io, "jluna.MemberUndefinedException: UserType " * string(e._type_name) * " does not have member " * string(e._field_name))
 
-
-        """
-        `new_struct(::Symbol) -> Expr`
-        """
-        function new_usertype(name::Symbol) ::UserTypeTemplate
+        # new
+        function new_usertype(name::Symbol, enable_pretty_syntax::Bool = false) ::UserType
+            out = UserType(name)
         end
+        export new_usertype
 
-        """
-        `set_mutable!(::UserTypeTemplate, ::Bool = true) -> Nothing`
+        # params
+        function add_parameter!(type::UserType, symbol::Symbol, upper_bound::Type = Any{}, lower_bound::Type = Union{}) ::Nothing
+           push!(type._parameters, TypeVar(symbol, lower_bound, upper_bound))
+           return nothing
+        end
+        export add_parameter!
 
-        modify struct expressions mutability
-        """
-        function set_mutable!(proto::UserTypeTemplate, is_mutable::Bool = true) ::Nothing
-
-            proto._expr.args[1] = is_mutable
+        # add non-const field
+        function add_field!(type::UserType, symbol::Symbol, value) ::Nothing
+            type._fields[symbol] = value
+            type._which[symbol] = 1
             return nothing
         end
+        export add_field!
 
-        """
-        `add_field!(::UserTypeTemplate, ::Symbol, ::Type = Any) -> Nothing`
-
-        add explicitly types field to struct expression
-        """
-        function add_field!(proto::UserTypeTemplate, field_name::Symbol, type::Type = Any) ::Nothing
-
-            push!(proto._expr.args[3].args, Expr(:(::), field_name, Symbol(type)))
+        # add const field
+        function add_const_field!(type::UserType, symbol::Symbol, value) ::Nothing
+            type._fields[symbol] = value
+            type._which[symbol] = 2
             return nothing
         end
+        export add_const_field!
 
-        # overload to be used with symbols such as parameter names
-        function add_field!(proto::UserTypeTemplate, field_name::Symbol, type::Symbol) ::Nothing
-
-            push!(proto._expr.args[3].args, Expr(:(::), field_name, type))
+        # add member function
+        function add_member_function!(type::UserType, symbol::Symbol, f) ::Nothing
+            type._functions[symbol] = f
+            type._which[symbol] = 3
             return nothing
         end
+        export add_member_function!
 
-        """
-        `add_parameter(::UserTypeTemplate, ::Symbol, ::Type = Any) -> Nothing`
+        # get
+        function get_field(type::UserType, symbol::Symbol) ::Any
 
-        add parameters to struct expression
-        """
-        function add_parameter!(proto::UserTypeTemplate, param_name::Symbol, type::Type = Any) ::Nothing
+            try
+                if type._which[symbol] == 1
+                    return type._fields[symbol]
+                elseif type._which[symbol] == 2
+                    return type._const_fields[symbol]
+                else
+                    return type._functions[symbol]
+                end
+            catch e
+                throw(MemberUndefinedException(type._name, symbol))
+                return nothing
+            end
+        end
+        export get_field
 
-            proto._expr.args[2].args[1] =
+        # set
+        function set_field!(type::UserType, symbol::Symbol, value) ::Nothing
 
-            if !(proto._expr.args[2] isa Expr)
-                proto._expr.args[2] = Expr(:curly, proto._expr.args[2], Expr(:(<:), param_name, Symbol(Type)))
-            else
-                push!(proto._expr.args[2].args, Expr(:(<:), param_name, Symbol(Type)))
+            if !haskey(type._which, symbol)
+                throw(MemberUndefinedException(type._name, symbol))
+                return nothing
             end
 
-            return nothing;
+            if type._which[symbol] == 1
+                type._fields[symbol] = value
+            else
+                throw(MutatingConstException(symbol))
+            end
+
+            return nothing
         end
-        
-        """
-        `add_member_function(::UserTypeTemplate, <:Function) -> Nothing`
-        
-        add member function
-        """
-        function add_member_function!(proto::UserTypeTemplate, f::Function) ::Nothing
-           proto._member_functions[Symbol(f)] = f
-           return nothing;
+        export set_field!
+
+        # call f
+        function call_member_function(type::UserType, symbol::Symbol, xs...) ::Any
+
+            if !haskey(type._which, symbol)
+                throw(MemberUndefinedException(type._name, symbol))
+                return nothing
+            end
+
+            if type._which[symbol] == 3
+                return type._fields[symbol](xs...)
+            else
+                throw(UndefVarError(Symbol(string(type.name) * "." * string(symbol))))
+                return nothing;
+            end
         end
+        export call_member_function
 
-        function add_member_function!(proto::UserTypeTemplate, name::Symbol, f::jluna._cppcall.UnnamedFunctionProxy) ::Nothing
-            proto._member_functions[name] = f
-            return nothing;
+        # implement
+        function implement(type::UserType, m::Module = Main) ::Type
+
+            curly = Expr(:curly, type._name)
+
+            for tv in type._parameters
+                push!(curly.args, Expr(:comparison, Symbol(tv.lb), :(<:), tv.name, :(<:), Symbol(tv.ub)))
+            end
+
+            println(dump(:(
+                mutable struct $(curly) end
+            )))
+
         end
-
-        """
-        `implement(::UserTypeTemplate) -> UserType`
-
-        evaluate usertype template and create an actual type from it
-        """
-        function implement(template::UserTypeTemplate) ::UserType
-
-
-        end
+        export implement
     end
+    using Main.jluna.usertype
 end
 
 """
@@ -1088,11 +1129,8 @@ function cppcall(function_name::Symbol, xs...) ::Any
 end
 export cppcall
 
-"""
-`(:)(::UserType, ::Symbol) -> Any`
 
-call member function of cpp usertype
-"""
-function (:)(type::jluna.usertype.UserType, function_name, xs...) #::Auto
-    return UserType._member_functions[function_name](xs...)
-end
+#TODO
+ut = jluna.new_usertype(:test)
+jluna.add_parameter!(ut, :T, Any)
+jluna.add_parameter!(ut, :U, AbstractFloat, Int)
