@@ -1199,7 +1199,17 @@ function implement(type::UserType)
         push!(block.args, Expr(:(::), field_name, (field_value isa Function ? :(Function) : Symbol(typeof(field_value)))))
     end
 
-    ctor = Expr(:(=), :($(type._name)(base::UserType)), Expr(:block))
+    new_and_curly = Expr(:curly, :new)
+    for tv in type._parameters
+        push!(new_and_curly.args, tv.name)
+    end
+
+    ctor = Expr(:(=), :($(type._name)(base::UserType)), Expr(:call, new_and_curly))
+
+    for (field_name, _) in type._fields
+        field_symbol = QuoteNode(field_name)
+        push!(ctor.args[2].args, :(base._fields[$(field_symbol)]))
+    end
 
     push!(block.args, ctor)
     out::Expr = :(mutable struct $(parameters) end)
