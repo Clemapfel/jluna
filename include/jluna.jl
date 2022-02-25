@@ -1199,12 +1199,33 @@ function implement(type::UserType)
         push!(block.args, Expr(:(::), field_name, (field_value isa Function ? :(Function) : Symbol(typeof(field_value)))))
     end
 
-    new_and_curly = Expr(:curly, :new)
-    for tv in type._parameters
-        push!(new_and_curly.args, tv.name)
-    end
+    ctor::Expr = :()
 
-    ctor = Expr(:(=), :($(type._name)(base::UserType)), Expr(:call, new_and_curly))
+    if isempty(type._parameters)
+        ctor = Expr(:(=), :($(type._name)(base::UserType)), Expr(:call, :new))
+    else
+
+        curly_new = Expr(:curly, :new);
+        for t in type._parameters
+            push!(curly_new.args, t.name)
+        end
+
+        where_call = Expr(
+            :where,
+            Expr(
+                :call,
+                Expr(
+                    :curly,
+                    type._name,
+                    (collect(p.name for p in type._parameters)...)
+                ),
+                :(base::UserType)
+            ),
+            (collect(p.name for p in type._parameters)...)
+        )
+
+        ctor = Expr(:(=), where_call, Expr(:call, curly_new))
+    end
 
     for (field_name, _) in type._fields
         field_symbol = QuoteNode(field_name)
