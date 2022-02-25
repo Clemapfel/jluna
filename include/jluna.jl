@@ -952,125 +952,79 @@ module jluna
         end
     end
 
+    """
+    interface for jluna::UserType
+    """
     module usertype
 
+        """
+        usertype wrapper
+        """
         mutable struct UserType
 
             _name::Symbol
-
+            _is_mutable::Bool
             _fields::Dict{Symbol, Any}
-            _functions::Dict{Symbol, Union{Function}}#, jluna._cppcall.UnnamedFunctionProxy}}
-            _which::Dict{Symbol, Int8}
-
             _parameters::Vector{TypeVar}
 
-
-            UserType(name::Symbol) = new(
+            UserType(name::Symbol, is_mutable::Bool = true) = new(
                 name,
+                is_mutable,
                 Dict{Symbol, Any}(),
-                Dict{Symbol, Union{Function}}(),
-                Dict{Symbol, Int8}(),
                 Vector{TypeVar}()
             )
         end
+        export UserType
 
-        # exception when modifying const
-        mutable struct MutatingConstException <: Exception
-            _field_name::Symbol
-        end
-        Base.showerror(io::IO, e::MutatingConstException) = print(io, "jluna.MutatingConstException: Trying to modify field :" * string(e._field_name) * " which was declared const")
+        """
+        `new_usertype(::Symbol) -> UserType`
 
-        # exception when field does not exist
-        mutable struct MemberUndefinedException <: Exception
-            _type_name::Symbol
-            _field_name::Symbol
-        end
-        Base.showerror(io::IO, e::MemberUndefinedException) = print(io, "jluna.MemberUndefinedException: UserType " * string(e._type_name) * " does not have member " * string(e._field_name))
-
-        # new
+        create new usertype
+        """
         function new_usertype(name::Symbol) ::UserType
-            out = UserType(name)
+             return UserType(name)
         end
         export new_usertype
 
-        # params
-        function add_parameter!(type::UserType, symbol::Symbol, upper_bound::Type = Any{}, lower_bound::Type = Union{}) ::Nothing
-           push!(type._parameters, TypeVar(symbol, lower_bound, upper_bound))
-           return nothing
-        end
-        export add_parameter!
+        """
+        `set_mutable(::UserType, ::Bool) -> Nothing`
 
-        # add non-const field
-        function add_field!(type::UserType, symbol::Symbol, value) ::Nothing
-            type._fields[symbol] = value
-            type._which[symbol] = 1
+        change mutability of usertype
+        """
+        function set_mutable!(x::UserType, value::Bool) ::Nothing
+            x._is_mutable = value
+            return nothing
+        end
+        export set_mutable!
+
+        """
+        `add_field!(::UserType, ::Symbol, value) -> Nothing`
+
+        add field to usertype, can also be a function
+        """
+        function add_field!(x::UserType, name::Symbol, value) ::Nothing
+            x._fields[name] = value
             return nothing
         end
         export add_field!
 
-        # add member function
-        function add_member_function!(type::UserType, symbol::Symbol, f) ::Nothing
-            type._functions[symbol] = f
-            type._which[symbol] = 3
-            return nothing
+        """
+        `add_parameter!(::UserType, ::Symbol, upper_bound::Type, lower_bound::Type) -> Nothing`
+
+        add parameter, including upper and lower bounds
+        """
+        function add_parameter!(x::UserType, name::Symbol, ub::Type = Any, lb::Type = Union{}) ::Nothing
+           push!(x._parameters, TypeVar(name, lb, ub))
+           return nothing
         end
-        export add_member_function!
+        export add_parameter!
 
-        # get
-        function get_field(type::UserType, symbol::Symbol) ::Any
+        """
+        `implement(::UserType) -> Type`
 
-            try
-                if type._which[symbol] == 1
-                    return type._fields[symbol]
-                elseif type._which[symbol] == 2
-                    return type._const_fields[symbol]
-                else
-                    return type._functions[symbol]
-                end
-            catch e
-                throw(MemberUndefinedException(type._name, symbol))
-                return nothing
-            end
-        end
-        export get_field
-
-        # set
-        function set_field!(type::UserType, symbol::Symbol, value) ::Nothing
-
-            if !haskey(type._which, symbol)
-                throw(MemberUndefinedException(type._name, symbol))
-                return nothing
-            end
-
-            if type._which[symbol] == 1
-                type._fields[symbol] = value
-            else
-                throw(MutatingConstException(symbol))
-            end
-
-            return nothing
-        end
-        export set_field!
-
-        # call f
-        function call_member_function(type::UserType, symbol::Symbol, xs...) ::Any
-
-            if !haskey(type._which, symbol)
-                throw(MemberUndefinedException(type._name, symbol))
-                return nothing
-            end
-
-            if type._which[symbol] == 3
-                return type._fields[symbol](xs...)
-            else
-                throw(UndefVarError(Symbol(string(type.name) * "." * string(symbol))))
-                return nothing;
-            end
-        end
-        export call_member_function
-
-        # implement
-        function implement(type::UserType, m::Module = Main) ::Expr
+        evaluate the type
+        """
+        function implement(type::UserType, m::Module = Main) ::Type
 
             parameters = Expr(:curly, type._name)
             for tv in type._parameters
@@ -1086,18 +1040,49 @@ module jluna
             end
 
             block = Expr(:block)
-            for (s, t) in type._fields
-                push!(block.args, Expr(:(::), s, t))
+
+            for (field_name, field_value) in type._fields
+                push!(block.args, Expr(:(::), field_name, (field_value isa Function ? :(Function) : Symbol(typeof(field_value)))))
             end
 
-            for (s, t) in type._functions
-                push!(block.args, Expr(:(::), s, Symbol("Function")))
+            ctor::Expr = :()
+
+            if isempty(type._parameters)
+                ctor = Expr(:(=), :($(type._name)(base::jluna.usertype.UserType)), Expr(:call, :new))
+            else
+                curly_new = Expr(:curly, :new);
+                for t in type._parameters
+                    push!(curly_new.args, t.name)
+                end
+
+                where_call = Expr(
+                    :where,
+                    Expr(
+                        :call,
+                        Expr(
+                            :curly,
+                            type._name,
+                            (collect(p.name for p in type._parameters)...)
+                        ),
+                        :(base::jluna.usertype.UserType)
+                    ),
+                    (collect(p.name for p in type._parameters)...)
+                )
+
+                ctor = Expr(:(=), where_call, Expr(:call, curly_new))
             end
 
+            for (field_name, _) in type._fields
+                field_symbol = QuoteNode(field_name)
+                push!(ctor.args[2].args, :(base._fields[$(field_symbol)]))
+            end
+
+            push!(block.args, ctor)
             out::Expr = :(mutable struct $(parameters) end)
             out.args[3] = block
 
-            return out
+            Base.eval(m, out);
+            return Base.eval(m, type._name)
         end
         export implement
     end
@@ -1135,132 +1120,10 @@ function cppcall(function_name::Symbol, xs...) ::Any
 end
 export cppcall
 
-
-#TODO
-ut = jluna.new_usertype(:test)
-jluna.add_parameter!(ut, :T, Any)
-jluna.add_parameter!(ut, :U, AbstractFloat, Int)
-jluna.add_field!(ut, :_field01, Any)
-jluna.add_field!(ut, :_field02, Integer)
-jluna.add_member_function!(ut, :f, x -> println(x))
-
-mutable struct UserType
-
-    _name::Symbol
-    _is_mutable::Bool
-    _fields::Dict{Symbol, Any}
-    _parameters::Vector{TypeVar}
-
-    UserType(name::Symbol, is_mutable::Bool = true) = new(
-        name,
-        is_mutable,
-        Dict{Symbol, Any}(),
-        Vector{TypeVar}()
-    )
-end
-
-function new_usertype(name::Symbol)
-     return UserType(name)
-end
-
-function set_mutable!(x::UserType, value::Bool) ::Nothing
-    x._is_mutable = value
-    return nothing
-end
-
-function add_field!(x::UserType, name::Symbol, value) ::Nothing
-    x._fields[name] = value
-    return nothing
-end
-
-function add_parameter!(x::UserType, name::Symbol, ub::Type = Any, lb::Type = Union{}) ::Nothing
-   push!(x._parameters, TypeVar(name, lb, ub))
-   return nothing
-end
-
-function implement(type::UserType)
-
-    parameters = Expr(:curly, type._name)
-    for tv in type._parameters
-        if tv.lb == Union{}
-            if tv.ub == Any
-                push!(param.args, tv.name)
-            else
-                push!(parameters.args, Expr(:(<:), tv.name, Symbol(tv.ub)))
-            end
-        else
-            push!(parameters.args, Expr(:comparison, Symbol(tv.lb), :(<:), tv.name, :(<:), Symbol(tv.ub)))
-        end
-    end
-
-    block = Expr(:block)
-
-    for (field_name, field_value) in type._fields
-        push!(block.args, Expr(:(::), field_name, (field_value isa Function ? :(Function) : Symbol(typeof(field_value)))))
-    end
-
-    ctor::Expr = :()
-
-    if isempty(type._parameters)
-        ctor = Expr(:(=), :($(type._name)(base::UserType)), Expr(:call, :new))
-    else
-
-        curly_new = Expr(:curly, :new);
-        for t in type._parameters
-            push!(curly_new.args, t.name)
-        end
-
-        where_call = Expr(
-            :where,
-            Expr(
-                :call,
-                Expr(
-                    :curly,
-                    type._name,
-                    (collect(p.name for p in type._parameters)...)
-                ),
-                :(base::UserType)
-            ),
-            (collect(p.name for p in type._parameters)...)
-        )
-
-        ctor = Expr(:(=), where_call, Expr(:call, curly_new))
-    end
-
-    for (field_name, _) in type._fields
-        field_symbol = QuoteNode(field_name)
-        push!(ctor.args[2].args, :(base._fields[$(field_symbol)]))
-    end
-
-    push!(block.args, ctor)
-    out::Expr = :(mutable struct $(parameters) end)
-    out.args[3] = block
-
-    return out
-end
-
-struct MyType
-
-    _field01
-    _field02
-
-    MyType(base::UserType) = new(
-        base._fields[:_field01],
-        base._fields[:_field02]
-    )
-end
-
-instance = UserType(:TestType)
-add_parameter!(instance, :T, Integer)
-set_mutable!(instance, true)
-add_field!(instance, :_field01, 1234)
-add_field!(instance, :_field02, 4567)
-add_field!(instance, :f, x -> println(x))
-implement(instance)
-
-
-
-
-
-
-
+instance = jluna.usertype.UserType(:TestType)
+jluna.usertype.add_parameter!(instance, :T, Integer)
+jluna.usertype.set_mutable!(instance, true)
+jluna.usertype.add_field!(instance, :_field01, 1234)
+jluna.usertype.add_field!(instance, :_field02, 4567)
+jluna.usertype.add_field!(instance, :f, x -> println(x))
+jluna.usertype.implement(instance)

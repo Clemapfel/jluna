@@ -10,10 +10,31 @@
 using namespace jluna;
 using namespace jluna::detail;
 
+template<typename T>
+struct NonJuliaType
+{
+    inline NonJuliaType(T in)
+        : _member_var(in)
+    {}
+
+    T _member_var;
+
+    int member_function()
+    {
+        return _member_var * _member_var;
+    }
+};
+
 int main()
 {
     State::initialize();
-    auto ut = UserType<Int64>("test");
+    auto ut = UserType<NonJuliaType<T>>("NonJuliaType", [](){
+
+    });
+
+
+
+    return 0;
 
     Test::initialize();
 

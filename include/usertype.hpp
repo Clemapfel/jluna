@@ -20,7 +20,8 @@ namespace jluna
         public:
             /// @brief ctor
             /// @param julia_side_name: exact name of the resulting julia type
-            UserType(const std::string& julia_side_name);
+            template<typename Lambda_t>
+            UserType(const std::string& julia_side_name, Lambda_t boxing_routine);
 
             /// @brief add field
             template<typename Value_t, std::enable_if_t<not std::is_same_v<Value_t, Any*>, Bool> = true>
@@ -44,6 +45,7 @@ namespace jluna
             Type implement(Module module = Main);
 
         private:
+
             Proxy _template;
             jl_datatype_t* _type = nullptr;
     };

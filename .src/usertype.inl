@@ -8,7 +8,8 @@
 namespace jluna
 {
     template<typename T>
-    UserType<T>::UserType(const std::string& name)
+    template<typename Lambda_t>
+    UserType<T>::UserType(const std::string& name, Lambda_t lambda)
     {
         static jl_function_t* new_usertype = jl_find_function("jluna.usertype", "new_usertype");
 
