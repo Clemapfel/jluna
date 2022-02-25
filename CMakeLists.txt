@@ -114,7 +114,10 @@ add_library(jluna SHARED
 
     include/generator_expression.hpp
     .src/generator_expression.cpp
-        include/usertype.hpp include/inline_eval.hpp)
+
+    include/usertype.hpp
+    .src/usertype.inl
+)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C

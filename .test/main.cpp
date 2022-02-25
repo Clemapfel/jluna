@@ -13,9 +13,8 @@ using namespace jluna::detail;
 int main()
 {
     State::initialize();
+    auto ut = UserType<Int64>("test");
 
-                jluna::safe_eval("throw(ErrorException(\"abc\"))");
-return 0;
     Test::initialize();
 
     Test::test("catch c exception", [](){

@@ -285,6 +285,7 @@ namespace jluna::State::detail
         UndefInitializer_t = Type(unroll("Core.UndefInitializer"));
         Union_t = Type(unroll("Core.Union"));
         UnionAll_t = Type(unroll("Core.UnionAll"));
+        UnionEmpty_t = Type((jl_datatype_t*) jl_eval_string("return Union{}"));
         Unsigned_t = Type(unroll("Core.Unsigned"));
         VecElement_t = Type(unroll("Core.VecElement"));
         WeakRef_t = Type(unroll("Core.WeakRef"));

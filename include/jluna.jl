@@ -990,7 +990,7 @@ module jluna
         Base.showerror(io::IO, e::MemberUndefinedException) = print(io, "jluna.MemberUndefinedException: UserType " * string(e._type_name) * " does not have member " * string(e._field_name))
 
         # new
-        function new_usertype(name::Symbol, enable_pretty_syntax::Bool = false) ::UserType
+        function new_usertype(name::Symbol) ::UserType
             out = UserType(name)
         end
         export new_usertype
@@ -1089,14 +1089,15 @@ module jluna
 
 
 
+
+
             println(dump(:(
                 mutable struct $(curly)
 
-                    __ut::UserType
-                    $(type.name)(x::UserType) = new(
+                    #__ut::UserType
+                    #$(type.name)(x::UserType) = new
                 end
             )))
-
         end
         export implement
     end
