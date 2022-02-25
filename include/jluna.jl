@@ -1170,15 +1170,16 @@ end
 
 function add_field!(x::UserType, name::Symbol, value) ::Nothing
     x._fields[name] = value
+    return nothing
 end
 
-function add_parameter!(x::UserType, name::Symbol, ub::Type = Any, lb::Type = Union{})
-   push!(x._parameters[name], TypeVar(name, lb, ub))
+function add_parameter!(x::UserType, name::Symbol, ub::Type = Any, lb::Type = Union{}) ::Nothing
+   push!(x._parameters, TypeVar(name, lb, ub))
+   return nothing
 end
 
 function implement(type::UserType)
 
-    # params and name
     parameters = Expr(:curly, type._name)
     for tv in type._parameters
         if tv.lb == Union{}
@@ -1194,15 +1195,13 @@ function implement(type::UserType)
 
     block = Expr(:block)
 
-    # fields
-    for (field_name, field_type) in type._fields
-        push!(block.args, Expr(:(::), field_name, field_type))
+    for (field_name, field_value) in type._fields
+        push!(block.args, Expr(:(::), field_name, (field_value isa Function ? :(Function) : Symbol(typeof(field_value)))))
     end
 
-    # ctor
+    ctor = Expr(:(=), :($(type._name)(base::UserType)), Expr(:block))
 
-
-
+    push!(block.args, ctor)
     out::Expr = :(mutable struct $(parameters) end)
     out.args[3] = block
 
@@ -1220,10 +1219,13 @@ struct MyType
     )
 end
 
-instance = UserType()
-instance.set_field(instance, :_field01, 1234)
-instance.set_field(instance, :_field02, 4567)
-instance.set_field(instance, :f, x -> println(x))
+instance = UserType(:TestType)
+add_parameter!(instance, :T, Integer)
+set_mutable!(instance, true)
+add_field!(instance, :_field01, 1234)
+add_field!(instance, :_field02, 4567)
+add_field!(instance, :f, x -> println(x))
+implement(instance)
 
 
 
