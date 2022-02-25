@@ -1083,13 +1083,18 @@ module jluna
         function implement(type::UserType, m::Module = Main) ::Type
 
             curly = Expr(:curly, type._name)
-
             for tv in type._parameters
                 push!(curly.args, Expr(:comparison, Symbol(tv.lb), :(<:), tv.name, :(<:), Symbol(tv.ub)))
             end
 
+
+
             println(dump(:(
-                mutable struct $(curly) end
+                mutable struct $(curly)
+
+                    __ut::UserType
+                    $(type.name)(x::UserType) = new(
+                end
             )))
 
         end
