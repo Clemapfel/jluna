@@ -1840,20 +1840,18 @@ Once fully unrolled, we have access to the properties necessary for introspect. 
 
 ## Performance
 
-This section will give some tips on how to achieve the best performance using `jluna`. As of release 0.7, `jluna` went through extensive optimization, minimizing overhead as much as possible. Still, when compared to pure julia, `jluna` will always be slower. Comparing `jluna` to the C-library though is a much fairer comparison and in that aspect it can do quite well, though it is important to be aware of how to avoid overhead and when it is worth to stay with the C-library.
-
-The following suggestions are good to keep in mind when writing performance-critical code:
+This section will give some tips on how to achieve the best performance using `jluna`. As of release 0.7, `jluna` went through extensive optimization, minimizing overhead as much as possible. Still, when compared to pure julia, `jluna` will always be slower. Comparing `jluna` to the C-library, though, is a much fairer comparison, and in that aspect it can do quite well. Yet, it's still important to be aware how to avoid overhead if possible, the following suggestions are good to keep in mind when writing performance-critical code:
 
 ### Stay Julia-Side
 
-All performance critical code should be inside a julia file. All C++ should do, is to manage data and dispatch the julia-side function. For example, let's say we are working on very big matrices. Any matrix operation should happen inside a julia function, and the actual data of the matrix should stay julia-side as much as possible. We can still control julia from C++, `State::eval` has almost no overhead. Similarly, `jluna::Proxy` is just a stand-in for julia-side data. Thus, using julia functions of `jluna::Proxy`s incurs very little overhead compared to doing both only in julia.
+All performance critical code should be inside a julia file. All C++ should do, is to manage data and dispatch the julia-side function. For example, let's say we are working on very big matrices. Any matrix operation should happen inside a julia function, and the actual data of the matrix should stay julia-side as much as possible. We can still control julia from C++, `State::eval` has almost no overhead. Similarly, `jluna::Proxy` is just a stand-in for julia-side data. Thus, using a julia functions on `jluna::Proxy`s incurs very little overhead compared to doing both purely julia-side.
 
 ### Minimize (Un)Boxing
 
 By far the easiest way to completely tank a programs' performance is to unnecessarily box/unbox values constantly. If our program requires operation `A` , `B`, `C` julia-side and `X`, `Y`, `Z` C++-side, it's very important to execute everything in a way that minimizes the number of box/unbox calls. So:
-`ABC <unbox> XYZ <box>` rather than `A <unbox> X <box> B <unbox> Y <box>`, etc.. This may seem obvious when abstracted like this but in a complex application, it's easy to forget. Knowing what calls cause box/unboxing is essential to avoiding pitfalls.
+`ABC <unbox> XYZ <box>` rather than `A <unbox> X <box> B <unbox> Y <box>`, etc.. This may seem obvious when abstracted like this but in a complex application, it is easy to forget. Knowing what calls cause box/unboxing is essential to avoiding this pitfall.
 
-Of course, we can't completely avoid it, either. To illustrate which box/unbox calls should be used as little as possible and which are perfectly fine, we will grade them in terms of how well they perform (where `A+` is "0 overhead" and `F` is "do not use this in performance critical code"):
+Of course, we can't completely avoid it, either. To illustrate which box/unbox calls should be used as little as possible and which are perfectly fine, we'll grade them in terms of how well they perform (where `A+` is "0 overhead" and `F` is "do not use this in performance critical code"):
 
 ```
 // type T of box<T>/unbox<T>    // grade
@@ -1863,18 +1861,19 @@ const char*                     A+
 Proxy                           A
 vector                          A
 std::string                     A
+cppcall / register              B
 Pair                            B
+Tuple                           B
 Set                             B-
-Tuple                           C
 (unordered) map                 D
 lambda                          D-
 ```
 
-Vectors and primitives can be directly swapped between language, which explains their excellent grade, while more complex objects need to be serialized or wrapped before being transferable.
+Vectors and primitives can be directly swapped between language, which explains their excellent grade. More complex objects need to be serialized or wrapped before being transferable, this is the main source of overhead when (un)boxing.
 
 ### Minimize Proxy Construction
 
-The main overhead incurred by `jluna` is that of safety. Anytime a proxy is constructed, its value and name have to be added to an internal state that protects them from the garbage collector. This takes some amount of time; internally, the value is wrapped and a reference to it and its name is stored in a dictionary. Neither of these is that expensive but when a function uses hundreds of proxies over its runtime, this can add up quickly. Consider the following:
+The main overhead incurred by `jluna` is that of safety. Anytime a proxy is constructed, its value and name have to be added to an internal state that protects them from the garbage collector. This takes some amount of time; internally, the value is wrapped and a reference to it and its name is stored in a dictionary. Neither of these is that expensive, but when a function uses hundreds of proxies over its runtime, things can add up quickly. Consider the following:
 
 ```cpp
 auto a = Main["Module1"]["Module2"]["vector_var"][1]["field"];
@@ -1894,7 +1893,7 @@ Proxy a;
 }
 ```
 
-Where each declaration triggers a proxy to be created. At the end of the block, all no proxies are deallocated because the value of a depends on it's host, `vector_var`.
+Where each declaration triggers a proxy to be created. At the end of the block, no proxies are deallocated because they are named proxies. These keep their "hosts" alive, `vector_var[1].field` depends on `vector_var` and thus keeps `vector_var` alive, even if no other reference to it is kept.
 
 If we instead access the value like so:
 
@@ -1902,15 +1901,15 @@ If we instead access the value like so:
 size_t a = State::safe_return<size_t>("Main.Module1.Module2.vector_var[1].field")
 ```
 
-We do not create any proxy at all, increasing performance by up to 6 times. Of course, doing this, we loose the convenience of being assignable, castable, and all other functionalities a named `jluna::Proxy` offers. Still, in performance-critical code, unnamed proxies are almost always faster than named proxies and should be preferred.
+We do not create any proxy at all, increasing performance by up to 6 times compared to the previous statement. Of course, doing this, we loose the convenience of being assignable, castable, and all other functionalities a named `jluna::Proxy` offers. Still, in performance-critical code, unnamed proxies are almost always faster than named proxies and should be preferred.
 
 ### Use the C-Library
 
-When performance needs to be optimal, not "good" or "excellent, but mathematically optimal, it is sometimes necessary to resort to the C-library. Values are hard to manage, the syntax is very clunky and the garbage collector will probably steal many of our values from under our nose and segfault the program, but that is the trade-off of performance vs convenience. <br>
-Luckily the C-library and `jluna` are freely mixable, though we may need to `.update` any proxies whos julia-side value was modified outside `jluna`.
+When performance needs to be optimal, not "good" or "excellent", but mathematically optimal, it is sometimes necessary to resort to the C-library. Values are hard to manage, the syntax is very clunky and the garbage collector will probably steal many of our values from under our nose and segfault the program, but that is the trade-off between performance and convenience. <br>
+Luckily, the C-library and `jluna` are freely mixable, though we may need to `.update` any proxies whos julia-side value was modified outside `jluna`.
 
 ### In Summary
 
-`jluna`s safety features incur an unavoidable overhead. Great care has been taken to minimize this overhead as much as possible, but it is still there. Knowing this, `jluna` is still perfectly fine for most applications. If a part of a library truly is performance critical, however, it may be necessary to avoid using `jluna` as much as possible in order for julia to do, what it's best at: being very fast. When mixing C++ and Julia, though, `jluna` does equally well at bridging that gap, and in many ways it does so better than the C-API.
+`jluna`s safety features incur an unavoidable overhead. Great care has been taken to minimize this overhead as much as possible, but it is still there. Knowing this, `jluna` is still perfectly fine for most applications. If a part of a library truly is performance critical, however, it may be necessary to avoid using `jluna` as much as possible in order for julia to do, what it's best at: being very fast. When mixing C++ and Julia, though, `jluna` does well at bridging that gap, and in many ways it does so better than the C-API.
 
 ---

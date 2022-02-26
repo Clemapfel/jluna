@@ -4,7 +4,7 @@
 
 Julia is a beautiful language, it is well-designed, and well-documented. Julias C-API is also well-designed, less beautiful, and much less... documented.
 
-Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API, replacing it in usage in C++ projects by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
+Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API, replacing it in usage in C++ projects by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
 
 ---
 
@@ -129,7 +129,7 @@ Some of the many advantages `jluna` has over the C-API include:
 
 (in order of priority, highest first)
 
-+ usertypes, creating modules and struct completely C++-side
++ usertypes, interface for (un)boxing arbitrary types
 + thread-safety, parallelization
 + linear algebra wrapper, matrices
 + expression proxies
