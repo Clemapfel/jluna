@@ -7,47 +7,147 @@
 
 #include <julia.h>
 
-
 #include <include/type.hpp>
 #include <include/proxy.hpp>
 
 namespace jluna
 {
+    template<typename>
+    struct UserTypeAlreadyImplementedException;
+
+    template<typename>
+    struct UserTypeNotFullyImplementedException;
+
     /// @brief customizable wrapper for non-julia type T
+    /// @note for information on how to use this class, visit https://github.com/Clemapfel/jluna/blob/master/docs/manual.md#usertypes
     template<typename T>
     class UserType
     {
         public:
-            /// @brief ctor
-            /// @param julia_side_name: exact name of the resulting julia type
-            template<typename Lambda_t>
-            UserType(const std::string& julia_side_name, Lambda_t boxing_routine);
+            /// ### STATIC INTERFACE ################################
+
+            /// @brief original type
+            using original_type = T;
+
+            /// @brief set julia-side name
+            /// @param name
+            static void set_name(const std::string& name);
+
+            /// @brief get julia-side name
+            /// @returns name
+            static const std::string& get_name();
+
+            /// @brief set mutability, no by default
+            /// @param bool
+            static void set_mutable(bool);
+
+            /// @brief get mutability
+            /// @returns bool
+            static bool is_mutable();
 
             /// @brief add field
-            template<typename Value_t, std::enable_if_t<not std::is_same_v<Value_t, Any*>, Bool> = true>
-            void add_field(const std::string& name, Type type, Value_t initial_value);
-            void add_field(const std::string& name, Type type = Any_t, Any* initial_value = jl_undef_initializer());
-
-            /// @brief add const field
-            template<typename Value_t, std::enable_if_t<not std::is_same_v<Value_t, Any*>, Bool> = true>
-            void add_const_field(const std::string& name, Type type, Value_t initial_value);
-            void add_const_field(const std::string& name, Type type = Any_t, Any* initial_value = jl_undef_initializer());
-
-            /// @brief add member function
-            template<typename Lambda_t, std::enable_if_t<not std::is_same_v<Lambda_t, Any*>, Bool> = true>
-            void add_function(const std::string& name, Lambda_t lambda);
-            void add_function(const std::string& name, Any* function);
+            /// @param name of field
+            /// @param type of field
+            /// @param initial value
+            template<Boxable Value_t>
+            static void add_field(const std::string& name, Type type, Value_t initial_value);
 
             /// @brief add parameter
-            void add_parameter(const std::string& name, Type upper_bound = Any_t, Type lower_bound = UnionEmpty_t);
+            /// @param name: e.g. T
+            /// @param upper_bound: .ub of TypeVar, equivalent to T <: upper_bound
+            /// @param lower_bound: .lb of TypeVar, equivalent to lower_bound <: T
+            static void add_parameter(const std::string& name, Type upper_bound = Any_t, Type lower_bound = UnionEmpty_t);
+
+            /// @brief boxing routine called during box<UserType<T>>
+            /// @param: lambda
+            /// @note c.f. https://github.com/Clemapfel/jluna/blob/master/docs/manual.md#usertypes
+            static void set_boxing_routine(std::function<Any*(T)> lambda);
+
+            /// @brief boxing routine called during unbox<UserType<T>>
+            /// @param: lambda
+            /// @note c.f. https://github.com/Clemapfel/jluna/blob/master/docs/manual.md#usertypes
+            static void set_boxing_routine(std::function<T(Any*)> lambda);
 
             /// @brief push to state and eval, cannot be extended afterwards
-            Type implement(Module module = Main);
+            /// @param module: module the type will be set in
+            /// @returns julia-side type
+            static Type implement(Module module = Main);
+
+            /// @brief is already implemented
+            /// @brief true if implement was called, false otherwise
+            static bool is_implemented();
+
+            /// @brief is fully initialized
+            /// @returns true if boxing, unboxing and name was set, false otherwise
+            static bool is_initialized();
+
+            /// @brief no ctor
+            UserType() = delete;
+
+            /// @brief instance this type using an original
+            /// @param cpp_side_type
+            /// @returns proxy to new instance
+            static Proxy create_instance(T);
 
         private:
+            static inline bool _already_initialized = false;
+            static inline bool _already_implemented = false;
+            static void pre_initialize();
 
-            Proxy _template;
-            jl_datatype_t* _type = nullptr;
+            static inline Proxy _template = Proxy(jl_nothing);
+    };
+
+    /// @brief unbox using unboxing routine
+    /// @param pointer
+    /// @returns T
+    template<typename T,
+        typename U = typename T::original_type,
+        typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool> = true>
+    inline T unbox(Any* in)
+    {
+        if(not T::is_implemented() or not T::is_initialized())
+            throw UserTypeNotFullyImplementedException<T>();
+
+        return T::unboxing_routine(in);
+    }
+
+    /// @brief box using boxing routine
+    /// @param
+    /// @returns pointer to julia-side memory
+    template<typename T,
+        typename U = typename T::original_type,
+        typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool> = true>
+    inline Any* box(T in)
+    {
+        if(not T::is_implemented() or not T::is_initialized())
+            throw UserTypeNotFullyImplementedException<T>();
+
+        return T::boxing_routine(in);
+    }
+
+    /// @brief exception raised if usertype is implemented again
+    template<typename T>
+    struct UserTypeAlreadyImplementedException : public std::exception
+    {
+        /// @brief ctor
+        /// @param name
+        UserTypeAlreadyImplementedException();
+
+        /// @brief what
+        /// @returns message
+        virtual const char* what() const noexcept override final;
+    };
+
+    template<typename T>
+    struct UserTypeNotFullyImplementedException : public std::exception
+    {
+        /// @brief ctor
+        /// @param name
+        UserTypeNotFullyImplementedException();
+
+        /// @brief what
+        /// @returns message
+        virtual const char* what() const noexcept override final;
     };
 }
 
