@@ -970,12 +970,14 @@ module jluna
 
             _name::Symbol
             _is_mutable::Bool
-            _fields::Dict{Symbol, Any}
+            _field_types::Dict{Symbol, Symbol}
+            _field_values::Dict{Symbol, Any}
             _parameters::Vector{TypeVar}
 
             UserType(name::Symbol, is_mutable::Bool = true) = new(
                 name,
                 is_mutable,
+                Dict{Symbol, Type}(),
                 Dict{Symbol, Any}(),
                 Vector{TypeVar}()
             )
@@ -1008,8 +1010,10 @@ module jluna
 
         add field to usertype, can also be a function
         """
-        function add_field!(x::UserType, name::Symbol, value) ::Nothing
-            x._fields[name] = value
+        function add_field!(x::UserType, name::Symbol, type::Symbol, value = missing) ::Nothing
+
+            x._field_types[name] = type
+            x._field_values[name] = value
             return nothing
         end
         export add_field!
@@ -1047,8 +1051,8 @@ module jluna
 
             block = Expr(:block)
 
-            for (field_name, field_value) in type._fields
-                push!(block.args, Expr(:(::), field_name, (field_value isa Function ? :(Function) : Symbol(typeof(field_value)))))
+            for (field_name, field_type) in type._field_types
+                push!(block.args, Expr(:(::), field_name, (field_type isa Function ? :(Function) : Symbol(field_type))))
             end
 
             ctor::Expr = :()
@@ -1078,9 +1082,9 @@ module jluna
                 ctor = Expr(:(=), where_call, Expr(:call, curly_new))
             end
 
-            for (field_name, _) in type._fields
+            for (field_name, field_value) in type._field_values
                 field_symbol = QuoteNode(field_name)
-                push!(ctor.args[2].args, :(base._fields[$(field_symbol)]))
+                push!(ctor.args[2].args, :(base._field_values[$(field_symbol)]))
             end
 
             push!(block.args, ctor)

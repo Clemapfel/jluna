@@ -10,43 +10,54 @@
 using namespace jluna;
 using namespace jluna::detail;
 
-template<typename T>
 struct NonJuliaType
 {
-    NonJuliaType() = default;
-
-    inline NonJuliaType(T in)
-        : _member_var(in)
-    {}
-
-    T member_function() {return _member_var * _member_var;}
-
-    T get_member() const {return _member_var;}
-
-    void set_member(T val) {_member_var = val;}
+    public:
+        NonJuliaType() = default;
+    
+        inline NonJuliaType(Int64 in)
+            : _member_var(in)
+        {}
+        
+        inline Int64 get_member() const {
+            return _member_var;
+        }
+        
+        inline void set_member(Int64 val) {
+            _member_var = val;
+        }
 
     private:
-        T _member_var;
+        Int64 _member_var;
 };
 
 int main()
 {
     State::initialize();
 
-    UserType<NonJuliaType<Int64>>::set_name("NonJuliaType");
-    UserType<NonJuliaType<Int64>>::add_field(
+    UserType<NonJuliaType>::set_name("NonJuliaType");
+    UserType<NonJuliaType>::add_field(
         "_member_var",
-        [](NonJuliaType<Int64>& in) -> Any* {return box(in.get_member());},
-        [](NonJuliaType<Int64>& out, Any* field) -> void {out.set_member(unbox<Int64>(field));}
+        Symbol("Int64"),
+        [](NonJuliaType& in) -> Any* {return box(in.get_member());},
+        [](NonJuliaType& out, Any* field) -> void {out.set_member(unbox<Int64>(field));}
     );
 
-    UserType<NonJuliaType<Int64>>::implement();
+    UserType<NonJuliaType>::implement();
 
+    auto cpp_side_instance = NonJuliaType(1234);
 
-    auto mine = NonJuliaType<Int64>(1234);
-    auto* out = UserType<NonJuliaType<Int64>>::box(mine);
-    Base["println"](out);
+    auto _ = State::new_named_undef("julia_side_instance");
+    Main["julia_side_instance"] = UserType<NonJuliaType>::box(cpp_side_instance);
+
+    State::eval(R"(
+        println(typeof(julia_side_instance))
+        println(fieldnames(julia_side_instance))
+        println(julia_side_instance._member_var)
+    )");
+
     return 0;
+
 
     Test::initialize();
 

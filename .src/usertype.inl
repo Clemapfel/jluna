@@ -70,10 +70,10 @@ namespace jluna
     }
 
     template<typename T>
-    void UserType<T>::add_field(const std::string& name, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
+    void UserType<T>::add_field(const std::string& name, const std::string& type, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
     {
         pre_initialize();
-        _mapping.insert({name, {box_get, unbox_set}});
+        _mapping.insert({name, {box_get, unbox_set, type}});
     }
 
     template<typename T>
@@ -85,10 +85,17 @@ namespace jluna
         jl_gc_pause;
         static jl_function_t* add_field = jl_find_function("jluna.usertype", "add_field!");
 
-        for (auto pair : _mapping)
-            jluna::safe_call(add_field, _template, jl_symbol(pair.first.c_str()), pair.second.first(in));
+        for (auto& pair : _mapping)
+            jluna::safe_call(
+                add_field,
+                _template,
+                jl_symbol(pair.first.c_str()),
+                jl_symbol(std::get<2>(pair.second).c_str()),
+                std::get<0>(pair.second)(in)
+            );
 
-        auto* out = jluna::safe_call(_implemented_type, _template);
+        auto* out = jl_call1(_implemented_type, _template);
+        forward_last_exception();
         jl_gc_unpause;
         return out;
     }
@@ -105,7 +112,7 @@ namespace jluna
         auto out = T(); //todo enforce this by concept
 
         for (auto pair : _mapping)
-            pair.second.second(out, jluna::safe_call(getfield, in, jl_symbol(pair.first)));
+            std::get<1>(pair.second)(out, jluna::safe_call(getfield, in, jl_symbol(pair.first)));
 
         return out;
     }
@@ -129,6 +136,16 @@ namespace jluna
             throw UserTypeNotFullyInitializedException<T>();
         
         jl_gc_pause;
+        static jl_function_t* add_field = jl_find_function("jluna.usertype", "add_field!");
+
+        for (auto& pair : _mapping)
+            jluna::safe_call(
+                add_field,
+                _template,
+                jl_symbol(pair.first.c_str()),
+                jl_symbol(std::get<2>(pair.second).c_str())
+            );
+
         static jl_function_t* implement = jl_find_function("jluna.usertype", "implement");
         _implemented_type = jluna::safe_call(implement, _template, module);
         _implemented = true;
