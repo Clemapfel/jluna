@@ -73,7 +73,14 @@ namespace jluna
     void UserType<T>::add_field(const std::string& name, const std::string& type, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
     {
         pre_initialize();
-        _mapping.insert({name, {box_get, unbox_set, type}});
+        _mapping.insert({name, {box_get, unbox_set, Symbol(type)}});
+    }
+
+    template<typename T>
+    void UserType<T>::add_field(const std::string& name, Type type, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
+    {
+        pre_initialize();
+        _mapping.insert({name, {box_get, unbox_set, type.get_symbol()}});
     }
 
     template<typename T>
@@ -89,9 +96,9 @@ namespace jluna
             jluna::safe_call(
                 add_field,
                 _template,
-                jl_symbol(pair.first.c_str()),
-                jl_symbol(std::get<2>(pair.second).c_str()),
-                std::get<0>(pair.second)(in)
+                jl_symbol(pair.first.c_str()),                  // name
+                jl_symbol(std::get<2>(pair.second).c_str()),    // typename
+                std::get<0>(pair.second)(in)                    // getted value
             );
 
         auto* out = jl_call1(_implemented_type, _template);
@@ -142,8 +149,8 @@ namespace jluna
             jluna::safe_call(
                 add_field,
                 _template,
-                jl_symbol(pair.first.c_str()),
-                jl_symbol(std::get<2>(pair.second).c_str())
+                jl_symbol(pair.first.c_str()),                  // name
+                jl_symbol(std::get<2>(pair.second).c_str())     // typename
             );
 
         static jl_function_t* implement = jl_find_function("jluna.usertype", "implement");

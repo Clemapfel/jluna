@@ -45,6 +45,7 @@ namespace jluna
             /// @param type of field
             /// @param initial value
             static void add_field(const std::string& name, const std::string& type_name, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set);
+            static void add_field(const std::string& name, Type type, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set);
 
             /// @brief add parameter
             /// @param name: e.g. T
@@ -83,7 +84,7 @@ namespace jluna
             static inline std::map<std::string, std::tuple<
                 std::function<Any*(T&)>,        // getter
                 std::function<void(T&, Any*)>,  // setter
-                const std::string&              // symbol of typename
+                Symbol                          // symbol of typename
             >> _mapping = {};
 
             static inline Any* _implemented_type = nullptr;
