@@ -99,9 +99,8 @@ namespace jluna
             static std::function<T(Any*)> _unboxing_routine;
             static inline bool _unboxing_routine_set = false;
 
-            bool _name_set = false;
-            bool _implemented = false;
-
+            static inline bool _name_set = false;
+            static inline bool _implemented = false;
     };
 
     /// @brief unbox using unboxing routine

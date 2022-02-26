@@ -656,7 +656,13 @@ module jluna
         make_named_proxy_id(id::Number, owner_id::ProxyID) ::ProxyID = return Expr(:ref, owner_id, convert(Int64, id))
 
         # assign to proxy id
-        assign(new_value::T, name::ProxyID) where T = return Main.eval(Expr(:(=), name, new_value));
+        function assign(new_value::T, name::ProxyID) where T
+            if new_value isa Symbol || new_value isa Expr
+                return Main.eval(Expr(:(=), name, QuoteNode(new_value)))
+            else
+                return Main.eval(Expr(:(=), name, new_value));
+            end
+        end
 
         # eval proxy id
         evaluate(name::ProxyID) ::Any = return Main.eval(name)

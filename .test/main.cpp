@@ -17,21 +17,21 @@ struct NonJuliaType
         : _member_var(in)
     {}
 
-    T _member_var;
+    T member_function() {return _member_var * _member_var;}
 
-    int member_function()
-    {
-        return _member_var * _member_var;
-    }
+    T get_member() const {return _member_var;}
+
+    void set_member(T val) {_member_var = val;}
+
+    private:
+        T _member_var;
 };
 
 int main()
 {
     State::initialize();
-    auto ut = UserType<NonJuliaType<T>>("NonJuliaType", [](){
 
-    });
-
+    UserType<NonJuliaType<Int64>>::set_name("NonJuliaType");
 
 
     return 0;

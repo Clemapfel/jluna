@@ -20,29 +20,18 @@ namespace jluna
         str << "\tb) UserType<T>::set_boxing_routine was used to implement the boxing routine" << std::endl;
         str << "\tc) UserType<T>::set_unboxing_routine was used to implement the unboxing routine" << std::endl;
         str << "\td) after all of the above, UserType<T>::implement was called exactly once" << std::endl;
-        return str.str.c_str();
+        return str.str().c_str();
     }
     
     template<typename T>
     void UserType<T>::pre_initialize()
     {
-        if (_already_pre_initialized)
+        if (_pre_initialized)
             return;
 
         throw_if_uninitialized();
         jl_gc_pause;
         _template = Proxy(jl_eval_string("return jluna.usertype.new_usertype(:unitialized)"));
-
-        _boxing_routine = [](T _) -> Any* {
-            throw UserTypeNotFullyInitializedException<T>();
-            return jl_nothing;
-        };
-
-        _unboxing_routine = [](Any* _) -> T {
-            throw UserTypeNotFullyInitializedException<T>();
-            return;
-        };
-
         jl_gc_unpause;
     }
 
@@ -50,7 +39,9 @@ namespace jluna
     void UserType<T>::set_name(const std::string& name)
     {
         pre_initialize();
-        _template["_name"] = jl_symbol(name.c_str());
+        jl_gc_pause;
+        _template["_name"] = Symbol(name);
+        jl_gc_unpause;
         _name_set = true;
     }
 
@@ -72,7 +63,7 @@ namespace jluna
     bool UserType<T>::is_mutable()
     {
         pre_initialize();
-        return _template["_is_mutable"] = b;
+        return _template["_is_mutable"];
     }
 
     template<typename T>
@@ -101,7 +92,7 @@ namespace jluna
     {
         pre_initialize();
 
-        _boxing_routine = lamdba;
+        _boxing_routine = lambda;
         _boxing_routine_set = true;
     }
 
@@ -115,7 +106,7 @@ namespace jluna
     }
 
     template<typename T>
-    void UserType<T>::implement(Module module)
+    Type UserType<T>::implement(Module module)
     {
         pre_initialize();
         
@@ -127,7 +118,7 @@ namespace jluna
         
         jl_gc_pause;
         static jl_function_t* implement = jl_find_function("jluna.usertype", "implement");
-        jluna::safe_call(implement, _template, module);
+        auto res = Type((jl_datatype_t*) jluna::safe_call(implement, _template, module));
         _implemented = true;
         jl_gc_unpause;
     }
@@ -145,7 +136,7 @@ namespace jluna
     }
 
     template<typename T>
-    static Proxy UserType<T>::create_instance(T in)
+    Proxy UserType<T>::create_instance(T in)
     {
         jl_gc_pause;
         auto out = Proxy(box<T>(in));
