@@ -33,6 +33,8 @@ namespace jluna
         jl_gc_pause;
         _template = Proxy(jl_eval_string("return jluna.usertype.new_usertype(:unitialized)"));
         jl_gc_unpause;
+
+        _pre_initialized = true;
     }
 
     template<typename T>
@@ -40,7 +42,8 @@ namespace jluna
     {
         pre_initialize();
         jl_gc_pause;
-        _template["_name"] = Symbol(name);
+        static jl_function_t* setfield = jl_get_function(jl_base_module, "setfield!");
+        jluna::safe_call(setfield, _template, jl_symbol("_name"), jl_symbol(name.c_str()));
         jl_gc_unpause;
         _name_set = true;
     }
@@ -67,14 +70,44 @@ namespace jluna
     }
 
     template<typename T>
-    template<Boxable Value_t>
-    void UserType<T>::add_field(const std::string& name, Value_t initial_value)
+    void UserType<T>::add_field(const std::string& name, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
     {
         pre_initialize();
+        _mapping.insert({name, {box_get, unbox_set}});
+    }
+
+    template<typename T>
+    Any* UserType<T>::box(T in)
+    {
+        if (not _implemented)
+            throw UserTypeNotFullyInitializedException<T>();
+
         jl_gc_pause;
         static jl_function_t* add_field = jl_find_function("jluna.usertype", "add_field!");
-        jluna::safe_call(add_field, _template, jl_symbol(name.c_str()), box<Value_t>(initial_value));
+
+        for (auto pair : _mapping)
+            jluna::safe_call(add_field, _template, jl_symbol(pair.first.c_str()), pair.second.first(in));
+
+        auto* out = jluna::safe_call(_implemented_type, _template);
         jl_gc_unpause;
+        return out;
+    }
+
+    template<typename T>
+    T UserType<T>::unbox(Any* in)
+    {
+        if (not _implemented)
+            throw UserTypeNotFullyInitializedException<T>();
+
+        jl_gc_pause;
+        static jl_function_t* getfield = jl_get_function(jl_base_module, "getfield");
+
+        auto out = T(); //todo enforce this by concept
+
+        for (auto pair : _mapping)
+            pair.second.second(out, jluna::safe_call(getfield, in, jl_symbol(pair.first)));
+
+        return out;
     }
 
     template<typename T>
@@ -88,39 +121,20 @@ namespace jluna
     }
 
     template<typename T>
-    void UserType<T>::set_boxing_routine(std::function<Any*(T)> lambda)
-    {
-        pre_initialize();
-
-        _boxing_routine = lambda;
-        _boxing_routine_set = true;
-    }
-
-    template<typename T>
-    void UserType<T>::set_unboxing_routine(std::function<T(Any*)> lambda)
-    {
-        pre_initialize();
-
-        _unboxing_routine = lambda;
-        _unboxing_routine_set = true;
-    }
-
-    template<typename T>
     Type UserType<T>::implement(Module module)
     {
         pre_initialize();
-        
-        if (_implemented)
-            throw UserTypeAlreadyImplementedException<T>();
 
         if (not is_initialized())
             throw UserTypeNotFullyInitializedException<T>();
         
         jl_gc_pause;
         static jl_function_t* implement = jl_find_function("jluna.usertype", "implement");
-        auto res = Type((jl_datatype_t*) jluna::safe_call(implement, _template, module));
+        _implemented_type = jluna::safe_call(implement, _template, module);
         _implemented = true;
         jl_gc_unpause;
+
+        return Type((jl_datatype_t*) _implemented_type);
     }
 
     template<typename T>
@@ -132,15 +146,6 @@ namespace jluna
     template<typename T>
     bool UserType<T>::is_initialized()
     {
-        return _boxing_routine_set && _unboxing_routine_set && _name_set;
-    }
-
-    template<typename T>
-    Proxy UserType<T>::create_instance(T in)
-    {
-        jl_gc_pause;
-        auto out = Proxy(box<T>(in));
-        jl_gc_unpause;
-        return out;
+        return _name_set;
     }
 }

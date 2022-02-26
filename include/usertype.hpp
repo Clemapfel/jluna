@@ -13,9 +13,6 @@
 namespace jluna
 {
     template<typename>
-    struct UserTypeAlreadyImplementedException;
-
-    template<typename>
     struct UserTypeNotFullyInitializedException;
 
     /// @brief customizable wrapper for non-julia type T
@@ -47,24 +44,13 @@ namespace jluna
             /// @param name of field
             /// @param type of field
             /// @param initial value
-            template<Boxable Value_t>
-            static void add_field(const std::string& name, Value_t initial_value);
+            static void add_field(const std::string& name, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set);
 
             /// @brief add parameter
             /// @param name: e.g. T
             /// @param upper_bound: .ub of TypeVar, equivalent to T <: upper_bound
             /// @param lower_bound: .lb of TypeVar, equivalent to lower_bound <: T
             static void add_parameter(const std::string& name, Type upper_bound = Any_t, Type lower_bound = UnionEmpty_t);
-
-            /// @brief boxing routine called during box<UserType<T>>
-            /// @param: lambda
-            /// @note c.f. https://github.com/Clemapfel/jluna/blob/master/docs/manual.md#usertypes
-            static void set_boxing_routine(std::function<Any*(T)> lambda);
-
-            /// @brief boxing routine called during unbox<UserType<T>>
-            /// @param: lambda
-            /// @note c.f. https://github.com/Clemapfel/jluna/blob/master/docs/manual.md#usertypes
-            static void set_unboxing_routine(std::function<T(Any*)> lambda);
 
             /// @brief push to state and eval, cannot be extended afterwards
             /// @param module: module the type will be set in
@@ -82,10 +68,8 @@ namespace jluna
             /// @brief no ctor
             UserType() = delete;
 
-            /// @brief instance this type using an original
-            /// @param cpp_side_type
-            /// @returns proxy to new instance
-            static Proxy create_instance(T);
+            static Any* box(T);
+            static T unbox(Any*);
 
         private:
             static void pre_initialize();
@@ -93,14 +77,11 @@ namespace jluna
             static inline bool _pre_initialized = false;
             static inline Proxy _template = Proxy(jl_nothing);
 
-            static std::function<Any*(T)> _boxing_routine;
-            static inline bool _boxing_routine_set = false;
-
-            static std::function<T(Any*)> _unboxing_routine;
-            static inline bool _unboxing_routine_set = false;
-
             static inline bool _name_set = false;
             static inline bool _implemented = false;
+
+            static inline std::map<std::string, std::pair<std::function<Any*(T&)>, std::function<void(T&, Any*)>>> _mapping = {};
+            static inline Any* _implemented_type = nullptr;
     };
 
     /// @brief unbox using unboxing routine
@@ -109,13 +90,7 @@ namespace jluna
     template<typename T,
         typename U = typename T::original_type,
         typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool> = true>
-    inline T unbox(Any* in)
-    {
-        if(not T::is_implemented() or not T::is_initialized())
-            throw UserTypeNotFullyInitializedException<T>();
-
-        return T::unboxing_routine(in);
-    }
+    T unbox(Any* in);
 
     /// @brief box using boxing routine
     /// @param
@@ -123,14 +98,9 @@ namespace jluna
     template<typename T,
         typename U = typename T::original_type,
         typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool> = true>
-    inline Any* box(T in)
-    {
-        if(not T::is_implemented() or not T::is_initialized())
-            throw UserTypeNotFullyInitializedException<T>();
+    Any* box(T in);
 
-        return T::boxing_routine(in);
-    }
-
+    /// @brief exception thrown
     template<typename T>
     struct UserTypeNotFullyInitializedException : public std::exception
     {

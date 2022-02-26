@@ -13,6 +13,8 @@ using namespace jluna::detail;
 template<typename T>
 struct NonJuliaType
 {
+    NonJuliaType() = default;
+
     inline NonJuliaType(T in)
         : _member_var(in)
     {}
@@ -32,8 +34,18 @@ int main()
     State::initialize();
 
     UserType<NonJuliaType<Int64>>::set_name("NonJuliaType");
-    UserType<NonJuliaType<Int64>>::add_field("_member_var", Int64(0));
+    UserType<NonJuliaType<Int64>>::add_field(
+        "_member_var",
+        [](NonJuliaType<Int64>& in) -> Any* {return box(in.get_member());},
+        [](NonJuliaType<Int64>& out, Any* field) -> void {out.set_member(unbox<Int64>(field));}
+    );
 
+    UserType<NonJuliaType<Int64>>::implement();
+
+
+    auto mine = NonJuliaType<Int64>(1234);
+    auto* out = UserType<NonJuliaType<Int64>>::box(mine);
+    Base["println"](out);
     return 0;
 
     Test::initialize();

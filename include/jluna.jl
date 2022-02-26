@@ -1030,7 +1030,7 @@ module jluna
 
         evaluate the type
         """
-        function implement(type::UserType, m::Module = Main) ::Type
+        function implement(type::UserType, m::Module = Main)
 
             parameters = Expr(:curly, type._name)
             for tv in type._parameters
@@ -1087,8 +1087,9 @@ module jluna
             out::Expr = :(mutable struct $(parameters) end)
             out.args[3] = block
 
-            Base.eval(m, out);
-            return Base.eval(m, type._name)
+            println(out)
+            Base.eval(m, out)
+            return getfield(m, type._name)
         end
         export implement
     end
@@ -1125,11 +1126,3 @@ function cppcall(function_name::Symbol, xs...) ::Any
     return jluna._cppcall.get_result()
 end
 export cppcall
-
-instance = jluna.usertype.UserType(:TestType)
-jluna.usertype.add_parameter!(instance, :T, Integer)
-jluna.usertype.set_mutable!(instance, true)
-jluna.usertype.add_field!(instance, :_field01, 1234)
-jluna.usertype.add_field!(instance, :_field02, 4567)
-jluna.usertype.add_field!(instance, :f, x -> println(x))
-jluna.usertype.implement(instance)
