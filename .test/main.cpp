@@ -32,7 +32,7 @@ int main()
     State::initialize();
 
     UserType<NonJuliaType<Int64>>::set_name("NonJuliaType");
-
+    UserType<NonJuliaType<Int64>>::add_field("_member_var", Int64(0));
 
     return 0;
 
