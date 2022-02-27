@@ -10,52 +10,68 @@
 using namespace jluna;
 using namespace jluna::detail;
 
+// julia incompatible arbitrary type
 struct NonJuliaType
 {
     public:
         NonJuliaType() = default;
     
         inline NonJuliaType(Int64 in)
-            : _member_var(in)
+            : _member(in)
         {}
         
         inline Int64 get_member() const {
-            return _member_var;
+            return _member;
         }
         
         inline void set_member(Int64 val) {
-            _member_var = val;
+            _member = val;
         }
 
     private:
-        Int64 _member_var;
+        Int64 _member;
 };
 
 int main()
 {
     State::initialize();
 
+    // setup usertype interface
     auto usertype = UserType<NonJuliaType>("NonJuliaType");
-    usertype.set_name("NonJuliaType");
     usertype.add_field(
-        "_member_var",
-                "Int64",
+        "_member",
+        "Int64",
         [](NonJuliaType& in) -> Any* {return box(in.get_member());},
         [](NonJuliaType& out, Any* field) -> void {out.set_member(unbox<Int64>(field));}
     );
 
-    //usertype.implement();
+    // implement
+    usertype.implement();
 
+    // cpp-side instance...
     auto cpp_side_instance = NonJuliaType(1234);
 
-    auto _ = State::new_named_undef("julia_side_instance");
-    Main["julia_side_instance"] = box<UserType<NonJuliaType>>(cpp_side_instance);
+    // ... can now be transfered to julia
+    State::new_named_undef("julia_side_instance") = box<UserType<NonJuliaType>>(cpp_side_instance);
 
+    // print, then modify instance julia-side
+    jl_eval_string(R"(
+        println(julia_side_instance)
+        julia_side_instance._member = 4567
+    )");
+
+    // move back cpp-side
+    auto back_cpp_side = unbox<UserType<NonJuliaType>>(jl_eval_string("return julia_side_instance"));
+    std::cout << back_cpp_side.get_member() << std::endl;
+
+    /*
+    
     jl_eval_string(R"(
         println(typeof(julia_side_instance))
         println(fieldnames(typeof(julia_side_instance)))
-        println(julia_side_instance._member_var)
+        println(julia_side_instance._member)
     )");
+     */
 
     return 0;
 

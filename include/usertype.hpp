@@ -84,17 +84,30 @@ namespace jluna
             >> _mapping = {};
     };
 
+    /// @brief wrapper
+    template<typename T>
+    struct UserTypeWrapper : public std::reference_wrapper<T>
+    {
+        UserTypeWrapper(T& in)
+            : std::reference_wrapper<T>(in)
+        {}
+    };
+
     /// @brief exception thrown when usertype is used before being implemented
     template<typename T>
     struct UserTypeNotFullyInitializedException : public std::exception
     {
-        /// @brief ctor
-        /// @param name
-        UserTypeNotFullyInitializedException();
+        public:
+            /// @brief ctor
+            /// @param name
+            UserTypeNotFullyInitializedException();
 
-        /// @brief what
-        /// @returns message
-        virtual const char* what() const noexcept override final;
+            /// @brief what
+            /// @returns message
+            const char* what() const noexcept override final;
+
+        private:
+            std::string _msg;
     };
 }
 

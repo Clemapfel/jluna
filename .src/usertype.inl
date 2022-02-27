@@ -9,16 +9,18 @@ namespace jluna
 {
     template<typename T>
     UserTypeNotFullyInitializedException<T>::UserTypeNotFullyInitializedException()
-    {}
+    {
+        std::stringstream str;
+        str << "[C++][EXCEPTION] UserType interface for this type has not yet been implemented, make sure that the following actions were performed:" << std::endl;
+        str << "\ta) UserType<T>::UserType(const std::string&) was used instance the type at least once" << std::endl;
+        str << "\tb) After calling the ctor, UserType<T>::implement was called exactly once" << std::endl;
+        _msg = str.str();
+    }
 
     template<typename T>
     const char * UserTypeNotFullyInitializedException<T>::what() const noexcept
     {
-        std::stringstream str;
-        str << "[C++][EXCEPTION] UserType interface for this type has not yet been fully specified, make sure that the following actions were performed:" << std::endl;
-        str << "\ta) UserType<T>::UserType(const std::string&) was used instance the type at least once" << std::endl;
-        str << "\tb) After calling the ctor, UserType<T>::implement was called exactly once" << std::endl;
-        return str.str().c_str();
+        return _msg.c_str();
     }
 
     template<typename T>
@@ -69,6 +71,9 @@ namespace jluna
     template<typename T>
     Any* UserType<T>::box(T in)
     {
+        if (not is_implemented())
+            throw UserTypeNotFullyInitializedException<T>();
+
         jl_gc_pause;
         static jl_function_t* set_field = jl_find_function("jluna.usertype", "set_field!");
 
@@ -89,13 +94,16 @@ namespace jluna
     template<typename T>
     T UserType<T>::unbox(Any* in)
     {
+        if (not is_implemented())
+            throw UserTypeNotFullyInitializedException<T>();
+
         jl_gc_pause;
         static jl_function_t* getfield = jl_get_function(jl_base_module, "getfield");
 
         auto out = T();
 
         for (auto pair : _mapping)
-            std::get<2>(pair.second)(out, jluna::safe_call(getfield, in, jl_symbol(pair.first)));
+            std::get<2>(pair.second)(out, jluna::safe_call(getfield, in, jl_symbol(pair.first.c_str())));
 
         jl_gc_unpause;
         return out;
@@ -147,4 +155,9 @@ namespace jluna
         return UserType<U>::box(in);
     }
 
+    template<typename T>
+    Any* box(UserTypeWrapper<T> wrapper)
+    {
+        UserType<T>::box(wrapper.get());
+    }
 }

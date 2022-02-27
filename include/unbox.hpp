@@ -145,7 +145,7 @@ namespace jluna
     template<Is<Type> T>
     T unbox(Any* value);
 
-    /// @brief unbox usertype to usertype
+    /// @brief unbox usertype wrapper to usertype
     template<typename>
     class UserType;
 

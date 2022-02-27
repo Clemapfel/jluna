@@ -185,7 +185,7 @@ namespace jluna
     template<Is<Type> T>
     Any* box(T);
 
-    /// @brief box usertype to usertype
+    /// @brief box usertype wrapper to usertype
     template<typename>
     class UserType;
 
@@ -193,6 +193,12 @@ namespace jluna
         typename U = typename T::original_type,
         typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool> = true>
     Any* box(U in);
+
+    template<typename>
+    class UserTypeWrapper;
+
+    template<typename T>
+    Any* box(UserTypeWrapper<T>);
 
     /// @concept requires a value to be boxable into a julia-side value
     template<typename T>
