@@ -114,4 +114,17 @@ namespace jluna
     {
         return _implemented;
     }
+
+    template<typename T, typename U, typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool>>
+    T unbox(Any* in)
+    {
+        return UserType<T>::unbox(in);
+    }
+
+    template<typename T, typename U, typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool>>
+    Any* box(T in)
+    {
+        return UserType<T>::box(in);
+    }
+
 }

@@ -23,27 +23,27 @@ namespace jluna
             /// @brief original type
             using original_type = T;
 
-            ///
+            /// @brief instance
             UserType(const std::string& name);
 
             /// @brief set julia-side name
             /// @param name
-            void set_name(const std::string& name);
+            static void set_name(const std::string& name);
 
             /// @brief get julia-side name
             /// @returns name
-            std::string get_name();
+            static std::string get_name();
 
             /// @brief set mutability, no by default
             /// @param bool
-            void set_mutable(bool);
+            static void set_mutable(bool);
 
             /// @brief get mutability
             /// @returns bool
-            bool is_mutable();
+            static bool is_mutable();
 
             /// @brief add field
-            void add_field(
+            static void add_field(
                 const std::string& name,
                 const std::string& type_name,
                 std::function<Any*(T&)> box_get,
@@ -54,30 +54,30 @@ namespace jluna
             /// @param name: e.g. T
             /// @param upper_bound: .ub of TypeVar, equivalent to T <: upper_bound
             /// @param lower_bound: .lb of TypeVar, equivalent to lower_bound <: T
-            void add_parameter(const std::string& name, Type upper_bound = Any_t, Type lower_bound = UnionEmpty_t);
+            static void add_parameter(const std::string& name, Type upper_bound = Any_t, Type lower_bound = UnionEmpty_t);
 
             /// @brief push to state and eval, cannot be extended afterwards
             /// @param module: module the type will be set in
             /// @returns julia-side type
-            Type implement(Module module = Main);
+            static Type implement(Module module = Main);
 
             /// @brief is already implemented
             /// @brief true if implement was called, false otherwise
-            bool is_implemented();
+            static bool is_implemented();
 
-            /// @brief no ctor
-            UserType() = delete;
+            /// @brief box interface
+            static Any* box(T);
 
-            Any* box(T);
-            T unbox(Any*);
+            /// @brief unbox interface
+            static T unbox(Any*);
 
         private:
-            Proxy _template;
+            static inline Proxy _template = Proxy(jl_nothing);
 
-            bool _implemented = false;
-            Any* _implemented_type = nullptr;
+            static inline bool _implemented = false;
+            static inline Any* _implemented_type = nullptr;
 
-            std::map<std::string, std::tuple<
+            static inline std::map<std::string, std::tuple<
                 std::string,                    // symbol of typename
                 std::function<Any*(T&)>,        // getter
                 std::function<void(T&, Any*)>   // setter
@@ -99,6 +99,8 @@ namespace jluna
         typename U = typename T::original_type,
         typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool> = true>
     Any* box(T in);
+
+
 }
 
 #include ".src/usertype.inl"
