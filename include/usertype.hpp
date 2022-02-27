@@ -84,23 +84,18 @@ namespace jluna
             >> _mapping = {};
     };
 
-    /// @brief unbox using unboxing routine
-    /// @param pointer
-    /// @returns T
-    template<typename T,
-        typename U = typename T::original_type,
-        typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool> = true>
-    T unbox(Any* in);
+    /// @brief exception thrown when usertype is used before being implemented
+    template<typename T>
+    struct UserTypeNotFullyInitializedException : public std::exception
+    {
+        /// @brief ctor
+        /// @param name
+        UserTypeNotFullyInitializedException();
 
-    /// @brief box using boxing routine
-    /// @param
-    /// @returns pointer to julia-side memory
-    template<typename T,
-        typename U = typename T::original_type,
-        typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool> = true>
-    Any* box(T in);
-
-
+        /// @brief what
+        /// @returns message
+        virtual const char* what() const noexcept override final;
+    };
 }
 
 #include ".src/usertype.inl"

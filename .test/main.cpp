@@ -44,12 +44,12 @@ int main()
         [](NonJuliaType& out, Any* field) -> void {out.set_member(unbox<Int64>(field));}
     );
 
-    usertype.implement();
+    //usertype.implement();
 
     auto cpp_side_instance = NonJuliaType(1234);
 
     auto _ = State::new_named_undef("julia_side_instance");
-    Main["julia_side_instance"] = usertype.box(cpp_side_instance);
+    Main["julia_side_instance"] = box<UserType<NonJuliaType>>(cpp_side_instance);
 
     jl_eval_string(R"(
         println(typeof(julia_side_instance))

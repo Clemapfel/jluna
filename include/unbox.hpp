@@ -145,6 +145,15 @@ namespace jluna
     template<Is<Type> T>
     T unbox(Any* value);
 
+    /// @brief unbox usertype to usertype
+    template<typename>
+    class UserType;
+
+    template<typename T,
+        typename U = typename T::original_type,
+        typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool> = true>
+    U unbox(Any* in);
+
     /// @concept requires a value to be unboxed from a julia-side value
     template<typename T>
     concept Unboxable = requires(T t, jl_value_t* v)

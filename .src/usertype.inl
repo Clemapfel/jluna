@@ -8,6 +8,20 @@
 namespace jluna
 {
     template<typename T>
+    UserTypeNotFullyInitializedException<T>::UserTypeNotFullyInitializedException()
+    {}
+
+    template<typename T>
+    const char * UserTypeNotFullyInitializedException<T>::what() const noexcept
+    {
+        std::stringstream str;
+        str << "[C++][EXCEPTION] UserType interface for this type has not yet been fully specified, make sure that the following actions were performed:" << std::endl;
+        str << "\ta) UserType<T>::UserType(const std::string&) was used instance the type at least once" << std::endl;
+        str << "\tb) After calling the ctor, UserType<T>::implement was called exactly once" << std::endl;
+        return str.str().c_str();
+    }
+
+    template<typename T>
     UserType<T>::UserType(const std::string& name)
     {
         jl_gc_pause;
@@ -116,15 +130,21 @@ namespace jluna
     }
 
     template<typename T, typename U, typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool>>
-    T unbox(Any* in)
+    U unbox(Any* in)
     {
-        return UserType<T>::unbox(in);
+        if (not UserType<U>::is_implemented())
+            throw UserTypeNotFullyInitializedException<T>();
+
+        return UserType<U >::unbox(in);
     }
 
     template<typename T, typename U, typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool>>
-    Any* box(T in)
+    Any* box(U in)
     {
-        return UserType<T>::box(in);
+        if (not UserType<U>::is_implemented())
+            throw UserTypeNotFullyInitializedException<T>();
+
+        return UserType<U>::box(in);
     }
 
 }
