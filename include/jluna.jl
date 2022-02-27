@@ -1006,17 +1006,29 @@ module jluna
         export set_mutable!
 
         """
-        `add_field!(::UserType, ::Symbol, value) -> Nothing`
+        `add_field!(::UserType, name::Symbol, typename::Symbol) -> Nothing`
 
         add field to usertype, can also be a function
         """
-        function add_field!(x::UserType, name::Symbol, type::Symbol, value = missing) ::Nothing
+        function add_field!(x::UserType, name::Symbol, type::Symbol) ::Nothing
 
             x._field_types[name] = type
-            x._field_values[name] = value
+            x._field_values[name] = missing
             return nothing
         end
         export add_field!
+
+        """
+        `set_field!(::UserType, ::Symbol, value) -> Nothing`
+
+        set value of field in usertype
+        """
+        function set_field!(x::UserType, name::Symbol, value) ::Nothing
+
+           @assert haskey(x._field_values, name)
+            x._field_values[name] = value
+            return nothing;
+        end
 
         """
         `add_parameter!(::UserType, ::Symbol, upper_bound::Type, lower_bound::Type) -> Nothing`
@@ -1036,16 +1048,22 @@ module jluna
         """
         function implement(type::UserType, m::Module = Main)
 
-            parameters = Expr(:curly, type._name)
-            for tv in type._parameters
-                if tv.lb == Union{}
-                    if tv.ub == Any
-                        push!(param.args, tv.name)
+            parameters = :()
+
+            if isempty(type._parameters)
+                parameters = type._name
+            else
+                parameters = Expr(:curly, type._name)
+                for tv in type._parameters
+                    if tv.lb == Union{}
+                        if tv.ub == Any
+                            push!(param.args, tv.name)
+                        else
+                            push!(parameters.args, Expr(:(<:), tv.name, Symbol(tv.ub)))
+                        end
                     else
-                        push!(parameters.args, Expr(:(<:), tv.name, Symbol(tv.ub)))
+                        push!(parameters.args, Expr(:comparison, Symbol(tv.lb), :(<:), tv.name, :(<:), Symbol(tv.ub)))
                     end
-                else
-                    push!(parameters.args, Expr(:comparison, Symbol(tv.lb), :(<:), tv.name, :(<:), Symbol(tv.ub)))
                 end
             end
 

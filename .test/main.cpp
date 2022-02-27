@@ -35,32 +35,31 @@ int main()
 {
     State::initialize();
 
-    UserType<NonJuliaType>::set_name("NonJuliaType");
-    UserType<NonJuliaType>::add_field(
+    auto usertype = UserType<NonJuliaType>("NonJuliaType");
+    usertype.set_name("NonJuliaType");
+    usertype.add_field(
         "_member_var",
-        Symbol("Int64"),
+                "Int64",
         [](NonJuliaType& in) -> Any* {return box(in.get_member());},
         [](NonJuliaType& out, Any* field) -> void {out.set_member(unbox<Int64>(field));}
     );
 
-    UserType<NonJuliaType>::implement();
+    usertype.implement();
 
     auto cpp_side_instance = NonJuliaType(1234);
 
     auto _ = State::new_named_undef("julia_side_instance");
-    Main["julia_side_instance"] = UserType<NonJuliaType>::box(cpp_side_instance);
+    Main["julia_side_instance"] = usertype.box(cpp_side_instance);
 
-    State::eval(R"(
+    jl_eval_string(R"(
         println(typeof(julia_side_instance))
-        println(fieldnames(julia_side_instance))
+        println(fieldnames(typeof(julia_side_instance)))
         println(julia_side_instance._member_var)
     )");
 
     return 0;
 
-
     Test::initialize();
-
     Test::test("catch c exception", [](){
 
         Test::assert_that_throws<JuliaException>([](){
