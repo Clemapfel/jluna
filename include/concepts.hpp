@@ -43,6 +43,13 @@ namespace jluna
     template<typename T>
     concept IsTuple = std::tuple_size<T>::value != 2;
 
+    /// @concept: has default ctor
+    template<typename T>
+    concept IsDefaultConstructible = requires(T)
+    {
+        {T()};
+    };
+
     /// @concept: is iterable
     template<typename T>
     concept Iterable = requires(T t)

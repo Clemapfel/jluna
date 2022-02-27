@@ -270,11 +270,16 @@ std::function<Any*(Any*, Any*)>             => function (::Any, ::Any) -> Any
 std::function<Any*(Any*, Any*, Any*)>       => function (::Any, ::Any, ::Any) -> Any
 std::function<Any*(Any*, Any*, Any*, Any*)> => function (::Any, ::Any, ::Any, ::Any) -> Any
 std::function<Any*(std::vector<Any*>)>      => function (::Vector{Any}) ::Any
+        
+UserType<T>             => T *
+        
+* where T is an arbitrary C++ type
 ```
 
-We will learn more on how to box/unbox functions, specifically, in the [section on calling C++ functions from julia](#functions).
+We will learn more on how to box/unbox functions, specifically, in the [section on calling C++ functions from julia](#functions). We can (un)box truly arbitrary C++ types through the [usertype interface](#usertypes), which we will explore later on, aswell.
 
-The template meta function `to_julia_type` is provided to convert a C++ type into a julia-type. `to_julia_type<T>::type_name` is the name of the type as a string.
+
+For any of the above, the template meta function `to_julia_type` is provided to convert a C++ type into a julia-type, where `to_julia_type<T>::type_name` is the name of the type as a string:
 
 ```cpp
 std::cout << to_julia_type<Array<size_t, 4>>::type_name << std::endl;
@@ -1834,7 +1839,77 @@ Once fully unrolled, we have access to the properties necessary for introspect. 
 
 ## Usertypes
 
-(this feature is not yet implemented)
+So far, we could only exchange information between the Julia and C++ state if its type was (un)boxable. This list of types while broad, is limited. This is why `jluna` offers an interface that allows users to specify their own (un)boxing routines and make *arbitrary* C++ types (un)boxable. We do this through a wrapper type `jluna::UserType<T>`.
+
+Unlike the previous sections, it may be best to illustrate the use of the usertype interface through an example. Let's say we want the following C++ class to be (un)boxable:
+
+```cpp
+class Quiver 
+{
+    public:
+        struct Arrow
+        {
+            const size_t _unique_id;
+        };
+        
+        Quiver() 
+            : _holds();
+        {}
+        
+        void add(Arrow arrow)
+        {
+            _holds.push_back(arrow);
+        }
+        
+        Arrow remove()
+        {
+            auto out = _holds.front();
+            _holds.erase(_holds.begin());
+            return out;
+        }
+        
+        size_t size() 
+        {
+            return _holds.size();
+        }
+    
+    private:
+        std::vector<InternalType> _holds;
+};
+```
+
+Let's first investigate this class using C++ terminology. Firstly, it is call `Quiver` and has an internal, public class called `Arrow`. `Arrow` only has a single, constant member `_unique_id`. `Quiver` has 3 member functions that add an arrow, remove an error and count the number of arrows. The arrows are held in an internal vector.
+
+When trying to translate this class to julia, we immediately run into a couple of problems. In julia, there are no internal structs in the traditional way. A struct declared inside another struct is available in the same scope. Furthermore, julia does not have traditional member functions, a function that is a member of a struct cannot access any other member in that struct implicitly. We can get around this by employing the following trick:
+
+```julia
+# in cpp
+
+
+Lastly, julia has no concept similar to private or public members, all members are always public. Given this, one way to translate `Quiver` to julia would be the following:
+
+
+```julia
+struct Arrow
+    _unique_id::UInt64
+end
+
+struct Quiver
+    
+    add::Function
+    remove::Function
+    size::Function
+    
+    _holds::Vector{Arrow}
+    
+    Quiver() = new(
+        function (arrow::Arrow)
+    
+    )
+end
+
+
+```
 
 ---
 

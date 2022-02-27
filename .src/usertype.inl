@@ -29,6 +29,7 @@ namespace jluna
         jl_gc_pause;
         static jl_function_t* new_usertype = jl_find_function("jluna.usertype", "new_usertype");
         _template = Proxy(jluna::safe_call(new_usertype, jl_symbol(name.c_str())));
+        to_julia_type<UserType<T>>::type_name = name;
         jl_gc_unpause;
         set_name(name);
     }
@@ -159,5 +160,15 @@ namespace jluna
     Any* box(UserTypeWrapper<T> wrapper)
     {
         UserType<T>::box(wrapper.get());
+    }
+
+    namespace detail
+    {
+        template<typename T>
+        struct to_julia_type_aux<UserType<T>>
+        {
+            // usertype name is only available, after UserType<T>::UserType(T) was called at least once
+            static inline std::string type_name = "<USERTYPE_NAME_UNINITIALIZED>";
+        };
     }
 }

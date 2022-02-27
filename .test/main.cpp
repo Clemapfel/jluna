@@ -15,18 +15,6 @@ struct NonJuliaType
 {
     public:
         NonJuliaType() = default;
-    
-        inline NonJuliaType(Int64 in)
-            : _member(in)
-        {}
-        
-        inline Int64 get_member() const {
-            return _member;
-        }
-        
-        inline void set_member(Int64 val) {
-            _member = val;
-        }
 
     private:
         Int64 _member;
@@ -38,40 +26,12 @@ int main()
 
     // setup usertype interface
     auto usertype = UserType<NonJuliaType>("NonJuliaType");
-    usertype.add_field(
+    /*usertype.add_field(
         "_member",
         "Int64",
         [](NonJuliaType& in) -> Any* {return box(in.get_member());},
         [](NonJuliaType& out, Any* field) -> void {out.set_member(unbox<Int64>(field));}
-    );
-
-    // implement
-    usertype.implement();
-
-    // cpp-side instance...
-    auto cpp_side_instance = NonJuliaType(1234);
-
-    // ... can now be transfered to julia
-    State::new_named_undef("julia_side_instance") = box<UserType<NonJuliaType>>(cpp_side_instance);
-
-    // print, then modify instance julia-side
-    jl_eval_string(R"(
-        println(julia_side_instance)
-        julia_side_instance._member = 4567
-    )");
-
-    // move back cpp-side
-    auto back_cpp_side = unbox<UserType<NonJuliaType>>(jl_eval_string("return julia_side_instance"));
-    std::cout << back_cpp_side.get_member() << std::endl;
-
-    /*
-    
-    jl_eval_string(R"(
-        println(typeof(julia_side_instance))
-        println(fieldnames(typeof(julia_side_instance)))
-        println(julia_side_instance._member)
-    )");
-     */
+    );*/
 
     return 0;
 
