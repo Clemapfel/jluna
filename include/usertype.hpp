@@ -15,7 +15,7 @@ namespace jluna
     /// @brief customizable wrapper for non-julia type T
     /// @note for information on how to use this class, visit https://github.com/Clemapfel/jluna/blob/master/docs/manual.md#usertypes
     template<typename T>
-    class UserType
+    class Usertype
     {
         static inline std::function<void(T&, Any*)> noop_set = [](T&, Any* ) {return;};
 
@@ -24,7 +24,7 @@ namespace jluna
             using original_type = T;
 
             /// @brief instance
-            UserType(const std::string& name);
+            static void enable(const std::string& name);
 
             /// @brief set julia-side name
             /// @param name
@@ -84,23 +84,14 @@ namespace jluna
             >> _mapping = {};
     };
 
-    /// @brief wrapper
-    template<typename T>
-    struct UserTypeWrapper : public std::reference_wrapper<T>
-    {
-        UserTypeWrapper(T& in)
-            : std::reference_wrapper<T>(in)
-        {}
-    };
-
     /// @brief exception thrown when usertype is used before being implemented
     template<typename T>
-    struct UserTypeNotFullyInitializedException : public std::exception
+    struct UsertypeNotFullyInitializedException : public std::exception
     {
         public:
             /// @brief ctor
             /// @param name
-            UserTypeNotFullyInitializedException();
+            UsertypeNotFullyInitializedException();
 
             /// @brief what
             /// @returns message

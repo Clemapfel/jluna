@@ -959,14 +959,14 @@ module jluna
     end
 
     """
-    interface for jluna::UserType
+    interface for jluna::Usertype
     """
     module usertype
 
         """
         usertype wrapper
         """
-        mutable struct UserType
+        mutable struct Usertype
 
             _name::Symbol
             _is_mutable::Bool
@@ -974,7 +974,7 @@ module jluna
             _field_values::Dict{Symbol, Any}
             _parameters::Vector{TypeVar}
 
-            UserType(name::Symbol, is_mutable::Bool = true) = new(
+            Usertype(name::Symbol, is_mutable::Bool = true) = new(
                 name,
                 is_mutable,
                 Dict{Symbol, Type}(),
@@ -982,35 +982,35 @@ module jluna
                 Vector{TypeVar}()
             )
         end
-        export UserType
+        export Usertype
 
         """
-        `new_usertype(::Symbol) -> UserType`
+        `new_usertype(::Symbol) -> Usertype`
 
         create new usertype
         """
-        function new_usertype(name::Symbol) ::UserType
-             return UserType(name)
+        function new_usertype(name::Symbol) ::Usertype
+             return Usertype(name)
         end
         export new_usertype
 
         """
-        `set_mutable(::UserType, ::Bool) -> Nothing`
+        `set_mutable(::Usertype, ::Bool) -> Nothing`
 
         change mutability of usertype
         """
-        function set_mutable!(x::UserType, value::Bool) ::Nothing
+        function set_mutable!(x::Usertype, value::Bool) ::Nothing
             x._is_mutable = value
             return nothing
         end
         export set_mutable!
 
         """
-        `add_field!(::UserType, name::Symbol, typename::Symbol) -> Nothing`
+        `add_field!(::Usertype, name::Symbol, typename::Symbol) -> Nothing`
 
         add field to usertype, can also be a function
         """
-        function add_field!(x::UserType, name::Symbol, type::Symbol) ::Nothing
+        function add_field!(x::Usertype, name::Symbol, type::Symbol) ::Nothing
 
             x._field_types[name] = type
             x._field_values[name] = missing
@@ -1019,11 +1019,11 @@ module jluna
         export add_field!
 
         """
-        `set_field!(::UserType, ::Symbol, value) -> Nothing`
+        `set_field!(::Usertype, ::Symbol, value) -> Nothing`
 
         set value of field in usertype
         """
-        function set_field!(x::UserType, name::Symbol, value) ::Nothing
+        function set_field!(x::Usertype, name::Symbol, value) ::Nothing
 
            @assert haskey(x._field_values, name)
             x._field_values[name] = value
@@ -1031,22 +1031,22 @@ module jluna
         end
 
         """
-        `add_parameter!(::UserType, ::Symbol, upper_bound::Type, lower_bound::Type) -> Nothing`
+        `add_parameter!(::Usertype, ::Symbol, upper_bound::Type, lower_bound::Type) -> Nothing`
 
         add parameter, including upper and lower bounds
         """
-        function add_parameter!(x::UserType, name::Symbol, ub::Type = Any, lb::Type = Union{}) ::Nothing
+        function add_parameter!(x::Usertype, name::Symbol, ub::Type = Any, lb::Type = Union{}) ::Nothing
            push!(x._parameters, TypeVar(name, lb, ub))
            return nothing
         end
         export add_parameter!
 
         """
-        `implement(::UserType) -> Type`
+        `implement(::Usertype) -> Type`
 
         evaluate the type
         """
-        function implement(type::UserType, m::Module = Main)
+        function implement(type::Usertype, m::Module = Main)
 
             parameters = :()
 
@@ -1076,7 +1076,7 @@ module jluna
             ctor::Expr = :()
 
             if isempty(type._parameters)
-                ctor = Expr(:(=), :($(type._name)(base::jluna.usertype.UserType)), Expr(:call, :new))
+                ctor = Expr(:(=), :($(type._name)(base::jluna.usertype.Usertype)), Expr(:call, :new))
             else
                 curly_new = Expr(:curly, :new);
                 for t in type._parameters
@@ -1092,7 +1092,7 @@ module jluna
                             type._name,
                             (collect(p.name for p in type._parameters)...)
                         ),
-                        :(base::jluna.usertype.UserType)
+                        :(base::jluna.usertype.Usertype)
                     ),
                     (collect(p.name for p in type._parameters)...)
                 )

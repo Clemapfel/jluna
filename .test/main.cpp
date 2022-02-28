@@ -16,15 +16,45 @@ struct NonJuliaType
 {
     public:
         NonJuliaType() = default;
+        NonJuliaType(Int64 in)
+            : _member(in)
+        {}
+
+        void set_member(Int64 in)
+        {
+            _member = in;
+        }
+
+        Int64 get_member() const
+        {
+            return _member;
+        }
 
     private:
         Int64 _member;
 };
 
-
+using namespace jluna;
 int main()
 {
     State::initialize();
+    std::cout << IsUsertypeDbg<NonJuliaType> << std::endl;
+    return 0;
+
+    Usertype<NonJuliaType>::enable("NonJuliaType");
+    Usertype<NonJuliaType>::add_field(
+        "_member",
+        "Int64",
+        [](NonJuliaType& in) -> Any* {return box(in.get_member());},
+        [](NonJuliaType& out, Any* value) {out.set_member(unbox<Int64>(value));}
+    );
+
+    Usertype<NonJuliaType>::implement();
+
+    //State::new_named_undef("julia_side_instance") = box(NonJuliaType(999));
+    //jl_eval_string("println(julia_side_instance)");
+
+    return 0;
     Test::initialize();
     Test::test("catch c exception", [](){
 

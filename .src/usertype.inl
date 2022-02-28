@@ -8,58 +8,58 @@
 namespace jluna
 {
     template<typename T>
-    UserTypeNotFullyInitializedException<T>::UserTypeNotFullyInitializedException()
+    UsertypeNotFullyInitializedException<T>::UsertypeNotFullyInitializedException()
     {
         std::stringstream str;
-        str << "[C++][EXCEPTION] UserType interface for this type has not yet been implemented, make sure that the following actions were performed:" << std::endl;
-        str << "\ta) UserType<T>::UserType(const std::string&) was used instance the type at least once" << std::endl;
-        str << "\tb) After calling the ctor, UserType<T>::implement was called exactly once" << std::endl;
+        str << "[C++][EXCEPTION] Usertype interface for this type has not yet been implemented, make sure that the following actions were performed before calling (un)box<T>:" << std::endl;
+        str << "\ta) Usertype<T>::Usertype(const std::string&) was used instance the usertype interface at least once" << std::endl;
+        str << "\tb) After calling the ctor, Usertype<T>::implement was called exactly once to push the usertype interface to the julia state" << std::endl;
         _msg = str.str();
     }
 
     template<typename T>
-    const char * UserTypeNotFullyInitializedException<T>::what() const noexcept
+    const char * UsertypeNotFullyInitializedException<T>::what() const noexcept
     {
         return _msg.c_str();
     }
 
     template<typename T>
-    UserType<T>::UserType(const std::string& name)
+    void Usertype<T>::enable(const std::string& name)
     {
         jl_gc_pause;
         static jl_function_t* new_usertype = jl_find_function("jluna.usertype", "new_usertype");
         _template = Proxy(jluna::safe_call(new_usertype, jl_symbol(name.c_str())));
-        to_julia_type<UserType<T>>::type_name = name;
+        detail::to_julia_type_aux<Usertype<T>>::type_name = name;
         jl_gc_unpause;
         set_name(name);
     }
 
     template<typename T>
-    void UserType<T>::set_name(const std::string& name)
+    void Usertype<T>::set_name(const std::string& name)
     {
         _template["_name"] = Symbol(name);
     }
 
     template<typename T>
-    std::string UserType<T>::get_name()
+    std::string Usertype<T>::get_name()
     {
         return _template["_name"].operator std::string();
     }
 
     template<typename T>
-    void UserType<T>::set_mutable(bool b)
+    void Usertype<T>::set_mutable(bool b)
     {
         _template["_is_mutable"] = b;
     }
 
     template<typename T>
-    bool UserType<T>::is_mutable()
+    bool Usertype<T>::is_mutable()
     {
         return _template["_is_mutable"];
     }
 
     template<typename T>
-    void UserType<T>::add_field(const std::string& name, const std::string& type, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
+    void Usertype<T>::add_field(const std::string& name, const std::string& type, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
     {
         jl_gc_pause;
 
@@ -70,10 +70,10 @@ namespace jluna
     }
 
     template<typename T>
-    Any* UserType<T>::box(T in)
+    Any* Usertype<T>::box(T in)
     {
         if (not is_implemented())
-            throw UserTypeNotFullyInitializedException<T>();
+            throw UsertypeNotFullyInitializedException<T>();
 
         jl_gc_pause;
         static jl_function_t* set_field = jl_find_function("jluna.usertype", "set_field!");
@@ -93,10 +93,10 @@ namespace jluna
     }
 
     template<typename T>
-    T UserType<T>::unbox(Any* in)
+    T Usertype<T>::unbox(Any* in)
     {
         if (not is_implemented())
-            throw UserTypeNotFullyInitializedException<T>();
+            throw UsertypeNotFullyInitializedException<T>();
 
         jl_gc_pause;
         static jl_function_t* getfield = jl_get_function(jl_base_module, "getfield");
@@ -111,7 +111,7 @@ namespace jluna
     }
 
     template<typename T>
-    void UserType<T>::add_parameter(const std::string& name, Type upper_bound, Type lower_bound)
+    void Usertype<T>::add_parameter(const std::string& name, Type upper_bound, Type lower_bound)
     {
         jl_gc_pause;
         static jl_function_t* add_parameter = jl_find_function("jluna.usertype", "add_parameter!");
@@ -120,7 +120,7 @@ namespace jluna
     }
 
     template<typename T>
-    Type UserType<T>::implement(Module module)
+    Type Usertype<T>::implement(Module module)
     {
         jl_gc_pause;
 
@@ -133,41 +133,35 @@ namespace jluna
     }
 
     template<typename T>
-    bool UserType<T>::is_implemented()
+    bool Usertype<T>::is_implemented()
     {
         return _implemented;
     }
 
-    template<typename T, typename U, typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool>>
-    U unbox(Any* in)
+    template<IsUsertype T>
+    T unbox(Any* in)
     {
-        if (not UserType<U>::is_implemented())
-            throw UserTypeNotFullyInitializedException<T>();
+        if (not Usertype<T>::is_implemented())
+            throw UsertypeNotFullyInitializedException<T>();
 
-        return UserType<U >::unbox(in);
+        return Usertype<T>::unbox(in);
     }
 
-    template<typename T, typename U, typename std::enable_if_t<std::is_same_v<T, UserType<U>>, Bool>>
-    Any* box(U in)
+    template<IsUsertype T>
+    Any* box(T in)
     {
-        if (not UserType<U>::is_implemented())
-            throw UserTypeNotFullyInitializedException<T>();
+        if (not Usertype<T>::is_implemented())
+            throw UsertypeNotFullyInitializedException<T>();
 
-        return UserType<U>::box(in);
-    }
-
-    template<typename T>
-    Any* box(UserTypeWrapper<T> wrapper)
-    {
-        UserType<T>::box(wrapper.get());
+        return Usertype<T>::box(in);
     }
 
     namespace detail
     {
         template<typename T>
-        struct to_julia_type_aux<UserType<T>>
+        struct to_julia_type_aux<Usertype<T>>
         {
-            // usertype name is only available, after UserType<T>::UserType(T) was called at least once
+            // usertype name is only available, after Usertype<T>::Usertype(T) was called at least once
             static inline std::string type_name = "<USERTYPE_NAME_UNINITIALIZED>";
         };
     }

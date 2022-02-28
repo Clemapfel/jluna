@@ -271,7 +271,7 @@ std::function<Any*(Any*, Any*, Any*)>       => function (::Any, ::Any, ::Any) ->
 std::function<Any*(Any*, Any*, Any*, Any*)> => function (::Any, ::Any, ::Any, ::Any) -> Any
 std::function<Any*(std::vector<Any*>)>      => function (::Vector{Any}) ::Any
         
-UserType<T>             => T *
+Usertype<T>             => T *
         
 * where T is an arbitrary C++ type
 ```
@@ -1839,7 +1839,7 @@ Once fully unrolled, we have access to the properties necessary for introspect. 
 
 ## Usertypes
 
-So far, we could only exchange information between the Julia and C++ state if its type was (un)boxable. This list of types while broad, is limited. This is why `jluna` offers an interface that allows users to specify their own (un)boxing routines and make *arbitrary* C++ types (un)boxable. We do this through a wrapper type `jluna::UserType<T>`.
+So far, we could only exchange information between the Julia and C++ state if its type was (un)boxable. This list of types while broad, is limited. This is why `jluna` offers an interface that allows users to specify their own (un)boxing routines and make *arbitrary* C++ types (un)boxable. We do this through a wrapper type `jluna::Usertype<T>`.
 
 Unlike the previous sections, it may be best to illustrate the use of the usertype interface through an example. Let's say we want the following C++ class to be (un)boxable:
 

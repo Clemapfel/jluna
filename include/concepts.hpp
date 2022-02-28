@@ -79,12 +79,25 @@ namespace jluna
         not Is<T, const char*>;
 
     /// @concept is std::complex
+    template<typename T, typename U>
+    concept IsComplexAux = requires(T t)
+    {
+        typename T::value_type;
+    };
     template<typename T, typename U = typename T::value_type>
     concept IsComplex = std::is_same_v<T, std::complex<U>>;
+
+
 
     /// @concept is std::vector
     template<typename T, typename U = typename T::value_type>
     concept IsVector = std::is_same_v<T, std::vector<U>>;
+
+    template<typename T>
+    concept IsVectorAux = requires(T t)
+    {
+        typename T::value_type;
+    };
 
     /// @concept is map
     template<typename T, typename Key_t = typename T::key_type, typename Value_t = typename T::mapped_type>
@@ -93,13 +106,33 @@ namespace jluna
         std::is_same_v<T, std::multimap<Key_t, Value_t>> or
         std::is_same_v<T, std::unordered_map<Key_t, Value_t>>;
 
+    template<typename T>
+    concept IsMapAux = requires(T t)
+    {
+        typename T::key_type;
+        typename T::mapped_type;
+    };
+
     /// @concept is std::set
     template<typename T, typename U = typename T::value_type>
     concept IsSet = std::is_same_v<T, std::set<U>>;
 
+    template<typename T>
+    concept IsSetAux = requires(T t)
+    {
+        typename T::value_type;
+    };
+
     /// @concept is pair
     template<typename T, typename T1 = typename T::first_type, typename T2 = typename T::second_type>
     concept IsPair = std::is_same_v<T, std::pair<T1, T2>> and std::tuple_size_v<T> == 2;
+
+    template<typename T>
+    concept IsPairAux = requires(T t)
+    {
+        typename T::first_type;
+        typename T::second_type;
+    };
 
     /// @concept is tuple
     namespace detail
@@ -113,17 +146,36 @@ namespace jluna
     template<typename T>
     concept IsTuple = detail::is_tuple_aux<T>(std::make_index_sequence<std::tuple_size<T>::value>());
 
+    template<typename T>
+    concept IsTupleAux = requires(T t)
+    {
+        {std::tuple_size<T>::value};
+    };
 
     /// @concept not unboxable out-of-the-box
     template<typename T>
-    concept IsUsertype =
-        not IsJuliaValuePointer<T> and
-        not IsAnyPtrCastable<T> and
-        not IsPrimitive<T> and
-        not IsComplex<T> and
-        not IsVector<T> and
-        not IsMap<T> and
-        not IsSet<T> and
-        not IsPair<T> and
-        not IsTuple<T>;
+    concept IsUsertype = requires (T t)
+    {
+        not IsJuliaValuePointer<T>;
+        not IsAnyPtrCastable<T>;
+        not IsPrimitive<T>;
+        not IsComplexAux<T> or not IsComplex<T>;
+        not IsVectorAux<T> or not IsVector<T>;
+        not IsSetAux<T> or not IsSet<T>;
+        not IsPairAux<T> or not IsPair<T>;
+        not IsTupleAux<T> or not IsTuple<T>;
+    };
+
+    template<typename T>
+    concept IsUsertypeDbg = requires (T t)
+    {
+        //not IsJuliaValuePointer<T>;
+        //not IsAnyPtrCastable<T>;
+        //not IsPrimitive<T>;
+        not IsComplexAux<T> || (not IsComplex<T>);
+        //not IsVectorAux<T> or not IsVector<T>;
+        //not IsSetAux<T> or not IsSet<T>;
+        //not IsPairAux<T> or not IsPair<T>;
+        //not IsTupleAux<T> or not IsTuple<T>;
+    };
 }
