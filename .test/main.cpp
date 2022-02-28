@@ -25,17 +25,6 @@ struct NonJuliaType
 int main()
 {
     State::initialize();
-    std::cout << detail::is_tuple_aux<std::tuple<size_t, size_t, size_t>, 0, 1, 2> << std::endl;
-
-
-
-    std::cout << IsTuple<std::pair<size_t, size_t>> << std::endl;
-    std::cout << IsTuple<size_t> << std::endl;
-    std::cout << IsTuple<std::map<size_t, size_t>> << std::endl;
-    return 0;
-
-    /*
-
     Test::initialize();
     Test::test("catch c exception", [](){
 
@@ -1110,7 +1099,6 @@ int main()
     });
 
     Test::conclude();
-     */
 }
 
 

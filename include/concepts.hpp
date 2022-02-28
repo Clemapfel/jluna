@@ -10,6 +10,7 @@
 #include <tuple>
 #include <utility>
 #include <functional>
+#include <iostream>
 
 namespace jluna
 {
@@ -109,23 +110,9 @@ namespace jluna
             return std::is_same_v<T, std::tuple<std::tuple_element_t<Ns, T>...>>;
         }
     }
-
     template<typename T>
-    concept IsTuple = std::tuple_size<T>::value != 2;
+    concept IsTuple = detail::is_tuple_aux<T>(std::make_index_sequence<std::tuple_size<T>::value>());
 
-    /*
-    template<typename T>
-    concept IsTuple = requires(T t)
-    {
-        {std::tuple_size<T>::value};
-        {std::tuple_size_v<T> != 2};
-    };
-
-    /*requires (T t) {
-
-        {std::tuple_size<T>::value != 2};
-        //{detail::is_tuple_aux<T, std::make_index_sequence<std::tuple_size<T>::value>>() and std::tuple_size<T>::value != 2};
-    };*/
 
     /// @concept not unboxable out-of-the-box
     template<typename T>
