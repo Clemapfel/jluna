@@ -11,9 +11,12 @@ namespace jluna
     UsertypeNotFullyInitializedException<T>::UsertypeNotFullyInitializedException()
     {
         std::stringstream str;
-        str << "[C++][EXCEPTION] Usertype interface for this type has not yet been implemented, make sure that the following actions were performed before calling (un)box<T>:" << std::endl;
-        str << "\ta) Usertype<T>::Usertype(const std::string&) was used instance the usertype interface at least once" << std::endl;
-        str << "\tb) After calling the ctor, Usertype<T>::implement was called exactly once to push the usertype interface to the julia state" << std::endl;
+        str << "\n[C++][EXCEPTION] Usertype interface for this type T has not yet been fully implemented, make sure the following are true:" << std::endl;
+        str << "\t1) T is default-constructible and a an implementation is available at compile time" << std::endl;
+        str << "\t2) Usertype<T>::enable(\"<name of usertype here>\") was used to instance the usertype interface" << std::endl;
+        str << "\t3) Usertype<T>::implement() was called, after which the interface cannot be extended" << std::endl;
+        str << "\nIf all of the above are true, T is now (un)boxable and to_julia_type<T>::type_name is defined." << std::endl;
+        str << "(for more information, visit: https://github.com/Clemapfel/jluna/blob/master/docs/manual.md#usertypes)" << std::endl;
         _msg = str.str();
     }
 
@@ -24,20 +27,30 @@ namespace jluna
     }
 
     template<typename T>
+    UsertypeAlreadyImplementedException<T>::UsertypeAlreadyImplementedException()
+    {
+        std::stringstream str;
+        str << "[C++][EXCEPTION] Usertype<T>::implement() was already called once for this type. It cannot be extended afterwards." << std::endl;
+        _msg = str.str();
+    }
+
+    template<typename T>
+    const char * UsertypeAlreadyImplementedException<T>::what() const noexcept
+    {
+        return _msg.c_str();
+    }
+
+    template<typename T>
     void Usertype<T>::enable(const std::string& name)
     {
+        if (_implemented)
+            throw UsertypeAlreadyImplementedException<T>();
+
         jl_gc_pause;
         static jl_function_t* new_usertype = jl_find_function("jluna.usertype", "new_usertype");
         _template = Proxy(jluna::safe_call(new_usertype, jl_symbol(name.c_str())));
         detail::to_julia_type_aux<Usertype<T>>::type_name = name;
         jl_gc_unpause;
-        set_name(name);
-    }
-
-    template<typename T>
-    void Usertype<T>::set_name(const std::string& name)
-    {
-        _template["_name"] = Symbol(name);
     }
 
     template<typename T>
@@ -49,6 +62,9 @@ namespace jluna
     template<typename T>
     void Usertype<T>::set_mutable(bool b)
     {
+        if (_implemented)
+            throw UsertypeAlreadyImplementedException<T>();
+
         _template["_is_mutable"] = b;
     }
 
@@ -61,8 +77,10 @@ namespace jluna
     template<typename T>
     void Usertype<T>::add_field(const std::string& name, const std::string& type, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
     {
-        jl_gc_pause;
+        if (_implemented)
+            throw UsertypeAlreadyImplementedException<T>();
 
+        jl_gc_pause;
         static jl_function_t* add_field = jl_find_function("jluna.usertype", "add_field!");
         auto res = (*(_mapping.insert({name, {type, box_get, unbox_set}})).first);
         jluna::safe_call(add_field, _template, jl_symbol(res.first.c_str()), jl_symbol(std::get<0>(res.second).c_str()));
@@ -70,7 +88,13 @@ namespace jluna
     }
 
     template<typename T>
-    Any* Usertype<T>::box(T in)
+    void Usertype<T>::add_field(const std::string& name, Type& type, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
+    {
+        add_field(name, type.operator std::string(), box_get, unbox_set);
+    }
+
+    template<typename T>
+    Any* Usertype<T>::box(T& in)
     {
         if (not is_implemented())
             throw UsertypeNotFullyInitializedException<T>();
@@ -111,22 +135,30 @@ namespace jluna
     }
 
     template<typename T>
-    void Usertype<T>::add_parameter(const std::string& name, Type upper_bound, Type lower_bound)
+    void Usertype<T>::add_parameter(const std::string& name, const Type& upper_bound, const Type& lower_bound)
     {
+        if (_implemented)
+            throw UsertypeAlreadyImplementedException<T>();
+
         jl_gc_pause;
         static jl_function_t* add_parameter = jl_find_function("jluna.usertype", "add_parameter!");
-        jluna::safe_call(add_parameter,_template, jl_symbol(name.c_str()), upper_bound, lower_bound);
+        jluna::safe_call(add_parameter, _template, jl_symbol(name.c_str()), upper_bound.operator const Any*(), lower_bound.operator const Any*());
         jl_gc_unpause;
     }
 
     template<typename T>
     Type Usertype<T>::implement(Module module)
     {
-        jl_gc_pause;
+        if (_implemented)
+            throw UsertypeAlreadyImplementedException<T>();
 
+        jl_gc_pause;
         static jl_function_t* implement = jl_find_function("jluna.usertype", "implement");
         _implemented_type = jluna::safe_call(implement, _template, module);
         _implemented = true;
+
+        auto* out = jl_call1(_implemented_type, _template);
+        forward_last_exception();
         jl_gc_unpause;
 
         return Type((jl_datatype_t*) _implemented_type);

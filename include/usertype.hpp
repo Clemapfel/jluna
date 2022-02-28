@@ -23,12 +23,9 @@ namespace jluna
             /// @brief original type
             using original_type = T;
 
-            /// @brief instance
+            /// @brief enable this type by giving it a name
+            /// @param name: julia-side name
             static void enable(const std::string& name);
-
-            /// @brief set julia-side name
-            /// @param name
-            static void set_name(const std::string& name);
 
             /// @brief get julia-side name
             /// @returns name
@@ -36,6 +33,7 @@ namespace jluna
 
             /// @brief set mutability, no by default
             /// @param bool
+            /// @note this function will throw if called after implement()
             static void set_mutable(bool);
 
             /// @brief get mutability
@@ -43,6 +41,11 @@ namespace jluna
             static bool is_mutable();
 
             /// @brief add field
+            /// @param name: julia-side name of field
+            /// @param type_name: symbol of the fields type, such as "Int64" or "P" (where P is a parameter)
+            /// @param box_get: lambda with signature (T&) -> Any*
+            /// @param unbox_set: lambda with signature (T&, Any*)
+            /// @note this function will throw if called after implement()
             static void add_field(
                 const std::string& name,
                 const std::string& type_name,
@@ -50,11 +53,26 @@ namespace jluna
                 std::function<void(T&, Any*)> unbox_set = noop_set
             );
 
+            /// @brief add field
+            /// @param name: julia-side name of field
+            /// @param type: type of symbol. User the other overload if the type is a typevar, such as "P" (where P is a parameter)
+            /// @param box_get: lambda with signature (T&) -> Any*
+            /// @param unbox_set: lambda with signature (T&, Any*)
+            /// @note this function will throw if called after implement()
+            static void add_field(
+                const std::string& name,
+                Type& type,
+                std::function<Any*(T&)> box_get,
+                std::function<void(T&, Any*)> unbox_set = noop_set
+            );
+
             /// @brief add parameter
-            /// @param name: e.g. T
-            /// @param upper_bound: .ub of TypeVar, equivalent to T <: upper_bound
-            /// @param lower_bound: .lb of TypeVar, equivalent to lower_bound <: T
-            static void add_parameter(const std::string& name, Type upper_bound = Any_t, Type lower_bound = UnionEmpty_t);
+            /// @param name: e.g. "P"
+            /// @param upper_bound: .ub of TypeVar, equivalent to P <: upper_bound
+            /// @param lower_bound: .lb of TypeVar, equivalent to lower_bound <: P
+            /// @param unbox_set: lambda with signature (T&, Any*)
+            /// @note this function will throw if called after implement()
+            static void add_parameter(const std::string& name, const Type& upper_bound = Any_t, const Type& lower_bound = UnionEmpty_t);
 
             /// @brief push to state and eval, cannot be extended afterwards
             /// @param module: module the type will be set in
@@ -66,7 +84,7 @@ namespace jluna
             static bool is_implemented();
 
             /// @brief box interface
-            static Any* box(T);
+            static Any* box(T&);
 
             /// @brief unbox interface
             static T unbox(Any*);
@@ -92,6 +110,23 @@ namespace jluna
             /// @brief ctor
             /// @param name
             UsertypeNotFullyInitializedException();
+
+            /// @brief what
+            /// @returns message
+            const char* what() const noexcept override final;
+
+        private:
+            std::string _msg;
+    };
+
+    /// @brief exception thrown when usertype is used before being implemented
+    template<typename T>
+    struct UsertypeAlreadyImplementedException : public std::exception
+    {
+        public:
+            /// @brief ctor
+            /// @param name
+            UsertypeAlreadyImplementedException();
 
             /// @brief what
             /// @returns message

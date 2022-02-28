@@ -1074,9 +1074,15 @@ module jluna
             end
 
             ctor::Expr = :()
+            default_ctor::Expr = :()
 
             if isempty(type._parameters)
                 ctor = Expr(:(=), :($(type._name)(base::jluna.usertype.Usertype)), Expr(:call, :new))
+
+                default_ctor = Expr(:(=), Expr(:call, type._name), Expr(:call, :new));
+                for (_, field_value) in type._field_values
+                    push!(default_ctor.args[2].args, field_value)
+                end
             else
                 curly_new = Expr(:curly, :new);
                 for t in type._parameters
@@ -1098,6 +1104,21 @@ module jluna
                 )
 
                 ctor = Expr(:(=), where_call, Expr(:call, curly_new))
+
+                where_call = Expr(
+                    :where,
+                    Expr(
+                        :call,
+                        Expr(
+                            :curly,
+                            type._name,
+                            (collect(p.name for p in type._parameters)...)
+                        )
+                    ),
+                    (collect(p.name for p in type._parameters)...)
+                )
+
+                default_ctor = Expr(:(=), where_call, Expr(:call, curly_new, (collect(missing for _ in 1:length(type._parameters))...)))
             end
 
             for (field_name, field_value) in type._field_values
@@ -1106,6 +1127,8 @@ module jluna
             end
 
             push!(block.args, ctor)
+            push!(block.args, default_ctor);
+
             out::Expr = :(mutable struct $(parameters) end)
             out.args[3] = block
 
