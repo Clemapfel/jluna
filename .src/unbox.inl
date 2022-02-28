@@ -240,7 +240,6 @@ namespace jluna
     template<Is<Type> T>
     T unbox(Any*);
 
-
     template<IsTuple T>
     T unbox(Any* value)
     {

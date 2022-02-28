@@ -38,9 +38,21 @@ using namespace jluna;
 int main()
 {
     State::initialize();
-    std::cout << IsUsertypeDbg<NonJuliaType> << std::endl;
-    return 0;
 
+    Usertype<NonJuliaType>::enable("NonJuliaType");
+    Usertype<NonJuliaType>::add_field(
+        "_member",
+        "Int64",
+        [](NonJuliaType& in) -> Any* {return box(in.get_member());},
+        [](NonJuliaType& out, Any* in) -> void {out.set_member(unbox<Int64>(in));}
+    );
+    Usertype<NonJuliaType>::implement();
+
+    jluna::safe_eval("julia_side_instance = undef");
+    Main["julia_side_instance"] = NonJuliaType(1234);
+    jluna::safe_eval("println(julia_side_instance");
+
+    /*
     Usertype<NonJuliaType>::enable("NonJuliaType");
     Usertype<NonJuliaType>::add_field(
         "_member",
@@ -1127,6 +1139,7 @@ int main()
             i += 1;
         }
     });
+     */
 
     Test::conclude();
 }
