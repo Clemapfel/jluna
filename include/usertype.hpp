@@ -75,7 +75,7 @@ namespace jluna
             static inline Any* _implemented_type = nullptr;
 
             static inline std::map<std::string, std::tuple<
-                std::string,                    // symbol of typename
+                Type,                           // symbol of typename
                 std::function<Any*(T&)>,        // getter
                 std::function<void(T&, Any*)>   // setter
             >> _mapping = {};

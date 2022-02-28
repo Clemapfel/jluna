@@ -83,7 +83,7 @@ namespace jluna
         jl_gc_pause;
         static jl_function_t* add_field = jl_find_function("jluna.usertype", "add_field!");
         auto res = (*(_mapping.insert({name, {type, box_get, unbox_set}})).first);
-        jluna::safe_call(add_field, _template, jl_symbol(name.c_str()), type.get_symbol(), jl_symbol(std::get<0>(res.second).c_str()));
+        jluna::safe_call(add_field, _template, jl_symbol(name.c_str()), std::get<0>(res.second).operator jl_datatype_t*());
         jl_gc_unpause;
     }
 

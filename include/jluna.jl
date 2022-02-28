@@ -970,7 +970,7 @@ module jluna
 
             _name::Symbol
             _is_mutable::Bool
-            _field_types::Dict{Symbol, Symbol}
+            _field_types::Dict{Symbol, Type}
             _field_values::Dict{Symbol, Any}
             _parameters::Vector{TypeVar}
 
@@ -1079,6 +1079,8 @@ module jluna
             if isempty(type._parameters)
                 ctor = Expr(:(=), :($(type._name)(base::jluna.usertype.Usertype)), Expr(:call, :new))
 
+
+                TODO: DEFAULT CTOR
                 default_ctor = Expr(:(=), Expr(:call, type._name), Expr(:call, :new));
                 for (_, field_value) in type._field_values
                     push!(default_ctor.args[2].args, field_value)
