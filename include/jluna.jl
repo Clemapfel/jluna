@@ -1010,7 +1010,7 @@ module jluna
 
         add field to usertype, can also be a function
         """
-        function add_field!(x::Usertype, name::Symbol, type::Symbol) ::Nothing
+        function add_field!(x::Usertype, name::Symbol, type::Type) ::Nothing
 
             x._field_types[name] = type
             x._field_values[name] = missing

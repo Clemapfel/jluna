@@ -75,7 +75,7 @@ namespace jluna
     }
 
     template<typename T>
-    void Usertype<T>::add_field(const std::string& name, const std::string& type, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
+    void Usertype<T>::add_field(const std::string& name, const Type& type, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
     {
         if (_implemented)
             throw UsertypeAlreadyImplementedException<T>();
@@ -83,14 +83,8 @@ namespace jluna
         jl_gc_pause;
         static jl_function_t* add_field = jl_find_function("jluna.usertype", "add_field!");
         auto res = (*(_mapping.insert({name, {type, box_get, unbox_set}})).first);
-        jluna::safe_call(add_field, _template, jl_symbol(res.first.c_str()), jl_symbol(std::get<0>(res.second).c_str()));
+        jluna::safe_call(add_field, _template, jl_symbol(name.c_str()), type.get_symbol(), jl_symbol(std::get<0>(res.second).c_str()));
         jl_gc_unpause;
-    }
-
-    template<typename T>
-    void Usertype<T>::add_field(const std::string& name, Type& type, std::function<Any*(T&)> box_get, std::function<void(T&, Any*)> unbox_set)
-    {
-        add_field(name, type.operator std::string(), box_get, unbox_set);
     }
 
     template<typename T>
@@ -132,18 +126,6 @@ namespace jluna
 
         jl_gc_unpause;
         return out;
-    }
-
-    template<typename T>
-    void Usertype<T>::add_parameter(const std::string& name, const Type& upper_bound, const Type& lower_bound)
-    {
-        if (_implemented)
-            throw UsertypeAlreadyImplementedException<T>();
-
-        jl_gc_pause;
-        static jl_function_t* add_parameter = jl_find_function("jluna.usertype", "add_parameter!");
-        jluna::safe_call(add_parameter, _template, jl_symbol(name.c_str()), upper_bound.operator const Any*(), lower_bound.operator const Any*());
-        jl_gc_unpause;
     }
 
     template<typename T>

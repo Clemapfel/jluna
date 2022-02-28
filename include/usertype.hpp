@@ -42,37 +42,16 @@ namespace jluna
 
             /// @brief add field
             /// @param name: julia-side name of field
-            /// @param type_name: symbol of the fields type, such as "Int64" or "P" (where P is a parameter)
-            /// @param box_get: lambda with signature (T&) -> Any*
-            /// @param unbox_set: lambda with signature (T&, Any*)
-            /// @note this function will throw if called after implement()
-            static void add_field(
-                const std::string& name,
-                const std::string& type_name,
-                std::function<Any*(T&)> box_get,
-                std::function<void(T&, Any*)> unbox_set = noop_set
-            );
-
-            /// @brief add field
-            /// @param name: julia-side name of field
             /// @param type: type of symbol. User the other overload if the type is a typevar, such as "P" (where P is a parameter)
             /// @param box_get: lambda with signature (T&) -> Any*
             /// @param unbox_set: lambda with signature (T&, Any*)
             /// @note this function will throw if called after implement()
             static void add_field(
                 const std::string& name,
-                Type& type,
+                const Type& type,
                 std::function<Any*(T&)> box_get,
                 std::function<void(T&, Any*)> unbox_set = noop_set
             );
-
-            /// @brief add parameter
-            /// @param name: e.g. "P"
-            /// @param upper_bound: .ub of TypeVar, equivalent to P <: upper_bound
-            /// @param lower_bound: .lb of TypeVar, equivalent to lower_bound <: P
-            /// @param unbox_set: lambda with signature (T&, Any*)
-            /// @note this function will throw if called after implement()
-            static void add_parameter(const std::string& name, const Type& upper_bound = Any_t, const Type& lower_bound = UnionEmpty_t);
 
             /// @brief push to state and eval, cannot be extended afterwards
             /// @param module: module the type will be set in

@@ -39,11 +39,9 @@ int main()
 {
     State::initialize();
 Usertype<NonJuliaType>::enable("NonJuliaType");
-
-Usertype<NonJuliaType>::add_parameter("T", Integer_t);
 Usertype<NonJuliaType>::add_field(
     "_member",  // field name
-    "T",      // field type
+    Int64_t,      // field type
     [](NonJuliaType& in) -> Any* {return box(in.get_member());},    // getter during box
     [](NonJuliaType& out, Any* in) -> void {out.set_member(unbox<Int64>(in));}  // setter during unbox
 );
