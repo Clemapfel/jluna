@@ -557,7 +557,7 @@ module jluna
 
         call any function, update the handler then forward the result, if any
         """
-        function safe_call(f::Function, args...)
+        function safe_call(f::Any, args...)
 
             result = undef
             try
@@ -1053,6 +1053,7 @@ module jluna
             if isempty(type._parameters)
                 parameters = type._name
             else
+                @assert false
                 parameters = Expr(:curly, type._name)
                 for tv in type._parameters
                     if tv.lb == Union{}
@@ -1077,15 +1078,15 @@ module jluna
             default_ctor::Expr = :()
 
             if isempty(type._parameters)
-                ctor = Expr(:(=), :($(type._name)(base::jluna.usertype.Usertype)), Expr(:call, :new))
+                ctor = Expr(:(=), :($(type._name)(base::Main.jluna.usertype.Usertype)), Expr(:call, :new))
 
-
-                TODO: DEFAULT CTOR
                 default_ctor = Expr(:(=), Expr(:call, type._name), Expr(:call, :new));
-                for (_, field_value) in type._field_values
-                    push!(default_ctor.args[2].args, field_value)
+                for (field_name, field_type) in type._field_types
+                    push!(default_ctor.args[1].args, Expr(:(::), field_name, field_type))
+                    push!(default_ctor.args[2].args, field_name)
                 end
             else
+                @assert false
                 curly_new = Expr(:curly, :new);
                 for t in type._parameters
                     push!(curly_new.args, t.name)
@@ -1123,7 +1124,7 @@ module jluna
                 default_ctor = Expr(:(=), where_call, Expr(:call, curly_new, (collect(missing for _ in 1:length(type._parameters))...)))
             end
 
-            for (field_name, field_value) in type._field_values
+            for (field_name, _) in type._field_values
                 field_symbol = QuoteNode(field_name)
                 push!(ctor.args[2].args, :(base._field_values[$(field_symbol)]))
             end

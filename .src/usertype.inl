@@ -138,9 +138,6 @@ namespace jluna
         static jl_function_t* implement = jl_find_function("jluna.usertype", "implement");
         _implemented_type = jluna::safe_call(implement, _template, module);
         _implemented = true;
-
-        auto* out = jl_call1(_implemented_type, _template);
-        forward_last_exception();
         jl_gc_unpause;
 
         return Type((jl_datatype_t*) _implemented_type);
