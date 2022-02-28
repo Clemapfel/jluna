@@ -6,6 +6,7 @@
 #include <.src/c_adapter.hpp>
 #include <include/julia_extension.hpp>
 #include <include/exceptions.hpp>
+#include <include/concepts.hpp>
 
 using namespace jluna;
 using namespace jluna::detail;
@@ -20,20 +21,20 @@ struct NonJuliaType
         Int64 _member;
 };
 
+
 int main()
 {
     State::initialize();
+    std::cout << detail::is_tuple_aux<std::tuple<size_t, size_t, size_t>, 0, 1, 2> << std::endl;
 
-    // setup usertype interface
-    auto usertype = UserType<NonJuliaType>("NonJuliaType");
-    /*usertype.add_field(
-        "_member",
-        "Int64",
-        [](NonJuliaType& in) -> Any* {return box(in.get_member());},
-        [](NonJuliaType& out, Any* field) -> void {out.set_member(unbox<Int64>(field));}
-    );*/
 
+
+    std::cout << IsTuple<std::pair<size_t, size_t>> << std::endl;
+    std::cout << IsTuple<size_t> << std::endl;
+    std::cout << IsTuple<std::map<size_t, size_t>> << std::endl;
     return 0;
+
+    /*
 
     Test::initialize();
     Test::test("catch c exception", [](){
@@ -1109,6 +1110,7 @@ int main()
     });
 
     Test::conclude();
+     */
 }
 
 

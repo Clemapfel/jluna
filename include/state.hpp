@@ -161,7 +161,7 @@ namespace jluna::State
     /// @param real
     /// @param imaginary
     /// @returns *named* proxy to newly created value
-    template<IsNumerical T>
+    template<IsPrimitive T>
     [[nodiscard]] Proxy new_named_complex(const std::string& name, T real = 0, T imag = 0);
 
     /// @brief creates new variable in main, then returns named proxy to it
@@ -319,7 +319,7 @@ namespace jluna::State
     /// @param real
     /// @param imaginary
     /// @returns *unnamed* proxy to newly created value
-    template<IsNumerical T>
+    template<IsPrimitive T>
     [[nodiscard]] Proxy new_unnamed_complex(T real = 0, T imag = 0);
 
     /// @brief creates new variable in main, then returns unnamed proxy to it

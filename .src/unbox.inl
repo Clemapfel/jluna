@@ -184,7 +184,7 @@ namespace jluna
         return out;
     }
 
-    template<typename T, typename T1, typename T2, std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool>>
+    template<IsPair T>
     T unbox(Any* value)
     {
         jl_gc_pause;
@@ -192,7 +192,7 @@ namespace jluna
         auto* first = jl_get_nth_field(value, 0);
         auto* second = jl_get_nth_field(value, 1);
 
-        auto res = std::pair<T1, T2>(unbox<T1>(first), unbox<T2>(second));
+        auto res = T(unbox<typename T::first_type>(first), unbox<typename T::second_type>(second));
         jl_gc_unpause;
 
         return res;

@@ -96,7 +96,7 @@ namespace jluna::State
         return detail::create_or_assign(name, (jl_value_t*) jl_symbol(value.c_str()));
     }
 
-    template<IsNumerical T>
+    template<IsPrimitive T>
     Proxy new_named_complex(const std::string& name, T real, T imag)
     {
         return detail::create_or_assign(name, box<std::complex<T>>(std::complex<T>(real, imag)));
@@ -236,7 +236,7 @@ namespace jluna::State
         return Proxy((jl_value_t*) jl_symbol(value.c_str()));
     }
 
-    template<IsNumerical T>
+    template<IsPrimitive T>
     Proxy new_unnamed_complex(T real, T imag)
     {
         return Proxy(box<std::complex<T>>(std::complex<T>(real, imag)));
