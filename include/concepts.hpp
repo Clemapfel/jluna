@@ -48,6 +48,7 @@ namespace jluna
         std::is_same_v<T, jl_function_t*> or
         std::is_same_v<T, jl_sym_t*>;
 
+    /// @concept can be cast to Any*
     template<typename T>
     concept IsAnyPtrCastable = requires(T t)
     {
@@ -128,10 +129,11 @@ namespace jluna
     template<typename T>
     concept IsTuple = detail::is_tuple_aux<T>(std::make_index_sequence<std::tuple_size<T>::value>());
 
-    /// @concept is none of the above
+    /// @concept is none of the above and default constructible
     template<typename T>
     concept IsUsertype =
-        not IsJuliaValuePointer<T>
+        IsDefaultConstructible<T>
+        and not IsJuliaValuePointer<T>
         and not IsAnyPtrCastable<T>
         and not IsPrimitive<T>
         and not IsComplex<T>
