@@ -18,10 +18,6 @@ namespace jluna
     template<typename T, typename U>
     concept Is = std::is_same<T, U>::value or std::is_same_v<T, const U>;
 
-    /// @concept: is tuple but not pair
-    //template<typename T>
-    //concept IsTuple = std::tuple_size<T>::value != 2;
-
     /// @concept: has default ctor
     template<typename T>
     concept IsDefaultConstructible = requires(T)
@@ -120,7 +116,6 @@ namespace jluna
         std::is_same_v<T, std::pair<typename T::first_type, typename T::second_type>>;
     };
 
-
     /// @concept is tuple
     namespace detail
     {
@@ -142,6 +137,7 @@ namespace jluna
         and not IsComplex<T>
         and not IsVector<T>
         and not IsSet<T>
+        and not IsMap<T>
         and not IsPair<T>
         and not IsTuple<T>;
 }

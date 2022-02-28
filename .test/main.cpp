@@ -39,18 +39,17 @@ int main()
 {
     State::initialize();
 
-    Usertype<NonJuliaType>::enable("NonJuliaType");
-    Usertype<NonJuliaType>::add_field(
-        "_member",
-        "Int64",
-        [](NonJuliaType& in) -> Any* {return box(in.get_member());},
-        [](NonJuliaType& out, Any* in) -> void {out.set_member(unbox<Int64>(in));}
-    );
-    Usertype<NonJuliaType>::implement();
+Usertype<NonJuliaType>::enable("NonJuliaType");
+Usertype<NonJuliaType>::add_field(
+    "_member",  // field name
+    Int64,      // field type
+    [](NonJuliaType& in) -> Any* {return box(in.get_member());},    // getter during box
+    [](NonJuliaType& out, Any* in) -> void {out.set_member(unbox<Int64>(in));}  // setter during unbox
+);
+Usertype<NonJuliaType>::implement();    // push type to julia
 
-    jluna::safe_eval("julia_side_instance = undef");
-    Main["julia_side_instance"] = NonJuliaType(1234);
-    jluna::safe_eval("println(julia_side_instance");
+jluna::safe_eval("julia_side_instance = undef");
+Main["julia_side_instance"] = NonJuliaType(1234); // works now
 
     /*
     Usertype<NonJuliaType>::enable("NonJuliaType");
