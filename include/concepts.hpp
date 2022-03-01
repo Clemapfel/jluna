@@ -132,8 +132,7 @@ namespace jluna
     /// @concept is none of the above and default constructible
     template<typename T>
     concept IsUsertype =
-        IsDefaultConstructible<T>
-        and not IsJuliaValuePointer<T>
+        not IsJuliaValuePointer<T>
         and not IsAnyPtrCastable<T>
         and not IsPrimitive<T>
         and not IsComplex<T>

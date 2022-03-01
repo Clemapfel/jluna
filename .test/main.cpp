@@ -11,68 +11,60 @@
 using namespace jluna;
 using namespace jluna::detail;
 
-// julia incompatible arbitrary type
-struct NonJuliaType
+class Frog
 {
+    private:
+        std::string _name;
+
     public:
-        NonJuliaType() = default;
-        NonJuliaType(Int64 in)
-            : _member(in)
+        struct Tadpole
+        {
+            Tadpole() = default;
+
+            void set_name(const std::string& name)
+            {
+                _name = name;
+            }
+
+            const std::string& get_name() const
+            {
+                return _name;
+            }
+
+            Frog evolve()
+            {
+                assert(_name != "");
+                return Frog(_name);
+            }
+
+            private:
+                std::string _name;
+        };
+
+        Frog(const std::string& name)
+            : _name(name)
         {}
 
-        void set_member(Int64 in)
+        std::vector<Tadpole> spawn(size_t number)
         {
-            _member = in;
-        }
+            std::vector<Tadpole> out;
+            for (size_t i = 0; i < number; ++i)
+                out.push_back(Tadpole());
 
-        Int64 get_member() const
-        {
-            return _member;
+            return out;
         }
-
-    private:
-        Int64 _member;
 };
 
 using namespace jluna;
 int main()
 {
     State::initialize();
-Usertype<NonJuliaType>::enable("NonJuliaType");
-Usertype<NonJuliaType>::add_field(
-    "_member",  // field name
-    Int64_t,      // field type
-    [](NonJuliaType& in) -> Any* {return box(in.get_member());},    // getter during box
-    [](NonJuliaType& out, Any* in) -> void {out.set_member(unbox<Int64>(in));}  // setter during unbox
-);
-Usertype<NonJuliaType>::implement();    // push type to julia
 
-State::new_named_undef("lambda") = [](Any* in) -> Any* {
-
-    auto unboxed = unbox<NonJuliaType>(in);
-    unboxed.set_member(unboxed.get_member() + 1);
-    return box<NonJuliaType>(unboxed);
-};
-
-jluna::safe_eval("julia_side_instance = undef");
-Main["julia_side_instance"] = NonJuliaType(1234); // works now
-jluna::safe_eval("println(lambda(julia_side_instance))");
-
-    /*
-    Usertype<NonJuliaType>::enable("NonJuliaType");
-    Usertype<NonJuliaType>::add_field(
-        "_member",
-        "Int64",
-        [](NonJuliaType& in) -> Any* {return box(in.get_member());},
-        [](NonJuliaType& out, Any* value) {out.set_member(unbox<Int64>(value));}
-    );
-
-    Usertype<NonJuliaType>::implement();
-
-    //State::new_named_undef("julia_side_instance") = box(NonJuliaType(999));
-    //jl_eval_string("println(julia_side_instance)");
+    auto cpp_side_instance = Frog("Eve");
+    State::new_named_undef("julia_side_instance") = box<Frog>(cpp_side_instance);
 
     return 0;
+    /*
     Test::initialize();
     Test::test("catch c exception", [](){
 

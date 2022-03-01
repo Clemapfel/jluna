@@ -1896,6 +1896,230 @@ Let's first investigate this class. The outer class, `Frog`, only has a single f
 
 When translating this class in Julia, we run into a number of problems. There are no traditional internal classes in julia, if we define a struct inside another struct, both will be available in the outer structs namespace. Julia furthermore has no concept of visiblity, all its members are public. Lastly, julia does not have traditional member functions, we can have members that are functions but that functions definition does not have implicit access to the classes other members, as it would in C++. 
 
+### Utilizing Usertypes
+
+When attempting to transfer frogs and tadpoles between states, one might naively do the following:
+
+```cpp
+using namespace julia
+State::initialize();
+
+auto cpp_side_instance = Frog("Eve");
+State::new_named_undef("julia_side_instace") = box<Frog>(cpp_side_instance);
+```
+
+This is actually valid syntax, it will compile. Executing the above, however, throws at runtime:
+
+```
+terminate called after throwing an instance of 'jluna::UsertypeNotFullyInitializedException<Frog>'
+  what():  
+[C++][EXCEPTION] Usertype interface for this type T has not yet been fully implemented, make sure the following are true:
+	1) T is default-constructible and a an implementation is available at compile time
+	2) Usertype<T>::enable("<name of usertype here>") was used to instance the usertype interface
+	3) Usertype<T>::implement() was called, after which the interface cannot be extended
+
+If all of the above are true, T is now (un)boxable and to_julia_type<T>::type_name is defined.
+```
+
+This exception is very verbose and explains to us, what we need to do before a call like `box<Frog>` can be successfull. Because explaining a process inside a single exception can make things quite dense, we'll go through the process one-by-one.
+
+### Usertype Interface
+
+To make an arbitrary type (un)boxable, we can implement its *usertype interface* `jluna::Usertype<T>`. This class is a singleton, meaning there can only ever be one instance of it over the live of the program. Because we need `Tadpole` already (un)boxable to define `Frog`, let's start with the former
+
+#### Step 1: Enabling the Interface
+
+To instance the interface as a singleton, we use `Usertype<T>::enable(const std::string&)`. This static function takes a name, this is not the name of the tadpole but the symbol of the type that we will be generating julia side. Most of the time we want the types name to be the same as the C++ class' name:
+
+```cpp
+// in main
+Usertype<Frog::Tadpole>::enable("Tadpole");
+```
+
+#### Step 2: Adding Fields
+
+A type that is just name and nothing else is not very useful, thought. Instead we will need to give it fields that correspond to it's C++ fields. To do this, we use `Usertype<T>::add_field`:
+
+This method takes 4 arguments:
+
++ `const std::string& name`: name of the field julia-side
++ `Type&`: type of the julia-side field, can be `Any_t`
++ `std::function<Any*(T&)>`: a lambda executed during box (see below)
++ `std::functionvoid<T&, Any*>`: a lambda executed during unbox (see below)
+
+#### Getter Lambda
+
+Both the fields name and type are self-explanatory, the lambdas are not. 
+
+When a usertype T is **boxed**, each field added via `add_field` get sassigned a value. This value is the result of the first lambda expression with signature `(T&) -> Any*`, which we will call the **boxing routine** for that specific field. This lambda takes an instance of the type and returns a boxed value. Some examples:
+
+```cpp
+// using a getter to acquire the value for the field
+struct A
+
+    std::string get_field() const
+    {
+        return _field;
+    }
+    
+    std::string set_field(std::string in) 
+    {
+        _field = in;
+    }
+        
+    private:
+        std::string _field;
+end
+
+Usertype<A>::enable("A");
+Usertype<A>::add_field("_field", String_t, [](A& instance) -> Any* {
+   // call getter on instance and return its value
+   return box(instance.get_field());
+});
+```
+In this example, during `Any* result_a = box<A>(instance)`, the getter will be called to initialize the value of the field `_field` of `result_a` (which is of type `A`) to `instance.get_field()`. 
+
+```cpp
+// default initialize a field
+struct B
+    Int64 _field = 1234;
+end
+
+Usertype<B>::enable("B");
+Usertype<B>::add_field("_field", Int64_t, [](B& _) -> Any* {
+    // ignore instance and always return the same value
+    return box(1234);
+});
+```
+
+In this example, during `Any* result_b = box<B>(instance)` the value of the field `_field` of `result_b` will always be `1234`, regardless of what value the instance holds. This can be thought of as default initialization, however the lambda still needs to conform to the signature `(T&) -> Any*`, which is why we name the argument `_` to signal that it is unused.
+
+```cpp
+// computation unrelated to the instance to set the field
+struct C
+    size_t id;
+end
+
+static inline current_id = 33;
+
+Usertype<C>::enable("C");
+Usertype<C>::add_field("_id", UInt64_t, [&](B& _) -> Any* {
+   // capture global id and use it for initialize
+   current_id += 1;
+   return box(current_id);
+});
+```
+Lastly, here we are using the lambda capture to access the value of `current_id`, which is unrelated to the instance. We increase this value of this global, then box it to hand to the result, such that for the expression `Any* result_c = box<C>(instance)`, the value of the field `_id` will be what we handed it but we also modified a variable unrelated to the instance.
+
+What these three examples illustrate it similar to how boxing lambdas worked. While we are limited to the signature `(T&) -> Any*`, through captures we can actually execute arbitrary code.
+
+#### Setter Lambda
+
+Similar to how the `(T&) -> Any*` getter lambda governs, what the corresponding field of the result of the box expression will be set to, the **unbox routine** governs, what value the result calling `unbox<T>(Any*)` will have. The unbox routine has the following signature:
+
+`(T& out, Any* field) -> T`
+
+Where `out` is the resulting object of type T and `field` is the julia-side value of the correponsing field of the julia-side type. Extending our previous examples:
+
+```cpp
+// using a setter to modify the result 
+struct A
+
+    std::string get_field() const
+    {
+        return _field;
+    }
+    
+    std::string set_field(std::string in) 
+    {
+        _field = in;
+    }
+        
+    private:
+        std::string _field;
+end
+
+Usertype<A>::enable("A");
+Usertype<A>::add_field(
+    "_field",   // field name
+    String_t,   // field type
+    // boxing routine
+    [](A& instance) -> Any* {
+       return box(instance.get_field());
+    },
+    // unboxing routine
+    [](A& instance, Any* field_value) -> void
+    {
+        instance.set_field(unbox<std::string>(field_value));
+        return
+    }
+);
+```
+
+Because `A`s `_field` is private, we can only modify it through `set_field`.`field_value`, here, is the value of the field name `_field`. After unboxing it, we can modify the resulting instance `instance` using the setter.
+
+```cpp
+// default initialize a field
+struct B
+    Int64 _field = 1234;
+end
+
+Usertype<B>::enable("B");
+Usertype<B>::add_field(
+    "_field",   // field name
+    Int64_t,    // field type
+    // boxing routine
+    [](B& _) -> Any* {
+        return box(1234);
+    },
+    // unboxing routine
+    [](B& out, Any* field_value) -> void
+    {
+        out._field = unbox<Int64>(field_value);
+        return;
+    }
+);
+```
+Here, we want the result of the unbox expression to acquire the value of the julia-side field. Because the member is public, we can simply assign it.
+
+```cpp
+// computation unrelated to the instance to set the field
+struct C
+    size_t id;
+end
+
+static inline current_id = 33;
+static inline number_of_cpp_side_instances = 12;
+
+Usertype<C>::enable("C");
+Usertype<C>::add_field(
+    "_id",      // field name 
+    UInt64_t,   // field type 
+    // boxing routine
+    [&](C& _) -> Any* 
+    {
+        current_id += 1;
+        return box(current_id);
+    },
+    // unboxing routine
+    [&](C& _, Any* _) -> void
+    
+        number_of_cpp_side_instnaces
+    
+    );
+```
+
+
+
+
+
+
+
+
+
+
+
+
 Despite these differences, if we were to translate this C++ class into Julia, it would be something like:
 
 ```julia
