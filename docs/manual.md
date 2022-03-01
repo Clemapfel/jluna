@@ -1934,7 +1934,70 @@ To instance the interface as a singleton, we use `Usertype<T>::enable(const std:
 ```cpp
 // in main
 Usertype<Frog::Tadpole>::enable("Tadpole");
+Usertype<Frog>::enable("Frog");
 ```
+Once we finished implementing these types, their will be two julia-side types `Frog` and `Tadpole`, because we gave them these names here.
+
+#### Step 2 (optional): Setting Mutability
+
+Next we will need to decide wether we want the julia-side `Frog` and `Tadpole` to be mutable or immutable struct types. Looking at our initial C++ classes, we notice that all member of tadpole, namely just `_name`, can be both read and written to via `set_name` and `get_name`. Because of this, its best not directly translate this behavior via two member function but rather just make the entirety of `Tadpole` mutable:
+
+```cpp
+Usertype<Frog::Tadpole>::set_mutable(true);
+```
+
+Frogs name cannot be changed because there is no setter, only a getter. This behavior is identical to an immutable struct type in julia so we should define it as such:
+
+```cpp
+Usertype<Frog::Tadpole>::set_mutable(false);
+```
+
+This step is optional because by default, all usertypes are mutable. Usually, however, it is better style to manually declare them so.
+
+#### Step 3 (optional): Adding Fields & Methods
+
+To add fields to our julia types, we use `Usertype<T>::add_field`. This class takes 4 arguments:
+
++ `const std::string& name`: name of the julia-side field
++ `Type& type`: type of the field
++ `std::function<Any*(T&)> boxing_routine`: this lambda with signature `(T&) -> Any*` will be called during boxing. It's argument of type `T&` is the instance of the object, the argument of the `box<T>(instance)` call. It's result is the value of the corresponding field. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #### Step 2: Adding Fields
 
