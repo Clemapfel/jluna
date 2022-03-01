@@ -1839,77 +1839,156 @@ Once fully unrolled, we have access to the properties necessary for introspect. 
 
 ## Usertypes
 
+### Example
+
 So far, we could only exchange information between the Julia and C++ state if its type was (un)boxable. This list of types while broad, is limited. This is why `jluna` offers an interface that allows users to specify their own (un)boxing routines and make *arbitrary* C++ types (un)boxable. We do this through a wrapper type `jluna::Usertype<T>`.
 
 Unlike the previous sections, it may be best to illustrate the use of the usertype interface through an example. Let's say we want the following C++ class to be (un)boxable:
 
 ```cpp
-class Quiver 
+class Frog 
 {
+    private:
+        std::string _name;
+        
     public:
-        struct Arrow
+        struct Tadpole
         {
-            const size_t _unique_id;
+            Tadpole() = default;
+            
+            void set_name(const std::string& name)
+            {
+                _name = name;
+            }  
+            
+            const std::string& get_name() const
+            {
+                return _name;
+            }
+            
+            Frog evolve()
+            {
+                assert(_name != "");
+                return Frog(name);
+            }
+            
+            private:
+                std::string _name;
+                
         };
         
-        Quiver() 
-            : _holds();
+        Frog(const std::string& name) 
+            : _name
         {}
         
-        void add(Arrow arrow)
+        std::vector<Tadpole> spawn(size_t number)
         {
-            _holds.push_back(arrow);
-        }
-        
-        Arrow remove()
-        {
-            auto out = _holds.front();
-            _holds.erase(_holds.begin());
+            std::vector<Tadpole> out;
+            for (size_t i = 0; i < number; ++i)
+                out.push_back(Tadpole());
+            
             return out;
         }
-        
-        size_t size() 
-        {
-            return _holds.size();
-        }
-    
-    private:
-        std::vector<InternalType> _holds;
 };
 ```
 
-Let's first investigate this class using C++ terminology. Firstly, it is call `Quiver` and has an internal, public class called `Arrow`. `Arrow` only has a single, constant member `_unique_id`. `Quiver` has 3 member functions that add an arrow, remove an error and count the number of arrows. The arrows are held in an internal vector.
+Let's first investigate this class. The outer class, `Frog`, only has a single field called `_name`. It has one ctor that takes the name and sets it, after constructing there is no way to renamed the frog. `Frog` other function is `spawn` which returns vector of `Frog::Tadpole`s. `Frog::Tadpole` is an internal class, tadpoles also have a name except they don't when they are born, we will have to name them some time afterwards. We can evolve a tadpole into a frog of the same name using `evolve`, however at that time, the tadpole has to have been named or an assertion is raised. 
 
-When trying to translate this class to julia, we immediately run into a couple of problems. In julia, there are no internal structs in the traditional way. A struct declared inside another struct is available in the same scope. Furthermore, julia does not have traditional member functions, a function that is a member of a struct cannot access any other member in that struct implicitly. We can get around this by employing the following trick:
+When translating this class in Julia, we run into a number of problems. There are no traditional internal classes in julia, if we define a struct inside another struct, both will be available in the outer structs namespace. Julia furthermore has no concept of visiblity, all its members are public. Lastly, julia does not have traditional member functions, we can have members that are functions but that functions definition does not have implicit access to the classes other members, as it would in C++. 
 
-```julia
-# in cpp
-
-
-Lastly, julia has no concept similar to private or public members, all members are always public. Given this, one way to translate `Quiver` to julia would be the following:
-
+Despite these differences, if we were to translate this C++ class into Julia, it would be something like:
 
 ```julia
-struct Arrow
-    _unique_id::UInt64
-end
-
-struct Quiver
+mutable struct Tadpole
     
-    add::Function
-    remove::Function
-    size::Function
+    _name::String
+    evolve::Function
     
-    _holds::Vector{Arrow}
-    
-    Quiver() = new(
-        function (arrow::Arrow)
-    
+    Tadpole() = new("",
+        function (this::Tadpole) ::Frog  
+            @assert this._name != ""
+            return Frog(this._name)
+        end
     )
 end
 
+struct Frog
+
+    _name::String
+    spawn::Function
+    
+    Frog(name::String) = new(name, 
+        (this::Frog, number::Integer) -> [Tadpole() for _ in 1:number]
+    )
+end
+```
+
+Let's talk through why this is a faithful translation. Regarding `Tadpole`, in C++ we had a setter `set_name` and getter `get_name` for the property `_name`, this for the julia struct, we need to both be able to read and write to `_name`. By making `Tadpole` mutable, this is achieved. `Tadpole` is furthermore "default constructible" (in C++ parlance), that is, it has a constructor that takes no arguments and initializes the `_name` property as an empty string. Lastly we come to `Tadpole::evolve`, because julia doesn't have traditional member functions we employ the following design:
+
+```julia
+# in cpp:
+Frog Tadpole::evolve() 
+{
+    assert((*this)._name != "");
+    return Frog((*this)._name);
+}
+
+#in julia
+function Tadpole.evolve(this::Tadpole) ::Frog
+    @assert this._name != ""
+    return Frog(this._name)
+end
+```
+By making the classes instance an argument for the member function, we can simulate the behavior of a C++ member function. Calling both functions looks very similar:
+
+```julia
+# in cpp
+Tadpole instance = Tadpole();
+instance.evolve();              // equivalent to: instance.Tadpole::evolve()
+
+# in julia
+instance::Tadpole = Tadpole();
+Tadpole.evolve(instance);
+```
+
+Using this trick, we can simulate C++ syntax very closely. It is paramount to understand this, as it will be the basis for the rest of the section.
+
+Regarding the julia version of `Frog` now: In C++, the _name property can bread (via `get_name`) but cannot be set, we cannot renamed a frog after it evolved. To simulate this behavior, we make the julia-side frog an immutable struct. For the member function `spawn`, we utilize the same trick as with `Tadpole`:
+
+```julia
+# in cpp
+std::vector<Tadpole> Frog::spawn(size_t number)
+{
+    std::vector<Tadpole> out;
+    for (size_t i = 0; i < number; ++i)
+        out.push_back(Tadpole());
+        
+    return out;
+}
+
+# in julia
+function Frog.spawn(number::Integer) ::Vector{Tadpole}
+    
+    out = Vector{Tadpole}()
+    for i in 1:number
+        push!(out, Tadpole())
+    end
+    
+    return out
+end
+```
+
+Really, the only difference is that in julia, we have to define the member function during construction, rather than during struct declaration.
+
+### Usertype Interface
+
+Now that we know how to translate the classes, one might ask: how do we exchange memory from one state to another? Neither `Frog` nor `Tadpole` were listed in the number of types that are (un)boxable, so we will have to define our own unboxing routines, right? No, we do not. `jluna` understands that this requires an unreasonable amount of effort, due to how cumbersome the C-API is to use, so instead it gives us a centralized usertype interface: `Usertype<T>`.
+
+For the interface to be able to handle a type T
 
 ```
+
+
 
 ---
 

@@ -47,9 +47,16 @@ Usertype<NonJuliaType>::add_field(
 );
 Usertype<NonJuliaType>::implement();    // push type to julia
 
+State::new_named_undef("lambda") = [](Any* in) -> Any* {
+
+    auto unboxed = unbox<NonJuliaType>(in);
+    unboxed.set_member(unboxed.get_member() + 1);
+    return box<NonJuliaType>(unboxed);
+};
+
 jluna::safe_eval("julia_side_instance = undef");
 Main["julia_side_instance"] = NonJuliaType(1234); // works now
-jluna::safe_eval("println(julia_side_instance)");
+jluna::safe_eval("println(lambda(julia_side_instance))");
 
     /*
     Usertype<NonJuliaType>::enable("NonJuliaType");

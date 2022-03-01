@@ -117,7 +117,7 @@ add_library(jluna SHARED
 
     include/usertype.hpp
     .src/usertype.inl
-)
+        include/gc_sentinel.hpp)
 
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C

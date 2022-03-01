@@ -75,7 +75,7 @@ namespace jluna
             static inline Any* _implemented_type = nullptr;
 
             static inline std::map<std::string, std::tuple<
-                Type,                           // symbol of typename
+                Type,                           // field type
                 std::function<Any*(T&)>,        // getter
                 std::function<void(T&, Any*)>   // setter
             >> _mapping = {};
@@ -87,7 +87,6 @@ namespace jluna
     {
         public:
             /// @brief ctor
-            /// @param name
             UsertypeNotFullyInitializedException();
 
             /// @brief what
@@ -98,13 +97,12 @@ namespace jluna
             std::string _msg;
     };
 
-    /// @brief exception thrown when usertype is used before being implemented
+    /// @brief exception thrown implementation is called twice
     template<typename T>
     struct UsertypeAlreadyImplementedException : public std::exception
     {
         public:
             /// @brief ctor
-            /// @param name
             UsertypeAlreadyImplementedException();
 
             /// @brief what
