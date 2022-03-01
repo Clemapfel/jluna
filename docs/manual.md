@@ -1958,12 +1958,126 @@ This step is optional because by default, all usertypes are mutable. Usually, ho
 
 To add fields to our julia types, we use `Usertype<T>::add_field`. This class takes 4 arguments:
 
-+ `const std::string& name`: name of the julia-side field
++ `const std::string& field_name`: name of the julia-side field
 + `Type& type`: type of the field
-+ `std::function<Any*(T&)> boxing_routine`: this lambda with signature `(T&) -> Any*` will be called during boxing. It's argument of type `T&` is the instance of the object, the argument of the `box<T>(instance)` call. It's result is the value of the corresponding field. 
++ `std::function<Any*(T&)> boxing_routine`: lambda with signature `(T&) -> Any*` that will be called during boxing. Its argument, of type `T&`, is the cpp-side instance of type `T` that we're trying to box. The result of this lambda will be assigned to the field `field_name` of the resulting julia-side type
++ `std::function<void(T&, Any*)> unboxing_routine`: lambda with signature `(T&, Any*) -> void`, that is called during unboxing. The first argument `T&` is the result of the unboxing call. The second argument `Any*` is the current value of the julia-side field `field_name`
+
+Working through our example will be illustrative here. Firstly `Tadpole`:
+
+`Tadpole` has one field `_name` that is of type `std::string`. When boxing, the resulting julia-side tadpole should keep this name. Similarly, when unboxing, the now cpp-side tadpole should keep the name it had julia side. We can thus execute:
+
+```cpp
+Usertype<Frog::Tadpole>::add_field(
+    "_name",    // name of the field
+    String_t,   // type of the field
+    // boxing routine
+    [](Frog::Tadpole& in) -> Any*
+    {
+        // box field value from cpp-tadpole and send to julia
+        return box<std::string>(in.get_name());
+    },
+    // unboxing routine
+    [](Frog::Tadpole& out, Any* name_value) -> void
+    {
+        // unbox name from julia-tadpole assign cpp-tadpole instance
+        out.set_name(unbox<std::string>(name_value));
+        return;
+    }
+);
+```
+
+#### Step 4: Implementing
+
+All that is left to do, concerning `Frog::Tadpole`, is to push our interface to julia using `Usertype<T>::implement()`. This generates a new type of our specifications for us julia-side and enables (un)boxing for `Frog::Tadpole`:
+
+```cpp
+Usertype<Frog::Tadpole>::implement();
+```
+
+This is not part of the actual release function but for illustration, let's see what jluna executes under-the-hood:
 
 
+```cpp
+Usertype<Frog::Tadpole>::enable("Tadpole");
+Usertype<Frog::Tadpole>::set_mutable(true)
+Usertype<Frog::Tadpole>::add_field(
+    "_name",
+    String_t,
+    [](Frog::Tadpole& in) -> Any*
+    {
+        return box<std::string>(in.get_name());
+    },
+    [](Frog::Tadpole& out, Any* name_value) -> void
+    {
+        out.set_name(unbox<std::string>(name_value));
+        return;
+    }
+);
+Usertype<Frog::Tadpole>::implement();
+```
+```julia
+:(mutable struct Tadpole
+    _name::String
 
+    Tadpole(_name::String) = new(_name)
+end)
+```
+
+We see that the resulting expression is exactly what we would have expected, `Tadpole` is a mutable struct, it has one field called `_name` which is of type `String`. Also, `jluna` generate the default constructor, in case we need it later. This expression was evaluated when `implement()` was called, because types in julia cannot be run-time extended, we cannot change `Tadpole` at this point. If we try to, `jluna` will throw an `UsertypeAlreadyImplementedException`. Keep this in mind, `implement()` can only ever be called exactly once and after we did, we cannot chang the type further.
+
+Our tadpole is supposedly (un)boxable now so let's try it out:
+
+```cpp
+// create cpp-side
+auto cpp_tadpole = Frog::Tadpole();
+
+// move to julia
+State::new_named_undef("jl_tadpole") = cpp_tadpole; // equivalent to `= box(cpp_tadpole)`
+jluna::safe_eval("println(jl_tadpole, " is of type ", typeof(jl_tadpole)"));
+
+// modify
+jluna::safe_eval("jl_tadpole._name = \"Ted\"");
+
+// move back to cpp
+cpp_tadpole = Main["jl_tadpole"]; // equivalent to unbox<Tadpole>(Main["jl_tadpole"])
+std::cout << "tadpole is now named : " << cpp_tadpole.get_name() << std::endl;
+```
+```
+Tadpole("")
+tadpole is now named : Ted
+```
+Everything works, we see that `jl_tadpole` is of type `Tadpole` and that when moving it from cpp to julia, the boxing routine was called and the empty name was preserved. After assigning the tadpoles name to `Ted`, when the unboxing routine was called during access through `operator[]` the name was again preserved and our cpp-side tadpole is now also named `Ted`.
+
+#### Finishing the Example
+
+You may have noticed that so far, we have neglected to implement `Frog::Tadpole::evolve`. This is because for that function to make sense, we first need to implement `Frog` itself. However `Frog` also has 
+
+Now that we know the basics of this system, let us implement `Frog`. Recall that it looks like this C++-side:
+
+```cpp
+class Frog 
+{
+    private:
+        std::string _name;
+        
+    public:
+        struct Tadpole {/*...*/};
+        
+        Frog(const std::string& name) 
+            : _name
+        {}
+        
+        std::vector<Tadpole> spawn(size_t number)
+        {
+            std::vector<Tadpole> out;
+            for (size_t i = 0; i < number; ++i)
+                out.push_back(Tadpole());
+            
+            return out;
+        }
+};
+```
 
 
 

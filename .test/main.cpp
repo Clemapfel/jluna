@@ -53,6 +53,11 @@ class Frog
 
             return out;
         }
+
+        std::string get_name() const
+        {
+            return _name;
+        }
 };
 
 using namespace jluna;
@@ -60,8 +65,89 @@ int main()
 {
     State::initialize();
 
-    auto cpp_side_instance = Frog("Eve");
-    State::new_named_undef("julia_side_instance") = box<Frog>(cpp_side_instance);
+    Usertype<Frog::Tadpole>::enable("Tadpole");
+    Usertype<Frog::Tadpole>::add_field(
+        "_name",    // name of the field
+        String_t,   // type of the field
+        // boxing routine
+        [](Frog::Tadpole& in) -> Any*
+        {
+            // box field value from cpp-tadpole and send to julia
+            return box<std::string>(in.get_name());
+        },
+        // unboxing routine
+        [](Frog::Tadpole& out, Any* name_value) -> void
+        {
+            // unbox name from julia-tadpole assign cpp-tadpole instance
+            out.set_name(unbox<std::string>(name_value));
+            return;
+        }
+    );
+    Usertype<Frog::Tadpole>::add_field(
+        "evolve",
+        Function_t,
+        [](Frog::Tadpole& in) -> Any*
+        {
+            return box([](Any* tadpole_instance) -> Any* {
+
+                Frog::Tadpole in = unbox<Frog::Tadpole>(tadpole_instance);
+                return box(Frog(in.get_name()));
+            });
+        },
+        [](Frog::Tadpole& _, Any* __) -> void
+        {
+            return;
+        }
+    );
+
+    Usertype<Frog>::enable("Frog");
+    Usertype<Frog>::set_mutable(false);
+    Usertype<Frog>::add_field(
+        "name",
+        String_t,
+        [](Frog& in) -> Any*
+        {
+            return box(in.get_name());
+        },
+        [](Frog& out, Any* name) -> void
+        {
+            out = Frog(unbox<std::string>(name));
+            return;
+        }
+    );
+    Usertype<Frog>::add_field(
+        "spawn",
+        Function_t,
+        [](Frog& in) -> Any*
+        {
+             return box([in](Any* frog_instance, Any* number) -> Any* {
+
+                Frog in = unbox<Frog>(frog_instance);
+                size_t n = unbox<size_t>(number);
+
+                return box(in.spawn(n));
+            });
+        }
+    );
+
+    Usertype<Frog>::implement();
+    Usertype<Frog::Tadpole>::implement();
+
+    return 0;
+
+    // create cpp-side
+auto cpp_tadpole = Frog::Tadpole();
+
+// move to julia
+State::new_named_undef("jl_tadpole") = cpp_tadpole; // equivalent to `= box(cpp_tadpole)`
+jluna::safe_eval("println(jl_tadpole)");
+
+// modify
+jluna::safe_eval("jl_tadpole._name = \"Ted\"");
+
+// move back to cpp
+cpp_tadpole = Main["jl_tadpole"];
+std::cout << "tadpole is now named : " << cpp_tadpole.get_name() << std::endl;
 
     return 0;
     /*

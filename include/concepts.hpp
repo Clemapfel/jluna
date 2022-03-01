@@ -12,6 +12,8 @@
 #include <functional>
 #include <iostream>
 
+#include <include/typedefs.hpp>
+
 namespace jluna
 {
     /// @concept: wrapper for std::is_same_v
@@ -140,5 +142,11 @@ namespace jluna
         and not IsSet<T>
         and not IsMap<T>
         and not IsPair<T>
-        and not IsTuple<T>;
+        and not IsTuple<T>
+        and not LambdaType<T>
+        and not LambdaType<T, Any*>
+        and not LambdaType<T, Any*, Any*>
+        and not LambdaType<T, Any*, Any*, Any*>
+        and not LambdaType<T, Any*, Any*, Any*, Any*>
+        and not LambdaType<T, std::vector<Any*>>;
 }
