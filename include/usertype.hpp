@@ -23,22 +23,15 @@ namespace jluna
             /// @brief original type
             using original_type = T;
 
-            /// @brief enable this type by giving it a name
-            /// @param name: julia-side name
-            static void enable(const std::string& name);
+            Usertype() = delete;
 
-            /// @brief get julia-side name
-            /// @returns name
-            static std::string get_name();
+            /// @brief enable interface
+            /// @param name
+            static void enable(const std::string&);
 
-            /// @brief set mutability, no by default
-            /// @param bool
-            /// @note this function will throw if called after implement()
-            static void set_mutable(bool);
-
-            /// @brief get mutability
+            /// @brief is enabled
             /// @returns bool
-            static bool is_mutable();
+            static bool is_enabled();
 
             /// @brief add field
             /// @param name: julia-side name of field
@@ -46,21 +39,12 @@ namespace jluna
             /// @param box_get: lambda with signature (T&) -> Any*
             /// @param unbox_set: lambda with signature (T&, Any*)
             /// @note this function will throw if called after implement()
-            static void add_field(
+            template<typename Field_t>
+            static void add_property(
                 const std::string& name,
-                const Type& type,
-                std::function<Any*(T&)> box_get,
-                std::function<void(T&, Any*)> unbox_set = noop_set
+                std::function<Field_t(T&)> box_get,
+                std::function<void(T&, Field_t)> unbox_set = noop_set
             );
-
-            /// @brief push to state and eval, cannot be extended afterwards
-            /// @param module: module the type will be set in
-            /// @returns julia-side type
-            static Type implement(Module module = Main);
-
-            /// @brief is already implemented
-            /// @brief true if implement was called, false otherwise
-            static bool is_implemented();
 
             /// @brief box interface
             static Any* box(T&);
@@ -69,41 +53,23 @@ namespace jluna
             static T unbox(Any*);
 
         private:
-            static inline Proxy _template = Proxy(jl_nothing);
+            static inline bool _enabled = false;
 
-            static inline bool _implemented = false;
-            static inline Any* _implemented_type = nullptr;
-
-            static inline std::map<std::string, std::tuple<
-                Type,                           // field type
+            static inline std::unique_ptr<Symbol> _name = std::unique_ptr<Symbol>(nullptr);
+            static inline std::map<Symbol, std::tuple<
                 std::function<Any*(T&)>,        // getter
-                std::function<void(T&, Any*)>   // setter
+                std::function<void(T&, Any*)>,   // setter
+                Type
             >> _mapping = {};
     };
 
     /// @brief exception thrown when usertype is used before being implemented
     template<typename T>
-    struct UsertypeNotFullyInitializedException : public std::exception
+    struct UsertypeNotEnabledException : public std::exception
     {
         public:
             /// @brief ctor
-            UsertypeNotFullyInitializedException();
-
-            /// @brief what
-            /// @returns message
-            const char* what() const noexcept override final;
-
-        private:
-            std::string _msg;
-    };
-
-    /// @brief exception thrown implementation is called twice
-    template<typename T>
-    struct UsertypeAlreadyImplementedException : public std::exception
-    {
-        public:
-            /// @brief ctor
-            UsertypeAlreadyImplementedException();
+            UsertypeNotEnabledException();
 
             /// @brief what
             /// @returns message

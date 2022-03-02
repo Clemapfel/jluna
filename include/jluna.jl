@@ -958,191 +958,53 @@ module jluna
         end
     end
 
-    """
-    interface for jluna::Usertype
-    """
-    module usertype
+    module cpp_proxy
 
-        """
-        usertype wrapper
-        """
-        mutable struct Usertype
+        const _proxy_id = Base.Ref{UInt64}(0x00000000ffffffff)
 
-            _name::Symbol
-            _is_mutable::Bool
-            _field_types::Dict{Symbol, Type}
-            _field_values::Dict{Symbol, Any}
-            _parameters::Vector{TypeVar}
+        struct ProxyInternal
 
-            Usertype(name::Symbol, is_mutable::Bool = true) = new(
-                name,
-                is_mutable,
-                Dict{Symbol, Type}(),
-                Dict{Symbol, Any}(),
-                Vector{TypeVar}()
-            )
-        end
-        export Usertype
-
-        """
-        `new_usertype(::Symbol) -> Usertype`
-
-        create new usertype
-        """
-        function new_usertype(name::Symbol) ::Usertype
-             return Usertype(name)
-        end
-        export new_usertype
-
-        """
-        `set_mutable(::Usertype, ::Bool) -> Nothing`
-
-        change mutability of usertype
-        """
-        function set_mutable!(x::Usertype, value::Bool) ::Nothing
-            x._is_mutable = value
-            return nothing
-        end
-        export set_mutable!
-
-        """
-        `add_field!(::Usertype, name::Symbol, typename::Symbol) -> Nothing`
-
-        add field to usertype, can also be a function
-        """
-        function add_field!(x::Usertype, name::Symbol, type::Type) ::Nothing
-
-            x._field_types[name] = type
-            x._field_values[name] = missing
-            return nothing
-        end
-        export add_field!
-
-        """
-        `set_field!(::Usertype, ::Symbol, value) -> Nothing`
-
-        set value of field in usertype
-        """
-        function set_field!(x::Usertype, name::Symbol, value) ::Nothing
-
-           @assert haskey(x._field_values, name)
-            x._field_values[name] = value
-            return nothing;
+            _fields::Dict{Symbol, Union{Any, Missing}}
+            ProxyInternal() = new(Dict{Symbol, Union{Any, Missing}}())
         end
 
-        """
-        `add_parameter!(::Usertype, ::Symbol, upper_bound::Type, lower_bound::Type) -> Nothing`
+        struct Proxy
 
-        add parameter, including upper and lower bounds
-        """
-        function add_parameter!(x::Usertype, name::Symbol, ub::Type = Any, lb::Type = Union{}) ::Nothing
-           push!(x._parameters, TypeVar(name, lb, ub))
-           return nothing
-        end
-        export add_parameter!
+            _id::UInt64
+            _typename::Symbol
+            _value::ProxyInternal
 
-        """
-        `implement(::Usertype) -> Type`
-
-        evaluate the type
-        """
-        function implement(type::Usertype, m::Module = Main)
-
-            parameters = :()
-
-            if isempty(type._parameters)
-                parameters = type._name
-            else
-                @assert false
-                parameters = Expr(:curly, type._name)
-                for tv in type._parameters
-                    if tv.lb == Union{}
-                        if tv.ub == Any
-                            push!(param.args, tv.name)
-                        else
-                            push!(parameters.args, Expr(:(<:), tv.name, Symbol(tv.ub)))
-                        end
-                    else
-                        push!(parameters.args, Expr(:comparison, Symbol(tv.lb), :(<:), tv.name, :(<:), Symbol(tv.ub)))
-                    end
-                end
+            function Proxy(name::Symbol)
+                global _proxy_id.x += 1
+                new(cpp_proxy._proxy_id.x, name, ProxyInternal())
             end
-
-            block = Expr(:block)
-
-            for (field_name, field_type) in type._field_types
-                push!(block.args, Expr(:(::), field_name, (field_type isa Function ? :(Function) : Symbol(field_type))))
-            end
-
-            ctor::Expr = :()
-            default_ctor::Expr = :()
-
-            if isempty(type._parameters)
-                ctor = Expr(:(=), :($(type._name)(base::Main.jluna.usertype.Usertype)), Expr(:call, :new))
-
-                default_ctor = Expr(:(=), Expr(:call, type._name), Expr(:call, :new));
-                for (field_name, field_type) in type._field_types
-                    push!(default_ctor.args[1].args, Expr(:(::), field_name, field_type))
-                    push!(default_ctor.args[2].args, field_name)
-                end
-            else
-                @assert false
-                curly_new = Expr(:curly, :new);
-                for t in type._parameters
-                    push!(curly_new.args, t.name)
-                end
-
-                where_call = Expr(
-                    :where,
-                    Expr(
-                        :call,
-                        Expr(
-                            :curly,
-                            type._name,
-                            (collect(p.name for p in type._parameters)...)
-                        ),
-                        :(base::jluna.usertype.Usertype)
-                    ),
-                    (collect(p.name for p in type._parameters)...)
-                )
-
-                ctor = Expr(:(=), where_call, Expr(:call, curly_new))
-
-                where_call = Expr(
-                    :where,
-                    Expr(
-                        :call,
-                        Expr(
-                            :curly,
-                            type._name,
-                            (collect(p.name for p in type._parameters)...)
-                        )
-                    ),
-                    (collect(p.name for p in type._parameters)...)
-                )
-
-                default_ctor = Expr(:(=), where_call, Expr(:call, curly_new, (collect(missing for _ in 1:length(type._parameters))...)))
-            end
-
-            for (field_name, _) in type._field_values
-                field_symbol = QuoteNode(field_name)
-                push!(ctor.args[2].args, :(base._field_values[$(field_symbol)]))
-            end
-
-            push!(block.args, ctor)
-            push!(block.args, default_ctor);
-
-            out::Expr = :(mutable struct $(parameters) end)
-            out.args[3] = block
-
-            println(out)
-            Base.eval(m, out)
-            return getfield(m, type._name)
         end
-        export implement
+        export proxy
+
+        new_proxy(name::Symbol) = return Proxy(name)
     end
-    using Main.jluna.usertype
 end
+
+"""
+`setindex!(::Proxy, <:Any, ::Symbol) -> Nothing`
+
+extend base.setindex!
+"""
+function Base.setindex!(proxy::Main.jluna.cpp_proxy.Proxy, value, key::Symbol) ::Nothing
+    proxy._value._fields[key] = value
+    return nothing
+end
+export setindex!
+
+"""
+`getindex(::Proxy, ::Symbol) -> Any`
+
+extend base.getindex
+"""
+function Base.getindex(proxy::Main.jluna.cpp_proxy.Proxy, value, key::Symbol) #::Auto
+    return proxy._value._fields[key]
+end
+export getindex
 
 """
 `cppall(::Symbol, ::Any...) -> Any`
