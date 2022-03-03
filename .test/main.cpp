@@ -11,6 +11,21 @@
 using namespace jluna;
 using namespace jluna::detail;
 
+struct RGBA
+{
+    RGBA()
+        : _red(0),
+          _green(0),
+          _blue(0),
+          _alpha(1)
+    {}
+
+    float _red;
+    float _green;
+    float _blue;
+    float _alpha;
+};
+
 class Frog
 {
     private:
@@ -65,17 +80,32 @@ int main()
 {
     State::initialize();
 
-    Usertype<Frog::Tadpole>::enable("Tadpole");
-    Usertype<Frog::Tadpole>::add_property<std::string>(
-        "_name",
-        [](Frog::Tadpole& instance) -> std::string {return instance.get_name();},
-        [](Frog::Tadpole& instance, std::string name) {instance.set_name(name);}
+    Usertype<RGBA>::enable("RGBA");
+    Usertype<RGBA>::add_property<float>(
+        "_red",
+        [](RGBA& in) -> float {return in._red;},
+        [](RGBA& out, float in) -> void {out._red;}
+    );
+    Usertype<RGBA>::add_property<float>(
+        "_green",
+        [](RGBA& in) -> float {return in._green;},
+        [](RGBA& out, float in) -> void {out._green;}
+    );
+    Usertype<RGBA>::add_property<float>(
+        "_blue",
+        [](RGBA& in) -> float {return in._blue;},
+        [](RGBA& out, float in) -> void {out._blue;}
+    );
+    Usertype<RGBA>::add_property<float>(
+        "_alpha",
+        [](RGBA& in) -> float {return in._alpha;},
+        [](RGBA& out, float in) -> void {out._alpha;}
     );
 
-    auto cpp_pole = Frog::Tadpole();
-    cpp_pole.set_name("Ted");
-    State::new_named_undef("julia_pole") = box<Frog::Tadpole>(cpp_pole);
-    State::eval("println(julia_pole)");
+    auto instance = RGBA();
+    auto* res = box<RGBA>(instance);
+
+
 
     return 0;
     /*

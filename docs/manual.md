@@ -1839,558 +1839,202 @@ Once fully unrolled, we have access to the properties necessary for introspect. 
 
 ## Usertypes
 
-### Example
-
-So far, we could only exchange information between the Julia and C++ state if its type was (un)boxable. This list of types while broad, is limited. This is why `jluna` offers an interface that allows users to specify their own (un)boxing routines and make *arbitrary* C++ types (un)boxable. We do this through a wrapper type `jluna::Usertype<T>`.
-
-Unlike the previous sections, it may be best to illustrate the use of the usertype interface through an example. Let's say we want the following C++ class to be (un)boxable:
-
-```cpp
-class Frog 
-{
-    private:
-        std::string _name;
-        
-    public:
-        struct Tadpole
-        {
-            Tadpole() = default;
-            
-            void set_name(const std::string& name)
-            {
-                _name = name;
-            }  
-            
-            const std::string& get_name() const
-            {
-                return _name;
-            }
-            
-            Frog evolve()
-            {
-                assert(_name != "");
-                return Frog(name);
-            }
-            
-            private:
-                std::string _name;
-                
-        };
-        
-        Frog(const std::string& name) 
-            : _name
-        {}
-        
-        std::vector<Tadpole> spawn(size_t number)
-        {
-            std::vector<Tadpole> out;
-            for (size_t i = 0; i < number; ++i)
-                out.push_back(Tadpole());
-            
-            return out;
-        }
-};
-```
-
-Let's first investigate this class. The outer class, `Frog`, only has a single field called `_name`. It has one ctor that takes the name and sets it, after constructing there is no way to renamed the frog. `Frog` other function is `spawn` which returns vector of `Frog::Tadpole`s. `Frog::Tadpole` is an internal class, tadpoles also have a name except they don't when they are born, we will have to name them some time afterwards. We can evolve a tadpole into a frog of the same name using `evolve`, however at that time, the tadpole has to have been named or an assertion is raised. 
-
-When translating this class in Julia, we run into a number of problems. There are no traditional internal classes in julia, if we define a struct inside another struct, both will be available in the outer structs namespace. Julia furthermore has no concept of visiblity, all its members are public. Lastly, julia does not have traditional member functions, we can have members that are functions but that functions definition does not have implicit access to the classes other members, as it would in C++. 
-
-### Utilizing Usertypes
-
-When attempting to transfer frogs and tadpoles between states, one might naively do the following:
-
-```cpp
-using namespace julia
-State::initialize();
-
-auto cpp_side_instance = Frog("Eve");
-State::new_named_undef("julia_side_instace") = box<Frog>(cpp_side_instance);
-```
-
-This is actually valid syntax, it will compile. Executing the above, however, throws at runtime:
-
-```
-terminate called after throwing an instance of 'jluna::UsertypeNotFullyInitializedException<Frog>'
-  what():  
-[C++][EXCEPTION] Usertype interface for this type T has not yet been fully implemented, make sure the following are true:
-	1) T is default-constructible and a an implementation is available at compile time
-	2) Usertype<T>::enable("<name of usertype here>") was used to instance the usertype interface
-	3) Usertype<T>::implement() was called, after which the interface cannot be extended
-
-If all of the above are true, T is now (un)boxable and to_julia_type<T>::type_name is defined.
-```
-
-This exception is very verbose and explains to us, what we need to do before a call like `box<Frog>` can be successfull. Because explaining a process inside a single exception can make things quite dense, we'll go through the process one-by-one.
+So far, we were only able to box and unbox types that were already supported by `jluna`. While this list of types is broad, in more specialized applications it is sometimes necessary to define our own boxing/unboxing routines, such that we can (un)box arbitrary types. This section will give guidance on how to achieve this.
 
 ### Usertype Interface
 
-To make an arbitrary type (un)boxable, we can implement its *usertype interface* `jluna::Usertype<T>`. This class is a singleton, meaning there can only ever be one instance of it over the live of the program. Because we need `Tadpole` already (un)boxable to define `Frog`, let's start with the former
-
-#### Step 1: Enabling the Interface
-
-To instance the interface as a singleton, we use `Usertype<T>::enable(const std::string&)`. This static function takes a name, this is not the name of the tadpole but the symbol of the type that we will be generating julia side. Most of the time we want the types name to be the same as the C++ class' name:
+Consider the following C++ class:
 
 ```cpp
-// in main
-Usertype<Frog::Tadpole>::enable("Tadpole");
-Usertype<Frog>::enable("Frog");
-```
-Once we finished implementing these types, their will be two julia-side types `Frog` and `Tadpole`, because we gave them these names here.
-
-#### Step 2 (optional): Setting Mutability
-
-Next we will need to decide wether we want the julia-side `Frog` and `Tadpole` to be mutable or immutable struct types. Looking at our initial C++ classes, we notice that all member of tadpole, namely just `_name`, can be both read and written to via `set_name` and `get_name`. Because of this, its best not directly translate this behavior via two member function but rather just make the entirety of `Tadpole` mutable:
-
-```cpp
-Usertype<Frog::Tadpole>::set_mutable(true);
-```
-
-Frogs name cannot be changed because there is no setter, only a getter. This behavior is identical to an immutable struct type in julia so we should define it as such:
-
-```cpp
-Usertype<Frog::Tadpole>::set_mutable(false);
-```
-
-This step is optional because by default, all usertypes are mutable. Usually, however, it is better style to manually declare them so.
-
-#### Step 3 (optional): Adding Fields & Methods
-
-To add fields to our julia types, we use `Usertype<T>::add_field`. This class takes 4 arguments:
-
-+ `const std::string& field_name`: name of the julia-side field
-+ `Type& type`: type of the field
-+ `std::function<Any*(T&)> boxing_routine`: lambda with signature `(T&) -> Any*` that will be called during boxing. Its argument, of type `T&`, is the cpp-side instance of type `T` that we're trying to box. The result of this lambda will be assigned to the field `field_name` of the resulting julia-side type
-+ `std::function<void(T&, Any*)> unboxing_routine`: lambda with signature `(T&, Any*) -> void`, that is called during unboxing. The first argument `T&` is the result of the unboxing call. The second argument `Any*` is the current value of the julia-side field `field_name`
-
-Working through our example will be illustrative here. Firstly `Tadpole`:
-
-`Tadpole` has one field `_name` that is of type `std::string`. When boxing, the resulting julia-side tadpole should keep this name. Similarly, when unboxing, the now cpp-side tadpole should keep the name it had julia side. We can thus execute:
-
-```cpp
-Usertype<Frog::Tadpole>::add_field(
-    "_name",    // name of the field
-    String_t,   // type of the field
-    // boxing routine
-    [](Frog::Tadpole& in) -> Any*
-    {
-        // box field value from cpp-tadpole and send to julia
-        return box<std::string>(in.get_name());
-    },
-    // unboxing routine
-    [](Frog::Tadpole& out, Any* name_value) -> void
-    {
-        // unbox name from julia-tadpole assign cpp-tadpole instance
-        out.set_name(unbox<std::string>(name_value));
-        return;
-    }
-);
-```
-
-#### Step 4: Implementing
-
-All that is left to do, concerning `Frog::Tadpole`, is to push our interface to julia using `Usertype<T>::implement()`. This generates a new type of our specifications for us julia-side and enables (un)boxing for `Frog::Tadpole`:
-
-```cpp
-Usertype<Frog::Tadpole>::implement();
-```
-
-This is not part of the actual release function but for illustration, let's see what jluna executes under-the-hood:
-
-
-```cpp
-Usertype<Frog::Tadpole>::enable("Tadpole");
-Usertype<Frog::Tadpole>::set_mutable(true)
-Usertype<Frog::Tadpole>::add_field(
-    "_name",
-    String_t,
-    [](Frog::Tadpole& in) -> Any*
-    {
-        return box<std::string>(in.get_name());
-    },
-    [](Frog::Tadpole& out, Any* name_value) -> void
-    {
-        out.set_name(unbox<std::string>(name_value));
-        return;
-    }
-);
-Usertype<Frog::Tadpole>::implement();
-```
-```julia
-:(mutable struct Tadpole
-    _name::String
-
-    Tadpole(_name::String) = new(_name)
-end)
-```
-
-We see that the resulting expression is exactly what we would have expected, `Tadpole` is a mutable struct, it has one field called `_name` which is of type `String`. Also, `jluna` generate the default constructor, in case we need it later. This expression was evaluated when `implement()` was called, because types in julia cannot be run-time extended, we cannot change `Tadpole` at this point. If we try to, `jluna` will throw an `UsertypeAlreadyImplementedException`. Keep this in mind, `implement()` can only ever be called exactly once and after we did, we cannot chang the type further.
-
-Our tadpole is supposedly (un)boxable now so let's try it out:
-
-```cpp
-// create cpp-side
-auto cpp_tadpole = Frog::Tadpole();
-
-// move to julia
-State::new_named_undef("jl_tadpole") = cpp_tadpole; // equivalent to `= box(cpp_tadpole)`
-jluna::safe_eval("println(jl_tadpole, " is of type ", typeof(jl_tadpole)"));
-
-// modify
-jluna::safe_eval("jl_tadpole._name = \"Ted\"");
-
-// move back to cpp
-cpp_tadpole = Main["jl_tadpole"]; // equivalent to unbox<Tadpole>(Main["jl_tadpole"])
-std::cout << "tadpole is now named : " << cpp_tadpole.get_name() << std::endl;
-```
-```
-Tadpole("")
-tadpole is now named : Ted
-```
-Everything works, we see that `jl_tadpole` is of type `Tadpole` and that when moving it from cpp to julia, the boxing routine was called and the empty name was preserved. After assigning the tadpoles name to `Ted`, when the unboxing routine was called during access through `operator[]` the name was again preserved and our cpp-side tadpole is now also named `Ted`.
-
-#### Finishing the Example
-
-You may have noticed that so far, we have neglected to implement `Frog::Tadpole::evolve`. This is because for that function to make sense, we first need to implement `Frog` itself. However `Frog` also has 
-
-Now that we know the basics of this system, let us implement `Frog`. Recall that it looks like this C++-side:
-
-```cpp
-class Frog 
+struct RGBA
 {
-    private:
-        std::string _name;
-        
-    public:
-        struct Tadpole {/*...*/};
-        
-        Frog(const std::string& name) 
-            : _name
-        {}
-        
-        std::vector<Tadpole> spawn(size_t number)
-        {
-            std::vector<Tadpole> out;
-            for (size_t i = 0; i < number; ++i)
-                out.push_back(Tadpole());
-            
-            return out;
-        }
+    float _red;
+    float _green;
+    float _blue;
+    float _alpha;
 };
 ```
 
+To make classes like this unboxable, we can use the `jluna::Usertype<T>`, a usertype interface that provides a safe, easy way to transfer classes like this between C++ and Julia. 
 
+#### Step 1: Making the Type compliant
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### Step 2: Adding Fields
-
-A type that is just name and nothing else is not very useful, thought. Instead we will need to give it fields that correspond to it's C++ fields. To do this, we use `Usertype<T>::add_field`:
-
-This method takes 4 arguments:
-
-+ `const std::string& name`: name of the field julia-side
-+ `Type&`: type of the julia-side field, can be `Any_t`
-+ `std::function<Any*(T&)>`: a lambda executed during box (see below)
-+ `std::functionvoid<T&, Any*>`: a lambda executed during unbox (see below)
-
-#### Getter Lambda
-
-Both the fields name and type are self-explanatory, the lambdas are not. 
-
-When a usertype T is **boxed**, each field added via `add_field` get sassigned a value. This value is the result of the first lambda expression with signature `(T&) -> Any*`, which we will call the **boxing routine** for that specific field. This lambda takes an instance of the type and returns a boxed value. Some examples:
+For a type `T` to be manageable by `Usertype<T>`, it needs to be *default constructable*. `RGBA` currently has no default constructor, so we need to add it:
 
 ```cpp
-// using a getter to acquire the value for the field
-struct A
-
-    std::string get_field() const
-    {
-        return _field;
-    }
+struct RGBA
+{
+    RGBA() 
+        : _red(0), 
+          _green(0), 
+          _blue(0), 
+          _alpha(1)
+    {}
     
-    std::string set_field(std::string in) 
-    {
-        _field = in;
-    }
-        
-    private:
-        std::string _field;
-end
-
-Usertype<A>::enable("A");
-Usertype<A>::add_field("_field", String_t, [](A& instance) -> Any* {
-   // call getter on instance and return its value
-   return box(instance.get_field());
-});
-```
-In this example, during `Any* result_a = box<A>(instance)`, the getter will be called to initialize the value of the field `_field` of `result_a` (which is of type `A`) to `instance.get_field()`. 
-
-```cpp
-// default initialize a field
-struct B
-    Int64 _field = 1234;
-end
-
-Usertype<B>::enable("B");
-Usertype<B>::add_field("_field", Int64_t, [](B& _) -> Any* {
-    // ignore instance and always return the same value
-    return box(1234);
-});
+    float _red;
+    float _green;
+    float _blue;
+    float _alpha;
+};
 ```
 
-In this example, during `Any* result_b = box<B>(instance)` the value of the field `_field` of `result_b` will always be `1234`, regardless of what value the instance holds. This can be thought of as default initialization, however the lambda still needs to conform to the signature `(T&) -> Any*`, which is why we name the argument `_` to signal that it is unused.
+Furthermore, `T` (un)boxable via other functions in `jluna`, this means `T` cannot be a type mentioned in [this list of (un)boxables](#list-of-unboxables).
+
+#### Step 2: Enabling the Interface
+
+By default, the statement `box<T>(/*...*/)` and `unbox<T>(/*...*/)` compiles for any `T`. However if we try to do this with our `RGBA` class:
 
 ```cpp
-// computation unrelated to the instance to set the field
-struct C
-    size_t id;
-end
-
-static inline current_id = 33;
-
-Usertype<C>::enable("C");
-Usertype<C>::add_field("_id", UInt64_t, [&](B& _) -> Any* {
-   // capture global id and use it for initialize
-   current_id += 1;
-   return box(current_id);
-});
+auto instance = RGBA();
+auto* res = box<RGBA>(instance);
 ```
-Lastly, here we are using the lambda capture to access the value of `current_id`, which is unrelated to the instance. We increase this value of this global, then box it to hand to the result, such that for the expression `Any* result_c = box<C>(instance)`, the value of the field `_id` will be what we handed it but we also modified a variable unrelated to the instance.
+```
+terminate called after throwing an instance of 'jluna::UsertypeNotEnabledException<RGBA>'
+  what():  [C++][Exception] usertype interface for this type was not yet enabled. C Usertype<T>::enable(const std::string&) to instance the interface
 
-What these three examples illustrate it similar to how boxing lambdas worked. While we are limited to the signature `(T&) -> Any*`, through captures we can actually execute arbitrary code.
-
-#### Setter Lambda
-
-Similar to how the `(T&) -> Any*` getter lambda governs, what the corresponding field of the result of the box expression will be set to, the **unbox routine** governs, what value the result calling `unbox<T>(Any*)` will have. The unbox routine has the following signature:
-
-`(T& out, Any* field) -> T`
-
-Where `out` is the resulting object of type T and `field` is the julia-side value of the correponsing field of the julia-side type. Extending our previous examples:
+signal (6): Aborted
+```
+An exception is thrown. To avoid unintended behavior, `jluna` requires users to manually enable types managed by `Usertype<T>` by instancing the interface and naming them. We can do so using:
 
 ```cpp
-// using a setter to modify the result 
-struct A
+Usertype<RGBA>::enable("RGBA");
+```
+The name specific here will be available through the julia-side object that is the result of the `box<T>` call. We will learn how to access it soon.
 
-    std::string get_field() const
-    {
-        return _field;
-    }
-    
-    std::string set_field(std::string in) 
-    {
-        _field = in;
-    }
-        
-    private:
-        std::string _field;
-end
+#### Step 3: Adding Property Routines
 
-Usertype<A>::enable("A");
-Usertype<A>::add_field(
-    "_field",   // field name
-    String_t,   // field type
-    // boxing routine
-    [](A& instance) -> Any* {
-       return box(instance.get_field());
-    },
-    // unboxing routine
-    [](A& instance, Any* field_value) -> void
-    {
-        instance.set_field(unbox<std::string>(field_value));
-        return
+TODO: explain boxing and unboxing calls
+
+First we add a property for `_red`:
+
+```cpp
+Usertype<RGBA>::add_property<float>(
+    "_red",
+    [](RGBA& in) -> float {return in._red;},
+    [](RGBA& out float in) -> void {out._red;}
+);
+```
+
+Lets talk through this call one-by-one. 
+
+Firstly we have the **template parameter**, `float` in this case. This is the type of the field. We use C++ types here, however after `RGBA` is moved to Julia, C++s `float` becomes Julias `Float32`. 
+
+This first argument is the **name of the field**. It is best practice to have this be the same name as in C++, `_red` in this case, however there is no mechanism to enforced this.
+
+The second argument is the **boxing routine**. This function is called during `box<RGBA>`. It has the signature `(T&) -> Value_t`, which for `RGBA` and this specific field becomes `(RGBA&) -> float`. The argument of the boxing routine is the instance of the type that is about to be unboxing like so:
+
+```cpp
+auto instance = RGBA();
+Any* boxed = box<RGBA>(instance);
+
+// calls [](RGBA& in) -> float {return in._red;}
+// with in = instance
+// assign boxed._red with result of boxing routine
+```
+
+The result of the boxing routine lambda is assigned to the field of the specified name of the resulting Julia type.
+
+The third argument is the **unboxing routine**. This lambda has the signature `(T&, Value_t) -> void` which in this case becomes `(RGBA&, float) -> void`. The unboxing routine is called during unboxing, its first argument is the resulting instance and the second argument is the value of the field of the corresponding name:
+
+```cpp
+auto instance = RGBA();
+Any* boxed = box<RGBA>(instance);
+RGBA unboxed = unbox<RGBA>(boxed);
+
+// calls [](RGBA& out, float in) 
+// where out = unboxed
+//       in = boxed._red
+```
+
+The third argument is optional, if no unboxing routine is specific, no operation happens during unboxing, `unboxed` is unmodified.
+
+Now that we know how to add fields, let's fully implement the usertype interface for `RGBA`. For completions sake, all previous stated code written here again.
+
+```cpp
+struct RGBA
+{
+    float _red = 0;
+    float _green = 0;
+    float _blue = 0;
+    float _alpha = 1;
+    // is default constructable
+};
+
+Usertype<RGBA>::enable("RGBA");
+Usertype<RGBA>::add_property<float>(
+    "_red",
+    [](RGBA& in) -> float {return in._red;},
+    [](RGBA& out, float in) -> void {out._red;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_green",
+    [](RGBA& in) -> float {return in._green;},
+    [](RGBA& out, float in) -> void {out._green;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_blue",
+    [](RGBA& in) -> float {return in._blue;},
+    [](RGBA& out, float in) -> void {out._blue;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_alpha",
+    [](RGBA& in) -> float {return in._alpha;},
+    [](RGBA& out, float in) -> void {out._alpha;}
+);
+```
+To illustrate that the properties do not have to directly correspond with the C++ class, let's add another paremeter that represents the `value` component of the HSV color system, sometimes also called "lightness":
+
+```cpp
+Usertype<RGBA>::add_property<float>(
+    "_value",
+    [](RGBA& in) -> float {
+        float max = 0;
+        for (v : {in._red, in._green, in._blue})
+            max = std::max(v, max);
+        return max;
     }
 );
 ```
 
-Because `A`s `_field` is private, we can only modify it through `set_field`.`field_value`, here, is the value of the field name `_field`. After unboxing it, we can modify the resulting instance `instance` using the setter.
+We leave the unboxing routine for `_value` unspecified, because there is no field to assign to C++-Side.
+
+#### Step 5: Implementing the Type
+
+After fully specifying the usertype interface we now have to call `implement`:
 
 ```cpp
-// default initialize a field
-struct B
-    Int64 _field = 1234;
-end
-
-Usertype<B>::enable("B");
-Usertype<B>::add_field(
-    "_field",   // field name
-    Int64_t,    // field type
-    // boxing routine
-    [](B& _) -> Any* {
-        return box(1234);
-    },
-    // unboxing routine
-    [](B& out, Any* field_value) -> void
-    {
-        out._field = unbox<Int64>(field_value);
-        return;
-    }
-);
+Usertype<RGBA>::implement()
 ```
-Here, we want the result of the unbox expression to acquire the value of the julia-side field. Because the member is public, we can simply assign it.
+
+This creates a new type of our specification usertype and sets up all behind-the-scene machinery, such that now, the following works:
 
 ```cpp
-// computation unrelated to the instance to set the field
-struct C
-    size_t id;
-end
+auto instance = RGBA();
+instance._red = 1;
+instance._blue = 1;
 
-static inline current_id = 33;
-static inline number_of_cpp_side_instances = 12;
+State::new_named_undef("julia_side_instance") = box<RGBA>(instance);
+jluna::safe_eval(R"(
+    println("julia_side_instance"));
+    julia_side_instance._blue = 0.5;
+)")
 
-Usertype<C>::enable("C");
-Usertype<C>::add_field(
-    "_id",      // field name 
-    UInt64_t,   // field type 
-    // boxing routine
-    [&](C& _) -> Any* 
-    {
-        current_id += 1;
-        return box(current_id);
-    },
-    // unboxing routine
-    [&](C& _, Any* _) -> void
-    
-        number_of_cpp_side_instnaces
-    
-    );
+auto cpp_side_instance = unbox<RGBA>(jluna::safe_eval("return julia_side_instance"));
+std::cout << cpp_side_instance._blue << std::endl;
+```
+```
+TODO
 ```
 
+Because `box` and `unbox` are now defined, all of `jluna`s functionality now also works with `RGBA`, such as assigning proxies and calling julia-side functions with C++-side arguments:
 
-
-
-
-
-
-
-
-
-
-
-Despite these differences, if we were to translate this C++ class into Julia, it would be something like:
-
-```julia
-mutable struct Tadpole
-    
-    _name::String
-    evolve::Function
-    
-    Tadpole() = new("",
-        function (this::Tadpole) ::Frog  
-            @assert this._name != ""
-            return Frog(this._name)
-        end
-    )
-end
-
-struct Frog
-
-    _name::String
-    spawn::Function
-    
-    Frog(name::String) = new(name, 
-        (this::Frog, number::Integer) -> [Tadpole() for _ in 1:number]
-    )
-end
+```cpp
+RGBA proxy_conversion = Main["julia_side_instance"];
+Base["println"](cpp_side_instance);
 ```
-
-Let's talk through why this is a faithful translation. Regarding `Tadpole`, in C++ we had a setter `set_name` and getter `get_name` for the property `_name`, this for the julia struct, we need to both be able to read and write to `_name`. By making `Tadpole` mutable, this is achieved. `Tadpole` is furthermore "default constructible" (in C++ parlance), that is, it has a constructor that takes no arguments and initializes the `_name` property as an empty string. Lastly we come to `Tadpole::evolve`, because julia doesn't have traditional member functions we employ the following design:
-
-```julia
-# in cpp:
-Frog Tadpole::evolve() 
-{
-    assert((*this)._name != "");
-    return Frog((*this)._name);
-}
-
-#in julia
-function Tadpole.evolve(this::Tadpole) ::Frog
-    @assert this._name != ""
-    return Frog(this._name)
-end
 ```
-By making the classes instance an argument for the member function, we can simulate the behavior of a C++ member function. Calling both functions looks very similar:
-
-```julia
-# in cpp
-Tadpole instance = Tadpole();
-instance.evolve();              // equivalent to: instance.Tadpole::evolve()
-
-# in julia
-instance::Tadpole = Tadpole();
-Tadpole.evolve(instance);
+TODO
 ```
-
-Using this trick, we can simulate C++ syntax very closely. It is paramount to understand this, as it will be the basis for the rest of the section.
-
-Regarding the julia version of `Frog` now: In C++, the _name property can bread (via `get_name`) but cannot be set, we cannot renamed a frog after it evolved. To simulate this behavior, we make the julia-side frog an immutable struct. For the member function `spawn`, we utilize the same trick as with `Tadpole`:
-
-```julia
-# in cpp
-std::vector<Tadpole> Frog::spawn(size_t number)
-{
-    std::vector<Tadpole> out;
-    for (size_t i = 0; i < number; ++i)
-        out.push_back(Tadpole());
-        
-    return out;
-}
-
-# in julia
-function Frog.spawn(number::Integer) ::Vector{Tadpole}
-    
-    out = Vector{Tadpole}()
-    for i in 1:number
-        push!(out, Tadpole())
-    end
-    
-    return out
-end
-```
-
-Really, the only difference is that in julia, we have to define the member function during construction, rather than during struct declaration.
-
-### Usertype Interface
-
-Now that we know how to translate the classes, one might ask: how do we exchange memory from one state to another? Neither `Frog` nor `Tadpole` were listed in the number of types that are (un)boxable, so we will have to define our own unboxing routines, right? No, we do not. `jluna` understands that this requires an unreasonable amount of effort, due to how cumbersome the C-API is to use, so instead it gives us a centralized usertype interface: `Usertype<T>`.
-
-For the interface to be able to handle a type T
-
-```
-
-
-
 ---
 
 ## Performance
@@ -2422,10 +2066,16 @@ Pair                            B
 Set                             B-
 Tuple                           C
 (unordered) map                 D
-lambda                          D-
+lambdas                         F
+
+Usertype<T>                     ?
 ```
 
-Vectors and primitives can be directly swapped between language, which explains their excellent grade, while more complex objects need to be serialized or wrapped before being transferable.
+Vectors and primitives can be directly swapped between language, which explains their excellent grade, while more complex objects need to be serialized or wrapped before being transferable. 
+
+To make lambdas callable through julia, they have to through `jlunas` C-adapter library to then be wrapper Julia-side, which is too inefficient to be usable in performance critical code. However this only applies to boxing/unboxing the lambdas, usually we only need to box a lambda once, however after that, **calling already boxed lambdas is decently fast**.
+
+The performance of boxing/unboxing through the `Usertype<T>` interface wholly depends on how optimal the user-defined getter/setters are implemented. Because of this, it is impossible to assign a grade.
 
 ### Minimize Proxy Construction
 
