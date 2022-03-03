@@ -7,13 +7,11 @@
 
 namespace jluna
 {
-    namespace detail
+    template<typename T>
+    struct to_julia_type<Usertype<T>>
     {
-        struct to_julia_type_aux<Usertype<T>>
-        {
-                inline std::string type_name = "<USERTYPE_NAME_UNINITIALIZED>";
-        };
-    }
+        inline static std::string type_name = "<USERTYPE_NAME_UNINITIALIZED>";
+    };
 
     template<typename T>
     UsertypeNotEnabledException<T>::UsertypeNotEnabledException()
@@ -31,7 +29,7 @@ namespace jluna
     {
         _enabled = true;
         _name = std::make_unique<Symbol>(name);
-        detail::to_julia_type_aux<Usertype<T>>::type_name = name;
+        to_julia_type<Usertype<T>>::type_name = name;
     }
 
     template<typename T>
@@ -50,7 +48,7 @@ namespace jluna
         _mapping.insert({Symbol(name), {
             [box_get](T& instance) -> Any* {return jluna::box<Field_t>(box_get(instance));},
             [unbox_set](T& instance, Any* value) {unbox_set(instance, jluna::unbox<Field_t>(value));},
-            Type(jl_eval_string(to_julia_type<Usertype<T>>::type_name))
+            Type((jl_datatype_t*) jl_eval_string(to_julia_type<Field_t>::type_name.c_str()))
         }});
     }
 
@@ -61,7 +59,7 @@ namespace jluna
             throw UsertypeNotEnabledException<T>();
 
         jl_gc_pause;
-        static jl_function_t* new_proxy = jl_find_function("jluna.cpp_proxy", "new_proxy");
+        static jl_function_t* new_proxy = jl_find_function("jluna", "new_proxy");
         static jl_function_t* setfield = jl_get_function(jl_base_module, "setindex!");
 
         Any* out = jluna::safe_call(new_proxy, _name.get()->operator _jl_sym_t *());

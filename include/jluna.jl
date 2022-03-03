@@ -958,39 +958,40 @@ module jluna
         end
     end
 
-    module cpp_proxy
+    # internal id of proxies, starts at Max(Int32) to avoid id collision with UnnamedFunctionProxy
+    const _proxy_id = Base.Ref{UInt64}(0x00000000ffffffff)
 
-        const _proxy_id = Base.Ref{UInt64}(0x00000000ffffffff)
+    # obfuscate internal state to encourage using operator[] sytanx
+    struct ProxyInternal
 
-        struct ProxyInternal
-
-            _fields::Dict{Symbol, Union{Any, Missing}}
-            ProxyInternal() = new(Dict{Symbol, Union{Any, Missing}}())
-        end
-
-        struct Proxy
-
-            _id::UInt64
-            _typename::Symbol
-            _value::ProxyInternal
-
-            function Proxy(name::Symbol)
-                global _proxy_id.x += 1
-                new(cpp_proxy._proxy_id.x, name, ProxyInternal())
-            end
-        end
-        export proxy
-
-        new_proxy(name::Symbol) = return Proxy(name)
+        _fields::Dict{Symbol, Union{Any, Missing}}
+        ProxyInternal() = new(Dict{Symbol, Union{Any, Missing}}())
     end
+
+    # proxy as deepcopy of cpp-side usertype object
+    struct Proxy
+
+        _id::UInt64
+        _typename::Symbol
+        _value::ProxyInternal
+
+        function Proxy(name::Symbol)
+            global _proxy_id.x += 1
+            new(_proxy_id.x, name, ProxyInternal())
+        end
+    end
+    export proxy
+    new_proxy(name::Symbol) = return Proxy(name)
 end
+
+using Main.jluna;
 
 """
 `setindex!(::Proxy, <:Any, ::Symbol) -> Nothing`
 
 extend base.setindex!
 """
-function Base.setindex!(proxy::Main.jluna.cpp_proxy.Proxy, value, key::Symbol) ::Nothing
+function Base.setindex!(proxy::Main.jluna.Proxy, value, key::Symbol) ::Nothing
     proxy._value._fields[key] = value
     return nothing
 end
@@ -1001,7 +1002,7 @@ export setindex!
 
 extend base.getindex
 """
-function Base.getindex(proxy::Main.jluna.cpp_proxy.Proxy, value, key::Symbol) #::Auto
+function Base.getindex(proxy::Main.jluna.Proxy, value, key::Symbol) #::Auto
     return proxy._value._fields[key]
 end
 export getindex
