@@ -17,7 +17,8 @@ namespace jluna
     template<typename T>
     class Usertype
     {
-        static inline std::function<void(T&, Any*)> noop_set = [](T&, Any* ) {return;};
+        template<typename U>
+        static inline std::function<void(T&, U)> noop_set = [](T&, U) {return;};
 
         public:
             /// @brief original type
@@ -43,8 +44,11 @@ namespace jluna
             static void add_property(
                 const std::string& name,
                 std::function<Field_t(T&)> box_get,
-                std::function<void(T&, Field_t)> unbox_set = noop_set
+                std::function<void(T&, Field_t)> unbox_set = noop_set<Field_t>
             );
+
+            ///
+            static void implement(Module module = Main);
 
             /// @brief box interface
             static Any* box(T&);

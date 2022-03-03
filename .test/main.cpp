@@ -101,11 +101,24 @@ int main()
         [](RGBA& in) -> float {return in._alpha;},
         [](RGBA& out, float in) -> void {out._alpha;}
     );
+    Usertype<RGBA>::add_property<float>(
+        "_alpha",
+        [](RGBA& in) -> float {return in._alpha;},
+        [](RGBA& out, float in) -> void {out._alpha;}
+    );
 
-    auto instance = RGBA();
-    auto* res = box<RGBA>(instance);
+    Usertype<RGBA>::add_property<float>(
+        "_value",
+        [](RGBA& in) -> float {
+            float max = 0;
+            for (float v : {in._red, in._green, in._blue})
+                max = std::max(v, max);
+            return max;
+        }
+    );
 
-
+    static jl_function_t* implement = jl_find_function("jluna", "implement");
+    jluna::safe_call(implement, box<RGBA>(RGBA()));
 
     return 0;
     /*

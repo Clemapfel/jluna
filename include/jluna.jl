@@ -958,9 +958,6 @@ module jluna
         end
     end
 
-    # internal id of proxies, starts at Max(Int32) to avoid id collision with UnnamedFunctionProxy
-    const _proxy_id = Base.Ref{UInt64}(0x00000000ffffffff)
-
     # obfuscate internal state to encourage using operator[] sytanx
     struct ProxyInternal
 
@@ -971,17 +968,35 @@ module jluna
     # proxy as deepcopy of cpp-side usertype object
     struct Proxy
 
-        _id::UInt64
         _typename::Symbol
         _value::ProxyInternal
 
-        function Proxy(name::Symbol)
-            global _proxy_id.x += 1
-            new(_proxy_id.x, name, ProxyInternal())
-        end
+        Proxy(name::Symbol) = new(name, ProxyInternal())
     end
     export proxy
     new_proxy(name::Symbol) = return Proxy(name)
+
+    function implement(template::Proxy, m::Module = Main) ::Type
+
+        out::Expr = :(mutable struct $(template._typename) end)
+        deleteat!(out.args[3].args, 1)
+
+        for (name, value) in template._value._fields
+            push!(out.args[3].args, Expr(:(::), name, Symbol(typeof(value))))
+        end
+
+        new_call::Expr = Expr(:(=), Expr(:call, template._typename), Expr(:call, :new))
+
+        for (_, value) in template._value._fields
+            push!(new_call.args[2].args, value)
+        end
+
+        push!(out.args[3].args, new_call)
+
+        Base.eval(m, out)
+        return m.eval(template._typename)
+    end
+    export implement
 end
 
 using Main.jluna;
