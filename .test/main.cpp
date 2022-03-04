@@ -129,7 +129,8 @@ auto cpp_side_instance = unbox<RGBA>(jluna::safe_eval("return julia_side_instanc
 std::cout << cpp_side_instance._blue << std::endl;
 
     return 0;
-    /*
+    */
+
     Test::initialize();
     Test::test("catch c exception", [](){
 
@@ -1202,7 +1203,22 @@ std::cout << cpp_side_instance._blue << std::endl;
             i += 1;
         }
     });
-     */
+
+    struct NonJuliaType
+    {
+        std::vector<size_t> _field;
+    };
+
+    Test::test("Usertype: throw on disable", [](){
+
+        Test::assert_that_throws<UsertypeNotEnabledException>([](){
+            volatile box<NonJuliaType>(NonJuliaType());
+        });
+
+        Test::assert_that_throws<UsertypeNotEnabledException>([](){
+            volatile unbox<NonJuliaType>(jl_nothing);
+        });
+    });
 
     Test::conclude();
 }
