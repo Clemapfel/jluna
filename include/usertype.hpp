@@ -50,6 +50,8 @@ namespace jluna
             ///
             static void implement(Module module = Main);
 
+            static bool is_implemented();
+
             /// @brief box interface
             static Any* box(T&);
 
@@ -58,8 +60,12 @@ namespace jluna
 
         private:
             static inline bool _enabled = false;
+            static inline bool _implemented = false;
 
+            static inline std::unique_ptr<Type> _type = std::unique_ptr<Type>(nullptr);
             static inline std::unique_ptr<Symbol> _name = std::unique_ptr<Symbol>(nullptr);
+
+            static inline std::vector<Symbol> _fieldnames_in_order = {};
             static inline std::map<Symbol, std::tuple<
                 std::function<Any*(T&)>,        // getter
                 std::function<void(T&, Any*)>,   // setter

@@ -961,8 +961,9 @@ module jluna
     # obfuscate internal state to encourage using operator[] sytanx
     struct ProxyInternal
 
+        _fieldnames_in_order::Vector{Symbol}
         _fields::Dict{Symbol, Union{Any, Missing}}
-        ProxyInternal() = new(Dict{Symbol, Union{Any, Missing}}())
+        ProxyInternal() = new(Vector{Symbol}(), Dict{Symbol, Union{Any, Missing}}())
     end
 
     # proxy as deepcopy of cpp-side usertype object
@@ -981,14 +982,14 @@ module jluna
         out::Expr = :(mutable struct $(template._typename) end)
         deleteat!(out.args[3].args, 1)
 
-        for (name, value) in template._value._fields
-            push!(out.args[3].args, Expr(:(::), name, Symbol(typeof(value))))
+        for name in template._value._fieldnames_in_order
+            push!(out.args[3].args, Expr(:(::), name, Symbol(typeof(template._value._fields[name]))))
         end
 
         new_call::Expr = Expr(:(=), Expr(:call, template._typename), Expr(:call, :new))
 
-        for (_, value) in template._value._fields
-            push!(new_call.args[2].args, value)
+        for name in template._value._fieldnames_in_order
+            push!(new_call.args[2].args, template._value._fields[name])
         end
 
         push!(out.args[3].args, new_call)
@@ -1007,6 +1008,11 @@ using Main.jluna;
 extend base.setindex!
 """
 function Base.setindex!(proxy::Main.jluna.Proxy, value, key::Symbol) ::Nothing
+
+    if (!haskey(proxy._value._fields, key))
+        push!(proxy._value._fieldnames_in_order, key)
+    end
+
     proxy._value._fields[key] = value
     return nothing
 end

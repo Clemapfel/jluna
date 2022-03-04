@@ -117,8 +117,18 @@ int main()
         }
     );
 
-    static jl_function_t* implement = jl_find_function("jluna", "implement");
-    jluna::safe_call(implement, box<RGBA>(RGBA()));
+    auto cpp_side_instance = RGBA();
+    cpp_side_instance._red = 0;
+    cpp_side_instance._blue = 0;
+
+    State::new_named_undef("jl_side_instance") = cpp_side_instance;
+    jl_eval_string(R"(
+        jl_side_instance._blue = 0.5
+        println(jl_side_instance)
+    )");
+
+    RGBA back = Main["jl_side_instance"];
+    std::cout << back._blue << std::endl;
 
     return 0;
     /*
