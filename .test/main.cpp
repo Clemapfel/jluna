@@ -80,6 +80,43 @@ int main()
 {
     State::initialize();
 
+    struct NonJuliaType
+{
+    Int64 _field01 = 123;
+    std::vector<std::string> _field02;
+};
+
+Usertype<NonJuliaType>::enable("NonJuliaType");
+Usertype<NonJuliaType>::add_property<Int64>(
+    // fieldname
+    "_field01",
+    // getter
+    [](NonJuliaType& in) -> Int64 {return in._field01;},
+    // setter
+    [](NonJuliaType& out, Int64 value) {out._field01 = value;}
+);
+
+Usertype<NonJuliaType>::add_property<std::vector<std::string>>(
+   "_field02",
+   [](NonJuliaType& in) -> std::vector<std::string> {return in._field02;},
+      [](NonJuliaType& in, std::vector<std::string> value) {in._field02 = value;}
+
+);
+
+Usertype<NonJuliaType>::implement();
+
+auto cpp_instance = NonJuliaType();
+State::new_named_undef("julia_instance") = cpp_instance;
+// now exchangable between states!
+
+jluna::safe_eval(R"(
+    println(fieldnames(typeof(julia_instance)))
+    push!(julia_instance._field02, "new")
+    println(julia_instance)
+)");
+
+return 0;
+
     Usertype<RGBA>::enable("RGBA");
     Usertype<RGBA>::add_property<float>(
         "_red",

@@ -983,7 +983,7 @@ module jluna
         deleteat!(out.args[3].args, 1)
 
         for name in template._value._fieldnames_in_order
-            push!(out.args[3].args, Expr(:(::), name, Symbol(typeof(template._value._fields[name]))))
+            push!(out.args[3].args, Expr(:(::), name, :($(typeof(template._value._fields[name])))))
         end
 
         new_call::Expr = Expr(:(=), Expr(:call, template._typename), Expr(:call, :new))
