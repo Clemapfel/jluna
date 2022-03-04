@@ -84,27 +84,22 @@ int main()
     Usertype<RGBA>::add_property<float>(
         "_red",
         [](RGBA& in) -> float {return in._red;},
-        [](RGBA& out, float in) -> void {out._red;}
+        [](RGBA& out, float in) -> void {out._red = in;}
     );
     Usertype<RGBA>::add_property<float>(
         "_green",
         [](RGBA& in) -> float {return in._green;},
-        [](RGBA& out, float in) -> void {out._green;}
+        [](RGBA& out, float in) -> void {out._green = in;}
     );
     Usertype<RGBA>::add_property<float>(
         "_blue",
         [](RGBA& in) -> float {return in._blue;},
-        [](RGBA& out, float in) -> void {out._blue;}
+        [](RGBA& out, float in) -> void {out._blue = in;}
     );
     Usertype<RGBA>::add_property<float>(
         "_alpha",
         [](RGBA& in) -> float {return in._alpha;},
-        [](RGBA& out, float in) -> void {out._alpha;}
-    );
-    Usertype<RGBA>::add_property<float>(
-        "_alpha",
-        [](RGBA& in) -> float {return in._alpha;},
-        [](RGBA& out, float in) -> void {out._alpha;}
+        [](RGBA& out, float in) -> void {out._alpha = in;}
     );
 
     Usertype<RGBA>::add_property<float>(
@@ -116,6 +111,8 @@ int main()
             return max;
         }
     );
+
+    Usertype<RGBA>::implement();
 
     auto cpp_side_instance = RGBA();
     cpp_side_instance._red = 0;

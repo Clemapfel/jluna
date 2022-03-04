@@ -51,8 +51,12 @@ namespace jluna
             _fieldnames_in_order.push_back(symbol);
 
         _mapping.insert({symbol, {
-            [box_get](T& instance) -> Any* {return jluna::box<Field_t>(box_get(instance));},
-            [unbox_set](T& instance, Any* value) {unbox_set(instance, jluna::unbox<Field_t>(value));},
+            [box_get](T& instance) -> Any* {
+                return jluna::box<Field_t>(box_get(instance));
+            },
+            [unbox_set](T& instance, Any* value) -> void {
+                unbox_set(instance, jluna::unbox<Field_t>(value));
+            },
             Type((jl_datatype_t*) jl_eval_string(to_julia_type<Field_t>::type_name.c_str()))
         }});
     }
