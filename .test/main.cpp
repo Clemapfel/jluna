@@ -79,44 +79,7 @@ using namespace jluna;
 int main()
 {
     State::initialize();
-
-    struct NonJuliaType
-{
-    Int64 _field01 = 123;
-    std::vector<std::string> _field02;
-};
-
-Usertype<NonJuliaType>::enable("NonJuliaType");
-Usertype<NonJuliaType>::add_property<Int64>(
-    // fieldname
-    "_field01",
-    // getter
-    [](NonJuliaType& in) -> Int64 {return in._field01;},
-    // setter
-    [](NonJuliaType& out, Int64 value) {out._field01 = value;}
-);
-
-Usertype<NonJuliaType>::add_property<std::vector<std::string>>(
-   "_field02",
-   [](NonJuliaType& in) -> std::vector<std::string> {return in._field02;},
-      [](NonJuliaType& in, std::vector<std::string> value) {in._field02 = value;}
-
-);
-
-Usertype<NonJuliaType>::implement();
-
-auto cpp_instance = NonJuliaType();
-State::new_named_undef("julia_instance") = cpp_instance;
-// now exchangable between states!
-
-jluna::safe_eval(R"(
-    println(fieldnames(typeof(julia_instance)))
-    push!(julia_instance._field02, "new")
-    println(julia_instance)
-)");
-
-return 0;
-
+    /*
     Usertype<RGBA>::enable("RGBA");
     Usertype<RGBA>::add_property<float>(
         "_red",
@@ -150,19 +113,20 @@ return 0;
     );
 
     Usertype<RGBA>::implement();
+     */
 
-    auto cpp_side_instance = RGBA();
-    cpp_side_instance._red = 0;
-    cpp_side_instance._blue = 0;
+    auto instance = RGBA();
+instance._red = 1;
+instance._blue = 1;
 
-    State::new_named_undef("jl_side_instance") = cpp_side_instance;
-    jl_eval_string(R"(
-        jl_side_instance._blue = 0.5
-        println(jl_side_instance)
-    )");
+State::new_named_undef("julia_side_instance") = box<RGBA>(instance);
+jluna::safe_eval(R"(
+    println(julia_side_instance)
+    julia_side_instance._blue = 0.5;
+)");
 
-    RGBA back = Main["jl_side_instance"];
-    std::cout << back._blue << std::endl;
+auto cpp_side_instance = unbox<RGBA>(jluna::safe_eval("return julia_side_instance"));
+std::cout << cpp_side_instance._blue << std::endl;
 
     return 0;
     /*

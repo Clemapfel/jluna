@@ -1,4 +1,4 @@
-# jluna: A modern julia ⭤ C++ Wrapper (v0.7.0)
+# jluna: A modern julia ⭤ C++ Wrapper (v0.8.0)
 
 ![](./header.png)
 
@@ -148,7 +148,6 @@ jluna::safe_eval(R"(
 ```
 NonJuliaType(123, ["new"])
 ```
-
 ---
 
 ### Features

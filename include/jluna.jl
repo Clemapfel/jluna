@@ -993,7 +993,7 @@ module jluna
         end
 
         push!(out.args[3].args, new_call)
-
+        println(out)
         Base.eval(m, out)
         return m.eval(template._typename)
     end
