@@ -11,75 +11,10 @@
 using namespace jluna;
 using namespace jluna::detail;
 
-struct RGBA
-{
-    RGBA()
-        : _red(0),
-          _green(0),
-          _blue(0),
-          _alpha(1)
-    {}
-
-    float _red;
-    float _green;
-    float _blue;
-    float _alpha;
-};
-
-class Frog
-{
-    private:
-        std::string _name;
-
-    public:
-        struct Tadpole
-        {
-            Tadpole() = default;
-
-            void set_name(const std::string& name)
-            {
-                _name = name;
-            }
-
-            const std::string& get_name() const
-            {
-                return _name;
-            }
-
-            Frog evolve()
-            {
-                assert(_name != "");
-                return Frog(_name);
-            }
-
-            private:
-                std::string _name;
-        };
-
-        Frog(const std::string& name)
-            : _name(name)
-        {}
-
-        std::vector<Tadpole> spawn(size_t number)
-        {
-            std::vector<Tadpole> out;
-            for (size_t i = 0; i < number; ++i)
-                out.push_back(Tadpole());
-
-            return out;
-        }
-
-        std::string get_name() const
-        {
-            return _name;
-        }
-};
-
 using namespace jluna;
 int main()
 {
     State::initialize();
-
     Test::initialize();
 
     Test::test("catch c exception", [](){
