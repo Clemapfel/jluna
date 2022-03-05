@@ -91,3 +91,58 @@ namespace jluna
 }
 
 #include ".src/usertype.inl"
+
+function set_xor(set::Set{T}) where T
+
+	res = undef
+	front::Bool = true
+	for e in set
+		if front
+			res = e
+			front = false
+		else
+			res = Base.xor(res, e)
+		end
+	end
+	return res
+end
+
+function solve(set_in::Set, k::Integer) ::Set{Set}
+
+	pool = Vector{Set{Set}}()
+	push!(pool, Set())
+
+	# seed the pool with all sets of size 1
+	for n in set_in
+		push!(pool[1], Set([n]))
+	end
+
+	# grow sets to generate all possible sets of size k-1
+	index = 2
+	while index <= k-1
+
+		push!(pool, Set{Set}())
+		for set in pool[index-1]
+			for n in set_in
+				push!(pool[index], union(set, Set([n])))
+			end
+		end
+		index += 1
+	end
+
+	# reject some k-1 because:
+	# For a set s = {s1, s2, ..., s3} such that xor(s) != 0, m = xor(s): xor(union(s, m)) = 0
+	out = Set{Set}()
+	for set in pool[length(pool)]
+
+		xor_result = set_xor(set)
+		if !(xor_result in set) && (xor_result in set_in)
+			push!(out, union(set, Set([xor_result])))
+		end
+	end
+
+	return out
+end
+
+# usage:
+solve(Set([x for x in 1:256]), 5)
