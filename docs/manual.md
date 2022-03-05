@@ -56,14 +56,14 @@ Please navigate to the appropriate section by clicking the links below:
   10.6 [~~Type Info: Methods~~](#methods)<br>
   10.7 [~~Type Info: Properties~~](#properties)<br>
   10.8 [Type Classification](#type-classification)<br>
-11. [~~Expressions~~](#expressions)<br>
-12. [Usertypes](#usertypes)<br>
+11. [~~**Expressions**~~](#expressions)<br>
+12. [**Usertypes**](#usertypes)<br>
     12.1 [Usertype Interface](#usertype-interface)<br>
     12.2 [Making the Type Compliant](#step-1-making-the-type-compliant)<br>
     12.3 [Enabling the Interface](#step-2-enabling-the-interface)<br>
     12.4 [Adding Property Routines](#step-3-adding-property-routines)<br>
     12.5 [Implementing the Type](#step-4-implementing-the-type)<br>
-13. [~~**Paralell Execution~~](#performance)<br>
+13. [~~**Paralell Execution**~~](#performance)<br>
 14. [**Performance**](#performance)<br>
     14.1 [Cheat Sheet](#cheat-sheet)<br>
     14.2 [Avoiding String Parsing](#avoid-string-parsing)<br>
@@ -1847,7 +1847,7 @@ Once fully unrolled, we have access to the properties necessary for introspect. 
 
 ## Usertypes
 
-So far, we were only able to box and unbox types that were already supported by `jluna`. While this list of types is broad, in more specialized applications it is sometimes necessary to define our own boxing/unboxing routines, such that we can (un)box arbitrary types. This section will give guidance on how to achieve this.
+So far, we were only able to box and unbox types that were already supported by `jluna`. While this list of types is broad, in more specialized applications, it is sometimes necessary to define our own boxing/unboxing routines. Luckily, `jluna` offers an easy-to-use and safe interface for transferring arbitrary C++ types between states. This section will give guidance on its usage.
 
 ### Usertype Interface
 
@@ -1863,11 +1863,11 @@ struct RGBA
 };
 ```
 
-To make classes like this unboxable, we can use the `jluna::Usertype<T>`, a usertype interface that provides a safe, easy way to transfer classes like this between C++ and Julia. 
+While it may be possible to translate this class into a Julia-side `NamedTuple`, this is rarely the best option. For more complex classes, this is often not possible at all. To make classes like this (un)boxable, we use `jluna::Usertype<T>`.
 
 #### Step 1: Making the Type compliant
 
-For a type `T` to be manageable by `Usertype<T>`, it needs to be *default constructable*. `RGBA` currently has no default constructor, so we need to add it:
+For a type `T` to be manageable by `Usertype<T>`, it needs to be *default constructable*. `RGBA` currently has no explicit default constructor, so we need to add it:
 
 ```cpp
 struct RGBA
@@ -1886,11 +1886,11 @@ struct RGBA
 };
 ```
 
-Furthermore, `T` cannot be (un)boxable via other functions in `jluna`. This means `T` can't be any type in [this list of (un)boxables](#list-of-unboxables).
+Furthermore, `T` cannot be already (un)boxable via other `jluna` functions except for other `Usertype`-managed classes. This means `T` can't be any type in [this list of (un)boxables](#list-of-unboxables).
 
 #### Step 2: Enabling the Interface
 
-By default, the statement `box<T>(/*...*/)` and `unbox<T>(/*...*/)` compiles for any `T`. However if we try to do this with our `RGBA` class:
+By default, the statement `box<T>(/*...*/)` and `unbox<T>(/*...*/)` compiles for any `T`. However, if we try this with our `RGBA` class:
 
 ```cpp
 auto instance = RGBA();
@@ -1902,18 +1902,19 @@ terminate called after throwing an instance of 'jluna::UsertypeNotEnabledExcepti
 
 signal (6): Aborted
 ```
-An exception is thrown at runtime. To avoid unintended behavior, `jluna` requires users to manually enable the usertype interface for any specific type. We can do so using:
+An exception is thrown. To avoid unintended behavior, `jluna` requires users to manually enable the usertype interface for any specific type. We do so using:
 
 ```cpp
 Usertype<RGBA>::enable("RGBA");
 ```
-This functions takes the julia-side name as an argument. After unboxing, this will be the name of the type, `RGBA` will be converted to.
+
+Where the argument is the corresponding Julia-side types name, after unboxing.
 
 #### Step 3: Adding Property Routines
 
-A *property* of a struct type would be called a "field" in Julia and a "member" in C++. We will use all 3 terms interchangeably here. 
+A *property* of a struct type would be called a "field" in Julia and a "member" in C++, it any field of any type that is namespaced within a structtype. We'll use all 3 terms, "field", "member", and "property" interchangeably here. 
 
-Explaining how to add properties is best done via an example. Thus, we add a property for `_red`:
+To add a property for `RGBA`s `_red`, we use:
 
 ```cpp
 Usertype<RGBA>::add_property<float>(
@@ -1923,11 +1924,11 @@ Usertype<RGBA>::add_property<float>(
 );
 ```
 
-Lets talk through this call one-by-one. 
+Let's talk through this call one-by-one. 
 
-First, we have the **template parameter**, `float` in this case. This is the type of the field. We use C++ types here, however after `RGBA` is moved to Julia, C++s `float` becomes Julias `Float32`. We can check which C++ types gets converted to which Julia type using `to_julia_type<T>::type_name`.
+First, we have the **template parameter**, `float` in this case. This is the type of the field. We use C++ types here, however. after `RGBA` is boxed to Julia, C++s `float` becomes Julias `Float32`. We can check which C++ types gets converted to which Julia type using `to_julia_type<T>::type_name`.
 
-This first argument is the **name of the field**. It is best practice to have this be the same name as in C++, `_red` in this case, however there is no mechanism to enforced this.
+This first argument is the **name of the field**. It's best practice, to have this be the same name as in C++, `_red` in this case, however there is no mechanism to enforce this.
 
 The second argument is the **boxing routine**. This function is called during `box<RGBA>(instance)`. It has the signature `(T&) -> Value_t`, which for `RGBA` and this specific field becomes `(RGBA&) -> float`. The argument of the boxing routine is the instance of the type that is about to be boxed:
 
@@ -1935,9 +1936,8 @@ The second argument is the **boxing routine**. This function is called during `b
 auto instance = RGBA();
 Any* boxed = box<RGBA>(instance);
 
-// calls [](RGBA& in) -> float {return in._red;}
-// with in = instance
-// assign boxed._red with result of boxing routine
+// calls [](RGBA& in) -> float {return in._red;} with in = instance
+// then assigns boxed._red with result
 ```
 
 The result of the boxing routine lambda is assigned to the field of the specified name of the resulting Julia type.
@@ -1949,14 +1949,12 @@ auto instance = RGBA();
 Any* boxed = box<RGBA>(instance);
 RGBA unboxed = unbox<RGBA>(boxed);
 
-// calls [](RGBA& out, float in) 
-// where out = unboxed
-//       in = boxed._red
+// calls [](RGBA& out, float in) with out = unboxed, in = unboxed._red
 ```
 
-The third argument is optional, if no unboxing routine is unspecified, `unboxed` is not modified.
+Specifying the unboxing routine is optional. If left unspecified, no operation is performed during unboxing.
 
-Now that we know how to add fields, let's fully implement the usertype interface for `RGBA`. For completions sake, all previous  code is reprinted here:
+Now that we know how to add fields, let's fully implement the usertype interface for `RGBA` (where previous code is reprinted here for clarity):
 
 ```cpp
 struct RGBA
@@ -1965,7 +1963,7 @@ struct RGBA
     float _green = 0;
     float _blue = 0;
     float _alpha = 1;
-    // is default constructable
+    // is default constructable because all members are
 };
 
 Usertype<RGBA>::enable("RGBA");
@@ -1990,7 +1988,7 @@ Usertype<RGBA>::add_property<float>(
     [](RGBA& out, float in) -> void {out._alpha;}
 );
 ```
-To illustrate that the properties do not have to directly correspond with the C++ class, let's add another paremeter that represents the `value` component of the HSV color system, sometimes also called "lightness", is defined as the maximum of red, green and blue:
+To illustrate that properties do not have to directly correspond with members of the C++ class, we'll add another julia-side field that represents the `value` component from the HSV color system (sometimes also called "lightness"). It is defined as the maximum of red, green and blue, given a color in RGBA:
 
 ```cpp
 Usertype<RGBA>::add_property<float>(
@@ -2004,17 +2002,17 @@ Usertype<RGBA>::add_property<float>(
 );
 ```
 
-We leave the unboxing routine for `_value` unspecified, because there is no field called `_value` to assign to. C++-Side.
+We leave the unboxing routine for `_value` unspecified, because there is no field called `_value` to assign to C++-side.
 
 #### Step 4: Implementing the Type
 
-Having added all properties to the usertype interface, the only thing left to do is call:
+Having added all properties to the usertype interface, we make Julia aware of the interface by calling:
 
 ```cpp
 Usertype<RGBA>::implement()
 ```
 
-This creates a new type julia-side that has the same architecture we gave it. For end-users this happens behind the scene, but for illustrations sake, this expression is assembled an evaluated during `implement`:
+This creates a new type julia-side that has the architecture we just gave it. For end-users, this happens behind the scene, however internally, the following expression is assembled and evaluated:
 
 ```julia
 mutable struct RGBA
@@ -2027,9 +2025,9 @@ mutable struct RGBA
 end
 ```
 
-We see that `jluna` assembled a struct type whos field names and types are as we have specified. The type is also `mutable` and it has a default construct (a constructor that takes no arguments). The default values here are taken from an unmodified instance of `T` (`RGBA()`) in our case. This is why the type needs to be default constructible.
+We see that `jluna` assembled a struct type, whose field names and types are as we have specified. Even the order in which we called `add_field` for specific names is preserved. This becomes important for the default constructor (a constructor that takes no arguments). The default values for all the field are taken from an unmodified, default initialized instance of `T` (`RGBA()`) in our case. This is why the type needs to be default constructible. We furthermore note that the type is `mutable`.
 
-After having now evaluated this expression and defining the type, the following works:
+Having evaluated the above expression and thus defining the type, from this point onwards, the following works:
 
 ```cpp
 auto instance = RGBA();
@@ -2050,22 +2048,22 @@ RGBA(1.0f0, 0.0f0, 1.0f0, 1.0f0, 1.0f0)
 0.5
 ```
 
-Because `box` and `unbox` are now defined, all of `jluna`s functionality now also works with `RGBA`. This includes assigning proxies, calling julia-side functions with C++-side arguments and even using `RGBA` as value types for a `jluna` array.
+Because `box` and `unbox` are now defined, all of `jluna`s functionality now also works with `RGBA`. This includes assigning proxies, calling julia-side functions with C++-side arguments, and even using `RGBA` as value types for a `jluna` array. 
 
 ---
 
 ## Performance
 
-This section will give some tips on how to achieve the best performance using `jluna`. As of release 0.7, `jluna` went through extensive optimization, minimizing overhead as much as possible. Still, when compared to pure julia, `jluna` will always be slower. Comparing `jluna` to the C-library though is a much fairer comparison and in that aspect it can do quite well, though it is important to be aware of how to avoid overhead and when it is worth to stay with the C-library.
+This section will give some tips on how to achieve the best performance using `jluna`. As of release 0.7, `jluna` went through extensive optimization, minimizing overhead as much as possible. Still, when compared to pure julia, `jluna` will always be slower. Comparing `jluna` to the C-library, though, is a much fairer comparison and in that aspect it can do quite well. It is still important to be aware of how to avoid overhead, and when it may be worth it to stay with the C-library.
 
 ### Cheat Sheet
 
-Here, we provide a grading of most of `jluna`s features in terms of runtime performance. `A+` means there is literally 0-overhead, `F` means "do not use this in performance critical code":
+Here, we provide a grading of most of `jluna`s features in terms of runtime performance, where `A+` means there is literally 0-overhead, `F` means "do not use this in performance critical code":
 
 ```cpp
 // function or feature              // grade
 
-// ### executing julia code     
+// ### executing julia code ###
 jluna::call                         A+
 jluna::safe_call                    A
 Proxy::call                         A+
@@ -2081,17 +2079,17 @@ State::eval_file                    C+
 State::safe_eval_file               C
 GeneratorExpression                 F
 
-// ### accessing julia-side value
+// ### accessing julia-side values ###
 Array<T, N>::operator[](size_t)     A+
 Proxy::operator Any*()              A+
-Type::operator jl_datatype_t*()     A+
 State::safe_return                  A
-Proxy::operator[]                   A-
+Proxy::operator[](size_t)           A
+Proxy::operator[](std::string)      A-
 State::new_named_*                  A
 jl_get_function                     A+
 jl_find_function                    F
 
-// ### box<T> / unbox<T>
+// ### box<T> / unbox<T> for T = ###
 primitives (int, float, etc.)       A+
 const char*                         A+
 Proxy                               A
@@ -2105,19 +2103,20 @@ map / unordered map                 C
 lambdas                             F   // but calling is A
 Usertype<T>                         ?*
         
-* Usertype<T> boxing performance entirely dependend on user-supplied getter/setter
+* Usertype<T> boxing performance is entirely dependend on user-supplied getter/setter
         
-// ### other
+// ### other ###
 State::initialize                   F
 GCSentinel                          A+
 State::set_gc_enabled               A+
 State::collect_garbage              A+
-jluna::Type (all)                   A
+jluna::Type Introspection           A
 jluna::register_function            F   // but calling is A-
 Usertype<T>::add_field              D
 Usertype<T>::enable                 F
 Usertype<T>::implement              F
 ```
+---
 
 ### Tips
 
@@ -2125,10 +2124,10 @@ The following suggestions are good to keep in mind when writing performance-crit
 
 ### Avoid String Parsing
 
-It is often easy to view `jluna` like we would the REPL, controlling Julia through commands supplied as strings. While this is of course possible, it is rarely the fastest way to trigger action Julia side. Notably, when calling Julia functions, often the following pattern achieves much better performance:
+It's easy to fall into treating `jluna` like the REPL: a tool to control Julia through the use of commands supplied as strings. This is rarely the most optimal way to trigger Julia-side actions, however. Notably, when calling Julia functions, often the following pattern, of calling functions directly through C, achieves much better performance:
 
 ```cpp
-// 1) as fast as possible
+// 1) exactly as fast as pure julia
 static jl_function_t* call_function = jl_find_function("Main.MyModule", "call_function"); 
 jluna::call(call_function);
 
@@ -2140,16 +2139,16 @@ call_function();
 jluna::eval("Main.MyModule.call_function()");
 ```
 
-Where, `static` is used, such that the `call_function` pointer is only assigned exactly once. Because we control the functions purely through C in `1)`, the julia parser does not come into play at all, avoiding unnecessary overhead incurred by it.
+Where `static` was used, so the `call_function` pointer is only assigned exactly once over the course of runtime.
 
 ### Stay Julia-Side
 
-All performance critical code should be inside a julia file. All C++ should do, is to manage data and dispatch the julia-side function. For example, let's say we are working on very big matrices. Any matrix operation should happen inside a julia function, and the actual data of the matrix should stay julia-side as much as possible. We can still control julia from C++, `State::eval` has almost no overhead. Similarly, `jluna::Proxy` is just a stand-in for julia-side data. Thus, using julia functions of `jluna::Proxy`s incurs very little overhead compared to doing both only in julia.
+All performance critical code should be inside a Julia file. All C++ should do, is to manage data and dispatch the Julia-side functions. For example, let's say we are working on very big matrices. Any matrix operation should happen inside a julia function, the actual data of the matrix should stay julia-side as much as possible. We can still control julia from C++, `State::eval` has almost no overhead. Similarly, `jluna::Proxy` is just a stand-in for julia-side data. Thus, using julia functions of `jluna::Proxy`s incurs very little overhead compared to doing both only in julia.
 
 ### Minimize (Un)Boxing
 
-By far the easiest way to completely tank a programs' performance is to unnecessarily box/unbox values constantly. If our program requires operation `A` , `B`, `C` julia-side and `X`, `Y`, `Z` C++-side, it's very important to execute everything in a way that minimizes the number of box/unbox calls. So:
-`ABC <unbox> XYZ <box>` rather than `A <unbox> X <box> B <unbox> Y <box>`, etc.. This may seem obvious when abstracted like this but in a complex application, it's easy to forget. Knowing what calls cause box/unboxing is essential to avoiding pitfalls.
+By far the easiest way to completely tank a programs' performance is to unnecessarily box/unbox values constantly. If our program requires operation `A`, `B`, `C` julia-side and `X`, `Y`, `Z` C++-side, it's very important to execute everything in a way that minimizes the number of box/unbox calls. So:
+`ABC <unbox> XYZ <box>` rather than `A <unbox> X <box> B <unbox> Y <box>`, etc.. This may seem obvious when abstracted like this but in a complex application, it's easy to forget. Knowing what calls cause box/unboxing is essential to avoiding pitfalls, because of this it sometimes encouraged to not shy away from handling pure `Any*`, just make sure to also manually control the garbage collector.
 
 ### Minimize Proxy Construction
 
@@ -2173,7 +2172,7 @@ Proxy a;
 }
 ```
 
-Where each declaration triggers a proxy to be created. At the end of the block, all no proxies are deallocated because the value of a depends on it's host, `vector_var`.
+Where each declaration triggers a proxy to be created. At the end of the block, no proxies are deallocated, because the value of `a` depends on its host, `vector_var`, which needs to stay in scope for `a` to be able to be dereferenced.
 
 If we instead access the value like so:
 
@@ -2181,15 +2180,21 @@ If we instead access the value like so:
 size_t a = State::safe_return<size_t>("Main.Module1.Module2.vector_var[1].field")
 ```
 
-We do not create any proxy at all, increasing performance by up to 6 times. Of course, doing this, we loose the convenience of being assignable, castable, and all other functionalities a named `jluna::Proxy` offers. Still, in performance-critical code, unnamed proxies are almost always faster than named proxies and should be preferred.
+We do not create any proxy at all, increasing performance by up to 6 times. Of course, doing this, we loose the convenience of being assignable, castable, and all other functionalities a named `jluna::Proxy` offers. Still, in performance-critical code, unnamed proxies are almost always faster than named proxies and should be preferred. A good middle-ground is the following style:
+
+```cpp
+auto a_proxy = jluna::Proxy(jluna::safe_eval("Main.Module1.Module2.vector_var[1].field"));
+size_t a_value = a_proxy;
+```
+This calls the proxy constructor with a pure Any* returned through `safe_eval`, reducing the number of proxies from 6 to 1.
 
 ### Use the C-Library
 
-When performance needs to be optimal, not "good" or "excellent, but mathematically optimal, it is sometimes necessary to resort to the C-library. Values are hard to manage, the syntax is very clunky and the garbage collector will probably steal many of our values from under our nose and segfault the program, but that is the trade-off of performance vs convenience. <br>
+When performance needs to be optimal, not "good" or "excellent, but mathematically optimal, it is sometimes necessary to resort to the C-library. Values are hard to manage, the syntax is very clunky and the garbage collector will probably steal many of our values from under our nose and segfault the program, but, that is the trade-off of performance vs. convenience. <br>
 Luckily the C-library and `jluna` are freely mixable, though we may need to `.update` any proxies whos julia-side value was modified outside `jluna`.
 
 ### In Summary
 
-`jluna`s safety features incur an unavoidable overhead. Great care has been taken to minimize this overhead as much as possible, but it is still there. Knowing this, `jluna` is still perfectly fine for most applications. If a part of a library truly is performance critical, however, it may be necessary to avoid using `jluna` as much as possible in order for julia to do, what it's best at: being very fast. When mixing C++ and Julia, though, `jluna` does equally well at bridging that gap, and in many ways it does so better than the C-API.
+`jluna`s safety features incur an unavoidable overhead. Great care has been taken to minimize this overhead as much as possible, but it is still non-zero in many cases. Knowing this, `jluna` is still perfectly fine for most applications. If a part of a library is truly performance critical, however, it may be necessary to avoid using `jluna` as much as possible in order for julia to do, what it's best at: being very fast. When mixing C++ and Julia, however, `jluna` does equally well at bridging that gap, and in many ways it does so better than the C-API.
 
 ---

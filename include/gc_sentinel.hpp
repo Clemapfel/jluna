@@ -15,15 +15,16 @@ namespace jluna
         private:
             bool _before;
 
-        GCSentinel()
-        {
-            _before = jl_gc_is_enabled();
-            jl_gc_enable(false);
-        }
+        public:
+            GCSentinel()
+            {
+                _before = jl_gc_is_enabled();
+                jl_gc_enable(false);
+            }
 
-        ~GCSentinel()
-        {
-            jl_gc_enable(_before);
-        }
+            ~GCSentinel()
+            {
+                jl_gc_enable(_before);
+            }
     };
 }

@@ -79,59 +79,10 @@ using namespace jluna;
 int main()
 {
     State::initialize();
-    /*
-    Usertype<RGBA>::enable("RGBA");
-    Usertype<RGBA>::add_property<float>(
-        "_red",
-        [](RGBA& in) -> float {return in._red;},
-        [](RGBA& out, float in) -> void {out._red = in;}
-    );
-    Usertype<RGBA>::add_property<float>(
-        "_green",
-        [](RGBA& in) -> float {return in._green;},
-        [](RGBA& out, float in) -> void {out._green = in;}
-    );
-    Usertype<RGBA>::add_property<float>(
-        "_blue",
-        [](RGBA& in) -> float {return in._blue;},
-        [](RGBA& out, float in) -> void {out._blue = in;}
-    );
-    Usertype<RGBA>::add_property<float>(
-        "_alpha",
-        [](RGBA& in) -> float {return in._alpha;},
-        [](RGBA& out, float in) -> void {out._alpha = in;}
-    );
-
-    Usertype<RGBA>::add_property<float>(
-        "_value",
-        [](RGBA& in) -> float {
-            float max = 0;
-            for (float v : {in._red, in._green, in._blue})
-                max = std::max(v, max);
-            return max;
-        }
-    );
-
-    Usertype<RGBA>::implement();
-     */
-
-    auto instance = RGBA();
-instance._red = 1;
-instance._blue = 1;
-
-State::new_named_undef("julia_side_instance") = box<RGBA>(instance);
-jluna::safe_eval(R"(
-    println(julia_side_instance)
-    julia_side_instance._blue = 0.5;
-)");
-
-auto cpp_side_instance = unbox<RGBA>(jluna::safe_eval("return julia_side_instance"));
-std::cout << cpp_side_instance._blue << std::endl;
-
-    return 0;
-    */
 
     Test::initialize();
+
+    /*
     Test::test("catch c exception", [](){
 
         Test::assert_that_throws<JuliaException>([](){
@@ -1203,6 +1154,7 @@ std::cout << cpp_side_instance._blue << std::endl;
             i += 1;
         }
     });
+    */
 
     struct NonJuliaType
     {
@@ -1211,14 +1163,63 @@ std::cout << cpp_side_instance._blue << std::endl;
 
     Test::test("Usertype: throw on disable", [](){
 
-        Test::assert_that_throws<UsertypeNotEnabledException>([](){
-            volatile box<NonJuliaType>(NonJuliaType());
+        Test::assert_that_throws<UsertypeNotEnabledException<NonJuliaType>>([](){
+            volatile auto* res = box<NonJuliaType>(NonJuliaType());
         });
 
-        Test::assert_that_throws<UsertypeNotEnabledException>([](){
-            volatile unbox<NonJuliaType>(jl_nothing);
+        Test::assert_that_throws<UsertypeNotEnabledException<NonJuliaType>>([](){
+            volatile NonJuliaType t = unbox<NonJuliaType>(jl_nothing);
         });
     });
+
+    Test::test("Usertype: enable", [](){
+
+        Usertype<NonJuliaType>::enable("NonJuliaType");
+        Test::assert_that(Usertype<NonJuliaType>::is_enabled());
+    });
+
+    Test::test("Usertype: add property", [](){
+
+        Usertype<NonJuliaType>::add_property<std::vector<size_t>>(
+            "_field",
+            [](NonJuliaType& in) -> std::vector<size_t> {
+                return in._field;
+            }
+        );
+
+        Usertype<NonJuliaType>::add_property<std::vector<size_t>>(
+            "_field",
+            [](NonJuliaType& in) -> std::vector<size_t> {
+                return in._field;
+            },
+            [](NonJuliaType& out, std::vector<size_t> in) -> void{
+                out._field = in;
+            }
+        );
+    });
+
+    Test::test("Usertype: implement", [](){
+       Usertype<NonJuliaType>::implement();
+       Usertype<NonJuliaType>::implement();
+
+       Test::assert_that(Usertype<NonJuliaType>::is_implemented());
+    });
+
+    Test::test("Usertype: box/unbox", [](){
+       auto instance = NonJuliaType{{123, 34556, 12321}};
+       auto sentinel = GCSentinel();
+
+       auto* res01 = Usertype<NonJuliaType>::box(instance);
+       auto* res02 = box<NonJuliaType>(instance);
+
+       Test::assert_that(jl_is_equal(res01, res02));
+
+       auto backres01 = Usertype<NonJuliaType>::unbox(res01);
+       auto backres02 = unbox<NonJuliaType>(res02);
+
+       Test::assert_that(backres01._field.size() == backres02._field.size());
+    });
+
 
     Test::conclude();
 }

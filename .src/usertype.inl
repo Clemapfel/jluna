@@ -81,6 +81,12 @@ namespace jluna
     }
 
     template<typename T>
+    bool Usertype<T>::is_implemented()
+    {
+        return _implemented;
+    }
+
+    template<typename T>
     Any* Usertype<T>::box(T& in)
     {
         if (not _enabled)
