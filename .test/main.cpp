@@ -82,7 +82,6 @@ int main()
 
     Test::initialize();
 
-    /*
     Test::test("catch c exception", [](){
 
         Test::assert_that_throws<JuliaException>([](){
@@ -1154,7 +1153,6 @@ int main()
             i += 1;
         }
     });
-    */
 
     struct NonJuliaType
     {
