@@ -62,14 +62,94 @@ class Frog
         std::string _name;
 };
 
+template<Is<Frog::Tadpole> T>
+T unbox(Any* in)
+{
+    auto sentinel = GCSentinel();
+    static auto* getfield = jl_find_function("Base", "getfield");
+    static auto field_symbol = Symbol("_name");
+
+    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+
+    auto out = Frog::Tadpole();
+    out._name = unbox<std::string>(julia_side_name);
+    return out;
+}
+
+template<Is<Frog> T>
+T unbox(Any* in)
+{
+    auto sentinel = GCSentinel();
+    static auto* getfield = jl_find_function("Base", "getfield");
+    static auto field_symbol = Symbol("_name");
+
+    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+
+    auto tadpole = Frog::Tadpole();
+    tadpole._name = unbox<std::string>(julia_side_name);
+
+    return tadpole.evolve();
+}
+
+template<Is<Frog::Tadpole> T>
+Any* box(T in)
+{
+    auto sentinel = GCSentinel();
+    static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
+
+    auto* out = jluna::safe_call(tadpole_ctor);
+
+    static auto* setfield = jl_find_function("Base", "setfield!");
+    static auto field_symbol = Symbol("_name");
+    jluna::safe_call(setfield, out, (Any*) field_symbol, box<std::string>(in._name));
+    return out;
+}
+
+template<Is<Frog> T>
+Any* box(T in)
+{
+    auto sentinel = GCSentinel();
+    static auto* frog_ctor = jl_find_function("Main", "generate_frog");
+
+    auto* out = jluna::safe_call(frog_ctor, box<std::string>(in._name));
+    return out;
+}
+
 int main()
 {
     State::initialize();
 
+    State::safe_eval(R"(
+        mutable struct Tadpole
+
+            _name::String
+            evolve::Function
+
+            Tadpole() = new(
+                "",
+                (this::Tadpole) -> Frog(this._name)
+            )
+        end
+
+        struct Frog
+
+            _name::String
+            spawn::Function
+
+            Frog(as_tadpole::Tadpole) = new(
+                as_tadpole._name,
+                (n::Integer) -> [Tadpole() for _ in 1:n]
+            )
+        end
+    )");
+
     auto ted = Frog::Tadpole();
+
+    auto* boxed = box<Frog::Tadpole>(ted);
+    Base["println"](boxed);
+
     ted._name = "Ted";
     auto frog = ted.evolve();
-    std::cout << frog.get_name() << std::endl;
 
     return 0;
     Test::initialize();
