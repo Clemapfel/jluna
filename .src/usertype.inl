@@ -15,7 +15,7 @@ namespace jluna
 
     template<typename T>
     UsertypeNotEnabledException<T>::UsertypeNotEnabledException()
-        : _msg("[C++][Exception] usertype interface for this type was not yet enabled. C Usertype<T>::enable(const std::string&) to instance the interface")
+        : _msg("[C++][Exception] usertype interface for this type was not yet enabled. Call Usertype<T>::enable(const std::string&) to instance the interface")
     {}
 
     template<typename T>

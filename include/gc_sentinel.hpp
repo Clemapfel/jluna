@@ -16,12 +16,14 @@ namespace jluna
             bool _before;
 
         public:
+            /// @brief ctor, from this point onwards, the GC is disabled
             GCSentinel()
             {
                 _before = jl_gc_is_enabled();
                 jl_gc_enable(false);
             }
 
+            /// @brief dtor, after this is called, the GC state is returned to what it was previously
             ~GCSentinel()
             {
                 jl_gc_enable(_before);

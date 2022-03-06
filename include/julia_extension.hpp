@@ -105,7 +105,8 @@ extern "C"
     /// @returns value
     inline jl_value_t* jl_undef_initializer()
     {
-        return jl_eval_string("return undef");
+        static jl_function_t* undef_initializer = jl_get_function(jl_base_module, "UndefInitializer");
+        return jl_call0(undef_initializer);
     }
 
     /// @brief get nth element of tuple

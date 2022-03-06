@@ -11,10 +11,67 @@
 using namespace jluna;
 using namespace jluna::detail;
 
-using namespace jluna;
+class Frog
+{
+    public:
+        // tadpole, a baby frog
+        struct Tadpole
+        {
+            // name, can be changed
+            std::string _name;
+
+            // ctor, tadpoles are born without a name
+            Tadpole()
+                : _name("")
+            {}
+
+            // if a tadpole has a name, it can evolve into a frog
+            Frog evolve() const
+            {
+                if (_name == "")
+                    throw std::invalid_argument("tadpole needs to be named before evolving");
+
+                return Frog(_name);
+            }
+        };
+
+    public:
+        // a frog can spawn a number of tadpoles
+        std::vector<Frog::Tadpole> spawn(size_t n) const
+        {
+            std::vector<Frog::Tadpole> out;
+            for (size_t i = 0; i < n; ++i)
+                out.push_back(Frog::Tadpole());
+
+            return out;
+        }
+
+        // get name
+        std::string get_name()
+        {
+            return _name;
+        }
+
+    private:
+        // private ctor, can only be called by Frog::Tadpole::evolve
+        Frog(std::string name)
+            : _name(name)
+        {}
+
+        // name, cannot be changed because there is no setter
+        std::string _name;
+};
+
 int main()
 {
     State::initialize();
+
+    auto ted = Frog::Tadpole();
+    ted._name = "Ted";
+    auto frog = ted.evolve();
+    std::cout << frog.get_name() << std::endl;
+
+    return 0;
     Test::initialize();
 
     Test::test("catch c exception", [](){
