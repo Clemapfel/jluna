@@ -111,25 +111,18 @@ cpp prints what julia handed it and returns:
 ```cpp
 struct NonJuliaType
 {
-    Int64 _field01 = 123;
-    std::vector<std::string> _field02;
+    std::vector<std::string> _field;
 };
+set_usertype_enabled(NonJuliaType);
 
 // setup usertype interface
-Usertype<NonJuliaType>::enable("NonJuliaType");
 Usertype<NonJuliaType>::add_property<Int64>(
     // fieldname
-    "_field01",
+    "_field",
     // getter
     [](NonJuliaType& in) -> Int64 {return in._field01;},
     // setter
     [](NonJuliaType& out, Int64 value) {out._field01 = value;}
-);
-
-Usertype<NonJuliaType>::add_property<std::vector<std::string>>(
-    "_field02",
-    [](NonJuliaType& in) -> std::vector<std::string> {return in._field02;},
-    [](NonJuliaType& in, std::vector<std::string> value) {in._field02 = value;}
 );
 
 // create julia-side equivalent type
@@ -140,12 +133,12 @@ auto cpp_instance = NonJuliaType();
 State::new_named_undef("julia_instance") = box<NonJuliaType>(cpp_instance);
 
 jluna::safe_eval(R"(
-    push!(julia_instance._field02, "new")
+    push!(julia_instance._field, "new")
     println(julia_instance)
 )");
 ```
 ```
-NonJuliaType(123, ["new"])
+NonJuliaType(["new"])
 ```
 ---
 
@@ -172,12 +165,12 @@ Some of the many advantages `jluna` has over the C-API include:
 + thread-safety, parallelization
 + linear algebra wrapper, matrices
 + expression proxies
-+ multiple julia worlds, save-states: restoring a previous julia state
++ multiple julia states, save-states: restoring a previous julia state
 ---
 
 ## Documentation
 
-A step-by-step introduction and reference guide is available [here](./docs/manual.md). Furthermore, all user-facing code has in-line documentation available through most IDEs (or the julia `help?` command). 
+A verbose, step-by-step introduction and manual is available [here](./docs/manual.md). Furthermore, all user-facing code has in-line documentation available through most IDEs (or the julia `help?` command). 
 
 Advanced users are encouraged to check the headers (available in `jluna/include/`) for implementation details. They are formatted specifically to be easily understood by 3rd parties. 
 
@@ -195,13 +188,13 @@ For `jluna` you'll need:
 
 Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang++-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are fully supported. g++-11 is the primary compiler used for development of `jluna` and is thus recommended. MSVC is untested but may work.
 
-> *Building on Windows is currently untested, however no part of `jluna`, julia, or cmake is explicitly unix-dependent. This suggests, compilation may work without problem using either clang (recommended) or MSVC. If anyone wants to open a PR that guides users on how to install jluna on windows, I'd be happy to accept it.
+> *Building on Windows is currently untested, however no part of `jluna`, julia, or cmake is explicitly unix-dependent. This suggests, compilation may work without problem using either clang (recommended) or MSVC.
 
 ---
 
 ## [Installation & Troubleshooting](./docs/installation.md)
 
-A step-by-step tutorial on how to create, compile and link a new C++ Project with `jluna` can be found [here](./docs/installation.md). It is recommended that you follow this guide closely, instead of trying to resolve issues on your own.
+A step-by-step tutorial on how to create, compile, and link a new C++ Project with `jluna` can be found [here](./docs/installation.md). It is recommended that you follow this guide closely, instead of trying to resolve issues on your own.
 
 ### For Advanced Users Only
 
