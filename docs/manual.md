@@ -2217,7 +2217,7 @@ template<Is<Frog::Tadpole> T>
 Any* box(T in)
 {
     auto sentinel = GCSentinel();
-    static auto* tadpole_ctor = jl_find_function("main", "Tadpole");
+    static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
     
     auto* out = jluna::safe_call(tadpole_ctor);
 }
@@ -2226,7 +2226,7 @@ template<Is<Frog> T>
 Any* box(T in)
 {
     auto sentinel = GCSentinel();
-    static auto* frog_ctor = jl_find_function("main", "Frog");
+    static auto* frog_ctor = jl_find_function("Main", "Frog");
     
     auto* out = jluna::safe_call(frog_tor); // WILL FAIL
 }
@@ -2248,7 +2248,7 @@ template<Is<Frog::Tadpole> T>
 Any* box(T in)
 {
     auto sentinel = GCSentinel();
-    static auto* tadpole_ctor = jl_find_function("main", "Tadpole");
+    static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
     
     auto* out = jluna::safe_call(tadpole_ctor);
 }
@@ -2257,7 +2257,7 @@ template<Is<Frog> T>
 Any* box(T in)
 {
     auto sentinel = GCSentinel();
-    static auto* frog_ctor = jl_find_function("main", "generate_frog");
+    static auto* frog_ctor = jl_find_function("Main", "generate_frog");
     
     auto* out = jluna::safe_call(frog_tor, box<std::string>(in._name));
 }
@@ -2272,7 +2272,7 @@ template<Is<Frog::Tadpole> T>
 Any* box(T in)
 {
     auto sentinel = GCSentinel();
-    static auto* tadpole_ctor = jl_find_function("main", "Tadpole");
+    static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
     
     auto* out = jluna::safe_call(tadpole_ctor);
     
@@ -2286,7 +2286,7 @@ template<Is<Frog> T>
 Any* box(T in)
 {
     auto sentinel = GCSentinel();
-    static auto* frog_ctor = jl_find_function("main", "generate_frog");
+    static auto* frog_ctor = jl_find_function("Main", "generate_frog");
     
     auto* out = jluna::safe_call(frog_tor, box<std::string>(in._name));
     return out;
@@ -2297,7 +2297,40 @@ Where we used `jluna::Symbol` to what needs to be `:_name` julia-side. We specif
 
 #### Implement unbox
 
-Now that we have box fully written, we can turn our attention to unbox. 
+Now that we have box fully written, we can turn our attention to unbox. Unboxing is much simpler, all we need to do is access the property of the julia-side instance pointed to by the argument using `Base.getfield`, then construct the C++-side instance. Because we are back C++-side, we can use `Tadpole::evolve` to create a frog, as intended:
+
+```cpp
+template<Is<Frog::Tadpole> T>
+T unbox(Any* in)
+{
+    auto sentinel = GCSentinel();
+    static auto* getfield = jl_find_function("Base", "getfield");
+    static auto field_symbol = Symbol("_name");
+    
+    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+    
+    auto out = Tadpole();
+    out._name = unbox<std::string>(julia_side_name);
+    return out;
+}
+
+template<Is<Frog::Tadpole> T>
+T unbox(Any* in)
+{
+    auto sentinel = GCSentinel();
+    static auto* getfield = jl_find_function("Base", "getfield");
+    static auto field_symbol = Symbol("_name");
+    
+    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+    
+    auto tadpole = Tadpole();
+    tadpole._name = unbox<std::string>(julia_side_name);
+    
+    return tadpole.evolve();
+}
+```
+
+Where we again allocate the julia-side symbol `:_name` statically to save on allocation per box call. 
 
 
 
