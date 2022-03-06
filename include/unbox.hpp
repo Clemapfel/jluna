@@ -115,10 +115,7 @@ namespace jluna
     T unbox(Any* value);
 
     /// @brief unbox to pair
-    template<typename T,
-        typename T1 = typename T::first_type,
-        typename T2 = typename T::second_type,
-        std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool> = true>
+    template<IsPair T>
     T unbox(Any* value);
 
     /// @brief unbox to tuple
@@ -143,6 +140,10 @@ namespace jluna
     /// @brief unbox to jluna::Type
     class Type;
     template<Is<Type> T>
+    T unbox(Any* value);
+
+    /// @brief unbox usertype wrapper to usertype
+    template<IsUsertype T>
     T unbox(Any* value);
 
     /// @concept requires a value to be unboxed from a julia-side value

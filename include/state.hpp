@@ -57,7 +57,6 @@ namespace jluna::State
     /// @returns proxy to result, if any
     Proxy safe_eval_file(const std::string& path) noexcept;
 
-
     /// @brief access a value, equivalent to unbox<T>(jl_eval_string("return " + name))
     /// @tparam T: type to be unboxed to
     /// @param full name of the value, e.g. Main.variable._field[0]
@@ -161,7 +160,7 @@ namespace jluna::State
     /// @param real
     /// @param imaginary
     /// @returns *named* proxy to newly created value
-    template<IsNumerical T>
+    template<IsPrimitive T>
     [[nodiscard]] Proxy new_named_complex(const std::string& name, T real = 0, T imag = 0);
 
     /// @brief creates new variable in main, then returns named proxy to it
@@ -319,7 +318,7 @@ namespace jluna::State
     /// @param real
     /// @param imaginary
     /// @returns *unnamed* proxy to newly created value
-    template<IsNumerical T>
+    template<IsPrimitive T>
     [[nodiscard]] Proxy new_unnamed_complex(T real = 0, T imag = 0);
 
     /// @brief creates new variable in main, then returns unnamed proxy to it

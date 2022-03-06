@@ -557,7 +557,7 @@ module jluna
 
         call any function, update the handler then forward the result, if any
         """
-        function safe_call(f::Function, args...)
+        function safe_call(f::Any, args...)
 
             result = undef
             try
@@ -957,7 +957,75 @@ module jluna
             return false
         end
     end
+
+    # obfuscate internal state to encourage using operator[] sytanx
+    struct ProxyInternal
+
+        _fieldnames_in_order::Vector{Symbol}
+        _fields::Dict{Symbol, Union{Any, Missing}}
+        ProxyInternal() = new(Vector{Symbol}(), Dict{Symbol, Union{Any, Missing}}())
+    end
+
+    # proxy as deepcopy of cpp-side usertype object
+    struct Proxy
+
+        _typename::Symbol
+        _value::ProxyInternal
+
+        Proxy(name::Symbol) = new(name, ProxyInternal())
+    end
+    export proxy
+    new_proxy(name::Symbol) = return Proxy(name)
+
+    function implement(template::Proxy, m::Module = Main) ::Type
+
+        out::Expr = :(mutable struct $(template._typename) end)
+        deleteat!(out.args[3].args, 1)
+
+        for name in template._value._fieldnames_in_order
+            push!(out.args[3].args, Expr(:(::), name, :($(typeof(template._value._fields[name])))))
+        end
+
+        new_call::Expr = Expr(:(=), Expr(:call, template._typename), Expr(:call, :new))
+
+        for name in template._value._fieldnames_in_order
+            push!(new_call.args[2].args, template._value._fields[name])
+        end
+
+        push!(out.args[3].args, new_call)
+        Base.eval(m, out)
+        return m.eval(template._typename)
+    end
+    export implement
 end
+
+using Main.jluna;
+
+"""
+`setindex!(::Proxy, <:Any, ::Symbol) -> Nothing`
+
+extend base.setindex!
+"""
+function Base.setindex!(proxy::Main.jluna.Proxy, value, key::Symbol) ::Nothing
+
+    if (!haskey(proxy._value._fields, key))
+        push!(proxy._value._fieldnames_in_order, key)
+    end
+
+    proxy._value._fields[key] = value
+    return nothing
+end
+export setindex!
+
+"""
+`getindex(::Proxy, ::Symbol) -> Any`
+
+extend base.getindex
+"""
+function Base.getindex(proxy::Main.jluna.Proxy, value, key::Symbol) #::Auto
+    return proxy._value._fields[key]
+end
+export getindex
 
 """
 `cppall(::Symbol, ::Any...) -> Any`

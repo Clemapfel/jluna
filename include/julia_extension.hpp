@@ -105,7 +105,8 @@ extern "C"
     /// @returns value
     inline jl_value_t* jl_undef_initializer()
     {
-        return jl_eval_string("return undef");
+        static jl_function_t* undef_initializer = jl_get_function(jl_base_module, "UndefInitializer");
+        return jl_call0(undef_initializer);
     }
 
     /// @brief get nth element of tuple
@@ -143,6 +144,14 @@ extern "C"
     {
         static jl_function_t* length = jl_get_function(jl_base_module, "length");
         return jl_unbox_int64(jl_call1(length, value));
+    }
+
+    /// @brief return string as expression
+    inline jl_value_t* jl_quote(const char* in)
+    {
+        const std::string a = "quote ";
+        const std::string b = " end";
+        return jl_eval_string((a + in + b).c_str());
     }
 
     /// @brief pause gc and save current state

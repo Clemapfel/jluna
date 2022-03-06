@@ -8,6 +8,7 @@
 
 #include <sstream>
 #include <vector>
+#include <iostream>
 
 namespace jluna
 {
@@ -55,9 +56,29 @@ namespace jluna
                     jl_eval_string("return jluna.exception_handler.get_last_exception()"),
                     jl_to_string(jl_eval_string("return jluna.exception_handler.get_last_message()"))
             );
-            return;
         }
+    }
 
+    Any* safe_eval(const char* str)
+    {
+        jluna::throw_if_uninitialized();
+
+        static jl_function_t* safe_call = jl_find_function("jluna.exception_handler", "safe_call");
+
+        jl_gc_pause;
+        auto* result = jl_call1(safe_call, jl_quote(str));
+        if (jl_exception_occurred() or jl_unbox_bool(jl_eval_string("jluna.exception_handler.has_exception_occurred()")))
+        {
+            std::cerr << "exception in jluna::State::safe_eval for expression:\n\"" << str << "\"\n" << std::endl;
+            forward_last_exception();
+        }
+        jl_gc_unpause;
+        return result;
+    }
+
+    Any* operator""_eval(const char* str, size_t _)
+    {
+        return safe_eval(str);
     }
 }
 

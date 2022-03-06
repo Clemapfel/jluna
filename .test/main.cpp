@@ -6,9 +6,17 @@
 #include <.src/c_adapter.hpp>
 #include <include/julia_extension.hpp>
 #include <include/exceptions.hpp>
+#include <include/concepts.hpp>
 
 using namespace jluna;
 using namespace jluna::detail;
+
+struct NonJuliaType
+{
+    std::vector<size_t> _field;
+};
+set_usertype_enabled(NonJuliaType);
+
 int main()
 {
     State::initialize();
@@ -21,7 +29,6 @@ int main()
             forward_last_exception();
         });
     });
-
 
     Test::test("jl_find_function", [](){
 
@@ -40,6 +47,12 @@ int main()
     Test::test("safe_call", [](){
         Test::assert_that_throws<JuliaException>([]() {
             safe_call(jl_find_function("Base", "throw"), jl_eval_string("return ErrorException(\"\")"));
+        });
+    });
+
+    Test::test("safe_eval", [](){
+        Test::assert_that_throws<JuliaException>([]() {
+            safe_eval("throw(ErrorException(\"abc\"))");
         });
     });
 
@@ -892,17 +905,17 @@ int main()
 
         type = Type::construct_from<std::vector<int>>();
     });
-    
+
     auto test_type = []<typename T>(Type& a, T b) {
-        
+
         std::string name = "Type Constant: ";
         name += jl_to_string((Any*) a);
-        
+
         Test::test(name, [&](){
             return a.operator jl_datatype_t*() == reinterpret_cast<jl_datatype_t*>(b);
         });
     };
-    
+
     test_type(AbstractArray_t, jl_abstractarray_type);
     test_type(AbstractChar_t, jl_eval_string("return AbstractChar"));
     test_type(AbstractFloat_t, jl_eval_string("return AbstractFloat"));
@@ -1080,6 +1093,55 @@ int main()
             i += 1;
         }
     });
+
+    Test::test("Usertype: enable", [](){
+
+        Test::assert_that(Usertype<NonJuliaType>::get_name() == "NonJuliaType");
+        Test::assert_that(Usertype<NonJuliaType>::is_enabled());
+    });
+
+    Test::test("Usertype: add property", [](){
+
+        Usertype<NonJuliaType>::add_property<std::vector<size_t>>(
+            "_field",
+            [](NonJuliaType& in) -> std::vector<size_t> {
+                return in._field;
+            }
+        );
+
+        Usertype<NonJuliaType>::add_property<std::vector<size_t>>(
+            "_field",
+            [](NonJuliaType& in) -> std::vector<size_t> {
+                return in._field;
+            },
+            [](NonJuliaType& out, std::vector<size_t> in) -> void{
+                out._field = in;
+            }
+        );
+    });
+
+    Test::test("Usertype: implement", [](){
+       Usertype<NonJuliaType>::implement();
+       Usertype<NonJuliaType>::implement();
+
+       Test::assert_that(Usertype<NonJuliaType>::is_implemented());
+    });
+
+    Test::test("Usertype: box/unbox", [](){
+       auto instance = NonJuliaType{{123, 34556, 12321}};
+       auto sentinel = GCSentinel();
+
+       auto* res01 = Usertype<NonJuliaType>::box(instance);
+       auto* res02 = box<NonJuliaType>(instance);
+
+       Test::assert_that(jl_is_equal(res01, res02));
+
+       auto backres01 = Usertype<NonJuliaType>::unbox(res01);
+       auto backres02 = unbox<NonJuliaType>(res02);
+
+       Test::assert_that(backres01._field.size() == backres02._field.size());
+    });
+
 
     Test::conclude();
 }

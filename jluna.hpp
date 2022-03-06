@@ -20,3 +20,5 @@
 #include <include/module.hpp>
 #include <include/function.hpp>
 #include <include/generator_expression.hpp>
+#include <include/usertype.hpp>
+#include <include/gc_sentinel.hpp>

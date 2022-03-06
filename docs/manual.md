@@ -40,7 +40,7 @@ Please navigate to the appropriate section by clicking the links below:
    8.5 [Allowed Function Names](#allowed-function-names)<br>
    8.6 [Allowed Function Signatures](#possible-signatures)<br>
    8.7 [Using arbitrary Objects in julia Functions](#using-non-julia-objects-in-functions)<br>
-9. [**Arrays**](#arrays)<br>
+9. [**Specialized Proxies: Arrays**](#arrays)<br>
   9.1 [Constructing Arrays](#ctors)<br>
   9.2 [Indexing](#indexing)<br>
   9.3 [Iterating](#iterating)<br>
@@ -56,13 +56,21 @@ Please navigate to the appropriate section by clicking the links below:
   10.6 [~~Type Info: Methods~~](#methods)<br>
   10.7 [~~Type Info: Properties~~](#properties)<br>
   10.8 [Type Classification](#type-classification)<br>
-11. [~~Expressions~~](#expressions)<br>
-12. [~~Usertypes~~](#usertypes)<br>
-13. [**Performance**](#performance)<br>
-    13.1 [Staying Julia-Side](#stay-julia-side)<br>
-    13.2 [(Un)Boxing](#minimize-unboxing)<br>
-    13.3 [Proxy Construction](#minimize-proxy-construction)<br>
-    13.4 [Using the C-Library](#use-the-c-library)<br>
+11. [~~**Expressions**~~](#expressions)<br>
+12. [**Usertypes**](#usertypes)<br>
+    12.1 [Usertype Interface](#usertype-interface)<br>
+    12.2 [Making the Type Compliant](#step-1-making-the-type-compliant)<br>
+    12.3 [Enabling the Interface](#step-2-enabling-the-interface)<br>
+    12.4 [Adding Property Routines](#step-3-adding-property-routines)<br>
+    12.5 [Implementing the Type](#step-4-implementing-the-type)<br>
+13. [~~**Paralell Execution**~~](#performance)<br>
+14. [**Performance**](#performance)<br>
+    14.1 [Cheat Sheet](#cheat-sheet)<br>
+    14.2 [Avoiding String Parsing](#avoid-string-parsing)<br>
+    14.3 [Staying Julia-Side](#stay-julia-side)<br>
+    14.4 [(Un)Boxing](#minimize-unboxing)<br>
+    14.5 [Proxy Construction](#minimize-proxy-construction)<br>
+    14.6 [Using the C-Library](#use-the-c-library)<br>
 
 ## Initialization
 
@@ -270,11 +278,16 @@ std::function<Any*(Any*, Any*)>             => function (::Any, ::Any) -> Any
 std::function<Any*(Any*, Any*, Any*)>       => function (::Any, ::Any, ::Any) -> Any
 std::function<Any*(Any*, Any*, Any*, Any*)> => function (::Any, ::Any, ::Any, ::Any) -> Any
 std::function<Any*(std::vector<Any*>)>      => function (::Vector{Any}) ::Any
+        
+Usertype<T>::original_type                  => T °
+        
+° where T is an arbitrary C++ type
 ```
 
-We will learn more on how to box/unbox functions, specifically, in the [section on calling C++ functions from julia](#functions).
+We will learn more on how to box/unbox functions, specifically, in the [section on calling C++ functions from julia](#functions). We can (un)box truly arbitrary C++ types through the [usertype interface](#usertypes), which we will explore later on, aswell.
 
-The template meta function `to_julia_type` is provided to convert a C++ type into a julia-type. `to_julia_type<T>::type_name` is the name of the type as a string.
+
+For any of the above, the template meta function `to_julia_type` is provided to convert a C++ type into a julia-type, where `to_julia_type<T>::type_name` is the name of the type as a string:
 
 ```cpp
 std::cout << to_julia_type<Array<size_t, 4>>::type_name << std::endl;
@@ -1834,46 +1847,636 @@ Once fully unrolled, we have access to the properties necessary for introspect. 
 
 ## Usertypes
 
-(this feature is not yet implemented)
+So far, we were only able to box and unbox types that were already supported by `jluna`. While this list of types is broad, in more specialized applications it is sometimes necessary to define our own boxing/unboxing routines. Luckily, `jluna` offers an easy-to-use and safe interface for transferring arbitrary C++ types between states. This section will give guidance on how to use it.
+
+### Usertype Interface
+
+Consider the following C++ class:
+
+```cpp
+struct RGBA
+{
+    float _red;
+    float _green;
+    float _blue;
+    float _alpha;
+    
+    RGBA(float r, float g, float b)
+        : _red(r), _green(g), _blue(b), _alpha(1)
+    {}
+};
+```
+
+While it may be possible to manually translate this class into a Julia-side `NamedTuple`, this is rarely the best option. For more complex classes, this is often not possible at all. To make classes like this (un)boxable, we use `jluna::Usertype<T>`, the usertype interface.
+
+#### Step 1: Making the Type compliant
+
+For a type `T` to be manageable by `Usertype<T>`, it needs to be *default constructable*. `RGBA` currently has no default constructor, so we need to add it:
+
+```cpp
+struct RGBA
+{
+    float _red;
+    float _green;
+    float _blue;
+    float _alpha;
+    
+    RGBA(float r, float g, float b)
+        : _red(r), _green(g), _blue(b), _alpha(1)
+    {}
+    
+    RGBA() 
+        : _red(0), _green(0), _blue(0), _alpha(1
+    {}
+};
+```
+
+If the type `T` is not default constructable, a static assertion is triggered at compile time.
+
+#### Step 2: Enabling the Interface
+
+To make `jluna` aware that we want to use the usertype interface for `RGBA`, we need to **enable it** at compile time. To do this, we use the macro `set_usertype_enabled(T)` (executed in non-block scope).
+
+```cpp
+struct RGBA
+{
+    /* ... */
+};
+
+set_usertype_enabled(RGBA); // best called right after the declaration
+```
+
+This generates a call to a template meta function that sets up `Usertype<T>` for us. Among other things, it sets the julia-side name of the type we will unbox `RGBA` into, to the same name as that of the C++-side type. Meaning, C++s `RGBA` will be boxed into a new julia-side type called `Main.RGBA`. We can change whether we want it to actually be in `Main` scope later on.
+
+#### Step 3: Adding Property Routines
+
+A *property* of a struct type is what would be called a "field" in Julia or a "member" in C++. It is any named variable of any type (including functions) that is namespaced within a struct. We'll use all three terms, "field", "member", and "property" interchangeably here. 
+
+To add a property for `RGBA`s `_red`, we use the following function at runtime:
+
+```cpp
+Usertype<RGBA>::add_property<float>(
+    "_red",
+    [](RGBA& in) -> float {
+        return in._red;
+    },
+    [](RGBA& out float in) -> void {
+        out._red;
+    }
+);
+```
+
+Let's talk through this call one-by-one. 
+
+First, we have the **template parameter**, `float` in this case. This is the type of the field. We use C++ types here, however. after `RGBA` is boxed to Julia, C++s `float` becomes Julias `Float32`. We can check which C++ types gets converted to which Julia type using `to_julia_type<T>::type_name`.
+
+This first argument is the **name of the field**. It is best practice, to have this be the same name as the field in C++, `_red` in this case, however, there is no mechanism to enforce this.
+
+The second argument is the **boxing routine**. This function is called during `box<RGBA>(instance)`. It has the signature `(T&) -> Property_t`, which for `RGBA` and this specific field becomes `(RGBA&) -> float`. The argument of the boxing routine is the instance of the type that is about to be boxed:
+
+```cpp
+auto instance = RGBA();
+Any* boxed = box<RGBA>(instance);
+
+// calls [](RGBA& in) -> float {return in._red;} with in = instance
+// then assigns boxed._red with result
+```
+
+When `box` is called, the result of the boxing routine lambda is assigned to the field of the specified name.
+
+The third argument is the **unboxing routine**. This lambda has the signature `(T&, Property_t) -> void`, which in this case becomes `(RGBA&, float) -> void`. The unboxing routine is called during unboxing, its first argument is the cpp-side instance that is the result of the `unbox` call, the second argument is the value of the field of the corresponding name of the julia-side instance.
+
+```cpp
+auto instance = RGBA();
+Any* boxed = box<RGBA>(instance);
+RGBA unboxed = unbox<RGBA>(boxed);
+
+// calls [](RGBA& out, float in) with out = unboxed, in = unboxed._red
+```
+
+Specifying the unboxing routine is optional. If left unspecified, no operation is performed during unboxing. The boxing routine is not optional, if we want it to always return a constant value, we can simple create a lambda for this like so:
+
+```cpp
+Usertype<T>::add_field<float>("_constant_field", [](T& _) -> float {return 1;});
+```
+
+Now that we know how to add fields, let's fully implement the usertype interface for `RGBA` (where previous code is reprinted here for clarity):
+
+```cpp
+// in namespace scope
+struct RGBA
+{
+    float _red;
+    float _green;
+    float _blue;
+    float _alpha;
+    
+    RGBA(float r, float g, float b)
+        : _red(r), _green(g), _blue(b), _alpha(1)
+    {}
+    
+    RGBA() 
+        : _red(0), _green(0), _blue(0), _alpha(1
+    {}
+};
+set_usertype_enabled(RGBA);
+
+// ###
+
+// in function scope, i.e. inside main
+Usertype<RGBA>::add_property<float>(
+    "_red",
+    [](RGBA& in) -> float {return in._red;},
+    [](RGBA& out, float in) -> void {out._red;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_green",
+    [](RGBA& in) -> float {return in._green;},
+    [](RGBA& out, float in) -> void {out._green;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_blue",
+    [](RGBA& in) -> float {return in._blue;},
+    [](RGBA& out, float in) -> void {out._blue;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_alpha",
+    [](RGBA& in) -> float {return in._alpha;},
+    [](RGBA& out, float in) -> void {out._alpha;}
+);
+```
+To illustrate that properties do not have to directly correspond with members of the C++ class, we'll add another julia-side field that represents the `value` component from the HSV color system (sometimes also called "lightness"). It is defined as the maximum of red, green and blue, given a color in RGBA:
+
+```cpp
+Usertype<RGBA>::add_property<float>(
+    "_value",
+    [](RGBA& in) -> float {
+        float max = 0;
+        for (auto v : {in._red, in._green, in._blue})
+            max = std::max(v, max);
+        return max;
+    }
+);
+```
+
+We leave the unboxing routine for `_value` unspecified, because there is no field called `_value` to assign to for C++-side instances.
+
+#### Step 4: Implementing the Type
+
+Having added all properties to the usertype interface, we make the Julia state aware of the interface by calling:
+
+```cpp
+// in main
+Usertype<RGBA>::implement();
+```
+
+This creates a new type julia-side type that has the architecture we just gave it. For end-users, this happens behind the scene, however, internally, the following expression is assembled and evaluated:
+
+```julia
+mutable struct RGBA
+    _red::Float32
+    _green::Float32
+    _blue::Float32
+    _alpha::Float32
+    _value::Float32
+    RGBA() = new(0.0f0, 0.0f0, 0.0f0, 1.0f0, 0.0f0)
+end
+```
+
+We see that `jluna` assembled a mutable struct type, whose field names and types are as specified. Even the order in which we called `add_field` for specific names is preserved. This becomes important for the default constructor (a constructor that takes no arguments). The default values for each of the types fields are those of an unmodified, default initialized instance of `T` (`RGBA()` in our case). This is why the type needs to be default constructable.
+
+Having evaluated the above expression, we have fully implemented the usertype interface for `RGBA`. From this point onwards, the following works:
+
+```cpp
+auto instance = RGBA();
+instance._red = 1;
+instance._blue = 1;
+
+// now boxable
+State::new_named_undef("julia_side_instance") = box<RGBA>(instance);   
+jluna::safe_eval(R"(
+    println(julia_side_instance)
+    julia_side_instance._blue = 0.5;
+)");
+
+// and unboxable
+auto cpp_side_instance = unbox<RGBA>(jluna::safe_eval("return julia_side_instance"));
+std::cout << cpp_side_instance._blue << std::endl;
+```
+```
+RGBA(1.0f0, 0.0f0, 1.0f0, 1.0f0, 1.0f0)
+0.5
+```
+
+Because `box` and `unbox` are now defined and there is a corresponding julia-side type for `RGBA`, all of `jluna`s other functionality is now also works with `RGBA`. This includes assigning proxies, casting proxies to `RGBA`, calling julia-side functions with C++-side arguments, even using `RGBA` as value types for a `jluna` arrays, etc.
+
+### Manual Implementation
+
+`jluna::Usertype<T>` works great if we already have a C++-side type that we want to move to julia. What, however, if we already have a Julia-side type and we want to map a the C++-side type onto it? In cases like this, we will have to resort to manually implementing `box`/`unbox` without the help of `Usertype<T>`. 
+
+In this section, we'll work through a somewhat complex example, which provides a template for users to apply to their own specific classes. 
+
+#### Example: Tadpoles & Frogs
+
+Let's first introduce our problem: Consider the following classes:
+
+```cpp
+class Frog
+{
+    public:
+        // tadpole, a baby frog
+        struct Tadpole
+        {
+            // name, can be changed
+            std::string _name
+            
+            // ctor, tadpoles are born without a name
+            Tadpole() 
+                : _name("")
+            {}
+            
+            // if a tadpole has a name, it can evolve into a frog
+            Frog evolve() const
+            {
+                assert(_name != "");
+                return Frog(_name);
+            }
+        };
+        
+    public:
+        // a frog can spawn a number of tadpoles
+        std::vector<Frog::Tadpole> spawn(size_t n) const
+        {
+            std::vector<Frog::Tadpole> out;
+            for (size_t i = 0; i < n; ++i)
+                out.push_back(Frog::Tadpole());
+
+            return out;
+        }
+
+        // get name
+        std::string get_name()
+        {
+            return _name;
+        }
+    
+    private:
+        // private ctor, can only be called by Frog::Tadpole::evolve
+        Frog(std::string name)
+            : _name(name)
+        {}
+        
+        // name, cannot be changed because there is no setter
+        std::string _name;
+};
+```
+
+These classes are deceptively simple, however they provide some unique challenges. We cannot instance a `Frog` (henceforth "frog"), the only way to construct a frog is by first creating a `Frog::Tadpole` (henceforth "tadpole"), naming it, then calling `evolve`. Because tadpole is an internal class of `Frog`, it has access to the private constructor. Furthermore, while we can *access* a frogs name, we cannot change it. The name of a tadpole can be both access and changed. 
+
+Let's say we want to translate this functionality to Julia without using `Usertype<T>`. The julia-versions of the above could be:
+
+```julia
+mutable struct Tadpole  # mutable because _name needs to be changable
+    
+    # name, can be changed
+    _name::String
+    
+    # "member" function: (::Tadole) -> Frog
+    evolve::Function
+    
+    # ctor without a name
+    Tadpole() = new(
+        "",
+        (this::Tadpole) -> Frog(this._name)
+    )
+end
+
+struct Frog # immutable because _name only has getter
+
+    # name, cannot be changed
+    _name::String
+    
+    # member function: (::Integer) -> Vector{Tadpole}
+    spawn::Function
+    
+    # ctor from the tadpole
+    Frog(as_tadpole::Tadpole) = new(
+        as_tadpole._name, 
+        (n::Integer) -> [Tadpole() for _ in 1:n]
+    )
+end
+```
+
+Where we defined the frogs ctor as only being constructable from a tadpole. This emulates the behavior the classes exhibit C++ side. Julia usually discourages member functions in the C++ sense, but for the sake of this example, we defined them using the following equivalence:
+
+```julia
+# in cpp:
+auto instance = InstanceType();
+instance.member_function(arguments);
+
+# in julia
+instance = InstanceType()
+instance.member_function(instance, arguments)
+```
+
+By making the instance an argument, the julia function emulate the C++ behavior of being able to access all members of the struct they are part of.
+
+### Function Definition
+
+We now want to implement boxing and unboxing for both frogs and tadpoles. When defining these functions for a custom type, they need to adhere to the following signatures exactly:
+
+```cpp
+template<Is<U> T>
+Any* box(T);
+
+template<Is<U> T>
+T unbox(Any*);
+```
+
+Where `Is<U>` is a concept that enforces `T` to be equal to `U`. We need to use concepts and template functions here, so the syntax `box<U>(/*...*/)` and `unbox<U>(/*...*/)` are valid, which is required by `jluna`s functions. The `box` and `unbox` signatures for `Frog` and `Frog::Tadpole` then look like this:
+
+```cpp
+template<Is<Frog::Tadpole> T>
+Any* box(T in)
+{}
+
+template<Is<Frog> T>
+Any* box(T in)
+{}
+
+template<Is<Frog::Tadpole> T>
+T unbox(Any* in)
+{}
+
+template<Is<Frog> T>
+T unbox(Any* in)
+{}
+```
+
+Because we are handling raw C-pointers and not proxies, we need to manually protect ourself from the garbage collector (GC). This is done best, by using `jluna::GCSentinel`, which is a class that disables the GC while it is in scope:
+
+```cpp
+template<Is<Frog::Tadpole> T>
+Any* box(T in)
+{
+    auto sentinel = GCSentinel();
+}
+
+template<Is<Frog> T>
+Any* box(T in)
+{
+    auto sentinel = GCSentinel();
+}
+```
+
+To instance the julia-side versions of the classes, we need access to their julia-side constructors. We can do so using `jl_find_function`, using the result like a function to create instances:
+
+```cpp
+template<Is<Frog::Tadpole> T>
+Any* box(T in)
+{
+    auto sentinel = GCSentinel();
+    static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
+    
+    auto* out = jluna::safe_call(tadpole_ctor);
+}
+
+template<Is<Frog> T>
+Any* box(T in)
+{
+    auto sentinel = GCSentinel();
+    static auto* frog_ctor = jl_find_function("Main", "Frog");
+    
+    auto* out = jluna::safe_call(frog_tor); // WILL FAIL
+}
+```
+
+We run into a problem. `Frog` does not have a no-argument constructor. The only way to construct a frog, is from a tadpole. We cannot ask for a tadpole as an argument to the box function, though, because we have to strictly adhere to the `(T) -> Any*` signature. The only way to solve this conundrum, is to create a new julia-side function that constructs a frog for us, in a round-about way:
+
+```julia 
+function generate_frog(name::String) ::Frog
+    tadpole = Tadpole()
+    tadpole._name = name
+    return Frog(tadpole)
+end
+```
+The example in this section was specifically setup this way, to illustrate how, when the julia-type is pre-defined and cannot be extended, we will often do extra work to make C++ and Julia play nice together. We cannot extend the julia-side `Frog` class, which is why we need to create this wrapper function to construct a frog instead. 
+
+Accessing and calling the function inside `box<Is<Frog>>`:
+
+```cpp
+template<Is<Frog::Tadpole> T>
+Any* box(T in)
+{
+    auto sentinel = GCSentinel();
+    static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
+    
+    auto* out = jluna::safe_call(tadpole_ctor);
+}
+
+template<Is<Frog> T>
+Any* box(T in)
+{
+    auto sentinel = GCSentinel();
+    static auto* frog_ctor = jl_find_function("Main", "generate_frog");
+    
+    auto* out = jluna::safe_call(frog_tor, box<std::string>(in._name));
+}
+```
+
+Where we also had to manually box the string, because we are not dealing with proxies, which do this automatically, anymore. 
+
+Lastly, we need to update the newly created julia-side instance with the actual values of the C++-side instance. To do this, we use `Base.setfield!`. Note, however, that the julia-side `Frog` is immutable. This is why we created the generator function, the only way to make julia-side frogs have the same name as C++-side frogs, is to assign their name to a tadpole, then evolving it. Because of this, the frog instanced in `box<Frog>` does not need to be modified further:
+
+```cpp
+template<Is<Frog::Tadpole> T>
+Any* box(T in)
+{
+    auto sentinel = GCSentinel();
+    static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
+    
+    auto* out = jluna::safe_call(tadpole_ctor);
+    
+    static auto* setfield = jl_find_function("Base", "setfield!");
+    static auto field_symbol = Symbol("_name");
+    jluna::safe_call(setfield, out, (Any*) field_symbol, box<std::string>(in._name));
+    return out;
+}
+
+template<Is<Frog> T>
+Any* box(T in)
+{
+    auto sentinel = GCSentinel();
+    static auto* frog_ctor = jl_find_function("Main", "generate_frog");
+    
+    auto* out = jluna::safe_call(frog_tor, box<std::string>(in._name));
+    return out;
+}
+```
+
+Where we used `jluna::Symbol` create a symbol `:_name`, julia-side. We used the `static` keyword, because the value of this symbol will never change, thus only initializing it once saves runtime on further calls to `box`.
+
+Now that we have box fully written, we can turn our attention to unbox. Unboxing is much simpler, all we need to do, is to access the properties of the julia-side instances using `Base.getfield`. Because we are now back C++-side, we use `Tadpole::evolve` to create a frog:
+
+```cpp
+template<Is<Frog::Tadpole> T>
+T unbox(Any* in)
+{
+    auto sentinel = GCSentinel();
+    static auto* getfield = jl_find_function("Base", "getfield");
+    static auto field_symbol = Symbol("_name");
+    
+    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+    
+    auto out = Tadpole();
+    out._name = unbox<std::string>(julia_side_name);
+    return out;
+}
+
+template<Is<Frog::Tadpole> T>
+T unbox(Any* in)
+{
+    auto sentinel = GCSentinel();
+    static auto* getfield = jl_find_function("Base", "getfield");
+    static auto field_symbol = Symbol("_name");
+    
+    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+    
+    auto tadpole = Tadpole();
+    tadpole._name = unbox<std::string>(julia_side_name);
+    
+    return tadpole.evolve();
+}
+```
+
+Where we allocate the symbol `:_name`, as before.
+
+Because both box and unbox are now implemented for `Frog` and `Frog::Tadpole`, both are now compliant, and can be freely transferred between states to be used by all of `jluna`s functions:
+
+```cpp
+auto cpp_tadpole = Frog::Tadpole();
+cpp_tadpole._name = "Ted";
+
+State::new_named_undef("jl_tadpole") = box<Frog::Tadpole>(tadpole);
+State::safe_eval("jl_frog = Tadpole.evolve(jl_tadpole)");
+
+auto cpp_frog = Main["jl_frog"];
+std::cout << cpp_frog.get_name();
+```
+```
+Tadpole("Ted", var"#1#2"())
+Frog("Ted", var"#3#5"())
+Ted
+```
+
+The complete code for this example is available [here](./frog_tadpole_example.cpp).
 
 ---
 
 ## Performance
 
-This section will give some tips on how to achieve the best performance using `jluna`. As of release 0.7, `jluna` went through extensive optimization, minimizing overhead as much as possible. Still, when compared to pure julia, `jluna` will always be slower. Comparing `jluna` to the C-library, though, is a much fairer comparison, and in that aspect it can do quite well. Yet, it's still important to be aware how to avoid overhead if possible, the following suggestions are good to keep in mind when writing performance-critical code:
+This section will give some tips on how to achieve the best performance using `jluna`. As of release 0.7, `jluna` went through extensive optimization, minimizing overhead as much as possible. Still, when compared to pure julia, `jluna` will always be slower. Comparing `jluna` to the C-library, though, is a much fairer comparison and in that aspect, it can do quite well. It is still important to be aware of how to avoid overhead, and when it may be worth it to resort to only using the C-library.
+
+### Cheat Sheet
+
+Provided here is a grading of most of `jluna`s features in terms of runtime performance, where `A+` means there is literally 0-overhead compared to operating purely in julia, `F` means "do not use this in performance critical code":
+
+```cpp
+// function or feature              // grade
+
+// ### executing julia code ###
+jluna::call                         A+
+jluna::safe_call                    A
+Proxy::call                         A+
+Proxy::safe_call                    A
+Proxy::operator()                   A
+jluna::eval                         A-
+jluna::safe_eval                    A-
+State::eval                         B
+State::safe_eval                    B
+Module::eval                        B
+Module::safe_eval                   B
+State::eval_file                    C+
+State::safe_eval_file               C
+GeneratorExpression                 F
+
+// ### accessing julia-side values ###
+Array<T, N>::operator[](size_t)     A+
+Proxy::operator Any*()              A+
+State::safe_return                  A
+Proxy::operator[](size_t)           A
+Proxy::operator[](std::string)      A-
+State::new_named_*                  A
+jl_get_function                     A+
+jl_find_function                    F
+
+// ### box<T> / unbox<T> for T = ###
+primitives (int, float, etc.)       A+
+const char*                         A+
+Proxy                               A
+Array                               A
+std::vector                         A
+std::string                         A
+Pair                                B
+Tuple                               B
+Set                                 B-
+map / unordered map                 C
+lambdas                             F   // but calling is A
+Usertype<T>                         ?*
+        
+* Usertype<T> boxing performance is entirely dependend on user-supplied getter/setter
+        
+// ### other ###
+State::initialize                   F
+GCSentinel                          A+
+State::set_gc_enabled               A+
+State::collect_garbage              A+
+jluna::Type Introspection           A
+jluna::register_function            F   // but calling is A-
+Usertype<T>::add_field              D
+Usertype<T>::enable                 F
+Usertype<T>::implement              F
+```
+---
+
+### Tips
+
+The following suggestions are good to keep in mind when writing performance-critical code:
+
+### Avoid String Parsing
+
+It's easy to fall into the pattern of treating `jluna` like the REPL: a way to control Julia through the use of commands *supplied as strings*. This is rarely the most optimal way to trigger Julia-side actions, however. Notably, when calling Julia functions, often, the following pattern of calling functions directly through C achieves much better performance:
+
+```cpp
+// 1) exactly as fast as pure julia
+static jl_function_t* call_function = jl_find_function("Main.MyModule", "call_function"); 
+jluna::call(call_function);
+
+// 2) slightly slower
+auto call_function = Main["MyModule"]["call_function"];
+call_function();
+
+// 3) slowest
+jluna::eval("Main.MyModule.call_function()");
+```
+
+Where `static` was used, so the `call_function` pointer is only assigned exactly once over the course of runtime.
 
 ### Stay Julia-Side
 
-All performance critical code should be inside a julia file. All C++ should do, is to manage data and dispatch the julia-side function. For example, let's say we are working on very big matrices. Any matrix operation should happen inside a julia function, and the actual data of the matrix should stay julia-side as much as possible. We can still control julia from C++, `State::eval` has almost no overhead. Similarly, `jluna::Proxy` is just a stand-in for julia-side data. Thus, using a julia functions on `jluna::Proxy`s incurs very little overhead compared to doing both purely julia-side.
+All performance critical code should be inside a Julia file. All C++ should do, is to manage data and dispatch the Julia-side functions. For example, let's say we are working on very big matrices. Any matrix operation should happen inside a julia function, the actual data of the matrix should stay julia-side as much as possible. 
+ Relating to this, it is important to realize, when a C++ object does not actually manage any data C++-side. For example, `jluna::Proxy` is just a stand-in for julia-side object. The C++-part of it basically only holds a pointer to the data. Thus, using julia functions on `jluna::Proxy`s incurs very little overhead, compared to doing both only in julia, because all we are doing is using julia-side functions on julia-side objects.
 
 ### Minimize (Un)Boxing
 
-By far the easiest way to completely tank a programs' performance is to unnecessarily box/unbox values constantly. If our program requires operation `A` , `B`, `C` julia-side and `X`, `Y`, `Z` C++-side, it's very important to execute everything in a way that minimizes the number of box/unbox calls. So:
-`ABC <unbox> XYZ <box>` rather than `A <unbox> X <box> B <unbox> Y <box>`, etc.. This may seem obvious when abstracted like this but in a complex application, it is easy to forget. Knowing what calls cause box/unboxing is essential to avoiding this pitfall.
+By far the easiest way to completely tank a programs' performance is to unnecessarily box/unbox values constantly. If our program requires operation `A`, `B`, `C` julia-side and `X`, `Y`, `Z` C++-side, it's very important to execute everything in a way that minimizes the number of box/unbox calls. So:
+`ABC <unbox> XYZ <box>` rather than `A <unbox> X <box> B <unbox> Y <box>`, etc.. This may seem obvious when abstracted like this, but in a complex application, it's easy to forget. Knowing what calls cause box/unboxing is essential to avoiding pitfalls, because of this it sometimes encouraged to not shy away from handling pure `Any*`, just make sure to also manually control the garbage collector.
 
-Of course, we can't completely avoid it, either. To illustrate which box/unbox calls should be used as little as possible and which are perfectly fine, we'll grade them in terms of how well they perform (where `A+` is "0 overhead" and `F` is "do not use this in performance critical code"):
-
-```
-// type T of box<T>/unbox<T>    // grade
-
-int, size_t, float, etc         A+
-const char*                     A+
-Proxy                           A
-vector                          A
-std::string                     A
-cppcall / register              B
-Pair                            B
-Tuple                           B
-Set                             B-
-(unordered) map                 D
-lambda                          D-
-```
-
-Vectors and primitives can be directly swapped between language, which explains their excellent grade. More complex objects need to be serialized or wrapped before being transferable, this is the main source of overhead when (un)boxing.
+Lastly, though it is cumbersome, manually implementing box/unbox calls instead of going through `Usertype<T>` often gives more freedom to optimize. Advanced users are therefore encouraged to consider this method more frequently, at the cost of convenience.
 
 ### Minimize Proxy Construction
 
-The main overhead incurred by `jluna` is that of safety. Anytime a proxy is constructed, its value and name have to be added to an internal state that protects them from the garbage collector. This takes some amount of time; internally, the value is wrapped and a reference to it and its name is stored in a dictionary. Neither of these is that expensive, but when a function uses hundreds of proxies over its runtime, things can add up quickly. Consider the following:
+The main overhead incurred by `jluna` is that of safety. Anytime a proxy is constructed, its value and name have to be added to an internal state that protects them from the garbage collector. This takes some amount of time; internally, the value is wrapped and a reference to it and its name is stored in a dictionary. Neither of these is that expensive, but when a function uses hundreds of proxies over its runtime, this can add up quickly. Consider the following:
 
 ```cpp
 auto a = Main["Module1"]["Module2"]["vector_var"][1]["field"];
@@ -1893,7 +2496,7 @@ Proxy a;
 }
 ```
 
-Where each declaration triggers a proxy to be created. At the end of the block, no proxies are deallocated because they are named proxies. These keep their "hosts" alive, `vector_var[1].field` depends on `vector_var` and thus keeps `vector_var` alive, even if no other reference to it is kept.
+Where each declaration triggers a proxy to be created. At the end of the block, no proxies are deallocated, because the value of `a` depends on its host, `vector_var`, which needs to stay in scope for `a` to be able to be dereferenced.
 
 If we instead access the value like so:
 
@@ -1901,15 +2504,21 @@ If we instead access the value like so:
 size_t a = State::safe_return<size_t>("Main.Module1.Module2.vector_var[1].field")
 ```
 
-We do not create any proxy at all, increasing performance by up to 6 times compared to the previous statement. Of course, doing this, we loose the convenience of being assignable, castable, and all other functionalities a named `jluna::Proxy` offers. Still, in performance-critical code, unnamed proxies are almost always faster than named proxies and should be preferred.
+We do not create any proxy at all, increasing performance by up to 6 times. Of course, doing this, we loose the convenience of being assignable, castable, and all other functionalities a named `jluna::Proxy` offers. Still, in performance-critical code, unnamed proxies are almost always faster than named proxies and should be preferred. A good middle-ground is the following style:
+
+```cpp
+auto a_proxy = jluna::Proxy(jluna::safe_eval("Main.Module1.Module2.vector_var[1].field"));
+size_t a_value = a_proxy;
+```
+This calls the proxy constructor using a pure `Any*`, returned through `safe_eval`, thereby reducing the number of proxies constructed from 6 named to only 1 unnamed.
 
 ### Use the C-Library
 
-When performance needs to be optimal, not "good" or "excellent", but mathematically optimal, it is sometimes necessary to resort to the C-library. Values are hard to manage, the syntax is very clunky and the garbage collector will probably steal many of our values from under our nose and segfault the program, but that is the trade-off between performance and convenience. <br>
-Luckily, the C-library and `jluna` are freely mixable, though we may need to `.update` any proxies whos julia-side value was modified outside `jluna`.
+When performance needs to be optimal, not "good" or "excellent, but mathematically optimal, it is sometimes necessary to resort to the C-library. Values are hard to manage, the syntax is very clunky and the garbage collector will probably steal many of our values from under our nose and segfault the program, but, that is the trade-off of performance vs. convenience. <br>
+Luckily the C-library and `jluna` are freely mixable, though we may need to `.update` any proxies whos julia-side value was modified outside `jluna`.
 
 ### In Summary
 
-`jluna`s safety features incur an unavoidable overhead. Great care has been taken to minimize this overhead as much as possible, but it is still there. Knowing this, `jluna` is still perfectly fine for most applications. If a part of a library truly is performance critical, however, it may be necessary to avoid using `jluna` as much as possible in order for julia to do, what it's best at: being very fast. When mixing C++ and Julia, though, `jluna` does well at bridging that gap, and in many ways it does so better than the C-API.
+`jluna`s safety features incur an unavoidable overhead. Great care has been taken to minimize this overhead as much as possible, but it is still non-zero in many cases. Knowing this, `jluna` is still perfectly fine for most applications. If a part of a library is truly performance critical, however, it may be necessary to avoid using `jluna` as much as possible in order for julia to do, what it's best at: being very fast. When mixing C++ and Julia, however, `jluna` does equally well at bridging that gap, and in many ways it does so better than the C-API.
 
 ---

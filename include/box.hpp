@@ -185,6 +185,10 @@ namespace jluna
     template<Is<Type> T>
     Any* box(T);
 
+    /// @brief box usertype wrapper to usertype
+    template<IsUsertype T>
+    Any* box(T);
+
     /// @concept requires a value to be boxable into a julia-side value
     template<typename T>
     concept Boxable = requires(T t)

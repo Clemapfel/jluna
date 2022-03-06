@@ -200,6 +200,7 @@ namespace jluna
     inline Type UndefInitializer_t;
     inline Type Union_t;
     inline Type UnionAll_t;
+    inline Type UnionEmpty_t;
     inline Type Unsigned_t;
     inline Type VecElement_t;
     inline Type WeakRef_t;

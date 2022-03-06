@@ -1,10 +1,9 @@
-# jluna: A modern julia ⭤ C++ Wrapper (v0.7.0)
+# jluna: A modern julia ⭤ C++ Wrapper (v0.8.0)
 
 ![](./header.png)
 
 Julia is a beautiful language, it is well-designed, and well-documented. Julias C-API is also well-designed, less beautiful, and much less... documented.
-
-Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua⭤C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API, replacing it in usage in C++ projects by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
+Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua ⭤ C++ wrapper [**sol2**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API, replacing it in usage in projects with C++ as the host language by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
 
 ---
 
@@ -107,6 +106,48 @@ cpp prints what julia handed it and returns:
 10
 ```
 ---
+#### Exchange Arbitrary Types between States
+
+```cpp
+struct NonJuliaType
+{
+    Int64 _field01 = 123;
+    std::vector<std::string> _field02;
+};
+
+// setup usertype interface
+Usertype<NonJuliaType>::enable("NonJuliaType");
+Usertype<NonJuliaType>::add_property<Int64>(
+    // fieldname
+    "_field01",
+    // getter
+    [](NonJuliaType& in) -> Int64 {return in._field01;},
+    // setter
+    [](NonJuliaType& out, Int64 value) {out._field01 = value;}
+);
+
+Usertype<NonJuliaType>::add_property<std::vector<std::string>>(
+    "_field02",
+    [](NonJuliaType& in) -> std::vector<std::string> {return in._field02;},
+    [](NonJuliaType& in, std::vector<std::string> value) {in._field02 = value;}
+);
+
+// create julia-side equivalent type
+Usertype<NonJuliaType>::implement();
+
+// can now be moved between Julia and C++
+auto cpp_instance = NonJuliaType();
+State::new_named_undef("julia_instance") = box<NonJuliaType>(cpp_instance);
+
+jluna::safe_eval(R"(
+    push!(julia_instance._field02, "new")
+    println(julia_instance)
+)");
+```
+```
+NonJuliaType(123, ["new"])
+```
+---
 
 ### Features
 Some of the many advantages `jluna` has over the C-API include:
@@ -114,14 +155,13 @@ Some of the many advantages `jluna` has over the C-API include:
 + expressive generic syntax
 + call C++ functions from julia using any julia-type
 + assigning C++-side proxies also mutates the corresponding variable with the same name julia-side
++ any C++ type can be moved between Julia and C++
++ multi-dimensional, iterable array interface with julia-style indexing
++ C++-side introspection that is deeper than what is possible through only Julia
++ fast! All code is considered performance-critical and was optimized for minimal overhead compared to the C-API
 + julia-side values, including temporaries, are kept safe from the garbage collector
 + verbose exception forwarding, compile-time assertions
-+ wraps [most](./docs/manual.md#list-of-unboxables) of the relevant C++ `std` objects and types
-+ multi-dimensional, iterable array interface with julia-style indexing
-+ deep, C++-side introspection functionalities for julia objects
-+ fast! All code is considered performance-critical and was optimized for minimal overhead compared to the C-API
-+ verbose manual, written by a human
-+ inline documentation for IDEs for both C++ and Julia code 
++ inline documentation for IDEs for both C++ and Julia code+ verbose manual, written by a human
 + freely mix `jluna` and the C-API
 + And more!
 
@@ -129,7 +169,6 @@ Some of the many advantages `jluna` has over the C-API include:
 
 (in order of priority, highest first)
 
-+ usertypes, interface for (un)boxing arbitrary types
 + thread-safety, parallelization
 + linear algebra wrapper, matrices
 + expression proxies
