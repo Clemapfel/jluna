@@ -115,6 +115,9 @@ Any* box(T in)
     return out;
 }
 
+disable_usertype(Frog);
+disable_usertype(Frog::Tadpole);
+
 int main()
 {
     State::initialize();
@@ -152,6 +155,7 @@ int main()
     auto frog = ted.evolve();
 
     return 0;
+
     Test::initialize();
 
     Test::test("catch c exception", [](){

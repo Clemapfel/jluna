@@ -131,6 +131,18 @@ namespace jluna
     template<typename T>
     concept IsTuple = detail::is_tuple_aux<T>(std::make_index_sequence<std::tuple_size<T>::value>());
 
+    /// @concept should be resolved as usertype
+    template<typename T>
+    struct usertype_disabled
+    {
+        constexpr static inline bool value = false;
+    };
+
+    template<typename T>
+    concept HasUsertypeInterfaceDisabled = usertype_disabled<T>::value;
+
+    #define disable_usertype(T) template<> struct jluna::usertype_disabled<T> {constexpr static inline bool value = true;};
+
     /// @concept is none of the above and default constructible
     template<typename T>
     concept IsUsertype =
@@ -148,5 +160,6 @@ namespace jluna
         and not LambdaType<T, Any*, Any*>
         and not LambdaType<T, Any*, Any*, Any*>
         and not LambdaType<T, Any*, Any*, Any*, Any*>
-        and not LambdaType<T, std::vector<Any*>>;
+        and not LambdaType<T, std::vector<Any*>>
+        and not HasUsertypeInterfaceDisabled<T>;
 }
