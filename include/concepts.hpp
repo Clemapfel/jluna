@@ -133,33 +133,12 @@ namespace jluna
 
     /// @concept should be resolved as usertype
     template<typename T>
-    struct usertype_disabled
+    struct usertype_enabled
     {
+        constexpr static inline const char* name = "<NO_USERTYPE_NAME_SPECIFIED>";
         constexpr static inline bool value = false;
     };
 
     template<typename T>
-    concept HasUsertypeInterfaceDisabled = usertype_disabled<T>::value;
-
-    #define disable_usertype(T) template<> struct jluna::usertype_disabled<T> {constexpr static inline bool value = true;};
-
-    /// @concept is none of the above and default constructible
-    template<typename T>
-    concept IsUsertype =
-        not IsJuliaValuePointer<T>
-        and not IsAnyPtrCastable<T>
-        and not IsPrimitive<T>
-        and not IsComplex<T>
-        and not IsVector<T>
-        and not IsSet<T>
-        and not IsMap<T>
-        and not IsPair<T>
-        and not IsTuple<T>
-        and not LambdaType<T>
-        and not LambdaType<T, Any*>
-        and not LambdaType<T, Any*, Any*>
-        and not LambdaType<T, Any*, Any*, Any*>
-        and not LambdaType<T, Any*, Any*, Any*, Any*>
-        and not LambdaType<T, std::vector<Any*>>
-        and not HasUsertypeInterfaceDisabled<T>;
+    concept IsUsertype = usertype_enabled<T>::value;
 }

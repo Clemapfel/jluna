@@ -10,32 +10,15 @@ namespace jluna
     template<typename T>
     struct to_julia_type<Usertype<T>>
     {
-        inline static std::string type_name = "<USERTYPE_NAME_UNINITIALIZED>";
+        static inline const std::string type_name = usertype_enabled<T>::name;
     };
 
-    template<typename T>
-    UsertypeNotEnabledException<T>::UsertypeNotEnabledException()
-        : _msg("[C++][Exception] usertype interface for this type was not yet enabled. Call Usertype<T>::enable(const std::string&) to instance the interface")
-    {}
 
     template<typename T>
-    const char * UsertypeNotEnabledException<T>::what() const noexcept
+    void Usertype<T>::initialize()
     {
-        return _msg.c_str();
-    }
-
-    template<typename T>
-    void Usertype<T>::enable(const std::string& name)
-    {
-        _enabled = true;
-        _name = std::make_unique<Symbol>(name);
-        to_julia_type<Usertype<T>>::type_name = name;
-    }
-
-    template<typename T>
-    bool Usertype<T>::is_enabled()
-    {
-        return _enabled;
+        throw_if_uninitialized();
+        _name = std::make_unique<Symbol>(get_name());
     }
 
     template<typename T>
@@ -45,6 +28,9 @@ namespace jluna
         std::function<Field_t(T&)> box_get,
         std::function<void(T&, Field_t)> unbox_set)
     {
+        if (_name.get() == nullptr)
+            initialize();
+
         auto symbol = Symbol(name);
 
         if (_mapping.find(name) == _mapping.end())
@@ -62,8 +48,23 @@ namespace jluna
     }
 
     template<typename T>
+    std::string Usertype<T>::get_name()
+    {
+        return usertype_enabled<T>::name;
+    }
+
+    template<typename T>
+    bool Usertype<T>::is_enabled()
+    {
+        return usertype_enabled<T>::value;
+    }
+
+    template<typename T>
     void Usertype<T>::implement(Module module)
     {
+        if (_name.get() == nullptr)
+            initialize();
+
         jl_gc_pause;
         static jl_function_t* implement = jl_find_function("jluna", "implement");
         static jl_function_t* new_proxy = jl_find_function("jluna", "new_proxy");
@@ -89,9 +90,6 @@ namespace jluna
     template<typename T>
     Any* Usertype<T>::box(T& in)
     {
-        if (not _enabled)
-            throw UsertypeNotEnabledException<T>();
-
         if (not _implemented)
             implement();
 
@@ -110,9 +108,6 @@ namespace jluna
     template<typename T>
     T Usertype<T>::unbox(Any* in)
     {
-        if (not _enabled)
-            throw UsertypeNotEnabledException<T>();
-
         if (not _implemented)
             implement();
 
@@ -131,18 +126,12 @@ namespace jluna
     template<IsUsertype T>
     T unbox(Any* in)
     {
-        if (not Usertype<T>::is_enabled())
-            throw UsertypeNotEnabledException<T>();
-
-        return Usertype<T>::unbox(in);
+       return Usertype<T>::unbox(in);
     }
 
     template<IsUsertype T>
     Any* box(T in)
     {
-        if (not Usertype<T>::is_enabled())
-            throw UsertypeNotEnabledException<T>();
-
         return Usertype<T>::box(in);
     }
 }

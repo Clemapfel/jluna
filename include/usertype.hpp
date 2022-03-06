@@ -12,6 +12,10 @@
 
 namespace jluna
 {
+    /// @brief declare T to be a usertype at compile time, uses C++-side name as Julia-side typename
+    /// @param T: type
+    #define set_usertype_enabled(T) template<> struct jluna::usertype_enabled<T> {static_assert(IsDefaultConstructible<T>, "types managed by Usertype<T> need to be default constructable"); constexpr static inline const char* name = #T; constexpr static inline bool value = true;};
+
     /// @brief customizable wrapper for non-julia type T
     /// @note for information on how to use this class, visit https://github.com/Clemapfel/jluna/blob/master/docs/manual.md#usertypes
     template<typename T>
@@ -27,13 +31,13 @@ namespace jluna
             /// @brief ctor delete, static-only interface
             Usertype() = delete;
 
-            /// @brief enable interface
-            /// @param name
-            static void enable(const std::string&);
-
-            /// @brief is enabled
+            /// @brief was enabled at compile time using set_usertype_enabled
             /// @returns bool
             static bool is_enabled();
+
+            /// @brief get julia-side name
+            /// @returns name
+            static std::string get_name();
 
             /// @brief add field
             /// @param name: julia-side name of field
@@ -67,7 +71,7 @@ namespace jluna
             static T unbox(Any*);
 
         private:
-            static inline bool _enabled = false;
+            static void initialize();
             static inline bool _implemented = false;
 
             static inline std::unique_ptr<Type> _type = std::unique_ptr<Type>(nullptr);
@@ -79,22 +83,6 @@ namespace jluna
                 std::function<void(T&, Any*)>,   // setter
                 Type
             >> _mapping = {};
-    };
-
-    /// @brief exception thrown when usertype is used before being implemented
-    template<typename T>
-    struct UsertypeNotEnabledException : public std::exception
-    {
-        public:
-            /// @brief ctor
-            UsertypeNotEnabledException();
-
-            /// @brief what
-            /// @returns message
-            const char* what() const noexcept override final;
-
-        private:
-            std::string _msg;
     };
 }
 

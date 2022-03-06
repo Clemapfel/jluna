@@ -11,151 +11,9 @@
 using namespace jluna;
 using namespace jluna::detail;
 
-class Frog
-{
-    public:
-        // tadpole, a baby frog
-        struct Tadpole
-        {
-            // name, can be changed
-            std::string _name;
-
-            // ctor, tadpoles are born without a name
-            Tadpole()
-                : _name("")
-            {}
-
-            // if a tadpole has a name, it can evolve into a frog
-            Frog evolve() const
-            {
-                if (_name == "")
-                    throw std::invalid_argument("tadpole needs to be named before evolving");
-
-                return Frog(_name);
-            }
-        };
-
-    public:
-        // a frog can spawn a number of tadpoles
-        std::vector<Frog::Tadpole> spawn(size_t n) const
-        {
-            std::vector<Frog::Tadpole> out;
-            for (size_t i = 0; i < n; ++i)
-                out.push_back(Frog::Tadpole());
-
-            return out;
-        }
-
-        // get name
-        std::string get_name()
-        {
-            return _name;
-        }
-
-    private:
-        // private ctor, can only be called by Frog::Tadpole::evolve
-        Frog(std::string name)
-            : _name(name)
-        {}
-
-        // name, cannot be changed because there is no setter
-        std::string _name;
-};
-
-template<Is<Frog::Tadpole> T>
-T unbox(Any* in)
-{
-    auto sentinel = GCSentinel();
-    static auto* getfield = jl_find_function("Base", "getfield");
-    static auto field_symbol = Symbol("_name");
-
-    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
-
-    auto out = Frog::Tadpole();
-    out._name = unbox<std::string>(julia_side_name);
-    return out;
-}
-
-template<Is<Frog> T>
-T unbox(Any* in)
-{
-    auto sentinel = GCSentinel();
-    static auto* getfield = jl_find_function("Base", "getfield");
-    static auto field_symbol = Symbol("_name");
-
-    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
-
-    auto tadpole = Frog::Tadpole();
-    tadpole._name = unbox<std::string>(julia_side_name);
-
-    return tadpole.evolve();
-}
-
-template<Is<Frog::Tadpole> T>
-Any* box(T in)
-{
-    auto sentinel = GCSentinel();
-    static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
-
-    auto* out = jluna::safe_call(tadpole_ctor);
-
-    static auto* setfield = jl_find_function("Base", "setfield!");
-    static auto field_symbol = Symbol("_name");
-    jluna::safe_call(setfield, out, (Any*) field_symbol, box<std::string>(in._name));
-    return out;
-}
-
-template<Is<Frog> T>
-Any* box(T in)
-{
-    auto sentinel = GCSentinel();
-    static auto* frog_ctor = jl_find_function("Main", "generate_frog");
-
-    auto* out = jluna::safe_call(frog_ctor, box<std::string>(in._name));
-    return out;
-}
-
-disable_usertype(Frog);
-disable_usertype(Frog::Tadpole);
-
 int main()
 {
     State::initialize();
-
-    State::safe_eval(R"(
-        mutable struct Tadpole
-
-            _name::String
-            evolve::Function
-
-            Tadpole() = new(
-                "",
-                (this::Tadpole) -> Frog(this._name)
-            )
-        end
-
-        struct Frog
-
-            _name::String
-            spawn::Function
-
-            Frog(as_tadpole::Tadpole) = new(
-                as_tadpole._name,
-                (n::Integer) -> [Tadpole() for _ in 1:n]
-            )
-        end
-    )");
-
-    auto ted = Frog::Tadpole();
-
-    auto* boxed = box<Frog::Tadpole>(ted);
-    Base["println"](boxed);
-
-    ted._name = "Ted";
-    auto frog = ted.evolve();
-
-    return 0;
-
     Test::initialize();
 
     Test::test("catch c exception", [](){
@@ -1041,17 +899,17 @@ int main()
 
         type = Type::construct_from<std::vector<int>>();
     });
-    
+
     auto test_type = []<typename T>(Type& a, T b) {
-        
+
         std::string name = "Type Constant: ";
         name += jl_to_string((Any*) a);
-        
+
         Test::test(name, [&](){
             return a.operator jl_datatype_t*() == reinterpret_cast<jl_datatype_t*>(b);
         });
     };
-    
+
     test_type(AbstractArray_t, jl_abstractarray_type);
     test_type(AbstractChar_t, jl_eval_string("return AbstractChar"));
     test_type(AbstractFloat_t, jl_eval_string("return AbstractFloat"));
@@ -1230,25 +1088,9 @@ int main()
         }
     });
 
-    struct NonJuliaType
-    {
-        std::vector<size_t> _field;
-    };
-
-    Test::test("Usertype: throw on disable", [](){
-
-        Test::assert_that_throws<UsertypeNotEnabledException<NonJuliaType>>([](){
-            volatile auto* res = box<NonJuliaType>(NonJuliaType());
-        });
-
-        Test::assert_that_throws<UsertypeNotEnabledException<NonJuliaType>>([](){
-            volatile NonJuliaType t = unbox<NonJuliaType>(jl_nothing);
-        });
-    });
-
     Test::test("Usertype: enable", [](){
 
-        Usertype<NonJuliaType>::enable("NonJuliaType");
+        Test::assert_that(Usertype<NonJuliaType>::get_name() == "NonJuliaType");
         Test::assert_that(Usertype<NonJuliaType>::is_enabled());
     });
 
