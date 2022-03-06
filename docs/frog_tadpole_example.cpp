@@ -1,5 +1,5 @@
 // 
-// This file compiles the entire code of the section on manual implementation of usertypes in docs/manual.md
+// This file contains the code of the section on manual implementation of usertypes in docs/manual.md
 //
 
 #include <jluna.hpp>
@@ -70,6 +70,12 @@ const char* frogs_dot_jl = R"(
             as_tadpole._name,
             (n::Integer) -> [Tadpole() for _ in 1:n]
         )
+    end
+
+    function generate_frog(name::String) ::Frog
+        tadpole = Tadpole()
+        tadpole._name = name
+        return Frog(tadpole)
     end
 )";
 
