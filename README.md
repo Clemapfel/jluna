@@ -145,16 +145,17 @@ NonJuliaType(["new"])
 ### Features
 Some of the many advantages `jluna` has over the C-API include:
 
-+ expressive generic syntax
++ expressive, generic syntax
 + call C++ functions from julia using any julia-type
-+ assigning C++-side proxies also mutates the corresponding variable with the same name julia-side
-+ any C++ type can be moved between Julia and C++
++ assigning C++-side proxies also mutates the corresponding variable julia-side
++ any C++ type can be moved between Julia and C++. Any julia-type can be wrapped
 + multi-dimensional, iterable array interface with julia-style indexing
-+ C++-side introspection that is deeper than what is possible through only Julia
++ C++-side introspection, deeper than what is possible through only Julia
 + fast! All code is considered performance-critical and was optimized for minimal overhead compared to the C-API
 + julia-side values, including temporaries, are kept safe from the garbage collector
 + verbose exception forwarding, compile-time assertions
-+ inline documentation for IDEs for both C++ and Julia code+ verbose manual, written by a human
++ inline documentation for IDEs, for both C++ and Julia code 
++ verbose manual, written by a human
 + freely mix `jluna` and the C-API
 + And more!
 
