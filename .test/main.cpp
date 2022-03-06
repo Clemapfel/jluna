@@ -11,6 +11,12 @@
 using namespace jluna;
 using namespace jluna::detail;
 
+struct NonJuliaType
+{
+    std::vector<size_t> _field;
+};
+set_usertype_enabled(NonJuliaType);
+
 int main()
 {
     State::initialize();
