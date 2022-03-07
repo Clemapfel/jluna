@@ -244,7 +244,6 @@ If errors appear at any point, head to the [step-by-step guide](./docs/installat
 
 ## License
 
-`jluna` is supplied under Open Software License 3.0, available [here](https://opensource.org/licenses/OSL-3.0).
-For collaboration or further questions, feel free to [contact the developer](https://www.clemens-cords.com/contact).
+`jluna` is supplied under MIT license. For collaboration or further questions, feel free to [contact the developer](https://www.clemens-cords.com/contact).
 
 ---
