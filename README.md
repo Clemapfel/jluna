@@ -244,6 +244,12 @@ If errors appear at any point, head to the [step-by-step guide](./docs/installat
 
 ## License
 
-`jluna` is supplied under MIT license. For collaboration or further questions, feel free to [contact the developer](https://www.clemens-cords.com/contact).
+The current and all prior releases of `jluna` are supplied under MIT license, available [here](./LICENSE.txt).
+
+I would like to ask people using this library in commercial or university settings, to disclose their usage of `jluna` in some small way (for example, at the end of the credits or via a citation) and to make clear the origin of the work (for example by linking this github page). Unlike the text in `LICENSE.txt`, this is not a legally binding condition, only a personal request by the developer. Thank you for considering.
+
+For collaboration or further questions, feel free to [contact me](https://www.clemens-cords.com/contact).
+
+C. Cords
 
 ---
