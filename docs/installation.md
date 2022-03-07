@@ -157,39 +157,24 @@ cmake_minimum_required(VERSION 3.16)
 # name of our project
 project(MyProject)
 
-# cmake and cpp settings
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Debug)
-
-# compiler
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++")
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
-else()
-    message(FATAL_ERROR "only g++11 or clang-12 are supported")
-endif()
-
 # julia
 if (NOT DEFINED ENV{JULIA_PATH})
     message(WARNING "JULIA_PATH was not set correctly. Consider re-reading the jluna installation tutorial at https://github.com/Clemapfel/jluna/blob/master/docs/installation.md#setting-julia_path to fix this issue")
 endif()
 
+set(JULIA_INCLUDE "$ENV{JULIA_PATH}/include/julia")
+
 set(JULIA_LIB "$ENV{JULIA_PATH}/lib/libjulia.so")
 
-# find jluna and jluna_c_adapter
-find_library(JLUNA_LIB REQUIRED NAMES libjluna.so PATHS "${CMAKE_SOURCE_DIR}/jluna/")
-find_library(JLUNA_C_ADAPTER_LIB REQUIRED NAMES libjluna_c_adapter.so PATHS "${CMAKE_SOURCE_DIR}/jluna/")
-
-# include directories we'll need
-include_directories("${CMAKE_SOURCE_DIR}/jluna")
-include_directories("$ENV{JULIA_PATH}/include/julia")
+find_package(jluna REQUIRED)
 
 # add our executable
 add_executable(MY_EXECUTABLE ${CMAKE_SOURCE_DIR}/main.cpp)
 
+target_include_directories(MY_EXECUTABLE PRIVATE ${JULIA_INCLUDE})
+
 # link executable with jluna, jluna_c_adapter and julia
-target_link_libraries(MY_EXECUTABLE ${JLUNA_LIB} ${JLUNA_C_ADAPTER_LIB} ${JULIA_LIB})
+target_link_libraries(MY_EXECUTABLE jluna::jluna ${JULIA_LIB})
 ```
 
 We again save and close the file, then create our own build folder and run cmake, just like we did with `jluna` before

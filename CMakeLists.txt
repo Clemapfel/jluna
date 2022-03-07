@@ -1,14 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 project(jluna)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Debug)
-
 # compiler support
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2b -lstdc++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-volatile")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "10.0.0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts -Wno-volatile")
 else()
     message(FATAL_ERROR "Currently, the only supported compilers are G++10, G++11 (recommended) and Clang-12")
 endif()
@@ -51,11 +48,9 @@ else()
     message(FATAL_ERROR "Failed to detect julia image. Make sure JULIA_PATH is set correctly and that the julia image is uncompressed and not corrupted.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
 endif()
 
-include_directories(${JULIA_INCLUDE})
 
 ### JLUNA ###
 
-include_directories(${CMAKE_SOURCE_DIR})
 
 set(RESOURCE_PATH ${CMAKE_SOURCE_DIR})
 configure_file(${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in ${CMAKE_SOURCE_DIR}/.src/include_julia.inl @ONLY)
@@ -124,6 +119,7 @@ add_library(jluna SHARED
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEBUG_POSTFIX -debug
 )
 
 add_library(jluna_c_adapter SHARED
@@ -131,13 +127,22 @@ add_library(jluna_c_adapter SHARED
     .src/c_adapter.cpp
 )
 
+target_include_directories(jluna_c_adapter
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+    # The user should include julia it own his own
+    PUBLIC $<BUILD_INTERFACE:${JULIA_INCLUDE}>
+)
+
+target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
+target_link_libraries(jluna_c_adapter PUBLIC $<BUILD_INTERFACE:${JULIA_LIB}>)
+
 set_target_properties(jluna_c_adapter PROPERTIES
     LINKER_LANGUAGE C
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEBUG_POSTFIX -debug
 )
 
-target_link_libraries(jluna_c_adapter ${JULIA_LIB})
-target_link_libraries(jluna jluna_c_adapter ${JULIA_LIB})
+target_link_libraries(jluna PUBLIC jluna_c_adapter)
 
 ### EXECUTABLES ###
 
@@ -152,3 +157,32 @@ target_link_libraries(JLUNA_TEST jluna ${JULIA_LIB})
 #   .benchmark/benchmark.hpp
 #)
 #target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})
+
+
+include(GNUInstallDirs)
+
+# TODO: ConfigVersion.cmake
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/jluna-config.cmake [[
+if (NOT ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "10.0.0")))
+    message(FATAL_ERROR "Currently, the only supported compilers are G++10, G++11 (recommended) and Clang-12")
+endif()
+include("${CMAKE_CURRENT_LIST_DIR}/jluna-targets.cmake")
+]])
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/jluna-config.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/jluna
+)
+
+install(TARGETS jluna jluna_c_adapter EXPORT jluna_targets)
+
+install(EXPORT jluna_targets
+    FILE jluna-targets.cmake
+    NAMESPACE jluna::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/jluna
+)
+
+install(FILES jluna.hpp ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jluna)
+install(DIRECTORY include .src DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jluna)
+
+target_include_directories(jluna INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/jluna>)
