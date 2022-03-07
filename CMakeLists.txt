@@ -129,7 +129,7 @@ add_library(jluna_c_adapter SHARED
 
 target_include_directories(jluna_c_adapter
     PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-    # The user should include julia it own his own
+    # users should include julia on their own
     PUBLIC $<BUILD_INTERFACE:${JULIA_INCLUDE}>
 )
 
