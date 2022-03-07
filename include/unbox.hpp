@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <julia/julia.h>
+#include <julia.h>
 
 #include <include/concepts.hpp>
 #include <include/typedefs.hpp>
