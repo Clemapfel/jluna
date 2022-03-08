@@ -19,7 +19,8 @@ int main()
     State::initialize();
     Benchmark::initialize();
 
-    Benchmark::run("C: eval", n_reps, [](){
+    /*
+    Benchmark::run("jl_eval_string", n_reps, [](){
 
         auto name = generate_string(8);
         jl_eval_string((name + std::string(" = [i for i in 1:1000]")).c_str());
@@ -60,6 +61,82 @@ int main()
         Main.safe_eval(name + std::string(" = [i for i in 1:1000]"));
         Main.safe_eval(name + std::string(" = undef"));
     });
+
+    State::safe_eval(R"(
+        function f()
+            out::Vector{Int64} = [0]
+            for i in 2:1000
+                push!(out, i + out[i-1])
+            end
+            return out
+        end
+    )");
+
+    Benchmark::run("jl_call", n_reps, [](){
+
+        static jl_function_t* f = jl_get_function(jl_main_module, "f");
+        volatile auto* out = jl_call0(f);
+    });
+
+    Benchmark::run("jluna::call", n_reps, [](){
+
+        static jl_function_t* f = jl_get_function(jl_main_module, "f");
+        volatile auto* out = jluna::call(f);
+    });
+
+    Benchmark::run("jluna::safe_call", n_reps, [](){
+
+        static jl_function_t* f = jl_get_function(jl_main_module, "f");
+        volatile auto* out = jluna::safe_call(f);
+    });
+
+    Benchmark::run("Proxy::call", n_reps, [](){
+
+        static jl_function_t* f = jl_get_function(jl_main_module, "f");
+        static auto proxy = Proxy(f);
+
+        volatile auto res = proxy.call();
+    });
+
+    Benchmark::run("Proxy::safe_call", n_reps, [](){
+
+        static jl_function_t* f = jl_get_function(jl_main_module, "f");
+        static auto proxy = Proxy(f);
+
+        volatile auto res = proxy.safe_call();
+    });
+     */
+
+    Benchmark::run("C-API: allocate proxy", n_reps, []()
+    {
+        jl_gc_pause;
+        volatile auto* res = box<std::string>(generate_string(16));
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: allocate unnamed proxy", n_reps, []()
+    {
+        volatile auto unnamed = Proxy(box<std::string>(generate_string(16)));
+    });
+
+    Benchmark::run("jluna: allocate named proxy", n_reps, []()
+    {
+        volatile auto named = Proxy(box<std::string>(generate_string(16)), jl_symbol("name"));
+    });
+
+    Benchmark::run("State::new_unnamed", n_reps, []()
+    {
+        volatile auto unnamed = State::new_unnamed_string(generate_string(16));
+    });
+
+    Benchmark::run("State::new_named", n_reps, []()
+    {
+        volatile auto unnamed = State::new_named_string("name", generate_string(16));
+    });
+
+
+
+
 
     Benchmark::conclude();
     Benchmark::save();
