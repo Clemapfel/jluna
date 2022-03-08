@@ -12,7 +12,7 @@ using namespace jluna;
 std::vector<Proxy> _proxies;
 void setup();
 
-size_t n_reps = 1000;
+size_t n_reps = 5000;
 
 int main()
 {
@@ -162,7 +162,38 @@ int main()
 
         volatile auto* res = box<std::vector<size_t>>(vec);
     });
-    */
+
+    Benchmark::run("C-API: box primitive", n_reps, [](){
+
+        for (size_t i = 0; i < 10000; ++i)
+            volatile auto* res = jl_box_uint64(i);
+    });
+
+    Benchmark::run("jluna: box primitive", n_reps, [](){
+
+        for (size_t i = 0; i < 10000; ++i)
+            volatile auto* res = box<size_t>(i);
+    });
+
+    Benchmark::run("C-API: unbox primitive", n_reps, [](){
+
+        for (size_t i = 0; i < 10000; ++i)
+        {
+            jl_gc_pause;
+            auto* val = jl_box_uint64(i);
+            volatile size_t res = jl_unbox_uint64(val);
+            jl_gc_unpause;
+        }
+    });
+
+    Benchmark::run("jluna: unbox primitive", n_reps, [](){
+
+        for (size_t i = 0; i < 10000; ++i)
+        {
+            auto* val = jl_box_uint64(i);
+            volatile size_t res = unbox<UInt64>(val);
+        }
+    });
 
     Benchmark::run("C-API: unbox vector", n_reps, [](){
 
@@ -185,6 +216,81 @@ int main()
         auto* vec = jl_eval_string("Vector{Int64}([i for i in 1:10000])");
         auto out = unbox<std::vector<size_t>>(vec);
     });
+
+    Benchmark::run("C-API: box string", n_reps, [](){
+
+        jl_gc_pause;
+        auto value = generate_string(32);
+        volatile auto* res = jl_alloc_string(value.size());
+
+        for (size_t i = 0; i < value.size(); ++i)
+            jl_string_data(res)[i] = value.at(i);
+
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: box string", n_reps, [](){
+
+        volatile auto* res = box<std::string>(generate_string(32));
+    });
+
+    Benchmark::run("C-API: unbox string", n_reps, [](){
+
+        std::stringstream str;
+        str << "return \"" << generate_string(32) << "\"" << std::endl;
+        auto* jl_str = jl_eval_string(str.str().c_str());
+        size_t length = jl_length(jl_str);
+
+        std::string res;
+        res.reserve(length);
+        res = jl_string_data(jl_str);
+    });
+
+    Benchmark::run("jluna: unbox string", n_reps, [](){
+
+        std::stringstream str;
+        str << "return \"" << generate_string(32) << "\"" << std::endl;
+        auto* jl_str = jl_eval_string(str.str().c_str());
+        std::string res = unbox<std::string>(jl_str);
+    });
+
+     */
+
+    Benchmark::run("C-API: hash", n_reps, [](){
+
+        auto gc = GCSentinel();
+
+        auto name = generate_string(16);
+        auto* sym = jl_symbol(name.c_str());
+
+        volatile size_t res = sym->hash;
+    });
+
+    Benchmark::run("jluna: hash", n_reps, [](){
+
+        auto gc = GCSentinel();
+
+        auto name = generate_string(16);
+        volatile size_t res = c_adapter::hash(name);
+    });
+
+    Benchmark::run("box lambda", n_reps, [](){
+
+        static auto lambda = []() {
+            int out = 0;
+
+            for (size_t i = 0; i < 1000; ++i)
+                if (i % 2 == 0)
+                    out += i;
+                else
+                    out -= i;
+
+            return out;
+        };
+    });
+
+
+
 
     Benchmark::conclude();
     Benchmark::save();

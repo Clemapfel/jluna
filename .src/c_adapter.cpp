@@ -15,7 +15,7 @@ extern "C"
             static jl_function_t* get_args = jl_get_function((jl_module_t*) jl_eval_string("return Main.jluna._cppcall"), "get_arguments");
             static jl_function_t* set_result = jl_get_function((jl_module_t*) jl_eval_string("return Main.jluna._cppcall"), "set_result");
             jl_value_t* tuple = jl_call0(get_args);
-            jl_value_t* res;
+            jl_value_t* res = nullptr;
 
             res = _functions.at(id).first(tuple);
 
@@ -27,12 +27,7 @@ extern "C"
 
         size_t hash(const std::string& str)
         {
-            static jl_function_t* hash = jl_get_function(jl_base_module, "hash");
-
-            auto before = jl_gc_is_enabled();
-            jl_gc_enable(false);
-            return jl_unbox_uint64(jl_call1(hash, (jl_value_t*) jl_symbol(str.data())));
-            jl_gc_enable(before);
+            return jl_symbol(str.c_str())->hash;
         }
 
         void register_function(const std::string& name, size_t n_args, std::function<jl_value_t*(jl_value_t*)>&& lambda)

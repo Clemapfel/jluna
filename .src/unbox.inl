@@ -3,6 +3,8 @@
 // Created on 31.01.22 by clem (mail@clemens-cords.com)
 //
 
+#include <include/gc_sentinel.hpp>
+
 namespace jluna
 {
     namespace detail
@@ -50,109 +52,121 @@ namespace jluna
     template<Is<bool> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_bool_type))
+            return jl_unbox_bool(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<char> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_uint8_type))
+            return jl_unbox_uint8(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<uint8_t> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_uint8_type))
+            return jl_unbox_uint8(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<uint16_t> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_uint16_type))
+            return jl_unbox_uint16(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<uint32_t> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_uint32_type))
+            return jl_unbox_uint32(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<uint64_t> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_uint64_type))
+            return jl_unbox_uint64(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<int8_t> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_int8_type))
+            return jl_unbox_int8(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<int16_t> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_int16_type))
+            return jl_unbox_int16(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<int32_t> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_int32_type))
+            return jl_unbox_int32(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<int64_t> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_int64_type))
+            return jl_unbox_int64(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<float> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_float32_type))
+            return jl_unbox_float32(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<double> T>
     T unbox(Any* value)
     {
-        jl_gc_pause;
-        T res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        if (jl_typeis(value, jl_float64_type))
+            return jl_unbox_float64(value);
+        else
+            return detail::smart_unbox_primitive<T>(value);
     } //°
 
     template<Is<std::string> T>
