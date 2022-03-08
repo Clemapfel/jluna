@@ -250,6 +250,4 @@ I would like to ask people using this library in commercial or university settin
 
 For collaboration or further questions, feel free to [contact me](https://www.clemens-cords.com/contact).
 
-C. Cords
-
 ---
