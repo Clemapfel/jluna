@@ -167,7 +167,7 @@ int main()
     Benchmark::run("C-API: unbox vector", n_reps, [](){
 
         jl_gc_pause;
-        jl_array_t* vec = (jl_array_t*) jl_eval_string("[i for i in 1:10000]");
+        jl_array_t* vec = (jl_array_t*) jl_eval_string("Vector{UInt64}([i for i in 1:10000])");
 
         std::vector<size_t> out;
         out.reserve(vec->length);
@@ -182,7 +182,7 @@ int main()
 
     Benchmark::run("jluna: unbox vector", n_reps, [](){
 
-        auto* vec = jl_eval_string("[i for i in 1:10000]");
+        auto* vec = jl_eval_string("Vector{UInt64}([i for i in 1:10000])");
         auto out = unbox<std::vector<size_t>>(vec);
     });
 

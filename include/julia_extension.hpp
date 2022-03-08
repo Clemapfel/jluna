@@ -8,6 +8,7 @@
 #include <julia.h>
 
 #include <string>
+#include <iostream>
 
 #include <include/exceptions.hpp>
 
@@ -71,7 +72,10 @@ extern "C"
     inline jl_value_t* jl_try_convert(jl_datatype_t* type, jl_value_t* value)
     {
         static jl_function_t* convert = jl_get_function(jl_base_module, "convert");
-        return jluna::safe_call(convert, (jl_value_t*) type, value);
+        if (jl_isa(value, (jl_value_t*) type))
+            return value;
+        else
+            return jluna::safe_call(convert, (jl_value_t*) type, value);
     }
 
     /// @brief throw error if value is not of type named
