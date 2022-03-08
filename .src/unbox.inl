@@ -14,79 +14,118 @@ namespace jluna
     template<Is<bool> T>
     T unbox(Any* value)
     {
-        return jl_unbox_bool(jl_try_convert(jl_bool_type, value));
+        jl_gc_pause;
+        auto res = jl_unbox_bool(jl_try_convert(jl_bool_type, value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<char> T>
     T unbox(Any* value)
     {
-        return static_cast<char>(jl_unbox_uint8(jl_try_convert(jl_uint8_type, value)));
+        jl_gc_pause;
+        auto res = static_cast<char>(jl_unbox_uint8(jl_try_convert(jl_uint8_type, value)));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<uint8_t> T>
     T unbox(Any* value)
     {
-        return jl_unbox_uint8(jl_try_convert(jl_uint8_type, value));
+        jl_gc_pause;
+        auto res = jl_unbox_uint8(jl_try_convert(jl_uint8_type, value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<uint16_t> T>
     T unbox(Any* value)
     {
-        return jl_unbox_uint16(jl_try_convert(jl_uint16_type, value));
+        jl_gc_pause;
+        auto res =  jl_unbox_uint16(jl_try_convert(jl_uint16_type, value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<uint32_t> T>
     T unbox(Any* value)
     {
-        return jl_unbox_uint32(jl_try_convert(jl_uint32_type, value));
+        jl_gc_pause;
+        auto res =  jl_unbox_uint32(jl_try_convert(jl_uint32_type, value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<uint64_t> T>
     T unbox(Any* value)
     {
-        return jl_unbox_uint64(jl_try_convert(jl_uint64_type, value));
+        jl_gc_pause;
+        auto res =  jl_unbox_uint64(jl_try_convert(jl_uint64_type, value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<int8_t> T>
     T unbox(Any* value)
     {
-        return jl_unbox_int8(jl_try_convert(jl_int8_type, value));
+        jl_gc_pause;
+        auto res =  jl_unbox_int8(jl_try_convert(jl_int8_type, value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<int16_t> T>
     T unbox(Any* value)
     {
-        return jl_unbox_int16(jl_try_convert(jl_int16_type, value));
+        jl_gc_pause;
+        auto res =  jl_unbox_int16(jl_try_convert(jl_int16_type, value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<int32_t> T>
     T unbox(Any* value)
     {
-        return jl_unbox_int32(jl_try_convert(jl_int32_type, value));
+        jl_gc_pause;
+        auto res =  jl_unbox_int32(jl_try_convert(jl_int32_type, value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<int64_t> T>
     T unbox(Any* value)
     {
-        return jl_unbox_int64(jl_try_convert(jl_int64_type, value));
+        jl_gc_pause;
+        auto res =  jl_unbox_int64(jl_try_convert(jl_int64_type, value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<float> T>
     T unbox(Any* value)
     {
-        return jl_unbox_float32(jl_try_convert(jl_float32_type, value));
+        jl_gc_pause;
+        auto res =  jl_unbox_float32(jl_try_convert(jl_float32_type, value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<double> T>
     T unbox(Any* value)
     {
-        return jl_unbox_float64(jl_try_convert(jl_float64_type, value));
+        jl_gc_pause;
+        auto res =  jl_unbox_float64(jl_try_convert(jl_float64_type, value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<Is<std::string> T>
     T unbox(Any* value)
     {
-        return std::string(jl_to_string(value));
+        jl_gc_pause;
+        auto res =  std::string(jl_to_string(value));
+        jl_gc_unpause;
+        return res;
     } //°
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
