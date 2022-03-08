@@ -2390,10 +2390,10 @@ jluna::safe_call                    A
 Proxy::call                         A+
 Proxy::safe_call                    A
 Proxy::operator()                   A
-jluna::eval                         A-
-jluna::safe_eval                    A-
-State::eval                         B
-State::safe_eval                    B
+jluna::eval                         A
+jluna::safe_eval                    A
+State::eval                         A-
+State::safe_eval                    A-
 Module::eval                        B
 Module::safe_eval                   B
 State::eval_file                    C+

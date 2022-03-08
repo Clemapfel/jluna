@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(jluna)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 # compiler support
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0")
@@ -155,11 +155,12 @@ add_executable(JLUNA_TEST
 )
 target_link_libraries(JLUNA_TEST jluna ${JULIA_LIB})
 
-#add_executable(JLUNA_BENCHMARK
-#   .benchmark/main.cpp
-#   .benchmark/benchmark.hpp
-#)
-#target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})
+add_executable(JLUNA_BENCHMARK
+    .benchmark/main.cpp
+    .benchmark/benchmark.hpp
+    .benchmark/benchmark_aux.hpp
+)
+target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})
 
 ### INSTALL ###
 
