@@ -14,7 +14,10 @@ namespace jluna
     template<Is<bool> T>
     T unbox(Any* value)
     {
-        return jl_unbox_bool(jl_try_convert(jl_bool_type, value));
+        jl_gc_pause;
+        auto out =  jl_unbox_bool(jl_try_convert(jl_bool_type, value));
+        jl_gc_unpause;
+        return out;
     } //°
 
     template<Is<char> T>
@@ -44,7 +47,10 @@ namespace jluna
     template<Is<uint64_t> T>
     T unbox(Any* value)
     {
-        return jl_unbox_uint64(jl_try_convert(jl_uint64_type, value));
+        jl_gc_pause;
+        auto out = jl_unbox_uint64(jl_try_convert(jl_uint64_type, value));
+        jl_gc_unpause;
+        return out;
     } //°
 
     template<Is<int8_t> T>
@@ -107,14 +113,13 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-
-        static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
+        jl_array_t* in = (jl_array_t*) value;
 
         std::vector<Value_t> out;
-        out.reserve(jl_array_len(value));
+        out.reserve(in->length);
 
-        for (size_t i = 0; i < jl_array_len(value); ++i)
-            out.push_back(unbox<Value_t>(jl_call2(getindex, value, jl_box_uint64(i+1))));
+        for (size_t i = 0; i < in->length; ++i)
+            out.push_back(unbox<Value_t>(jl_arrayref(in, i)));
 
         jl_gc_unpause;
         return out;

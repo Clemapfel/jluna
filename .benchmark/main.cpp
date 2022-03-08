@@ -105,7 +105,6 @@ int main()
 
         volatile auto res = proxy.safe_call();
     });
-     */
 
     Benchmark::run("C-API: allocate proxy", n_reps, []()
     {
@@ -131,12 +130,61 @@ int main()
 
     Benchmark::run("State::new_named", n_reps, []()
     {
-        volatile auto unnamed = State::new_named_string("name", generate_string(16));
+        volatile auto named = State::new_named_string("name", generate_string(16));
     });
 
+    Benchmark::run("C-API: box vector", n_reps, []()
+    {
+        auto vec = std::vector<size_t>();
+        vec.reserve(10000);
 
+        for (size_t i = 0; i < 10000; ++i)
+            vec.push_back(generate_number<size_t>());
 
+        jl_gc_pause;
+        static jl_function_t* make_vector = jl_get_function(jl_base_module, "Vector");
 
+        jl_array_t* out = (jl_array_t*) jl_call2(make_vector, jl_undef_initializer(), jl_box_uint64(vec.size()));
+
+        for (size_t i = 0; i < vec.size(); ++i)
+            jl_arrayset(out, jl_box_uint64(vec.at(i)), i);
+
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: box vector", n_reps, []()
+    {
+        auto vec = std::vector<size_t>();
+        vec.reserve(10000);
+
+        for (size_t i = 0; i < 10000; ++i)
+            vec.push_back(generate_number<size_t>());
+
+        volatile auto* res = box<std::vector<size_t>>(vec);
+    });
+    */
+
+    Benchmark::run("C-API: unbox vector", n_reps, [](){
+
+        jl_gc_pause;
+        jl_array_t* vec = (jl_array_t*) jl_eval_string("[i for i in 1:10000]");
+
+        std::vector<size_t> out;
+        out.reserve(vec->length);
+
+        for (size_t i = 0; i < vec->length; ++i)
+            out.push_back(jl_unbox_uint64(jl_arrayref(vec, i)));
+
+        volatile auto copy = out;
+
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: unbox vector", n_reps, [](){
+
+        auto* vec = jl_eval_string("[i for i in 1:10000]");
+        auto out = unbox<std::vector<size_t>>(vec);
+    });
 
     Benchmark::conclude();
     Benchmark::save();
