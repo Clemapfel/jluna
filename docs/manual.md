@@ -4954,100 +4954,7 @@ Lastly, though it is cumbersome, manually implementing box/unbox calls instead o
 
 ### Be aware of implicit Conversions
 
-`jluna` triggers implicit conversion behind the scenes in many scenarios. Consider the following code:
-
-```cpp
-Any* jl_side_vec = "[i for i in 1:100000]"_eval;
-std::vector<size_t> cpp_side_vec = unbox<std::vector<size_t>>(jl_side_vec);
-```
-
-This statement seems harmless, we are creating a vector julia-side using a generator expression, then unboxing it into a `size_t` vector in C++. What we haven't considered, is the type of `jl_side_vec`:
-
-```julia
-typeof([i for i in 1:100000])
-```
-```
-Vector{Int64} (alias for Array{Int64, 1})
-```
-
-Julia-side, this vectors value type is `Int64`, while C++-side the value type is `size_t`, aka. `UInt64`. This means, during unboxing, we have to manually convert each number in the Julia-side vector before being able to move it C++-side. While converting one integer type into another isn't that expensive, what is expensive is allocating all those converted numbers. Unboxing `jl_side_vec` into a `std::vector<size_t>` is about 15 times slower than unboxing into a `std::vector<Int64>`. This doesn't matter for tiny vector, but for something sizeable like this 100k number vector it makes a huge difference. Always try for both the Julia-type and the C++-type to be the same, especially when both types are C-compliant (see below), as C-compliant types can be moved directly between states, with no allocation or conversion taking place. 
-
-The following types supported by jluna are C-compliant:
-| cpp-side name         | julia-side name             | 
-|-----------------------|-----------------------------|
-|bool                   | Bool                        |
-
-
-char                     Char
-int8_t                   Int8
-int16_t                  Int16
-int32_t                  Int32
-int64_t                  Int64
-uint8_t                  UInt8
-uint16_t                 UInt16
-uint32_t                 UInt32
-uint64_t                 UInt64
-float                    Float32
-double                   Float64
-const char*              CString (if null-terminated)
-T*                       Ptr{T} °
-nullptr                  C_NULL, UInt64(0)
-void                     Cvoid, nothing
-
-° where T is a C-compliant type
-
-
-
-### Minimize Proxy Construction
-
-The main overhead incurred by `jluna` is that of safety. Anytime a proxy is constructed, its value and name have to be added to an internal state that protects them from the garbage collector. This takes some amount of time; internally, the value is wrapped and a reference to it and its name is stored in a dictionary. Neither of these is that expensive, but when a function uses hundreds of proxies over its runtime, this can add up quickly. Consider the following:
-
-```cpp
-auto a = Main["Module1"]["Module2"]["vector_var"][1]["field"];
-``` 
-
-This statement constructs 5 proxies, it is exactly equivalent to:
-
-```cpp
-Proxy a;
-{
-    auto _0 = Main;
-    auto _1 = _0["Module1"];
-    auto _2 = _1["Module2"];
-    auto _3 = _2["vector_var"];
-    auto _4 = _3[1];
-    a = _4["field"]
-}
-```
-
-Where each declaration triggers a proxy to be created. At the end of the block, no proxies are deallocated, because the value of `a` depends on its host, `vector_var`, which needs to stay in scope for `a` to be able to be dereferenced.
-
-If we instead access the value like so:
-
-```cpp
-size_t a = State::safe_return<size_t>("Main.Module1.Module2.vector_var[1].field")
-```
-
-We do not create any proxy at all, increasing performance by up to 6 times. Of course, doing this, we loose the convenience of being assignable, castable, and all other functionalities a named `jluna::Proxy` offers. Still, in performance-critical code, unnamed proxies are almost always faster than named proxies and should be preferred. A good middle-ground is the following style:
-
-```cpp
-auto a_proxy = jluna::Proxy(jluna::safe_eval("Main.Module1.Module2.vector_var[1].field"));
-size_t a_value = a_proxy;
-```
-This calls the proxy constructor using a pure `Any*`, returned through `safe_eval`, thereby reducing the number of proxies constructed from 6 named to only 1 unnamed.
-
-### Use the C-Library
-
-When performance needs to be optimal, not "good" or "excellent, but mathematically optimal, it is sometimes necessary to resort to the C-library. Values are hard to manage, the syntax is very clunky and the garbage collector will probably steal many of our values from under our nose and segfault the program, but, that is the trade-off of performance vs. convenience. <br>
-Luckily the C-library and `jluna` are freely mixable, though we may need to `.update` any proxies whos Julia-side value was modified outside `jluna`.
-
-### In Summary
-
-`jluna`s safety features incur an unavoidable overhead. Great care has been taken to minimize this overhead as much as possible, but it is still non-zero in many cases. Knowing this, `jluna` is still perfectly fine for most applications. If a part of a library is truly performance critical, however, it may be necessary to avoid using `jluna` as much as possible in order for Julia to do, what it's best at: being very fast. When mixing C++ and Julia, however, `jluna` does equally well at bridging that gap, and in many ways it does so better than the C-API.
-
----
-gers implicit conversion behind the scenes, consider the following code:
-
+`jluna` triggers implicit conversion behind the scenes, consider the following code:
 
 ```cpp
 Any* jl_side_vec = "[i for i in 1:100000]"_eval;
@@ -5062,9 +4969,9 @@ typeof([i for i in 1:100000])
 ```
 Vector{Int64} (alias for Array{Int64, 1})
 ```
-Julia-side, this vectors value type is `Int64`, while C++-side the value type is `size_t`, aka. `UInt64`. This means, during unboxing, we have to manually convert each number in the julia-side vector before being able to move it C++-side. While converting one integer type into another isn't that expensive, what is expensive is allocating the entire vector again. Unboxing `jl_side_vec` into a `std::vector<size_t>` is about 15 times slower than unboxing it into a `std::vector<Int64>`. This doesn't matter for tiny vector but for something sizeable like this 100k number vector it makes a huge difference. Always try for both the julia type and the C++ type to be the same, especially when both types are C-compliant (see below), as C-compliant types can be moved directly between states with no allocation or conversion taking place. Even if there is no direct equivalent like with `Dict` and `std::map`, making sure that the key and/or value types match makes a huge difference.
+Julia-side, this vectors value type is `Int64`, while C++-side the value type is `size_t`, aka. `UInt64`. This means, during unboxing, we have to manually convert each number in the julia-side vector before being able to move it C++-side. While converting one integer type into another isn't that expensive, what is expensive is allocating the entire vector again. Unboxing `jl_side_vec` into a `std::vector<size_t>` is a non-trivial amount slower, than unboxing it into a `std::vector<Int64>`. This doesn't matter for tiny vectors, but for something sizeable like this 100k number vector, it can make a huge difference. On the author machines, making the types match gave about a 15% speedup. Always try for both the Julia-type and the C++-type to be the same, especially when both types are C-compliant (see below), as C-compliant types can be moved directly between states, with no allocation or conversion taking place. Even if there is no direct equivalent like with `Dict` and `std::map`, making sure that the key and/or value types match as much as possible can make a huge difference.
 
-The following types support by jluna are C-compliant:
+The following types supported by jluna are C-compliant:
 ```cpp
 // cpp-side name         // julia-side name
 bool                     Bool
@@ -5082,11 +4989,9 @@ double                   Float64
 const char*              CString [1]
 T*                       Ptr{T}  [2]
 
-[1] where const char* is null-terminated
+[1] where const char* is a null-terminated char[]
 [2] where T is a C-compliant type
 ```
-
-
 
 ### Minimize Proxy Construction
 
@@ -5136,3 +5041,4 @@ Luckily the C-library and `jluna` are freely mixable, though we may need to `.up
 `jluna`s safety features incur an unavoidable overhead. Great care has been taken to minimize this overhead as much as possible, but it is still non-zero in many cases. Knowing this, `jluna` is still perfectly fine for most applications. If a part of a library is truly performance critical, however, it may be necessary to avoid using `jluna` as much as possible in order for Julia to do, what it's best at: being very fast. When mixing C++ and Julia, however, `jluna` does equally well at bridging that gap, and in many ways it does so better than the C-API.
 
 ---
+

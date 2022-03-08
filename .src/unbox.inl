@@ -5,6 +5,42 @@
 
 namespace jluna
 {
+    namespace detail
+    {
+        template<typename T>
+        T smart_unbox_primitive(Any* in)
+        {
+            if (jl_isa(in, (Any*) jl_bool_type))
+                return jl_unbox_bool(in);
+            else if (jl_isa(in, (Any*) jl_int8_type))
+                return jl_unbox_int8(in);
+            else if (jl_isa(in, (Any*) jl_int16_type))
+                return jl_unbox_int16(in);
+            else if (jl_isa(in, (Any*) jl_int32_type))
+                return jl_unbox_int32(in);
+            else if (jl_isa(in, (Any*) jl_int64_type))
+                return jl_unbox_int64(in);
+            else if (jl_isa(in, (Any*) jl_uint8_type))
+                return jl_unbox_uint8(in);
+            else if (jl_isa(in, (Any*) jl_uint16_type))
+                return jl_unbox_uint16(in);
+            else if (jl_isa(in, (Any*) jl_uint32_type))
+                return jl_unbox_uint32(in);
+            else if (jl_isa(in, (Any*) jl_uint64_type))
+                return jl_unbox_uint64(in);
+            else if (jl_isa(in, (Any*) jl_float32_type))
+                return jl_unbox_float32(in);
+            else if (jl_isa(in, (Any*) jl_float64_type))
+                return jl_unbox_float64(in);
+            else if (jl_isa(in, (Any*) jl_float16_type))
+                return jl_unbox_float32(jl_try_convert(jl_float32_type, in));
+            else
+                throw std::invalid_argument("INTERNAL ERROR: detail::smart_unbox_primitive called with non-primitive argument");
+
+            return 0;
+        }
+    }
+
     template<Is<Any*> T>
     T unbox(Any* in)
     {
@@ -15,7 +51,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res = jl_unbox_bool(jl_try_convert(jl_bool_type, value));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°
@@ -24,7 +60,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res = static_cast<char>(jl_unbox_uint8(jl_try_convert(jl_uint8_type, value)));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°
@@ -33,7 +69,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res = jl_unbox_uint8(jl_try_convert(jl_uint8_type, value));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°
@@ -42,7 +78,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_uint16(jl_try_convert(jl_uint16_type, value));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°
@@ -51,7 +87,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_uint32(jl_try_convert(jl_uint32_type, value));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°
@@ -60,7 +96,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_uint64(jl_try_convert(jl_uint64_type, value));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°
@@ -69,7 +105,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_int8(jl_try_convert(jl_int8_type, value));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°
@@ -78,7 +114,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_int16(jl_try_convert(jl_int16_type, value));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°
@@ -87,7 +123,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_int32(jl_try_convert(jl_int32_type, value));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°
@@ -96,7 +132,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_int64(jl_try_convert(jl_int64_type, value));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°
@@ -105,7 +141,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_float32(jl_try_convert(jl_float32_type, value));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°
@@ -114,7 +150,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_float64(jl_try_convert(jl_float64_type, value));
+        T res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
     } //°

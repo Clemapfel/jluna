@@ -182,7 +182,7 @@ int main()
 
     Benchmark::run("jluna: unbox vector", n_reps, [](){
 
-        auto* vec = jl_eval_string("Vector{UInt64}([i for i in 1:10000])");
+        auto* vec = jl_eval_string("Vector{Int64}([i for i in 1:10000])");
         auto out = unbox<std::vector<size_t>>(vec);
     });
 
