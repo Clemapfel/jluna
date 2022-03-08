@@ -1,5 +1,5 @@
-/libjluna*.so
-/libjluna_c_adapter*.so
+/libjluna*.*
+/libjluna_c_adapter*.*
 /.src/include_julia.inl
 /.benchmark/results/
 /docs/bckp.txt
