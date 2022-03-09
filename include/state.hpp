@@ -12,9 +12,9 @@
 #include <unordered_map>
 #include <set>
 
-#include <include/concepts.hpp>
-#include <include/typedefs.hpp>
-#include <include/box.hpp>
+#include "concepts.hpp"
+#include "typedefs.hpp"
+#include "box.hpp"
 
 namespace jluna
 {
@@ -406,4 +406,4 @@ namespace jluna::State
     [[deprecated("use State::safe_eval instead")]] Proxy safe_script(const std::string&);
 }
 
-#include ".src/state.inl"
+#include "state.inl"

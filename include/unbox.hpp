@@ -7,9 +7,9 @@
 
 #include <julia.h>
 
-#include <include/concepts.hpp>
-#include <include/typedefs.hpp>
-#include <include/exceptions.hpp>
+#include "concepts.hpp"
+#include "typedefs.hpp"
+#include "exceptions.hpp"
 
 namespace jluna
 {
@@ -154,4 +154,4 @@ namespace jluna
     };
 }
 
-#include ".src/unbox.inl"
+#include "unbox.inl"

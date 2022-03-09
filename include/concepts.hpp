@@ -12,7 +12,7 @@
 #include <functional>
 #include <iostream>
 
-#include <include/typedefs.hpp>
+#include "typedefs.hpp"
 
 namespace jluna
 {

@@ -8,9 +8,9 @@
 #include <sstream>
 #include <iostream>
 
-#include <include/state.hpp>
-#include <include/proxy.hpp>
-#include <include/type.hpp>
+#include "state.hpp"
+#include "proxy.hpp"
+#include "type.hpp"
 
 namespace jluna
 {

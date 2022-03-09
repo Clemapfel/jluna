@@ -5,18 +5,18 @@
 
 #include <julia.h>
 
+#include <memory>
 #include <sstream>
 #include <iostream>
 #include <fstream>
 
-#include <include/state.hpp>
-#include <include/exceptions.hpp>
-#include <include/julia_extension.hpp>
-#include <include/proxy.hpp>
-#include <.src/include_julia.inl>
-#include <include/module.hpp>
-#include <include/type.hpp>
-
+#include "state.hpp"
+#include "exceptions.hpp"
+#include "julia_extension.hpp"
+#include "proxy.hpp"
+#include "include_julia.inl"
+#include "module.hpp"
+#include "type.hpp"
 
 namespace jluna::detail
 {
@@ -42,7 +42,28 @@ namespace jluna::State
         else
             jl_init_with_image(path.c_str(), NULL);
 
-        jl_eval_string(jluna::detail::include);
+        const char* julia_lib_load_template = R"julia(
+          begin
+            local dev_path = "%s/include/jluna.jl"
+            local prod_path = "%s/jluna/jluna.jl"
+            if isfile(dev_path)
+              include(dev_path)
+            else isfile(prod_path)
+              include(prod_path)
+            end
+          end
+        )julia";
+        std::vector<char> buf (
+            /* no need to account for null since %s takes 4 bytes accounted for
+             * which is double counted by BUILD_RESOURCE_DIR and RUN_RESOURCE_DIR */ 
+            strlen(julia_lib_load_template) +
+            strlen(BUILD_RESOURCE_DIR) +
+            strlen(RUN_RESOURCE_DIR),
+            /*c strings are null terminated*/
+            '\0'
+        );
+        snprintf(buf.data(), buf.size(), julia_lib_load_template, BUILD_RESOURCE_DIR, RUN_RESOURCE_DIR);
+        jl_eval_string(buf.data());
         forward_last_exception();
 
 
@@ -57,7 +78,14 @@ namespace jluna::State
         )");
         forward_last_exception();
 
-        jl_eval_string(("jluna._cppcall.eval(:(_library_name = \"" + std::string(RESOURCE_PATH) + "/libjluna_c_adapter.so\"))").c_str());
+        jl_eval_string(
+            R"julia(
+              begin
+                import Libdl
+                local lib_path = Libdl.dlpath("libjluna_c_adapter")
+                jluna._cppcall._set_library_name(lib_path)
+              end
+              )julia");
         forward_last_exception();
 
         jl_eval_string(R"(

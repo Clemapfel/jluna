@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <include/concepts.hpp>
-#include <include/proxy.hpp>
-#include <include/generator_expression.hpp>
+#include "concepts.hpp"
+#include "proxy.hpp"
+#include "generator_expression.hpp"
 
 namespace jluna
 {
@@ -318,5 +318,5 @@ namespace jluna
     }
 }
 
-#include ".src/array.inl"
-#include ".src/array_iterator.inl"
+#include "array.inl"
+#include "array_iterator.inl"

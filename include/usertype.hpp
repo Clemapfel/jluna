@@ -7,8 +7,8 @@
 
 #include <julia.h>
 
-#include <include/type.hpp>
-#include <include/proxy.hpp>
+#include "type.hpp"
+#include "proxy.hpp"
 
 namespace jluna
 {
@@ -86,4 +86,4 @@ namespace jluna
     };
 }
 
-#include ".src/usertype.inl"
+#include "usertype.inl"

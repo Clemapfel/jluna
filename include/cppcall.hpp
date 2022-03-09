@@ -9,8 +9,8 @@
 
 #include <vector>
 
-#include <include/typedefs.hpp>
-#include <include/concepts.hpp>
+#include "typedefs.hpp"
+#include "concepts.hpp"
 
 namespace jluna
 {
@@ -104,4 +104,4 @@ namespace jluna
     }
 }
 
-#include ".src/cppcall.inl"
+#include "cppcall.inl"

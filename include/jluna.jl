@@ -939,6 +939,10 @@ module jluna
             return _cppcall._state[]._arguments
         end
 
+        function _set_library_name(new_library_name)
+          global _library_name
+          _library_name = new_library_name
+        end
         """
         `verify_library() -> Bool`
 

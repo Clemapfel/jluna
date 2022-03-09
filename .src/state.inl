@@ -3,10 +3,10 @@
 // Created on 02.02.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/julia_extension.hpp>
-#include <include/proxy.hpp>
-#include <include/array.hpp>
-#include <include/module.hpp>
+#include "julia_extension.hpp"
+#include "proxy.hpp"
+#include "array.hpp"
+#include "module.hpp"
 
 namespace jluna::State
 {

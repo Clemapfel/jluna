@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <include/proxy.hpp>
+#include "proxy.hpp"
 
 namespace jluna
 {

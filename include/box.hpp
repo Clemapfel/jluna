@@ -13,8 +13,8 @@
 
 #include <julia.h>
 
-#include <include/concepts.hpp>
-#include <include/typedefs.hpp>
+#include "concepts.hpp"
+#include "typedefs.hpp"
 
 namespace jluna
 {
@@ -197,4 +197,4 @@ namespace jluna
     };
 }
 
-#include ".src/box.inl"
+#include "box.inl"

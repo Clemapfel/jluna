@@ -6,7 +6,7 @@
 #pragma once
 
 #include <julia.h>
-#include ".src/typedefs.inl"
+#include "typedefs.inl"
 
 namespace jluna
 {

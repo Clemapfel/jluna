@@ -3,8 +3,8 @@
 // Created on 16.02.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/generator_expression.hpp>
-#include <include/state.hpp>
+#include "generator_expression.hpp"
+#include "state.hpp"
 
 namespace jluna
 {

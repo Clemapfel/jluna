@@ -6,7 +6,7 @@
 #pragma once
 
 #include <julia.h>
-#include <include/typedefs.hpp>
+#include "typedefs.hpp"
 
 #include <string>
 #include <exception>
@@ -82,4 +82,4 @@ namespace jluna
     Any* operator""_eval(const char*, size_t);
 }
 
-#include ".src/exceptions.inl"
+#include "exceptions.inl"

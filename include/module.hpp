@@ -6,8 +6,8 @@
 #pragma once
 
 #include <julia.h>
-#include <include/proxy.hpp>
-#include <include/symbol.hpp>
+#include "proxy.hpp"
+#include "symbol.hpp"
 
 namespace jluna
 {
@@ -133,4 +133,4 @@ namespace jluna
     };
 }
 
-#include ".src/module.inl"
+#include "module.inl"

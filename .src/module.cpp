@@ -3,8 +3,8 @@
 // Created on 07.02.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/module.hpp>
-#include <include/state.hpp>
+#include "module.hpp"
+#include "state.hpp"
 
 namespace jluna
 {

@@ -3,8 +3,8 @@
 // Created on 31.01.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/julia_extension.hpp>
-#include <include/cppcall.hpp>
+#include "julia_extension.hpp"
+#include "cppcall.hpp"
 
 #include <iostream>
 

@@ -5,12 +5,5 @@
 
 #pragma once
 
-#cmakedefine RESOURCE_PATH "@RESOURCE_PATH@"
-
-namespace jluna::detail
-{
-    ///@brief allow julia to load jluna by using C++ #import statement
-    static inline const char* include = R"(
-        include("@RESOURCE_PATH@/include/jluna.jl")
-    )";
-}
+#define RUN_RESOURCE_DIR "@CMAKE_INSTALL_FULL_INCLUDEDIR@"
+#define BUILD_RESOURCE_DIR "@CMAKE_CURRENT_SOURCE_DIR@"

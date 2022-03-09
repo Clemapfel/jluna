@@ -11,9 +11,9 @@
 #include <deque>
 #include <string>
 
-#include <include/typedefs.hpp>
-#include <include/box.hpp>
-#include <include/unbox.hpp>
+#include "typedefs.hpp"
+#include "box.hpp"
+#include "unbox.hpp"
 
 namespace jluna
 {
@@ -207,4 +207,4 @@ namespace jluna
     };
 }
 
-#include ".src/proxy.inl"
+#include "proxy.inl"

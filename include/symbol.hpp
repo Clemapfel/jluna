@@ -6,7 +6,7 @@
 #pragma once
 
 #include <julia.h>
-#include <include/proxy.hpp>
+#include "proxy.hpp"
 
 namespace jluna
 {
@@ -68,4 +68,4 @@ namespace jluna
     };
 }
 
-#include ".src/symbol.inl"
+#include "symbol.inl"

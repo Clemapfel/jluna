@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include <.src/c_adapter.hpp>
+#include "c_adapter.hpp"
 
 extern "C"
 {

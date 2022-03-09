@@ -9,7 +9,7 @@
 
 #include <string>
 
-#include <include/exceptions.hpp>
+#include "exceptions.hpp"
 
 extern "C"
 {
