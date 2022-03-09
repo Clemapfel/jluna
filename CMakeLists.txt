@@ -14,14 +14,18 @@ endif()
 
 option(BUILD_SHARED_LIBS "prefer to build shared libraries" ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+if (WIN32)
+    message(WARNING "Windows support is experimental, some features my not work correctly. It maybe be necessary to fork jluna and modify jluna/CMakeLists.txt")
+endif()
 
-# compiler support
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-volatile")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "10.0.0")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts -Wno-volatile")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "19.20")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 else()
-    message(FATAL_ERROR "Currently, the only supported compilers are G++10, G++11 (recommended) and Clang-12")
+    message(FATAL_ERROR "Currently, the only supported compilers are G++10 (or higher), Clang-12 (or higher) and MSVC 19.30 (experimental)")
 endif()
 
 include(CTest)
@@ -36,16 +40,31 @@ if (NOT DEFINED ENV{JULIA_PATH})
             OUTPUT_VARIABLE JULIA_PATH_LOCAL)
 
     if ("${JULIA_PATH_LOCAL}" STREQUAL "")
+      if (WIN32)
         message(FATAL_ERROR "Cannot determine location of julia image. Before running cmake, please manually set the environment variable JULIA_PATH using\n    export JULIA_PATH=/path/to/your/.../julia\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))
 For more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
+      else()
+        message(FATAL_ERROR "Cannot determine location of julia image. Before running cmake, please manually set the environment variable JULIA_PATH using:\n\tset JULIA_PATH=\"C:/path/to/your/.../julia-1.7.2\"\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))")
+      endif()
     endif()
+else()
+    # access julia through julia environment variable
+    if (NOT DEFINED ENV{JULIA_PATH})
+        execute_process(
+                COMMAND julia -e "println(joinpath(Sys.BINDIR, \"..\"))"
+                OUTPUT_VARIABLE JULIA_PATH_LOCAL)
 
-    set(ENV{JULIA_PATH} ${JULIA_PATH_LOCAL})
+        if ("${JULIA_PATH}" STREQUAL "")
+            message(FATAL_ERROR "Cannot determine location of julia image. Before running cmake, please manually set the environment variable JULIA_PATH using\n    export JULIA_PATH=/path/to/your/.../julia\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))
+    For more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
+        endif()
+
+        set(ENV{JULIA_PATH} ${JULIA_PATH_LOCAL})
+    endif()
 endif()
 
 find_library(JULIA_LIB julia HINTS ENV JULIA_PATH REQUIRED)
 find_path(JULIA_INCLUDE julia.h HINTS ENV JULIA_PATH PATH_SUFFIXES julia REQUIRED)
-
 
 ### JLUNA ###
 
@@ -127,7 +146,6 @@ add_library(jluna_c_adapter SHARED
 
 target_include_directories(jluna_c_adapter
     PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-    # users should include julia on their own
     PUBLIC $<BUILD_INTERFACE:${JULIA_INCLUDE}>
 )
 
@@ -147,14 +165,14 @@ if(BUILD_TESTING)
 endif()
 
 #add_executable(JLUNA_BENCHMARK
-#   .benchmark/main.cpp
-#   .benchmark/benchmark.hpp
+#    .benchmark/main.cpp
+#    .benchmark/benchmark.hpp
+#    .benchmark/benchmark_aux.hpp
 #)
 #target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})
 
 ### INSTALL ###
 
-# TODO: ConfigVersion.cmake
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/jluna-config.cmake [[
 if (NOT ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "10.0.0")))
     message(FATAL_ERROR "Currently, the only supported compilers are G++10, G++11 (recommended) and Clang-12")
