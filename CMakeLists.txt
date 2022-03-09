@@ -2,40 +2,62 @@ cmake_minimum_required(VERSION 3.16)
 project(jluna)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
-# compiler support
+if (WIN32)
+    message(WARNING "Windows support is experimental, some features my not work correctly. It maybe be necessary to fork jluna and modify jluna/CMakeLists.txt")
+endif()
+
+### COMPILER SUPPORT ##
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-volatile")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "10.0.0")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts -Wno-volatile")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "19.20")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 else()
-    message(FATAL_ERROR "Currently, the only supported compilers are G++10, G++11 (recommended) and Clang-12")
+    message(FATAL_ERROR "Currently, the only supported compilers are G++10 (or higher), Clang-12 (or higher) and MSVC 19.30 (experimental)")
 endif()
 
 ### JULIA ###
 
-# access julia through JULIA_PATH environment variable
-if (NOT DEFINED ENV{JULIA_PATH})
-    execute_process(
-            COMMAND julia -e "println(joinpath(Sys.BINDIR, \"..\"))"
-            OUTPUT_VARIABLE JULIA_PATH_LOCAL)
-
-    if ("${JULIA_PATH}" STREQUAL "")
-        message(FATAL_ERROR "Cannot determine location of julia image. Before running cmake, please manually set the environment variable JULIA_PATH using\n    export JULIA_PATH=/path/to/your/.../julia\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))
-For more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
+if (WIN32)
+    if (NOT DEFINED ENV{JULIA_PATH})
+        message(FATAL_ERROR "Cannot determine location of julia image. Before running cmake, please manually set the environment variable JULIA_PATH using:\n\tset JULIA_PATH=\"C:/path/to/your/.../julia-1.7.2\"\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))")
     endif()
+else()
+    # access julia through julia environment variable
+    if (NOT DEFINED ENV{JULIA_PATH})
+        execute_process(
+                COMMAND julia -e "println(joinpath(Sys.BINDIR, \"..\"))"
+                OUTPUT_VARIABLE JULIA_PATH_LOCAL)
 
-    set(ENV{JULIA_PATH} ${JULIA_PATH_LOCAL})
+        if ("${JULIA_PATH}" STREQUAL "")
+            message(FATAL_ERROR "Cannot determine location of julia image. Before running cmake, please manually set the environment variable JULIA_PATH using\n    export JULIA_PATH=/path/to/your/.../julia\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))
+    For more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
+        endif()
+
+        set(ENV{JULIA_PATH} ${JULIA_PATH_LOCAL})
+    endif()
 endif()
 
-set(JULIA_LIB "$ENV{JULIA_PATH}/lib/libjulia.so")
+if (WIN32)
+    set(JULIA_LIB "$ENV{JULIA_PATH}/lib/libjulia.dll.a")
+else()
+    set(JULIA_LIB "$ENV{JULIA_PATH}/lib/libjulia.so")
+endif()
+
 set(JULIA_INCLUDE "$ENV{JULIA_PATH}/include/julia")
 set(JULIA_FOUND TRUE)
 
 # verify shared library
 if (NOT EXISTS ${JULIA_LIB})
-    message(WARNING "Cannot find shared library libjulia.so in $ENV{JULIA_PATH}/lib/")
+    if (WIN32)
+        message(WARNING "Cannot find shared library libjulia.dll.a in $ENV{JULIA_PATH}/lib/")
+    else()
+        message(WARNING "Cannot find shared library libjulia.so in $ENV{JULIA_PATH}/lib/")
+    endif()
     set(JULIA_FOUND FALSE)
 endif()
 
@@ -125,6 +147,9 @@ set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE C
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
+target_compile_features(jluna PUBLIC cxx_std_20)
+
+### C ADAPTER ##
 
 add_library(jluna_c_adapter SHARED
     .src/c_adapter.hpp
@@ -133,11 +158,9 @@ add_library(jluna_c_adapter SHARED
 
 target_include_directories(jluna_c_adapter
     PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-    # users should include julia on their own
     PUBLIC $<BUILD_INTERFACE:${JULIA_INCLUDE}>
 )
 
-target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
 target_link_libraries(jluna_c_adapter PUBLIC $<BUILD_INTERFACE:${JULIA_LIB}>)
 
 set_target_properties(jluna_c_adapter PROPERTIES
@@ -156,14 +179,14 @@ add_executable(JLUNA_TEST
 target_link_libraries(JLUNA_TEST jluna ${JULIA_LIB})
 
 #add_executable(JLUNA_BENCHMARK
-#   .benchmark/main.cpp
-#   .benchmark/benchmark.hpp
+#    .benchmark/main.cpp
+#    .benchmark/benchmark.hpp
+#    .benchmark/benchmark_aux.hpp
 #)
 #target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})
 
 ### INSTALL ###
 
-# TODO: ConfigVersion.cmake
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/jluna-config.cmake [[
 if (NOT ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "10.0.0")))
     message(FATAL_ERROR "Currently, the only supported compilers are G++10, G++11 (recommended) and Clang-12")
