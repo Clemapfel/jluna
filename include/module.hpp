@@ -73,18 +73,6 @@ namespace jluna
             /// @returns bool
             bool is_top_module() const;
 
-            /// @brief wrap hidden c-property optlevel
-            /// @returns level as int
-            int8_t get_optimization_level() const;
-
-            /// @brief wrap hidden c-property compile
-            /// @returns status : -1, false, true
-            int8_t get_compile_status() const;
-
-            /// @brief wrap hidden c-property infer, is type inference enabled
-            /// @returns status: -1, false, true
-            int8_t get_type_inference_status() const;
-
             /// @brief wrap hidden c-property bindings
             /// @returns hashtable where keys are symbols and values are the memory symbols are bound to
             [[nodiscard]] std::map<Symbol, Proxy> get_bindings() const;
