@@ -8,7 +8,7 @@ if (WIN32)
     message(WARNING "Windows support is experimental, some features my not work correctly. It maybe be necessary to fork jluna and modify jluna/CMakeLists.txt")
 endif()
 
-### COMPILER SUPPORT ##
+### COMPILER SUPPORT ###
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-volatile")
