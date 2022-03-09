@@ -17,6 +17,26 @@ size_t n_reps = 5000;
 int main()
 {
     State::initialize();
+
+    jl_gc_pause;
+
+    auto* map = jl_eval_string("return Dict([Pair(rasnd(i), rand(i)) for i in 1:10])");
+    auto* keys = (jl_array_t*) jl_get_nth_field(map, 1);
+    auto* vals = (jl_array_t*) jl_get_nth_field(map, 2);
+
+    jl_println((Any*) keys);
+
+    std::map<size_t, size_t> out;
+    for (size_t i = 0; i < 1000; ++i)
+        out.insert({jl_unbox_uint64(jl_arrayref(keys, i)), jl_unbox_uint64(jl_arrayref(vals, i))});
+
+    jl_gc_unpause;
+
+    for (auto& p : out)
+        std::cout << p.first << " => " << p.second << std::endl;
+
+    return 0;
+
     Benchmark::initialize();
 
     /*
@@ -253,9 +273,89 @@ int main()
         auto* jl_str = jl_eval_string(str.str().c_str());
         std::string res = unbox<std::string>(jl_str);
     });
-
      */
 
+    Benchmark::run("C-API: box map", n_reps, [](){
+
+        std::map<size_t, size_t> map;
+        for (size_t i = 0; i < 1000; ++i)
+            map.insert({generate_number<size_t>(), generate_number<size_t>()});
+
+        jl_gc_pause;
+        static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
+        static jl_function_t* make_map = jl_get_function(jl_base_module, "Dict");
+
+        jl_array_t* vec = (jl_array_t*) jl_alloc_vec_any(map.size());
+
+        {
+            size_t i = 0;
+            for (auto& pair : map)
+                jl_arrayset(vec, jl_call2(make_pair, jl_box_uint64(pair.first), jl_box_uint64(pair.second)), i++);
+        }
+
+        volatile auto* out = jl_call1(make_map, (Any*) vec);
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("C-API: box map", n_reps, [](){
+
+        std::map<size_t, size_t> map;
+        for (size_t i = 0; i < 1000; ++i)
+            map.insert({generate_number<size_t>(), generate_number<size_t>()});
+
+        jl_gc_pause;
+        static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
+        static jl_function_t* make_map = jl_get_function(jl_base_module, "Dict");
+
+        jl_array_t* vec = (jl_array_t*) jl_alloc_vec_any(map.size());
+
+        {
+            size_t i = 0;
+            for (auto& pair : map)
+                jl_arrayset(vec, jl_call2(make_pair, jl_box_uint64(pair.first), jl_box_uint64(pair.second)), i++);
+        }
+
+        volatile auto* out = jl_call1(make_map, (Any*) vec);
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: box map", n_reps, [](){
+
+        std::map<size_t, size_t> map;
+        for (size_t i = 0; i < 1000; ++i)
+            map.insert({generate_number<size_t>(), generate_number<size_t>()});
+
+        volatile auto* out = box<std::map<size_t, size_t>>(map);
+    });
+
+    Benchmark::run("C-API: unbox map", n_reps, [](){
+
+        jl_gc_pause;
+
+        auto* map = jl_eval_string("return Dict([Pair(rand(i), rand(i)) for i in 1:1000])");
+        auto* keys = (jl_array_t*) jl_get_nth_field(map, 1);
+        auto* vals = (jl_array_t*) jl_get_nth_field(map, 2);
+
+        std::map<size_t, size_t> out;
+        for (size_t i = 0; i < keys->length; ++i)
+            out.insert({jl_unbox_uint64(jl_arrayref(keys, i)), jl_unbox_uint64(jl_arrayref(vals, i))});
+
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: unbox map", n_reps, [](){
+
+        jl_gc_pause;
+
+        auto* map = jl_eval_string("return Dict([Pair(rand(UInt64), rand(UInt64)) for i in 1:1000])");
+        volatile auto out = unbox<std::map<size_t, size_t>>(map);
+    });
+
+
+
+
+
+    /*
     Benchmark::run("C-API: hash", n_reps, [](){
 
         auto gc = GCSentinel();
@@ -288,6 +388,7 @@ int main()
             return out;
         };
     });
+     */
 
 
 
