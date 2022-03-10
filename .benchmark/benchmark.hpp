@@ -24,33 +24,52 @@ namespace jluna
 
         struct Result
         {
-            const Duration _min;
-            const Duration _max;
-            const Duration _average;
-            const Duration _median;
+            Result()
+                : _name(""),
+                  _min(0),
+                  _max(0),
+                  _average(0),
+                  _median(0),
+                  _n_loops(-1),
+                  _exception_maybe()
+            {}
 
-            const size_t _n_loops;
-            const std::string _exception_maybe;
+            Result(std::string name, Duration min, Duration max, Duration average, Duration median, size_t n_loops, std::string exception_maybe)
+            : _name(name),
+              _min(min),
+              _max(max),
+              _average(average),
+              _median(median),
+              _n_loops(n_loops),
+              _exception_maybe(exception_maybe)
+            {}
+            
+            std::string _name;
 
-            [[nodiscard]] Result operator-(const Result& other)
-            {
-                assert(_exception_maybe == "");
+            Duration _min;
+            Duration _max;
+            Duration _average;
+            Duration _median;
 
-                return Result{
-                  abs(this->_min - other._min),
-                  abs(this->_max - other._max),
-                  abs(this->_average - other._average),
-                  abs(this->_median - other._median),
-                  std::min(this->_n_loops, other._n_loops),
-                  ""
-                };
-            }
+            float _overhead = 0;
+            std::string _compared_to = "self";
+
+            size_t _n_loops;
+            std::string _exception_maybe;
         };
 
         static void initialize()
         {
             std::cout << "[C++][LOG] starting benchmarks...\n" << std::endl;
             _results.clear();
+        }
+
+        template<typename Lambda_t>
+        static Benchmark::Result run_as_base(const std::string& name, size_t count, Lambda_t lambda, bool log = true)
+        {
+            auto res = run(name, count, lambda, log);
+            set_last_result_as_base();
+            return res;
         }
 
         template<typename Lambda_t>
@@ -93,6 +112,7 @@ namespace jluna
             avg = avg / (runs.size() != 0 ? runs.size() : 1);
 
             auto res = Result{
+                    name,
                     runs.front(),
                     runs.back(),
                     avg,
@@ -101,49 +121,56 @@ namespace jluna
                     exception_maybe
             };
 
-            /*
-            std::cout << name << std::endl;
+            static auto overhead = [](std::chrono::duration<double> a, std::chrono::duration<double> b) -> double {
 
-            for (size_t i = runs.size() - 20; i < runs.size(); ++i)
-                    std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(runs.at(i)).count() << std::endl;
+                if (a.count() == 0)
+                    return 0;
 
-            std::cout << "----------------------------------------" << std::endl;
-            */
+                return (a < b ? (b - a) / (a + b) : -1 *((a - b) / a));
+            };
+            res._overhead = overhead(_base._median, res._median);
+            if (res._overhead != 0)
+                res._compared_to = _base._name;
 
             if (log)
-                _results.push_back({name, res});
+                _results.push_back(res);
 
-            return _results.back().second;
+            return _results.back();
+        }
+
+        static void set_last_result_as_base()
+        {
+            _base = _results.back();
         }
 
         static void add_results(const std::string name, Benchmark::Result result)
         {
-            _results.push_back({name, result});
+            _results.push_back(result);
         }
 
         static void conclude()
         {
-            for (auto& pair : _results)
+            for (auto& res : _results)
             {
-                auto min = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._min).count();
-                auto avg = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._average).count();
-                auto med = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._median).count();
-                auto max = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._max).count();
+                auto min = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(res._min).count();
+                auto avg = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(res._average).count();
+                auto med = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(res._median).count();
+                auto max = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(res._max).count();
 
                 std::cout << "┌────────────────────────────────\n";
-                std::cout << "│ " << pair.first << " (" << pair.second._n_loops << "): \n│\n";
+                std::cout << "│ " << res._name << " (" << res._n_loops << "): \n│\n";
                 std::cout << "│ Min    : " << min << "ms" << std::endl;
                 std::cout << "│ Average: " << avg << "ms" << std::endl;
                 std::cout << "│ Max    : " << max << "ms" << std::endl;
-                std::cout << "│ " << std::endl;
                 std::cout << "│ Median : " << med << "ms" << std::endl;
+                std::cout << "│ " << std::endl;
+                std::cout << "│ Overhead: " << (res._overhead * 100) << "%" << std::endl;
 
-
-                if (pair.second._exception_maybe != "")
+                if (res._exception_maybe != "")
                 {
                     std::cout << "│ " << std::endl;
-                    std::cout << "│ Exception at run " << pair.second._n_loops << ":" << std::endl;
-                    std::cout << "│ " << pair.second._exception_maybe << std::endl;
+                    std::cout << "│ Exception at run " << res._n_loops << ":" << std::endl;
+                    std::cout << "│ " << res._exception_maybe << std::endl;
                 }
 
                 std::cout << "└────────────────────────────────\n" << std::endl;
@@ -163,21 +190,23 @@ namespace jluna
             file.open(name);
 
             const std::string del = ",";
-            file << "name" << del << "count" << del << "min" << del << "max" << del << "average" << del << "median" << std::endl;
+            file << "name" << del << "count" << del << "min" << del << "max" << del << "average" << del << "median" << del << "overhead" << del << "compared_to" << std::endl;
 
-            for (auto& pair : _results)
+            for (auto& res : _results)
             {
-                auto min = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._min).count();
-                auto avg = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._average).count();
-                auto med = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._median).count();
-                auto max = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(pair.second._max).count();
+                auto min = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(res._min).count();
+                auto avg = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(res._average).count();
+                auto med = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(res._median).count();
+                auto max = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(res._max).count();
 
-                file << "\"" << pair.first << "\"" << del;
-                file << pair.second._n_loops << del;
+                file << "\"" << res._name << "\"" << del;
+                file << res._n_loops << del;
                 file << min << del;
                 file << max << del;
                 file << avg << del;
-                file << med << std::endl;
+                file << med << del;
+                file << res._overhead << del;
+                file << "\"" << res._compared_to << "\"" << std::endl;
             }
 
             file << std::endl;
@@ -187,8 +216,9 @@ namespace jluna
         }
 
         private:
+            static inline Benchmark::Result _base = Benchmark::Result();
             static inline std::chrono::steady_clock _clock = std::chrono::steady_clock();
-            static inline std::vector<std::pair<std::string, Result>> _results = {};
+            static inline std::vector<Result> _results = {};
     };
 
 }

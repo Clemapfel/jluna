@@ -19,9 +19,12 @@ int main()
 {
     State::initialize();
     Benchmark::initialize();
-    setup();
 
-    Benchmark::run("jl_eval_string", n_reps, [](){
+    // pre-load proxy dict
+    for (size_t i = 0; i < 3000; ++i)
+        _proxies.push_back(State::new_named_uint64(generate_string(16), generate_number(0, 10000)));
+
+    Benchmark::run_as_base("jl_eval_string", n_reps, [](){
 
         auto name = generate_string(8);
         jl_eval_string((name + std::string(" = [i for i in 1:1000]")).c_str());
@@ -34,7 +37,7 @@ int main()
         jluna::safe_eval((name + std::string(" = [i for i in 1:1000]")).c_str());
         jluna::safe_eval((name + std::string(" = undef")).c_str());
     });
-
+    
     Benchmark::run("State::eval", n_reps, [](){
 
         auto name = generate_string(8);
@@ -62,6 +65,8 @@ int main()
         Main.safe_eval(name + std::string(" = [i for i in 1:1000]"));
         Main.safe_eval(name + std::string(" = undef"));
     });
+    
+    // ###
 
     State::safe_eval(R"(
         function f()
@@ -73,11 +78,12 @@ int main()
         end
     )");
 
-    Benchmark::run("jl_call", n_reps, [](){
+    Benchmark::run_as_base("jl_call", n_reps, [](){
 
         static jl_function_t* f = jl_get_function(jl_main_module, "f");
         volatile auto* out = jl_call0(f);
     });
+    
 
     Benchmark::run("jluna::call", n_reps, [](){
 
@@ -107,12 +113,15 @@ int main()
         volatile auto res = proxy.safe_call();
     });
 
-    Benchmark::run("C-API: allocate proxy", n_reps, []()
+    // ###
+
+    Benchmark::run_as_base("C-API: allocate proxy", n_reps, []()
     {
         jl_gc_pause;
         volatile auto* res = box<std::string>(generate_string(16));
         jl_gc_unpause;
     });
+    
 
     Benchmark::run("jluna: allocate unnamed proxy", n_reps, []()
     {
@@ -134,7 +143,9 @@ int main()
         volatile auto named = State::new_named_string("name", generate_string(16));
     });
 
-    Benchmark::run("C-API: box vector", n_reps, []()
+    _proxies.clear();
+    
+    Benchmark::run_as_base("C-API: box vector", n_reps, []()
     {
         auto vec = std::vector<size_t>();
         vec.reserve(10000);
@@ -152,6 +163,7 @@ int main()
 
         jl_gc_unpause;
     });
+    
 
     Benchmark::run("jluna: box vector", n_reps, []()
     {
@@ -186,11 +198,12 @@ int main()
         auto out = unbox<std::vector<size_t>>(vec);
     });
 
-    Benchmark::run("C-API: box primitive", n_reps, [](){
+    Benchmark::run_as_base("C-API: box primitive", n_reps, [](){
 
         for (size_t i = 0; i < 10000; ++i)
             volatile auto* res = jl_box_uint64(i);
     });
+    
 
     Benchmark::run("jluna: box primitive", n_reps, [](){
 
@@ -218,7 +231,7 @@ int main()
         }
     });
 
-    Benchmark::run("C-API: box string", n_reps, [](){
+    Benchmark::run_as_base("C-API: box string", n_reps, [](){
 
         jl_gc_pause;
         auto value = generate_string(32);
@@ -229,6 +242,7 @@ int main()
 
         jl_gc_unpause;
     });
+    
 
     Benchmark::run("jluna: box string", n_reps, [](){
 
@@ -255,29 +269,7 @@ int main()
         std::string res = unbox<std::string>(jl_str);
     });
 
-    Benchmark::run("C-API: box map", n_reps, [](){
-
-        std::map<size_t, size_t> map;
-        for (size_t i = 0; i < 1000; ++i)
-            map.insert({generate_number<size_t>(), generate_number<size_t>()});
-
-        jl_gc_pause;
-        static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
-        static jl_function_t* make_map = jl_get_function(jl_base_module, "Dict");
-
-        jl_array_t* vec = (jl_array_t*) jl_alloc_vec_any(map.size());
-
-        {
-            size_t i = 0;
-            for (auto& pair : map)
-                jl_arrayset(vec, jl_call2(make_pair, jl_box_uint64(pair.first), jl_box_uint64(pair.second)), i++);
-        }
-
-        volatile auto* out = jl_call1(make_map, (Any*) vec);
-        jl_gc_unpause;
-    });
-
-    Benchmark::run("C-API: box map", n_reps, [](){
+    Benchmark::run_as_base("C-API: box map", n_reps, [](){
 
         std::map<size_t, size_t> map;
         for (size_t i = 0; i < 1000; ++i)
@@ -332,7 +324,7 @@ int main()
         volatile auto out = unbox<std::map<size_t, size_t>>(map);
     });
 
-    Benchmark::run("C-API: box complex", n_reps, [](){
+    Benchmark::run_as_base("C-API: box complex", n_reps, [](){
 
         auto value = std::complex<float>(generate_number<float>(), generate_number<float>());
 
@@ -361,7 +353,7 @@ int main()
         volatile auto out = unbox<std::complex<float>>(value);
     });
 
-    Benchmark::run("C-API: box set", n_reps, []()
+    Benchmark::run_as_base("C-API: box set", n_reps, []()
     {
         auto set = std::set<size_t>();
 
@@ -413,7 +405,7 @@ int main()
         auto out = unbox<std::set<size_t>>(value);
     });
 
-    Benchmark::run("C-API: unbox pair", n_reps, [](){
+    Benchmark::run_as_base("C-API: unbox pair", n_reps, [](){
 
         jl_gc_pause;
         auto* value = jl_eval_string("return Pair(rand(), rand())");
@@ -446,7 +438,7 @@ int main()
         volatile auto out = box<std::pair<float, float>>(value);
     });
 
-    Benchmark::run("C-API: unbox tuple", n_reps, [](){
+    Benchmark::run_as_base("C-API: unbox tuple", n_reps, [](){
 
         jl_gc_pause;
         auto* value = jl_eval_string("return (rand(), rand(), rand(), rand())");
@@ -498,7 +490,7 @@ int main()
         volatile auto* out = box<typeof(value)>(value);
     });
 
-    Benchmark::run("C-API: hash", n_reps, [](){
+    Benchmark::run_as_base("C-API: hash", n_reps, [](){
 
         auto gc = GCSentinel();
 
@@ -516,7 +508,7 @@ int main()
         volatile size_t res = c_adapter::hash(name);
     });
 
-    Benchmark::run("box lambda", n_reps, [](){
+    Benchmark::run_as_base("C-API: call lambda without box", n_reps, [](){
 
         static auto lambda = []() {
             int out = 0;
@@ -529,15 +521,30 @@ int main()
 
             return out;
         };
+
+        auto res = State::new_named_undef(generate_string(1));
+        lambda();
+    });
+
+    Benchmark::run("jluna: call lambda with box", n_reps, [](){
+
+        static auto lambda = []() {
+            int out = 0;
+
+            for (size_t i = 0; i < 1000; ++i)
+                if (i % 2 == 0)
+                    out += i;
+                else
+                    out -= i;
+
+            return out;
+        };
+
+        auto res = State::new_named_undef(generate_string(1));
+        res = lambda;
+        res();
     });
 
     Benchmark::conclude();
     Benchmark::save();
 }
-
-void setup()
-{
-    for (size_t i = 0; i < 3000; ++i)
-        _proxies.push_back(State::new_named_uint64(generate_string(16), generate_number(0, 10000)));
-}
-
