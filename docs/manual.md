@@ -71,6 +71,7 @@ Please navigate to the appropriate section by clicking the links below:
     14.4 [(Un)Boxing](#minimize-unboxing)<br>
     14.5 [Proxy Construction](#minimize-proxy-construction)<br>
     14.6 [Using the C-Library](#use-the-c-library)<br>
+    14.7 [Benchmarking Results](#)
 
 ## Initialization
 
@@ -247,41 +248,36 @@ double                   => Float64
 jluna::Proxy             => /* value-type deduced during runtime */
 jluna::Symbol            => Symbol
 jluna::Type              => Type
-jluna::Array<T, R>       => Array{T, R}     * °
-jluna::Vector<T>         => Vector{T}       *
+jluna::Array<T, R>       => Array{T, R}     [1] [2]
+jluna::Vector<T>         => Vector{T}       [1]
 jluna::JuliaException    => Exception
 
 std::string              => String
 std::string              => Symbol
-std::complex<T>          => Complex{T}      *
-std::vector<T>           => Vector{T}       *
-std::array<T, R>         => Vector{T}       *
-std::pair<T, U>          => Pair{T, U}      *
-std::tuple<Ts...>        => Tuple{Ts...}    *
-std::map<T, U>           => Dict{T, U}      *
-std::unordered_map<T, U> => Dict{T, U}      *
-std::set<T>              => Set{T, U}       *
+std::complex<T>          => Complex{T}      [1]
+std::vector<T>           => Vector{T}       [1]
+std::array<T, R>         => Vector{T}       [1]
+std::pair<T, U>          => Pair{T, U}      [1]
+std::tuple<Ts...>        => Tuple{Ts...}    [1]
+std::map<T, U>           => Dict{T, U}      [1]
+std::unordered_map<T, U> => Dict{T, U}      [1]
+std::set<T>              => Set{T, U}       [1]
 
-* where T, U are also (Un)Boxables
-° where R is the rank of the array
+[1] where T, U are also (Un)Boxables
+[2] where R is the rank of the array
 
-std::function<void()>                       => function () -> Nothing     
-std::function<void(Any*)>                   => function (::Any) -> Nothing
-std::function<void(Any*, Any*)>             => function (::Any, ::Any) -> Nothing
-std::function<void(Any*, Any*, Any*)>       => function (::Any, ::Any, ::Any) -> Nothing
-std::function<void(Any*, Any*, Any*, Any*)> => function (::Any, ::Any, ::Any, ::Any) -> Nothing
-std::function<void(std::vector<Any*>)>      => function (::Vector{Any}) -> Nothing
-
-std::function<Any*()>                       => function () -> Any  
-std::function<Any*(Any*)>                   => function (::Any) -> Any
-std::function<Any*(Any*, Any*)>             => function (::Any, ::Any) -> Any
-std::function<Any*(Any*, Any*, Any*)>       => function (::Any, ::Any, ::Any) -> Any
-std::function<Any*(Any*, Any*, Any*, Any*)> => function (::Any, ::Any, ::Any, ::Any) -> Any
-std::function<Any*(std::vector<Any*>)>      => function (::Vector{Any}) ::Any
+std::function<T()>                       => function () -> T  [3]
+std::function<T(Any*)>                   => function (::Any) -> T  [3]
+std::function<T(Any*, Any*)>             => function (::Any, ::Any) -> T  [3]
+std::function<T(Any*, Any*, Any*)>       => function (::Any, ::Any, ::Any) -> T  [3]
+std::function<T(Any*, Any*, Any*, Any*)> => function (::Any, ::Any, ::Any, ::Any) -> T  [3]
+std::function<T(std::vector<Any*>)>      => function (::Vector{Any}) -> T  [3]
         
-Usertype<T>::original_type                  => T °
+[3] where T is a Boxable
         
-° where T is an arbitrary C++ type
+Usertype<T>::original_type                  => T [4]
+        
+[4] where T is an arbitrary C++ type
 ```
 
 We will learn more on how to box/unbox functions, specifically, in the [section on calling C++ functions from Julia](#functions). We can (un)box truly arbitrary C++ types through the [usertype interface](#usertypes), which we will explore later on, aswell.
@@ -4915,6 +4911,8 @@ Usertype<T>::add_field              D
 Usertype<T>::enable                 F
 Usertype<T>::implement              F
 ```
+
+
 ---
 
 ### Tips
