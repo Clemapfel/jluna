@@ -6,37 +6,18 @@
 #include <jluna.hpp>
 #include <.benchmark/benchmark.hpp>
 #include <.benchmark/benchmark_aux.hpp>
+#include <complex.h>
 
 using namespace jluna;
 
 std::vector<Proxy> _proxies;
 void setup();
 
-size_t n_reps = 5000;
+size_t n_reps = 1000;
 
 int main()
 {
     State::initialize();
-
-    jl_gc_pause;
-
-    auto* map = jl_eval_string("return Dict([Pair(rasnd(i), rand(i)) for i in 1:10])");
-    auto* keys = (jl_array_t*) jl_get_nth_field(map, 1);
-    auto* vals = (jl_array_t*) jl_get_nth_field(map, 2);
-
-    jl_println((Any*) keys);
-
-    std::map<size_t, size_t> out;
-    for (size_t i = 0; i < 1000; ++i)
-        out.insert({jl_unbox_uint64(jl_arrayref(keys, i)), jl_unbox_uint64(jl_arrayref(vals, i))});
-
-    jl_gc_unpause;
-
-    for (auto& p : out)
-        std::cout << p.first << " => " << p.second << std::endl;
-
-    return 0;
-
     Benchmark::initialize();
 
     /*
@@ -183,6 +164,28 @@ int main()
         volatile auto* res = box<std::vector<size_t>>(vec);
     });
 
+     Benchmark::run("C-API: unbox vector", n_reps, [](){
+
+        jl_gc_pause;
+        jl_array_t* vec = (jl_array_t*) jl_eval_string("Vector{UInt64}([i for i in 1:10000])");
+
+        std::vector<size_t> out;
+        out.reserve(vec->length);
+
+        for (size_t i = 0; i < vec->length; ++i)
+            out.push_back(jl_unbox_uint64(jl_arrayref(vec, i)));
+
+        volatile auto copy = out;
+
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: unbox vector", n_reps, [](){
+
+        auto* vec = jl_eval_string("Vector{Int64}([i for i in 1:10000])");
+        auto out = unbox<std::vector<size_t>>(vec);
+    });
+
     Benchmark::run("C-API: box primitive", n_reps, [](){
 
         for (size_t i = 0; i < 10000; ++i)
@@ -213,28 +216,6 @@ int main()
             auto* val = jl_box_uint64(i);
             volatile size_t res = unbox<UInt64>(val);
         }
-    });
-
-    Benchmark::run("C-API: unbox vector", n_reps, [](){
-
-        jl_gc_pause;
-        jl_array_t* vec = (jl_array_t*) jl_eval_string("Vector{UInt64}([i for i in 1:10000])");
-
-        std::vector<size_t> out;
-        out.reserve(vec->length);
-
-        for (size_t i = 0; i < vec->length; ++i)
-            out.push_back(jl_unbox_uint64(jl_arrayref(vec, i)));
-
-        volatile auto copy = out;
-
-        jl_gc_unpause;
-    });
-
-    Benchmark::run("jluna: unbox vector", n_reps, [](){
-
-        auto* vec = jl_eval_string("Vector{Int64}([i for i in 1:10000])");
-        auto out = unbox<std::vector<size_t>>(vec);
     });
 
     Benchmark::run("C-API: box string", n_reps, [](){
@@ -273,7 +254,6 @@ int main()
         auto* jl_str = jl_eval_string(str.str().c_str());
         std::string res = unbox<std::string>(jl_str);
     });
-     */
 
     Benchmark::run("C-API: box map", n_reps, [](){
 
@@ -332,25 +312,115 @@ int main()
 
         jl_gc_pause;
 
-        auto* map = jl_eval_string("return Dict([Pair(rand(i), rand(i)) for i in 1:1000])");
+        auto* map = jl_eval_string("return Dict([Pair(i, i) for i in 1:1000])");
+
+        auto* slots = (jl_array_t*) jl_get_nth_field(map, 0);
         auto* keys = (jl_array_t*) jl_get_nth_field(map, 1);
         auto* vals = (jl_array_t*) jl_get_nth_field(map, 2);
 
         std::map<size_t, size_t> out;
-        for (size_t i = 0; i < keys->length; ++i)
-            out.insert({jl_unbox_uint64(jl_arrayref(keys, i)), jl_unbox_uint64(jl_arrayref(vals, i))});
+        for (size_t i = 0; i < slots->length; ++i)
+            if (jl_unbox_bool(jl_arrayref(slots, i)))
+                out.insert({jl_unbox_uint64(jl_arrayref(keys, i)), jl_unbox_uint64(jl_arrayref(vals, i))});
 
         jl_gc_unpause;
     });
 
     Benchmark::run("jluna: unbox map", n_reps, [](){
 
-        jl_gc_pause;
-
-        auto* map = jl_eval_string("return Dict([Pair(rand(UInt64), rand(UInt64)) for i in 1:1000])");
+        auto* map = jl_eval_string("return Dict([Pair(i, i) for i in 1:1000])");
         volatile auto out = unbox<std::map<size_t, size_t>>(map);
     });
 
+    Benchmark::run("C-API: box complex", n_reps, [](){
+
+        auto value = std::complex<float>(generate_number<float>(), generate_number<float>());
+
+        jl_gc_pause;
+        static jl_function_t* complex = jl_get_function(jl_base_module, "Complex");
+        volatile auto* out = jl_call2(complex, jl_box_float32(value.real()), jl_box_float32(value.imag()));
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: box complex", n_reps, [](){
+
+        auto value = std::complex<float>(generate_number<float>(), generate_number<float>());
+        volatile auto* out = box<std::complex<float>>(value);
+    });
+
+    Benchmark::run("C-API: unbox complex", n_reps, [](){
+
+        auto* value = jl_eval_string("return Complex(rand(), rand())");
+        _Complex float as_complex = *((_Complex float*) value);
+        volatile auto out = std::complex<float>(as_complex);
+    });
+
+    Benchmark::run("jluna: unbox complex", n_reps, [](){
+
+        auto* value = jl_eval_string("return Complex(rand(), rand())");
+        volatile auto out = unbox<std::complex<float>>(value);
+    });
+
+    Benchmark::run("C-API: box set", n_reps, []()
+    {
+        auto set = std::set<size_t>();
+
+        for (size_t i = 0; i < 10000; ++i)
+            set.insert(generate_number<size_t>());
+
+        jl_gc_pause;
+        static jl_function_t* make_set = jl_get_function(jl_base_module, "Set");
+        static jl_function_t* push = jl_get_function(jl_base_module, "push!");
+
+        auto* out = jl_call0(make_set);
+
+        for (size_t e : set)
+            jl_call2(push, out, jl_box_uint64(e));
+
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: box set", n_reps, []()
+    {
+        auto set = std::set<size_t>();
+
+        for (size_t i = 0; i < 10000; ++i)
+            set.insert(generate_number<size_t>());
+
+        volatile auto* res = box<std::set<size_t>>(set);
+    });
+
+    Benchmark::run("C-API: unbox set", n_reps, [](){
+
+        jl_gc_pause;
+        auto* value = jl_eval_string("Set{UInt64}([rand(UInt64) for _ in 1:100])");
+        auto* dict = jl_get_nth_field(value, 0);
+        auto* slots = (jl_array_t*) jl_get_nth_field(dict, 0);
+        auto* keys = (jl_array_t*) jl_get_nth_field(dict, 1);
+
+        std::set<size_t> out;
+
+        for (size_t i = 0; i < slots->length; ++i)
+            if (jl_unbox_bool(jl_arrayref(slots, i)))
+                out.insert(jl_unbox_uint64(jl_arrayref(keys, i)));
+
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: unbox set", n_reps, [](){
+
+        auto* value = jl_eval_string("Set{UInt64}([rand(UInt64) for _ in 1:100])");
+        auto out = unbox<std::set<size_t>>(value);
+    });
+     */
+
+    Benchmark::run("C-API: unbox pair", n_reps, [](){
+
+        auto* value = jl_eval_string("return Pair(rand(), rand())");
+
+
+
+    });
 
 
 

@@ -18,7 +18,7 @@ namespace jluna
         static std::uniform_real_distribution<T> dist = std::uniform_real_distribution<T>(t_min, t_max);
         static std::mt19937 engine = std::mt19937(seed);
 
-        return dist(engine());
+        return dist(engine);
     }
 
     template<typename T, std::enable_if_t<std::is_integral_v<T>, bool> = true>
