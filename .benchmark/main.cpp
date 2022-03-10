@@ -13,14 +13,14 @@ using namespace jluna;
 std::vector<Proxy> _proxies;
 void setup();
 
-size_t n_reps = 1000;
+size_t n_reps = 5000;
 
 int main()
 {
     State::initialize();
     Benchmark::initialize();
+    setup();
 
-    /*
     Benchmark::run("jl_eval_string", n_reps, [](){
 
         auto name = generate_string(8);
@@ -412,7 +412,6 @@ int main()
         auto* value = jl_eval_string("Set{UInt64}([rand(UInt64) for _ in 1:100])");
         auto out = unbox<std::set<size_t>>(value);
     });
-     */
 
     Benchmark::run("C-API: unbox pair", n_reps, [](){
 
@@ -446,8 +445,6 @@ int main()
         auto value = std::make_pair(generate_number<float>(), generate_number<float>());
         volatile auto out = box<std::pair<float, float>>(value);
     });
-
-    //
 
     Benchmark::run("C-API: unbox tuple", n_reps, [](){
 
@@ -501,9 +498,6 @@ int main()
         volatile auto* out = box<typeof(value)>(value);
     });
 
-
-
-    /*
     Benchmark::run("C-API: hash", n_reps, [](){
 
         auto gc = GCSentinel();
@@ -536,10 +530,6 @@ int main()
             return out;
         };
     });
-     */
-
-
-
 
     Benchmark::conclude();
     Benchmark::save();
