@@ -292,8 +292,7 @@ namespace jluna
         template<typename Tuple_t, typename Value_t, size_t i>
         void unbox_tuple_aux_aux(Tuple_t& tuple, jl_value_t* value)
         {
-            static jl_function_t* tuple_at = (jl_function_t*) jl_eval_string("jluna.tuple_at");
-            std::get<i>(tuple) = unbox<std::tuple_element_t<i, Tuple_t>>(safe_call(tuple_at, value, jl_box_uint64(i + 1)));
+            std::get<i>(tuple) = unbox<std::tuple_element_t<i, Tuple_t>>(jl_get_nth_field(value, i));
         }
 
         template<typename Tuple_t, typename Value_t, std::size_t... is>
@@ -311,7 +310,7 @@ namespace jluna
         }
 
         template<typename... Ts>
-        std::tuple<Ts...> unbox_tuple_pre(jl_value_t* v, std::tuple<Ts...>)
+        std::tuple<Ts...> unbox_tuple_pre(jl_value_t* v, std::tuple<Ts...>&)
         {
             return unbox_tuple<Ts...>(v);
         }
@@ -333,7 +332,8 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto out = detail::unbox_tuple_pre(jl_try_convert((jl_datatype_t*) jl_eval_string(("return " + to_julia_type<T>::type_name).c_str()), value), T());
+        auto out = T();
+        detail::unbox_tuple_pre(value, out);
         jl_gc_unpause;
         return out;
     }

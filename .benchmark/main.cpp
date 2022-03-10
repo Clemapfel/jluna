@@ -416,12 +416,90 @@ int main()
 
     Benchmark::run("C-API: unbox pair", n_reps, [](){
 
+        jl_gc_pause;
         auto* value = jl_eval_string("return Pair(rand(), rand())");
 
-
-
+        volatile auto out = std::pair<float, float>();
+        out.first = jl_unbox_float32(jl_get_nth_field(value, 0));
+        out.second = jl_unbox_float32(jl_get_nth_field(value, 1));
+        jl_gc_unpause;
     });
 
+    Benchmark::run("jluna: unbox pair", n_reps, [](){
+
+        auto* value = jl_eval_string("return Pair(rand(), rand())");
+        volatile auto out = unbox<std::pair<float, float>>(value);
+    });
+
+    Benchmark::run("C-API: box pair", n_reps, [](){
+
+        jl_gc_pause;
+        auto value = std::make_pair(generate_number<float>(), generate_number<float>());
+        static jl_function_t* pair = jl_get_function(jl_base_module, "Pair");
+
+        volatile auto* out = jl_call2(pair, jl_box_float32(value.first), jl_box_float32(value.second));
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: box pair", n_reps, [](){
+
+        auto value = std::make_pair(generate_number<float>(), generate_number<float>());
+        volatile auto out = box<std::pair<float, float>>(value);
+    });
+
+    //
+
+    Benchmark::run("C-API: unbox tuple", n_reps, [](){
+
+        jl_gc_pause;
+        auto* value = jl_eval_string("return (rand(), rand(), rand(), rand())");
+
+        auto out = std::tuple<float, float, float, float>();
+        std::get<0>(out) = jl_unbox_float32(jl_get_nth_field(value, 0));
+        std::get<1>(out) = jl_unbox_float32(jl_get_nth_field(value, 1));
+        std::get<2>(out) = jl_unbox_float32(jl_get_nth_field(value, 2));
+        std::get<3>(out) = jl_unbox_float32(jl_get_nth_field(value, 3));
+
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: unbox tuple", n_reps, [](){
+
+        auto* value = jl_eval_string("return (rand(), rand(), rand(), rand())");
+        volatile auto out = unbox<std::tuple<float, float, float, float>>(value);
+    });
+
+    Benchmark::run("C-API: box tuple", n_reps, [](){
+
+        jl_gc_pause;
+        auto value = std::make_tuple
+        (
+            generate_number<float>(),
+            generate_number<float>(),
+            generate_number<float>()
+        );
+
+        static jl_function_t* tuple = jl_get_function(jl_base_module, "Tuple");
+        volatile auto* out = jl_call3(
+            tuple,
+            jl_box_float32(std::get<0>(value)),
+            jl_box_float32(std::get<0>(value)),
+            jl_box_float32(std::get<0>(value))
+        );
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: box tuple", n_reps, [](){
+
+        auto value = std::make_tuple
+        (
+            generate_number<float>(),
+            generate_number<float>(),
+            generate_number<float>()
+        );
+
+        volatile auto* out = box<typeof(value)>(value);
+    });
 
 
 
