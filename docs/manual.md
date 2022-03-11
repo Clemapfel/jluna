@@ -4912,6 +4912,7 @@ Usertype<T>::enable                 F
 Usertype<T>::implement              F
 ```
 
+Exact benchmark results that compare most of these features with their only-C-API equivalent can be found [here](../.benchmark/results/results.txt);
 
 ---
 

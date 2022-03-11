@@ -1,0 +1,4 @@
+name,count,min,max,average,median,overhead,compared_to
+"jl_eval_string",5001,0.316898,22.6616,0.35733,0.32751,0,"self"
+"jluna::safe_eval",5001,0.488954,15.0582,0.533804,0.5009,0.209305,"jl_eval_string"
+

@@ -49,6 +49,6 @@ name,count,min,max,average,median,overhead,compared_to
 "jluna: box tuple",5001,0.001056,0.009179,0.001152,0.00111,-0.952776,"C-API: box tuple"
 "C-API: hash",5001,0.002215,0.016616,0.003398,0.002885,0,"self"
 "jluna: hash",5001,0.002271,0.932387,0.003231,0.002732,-0.0530329,"C-API: hash"
-"C-API: call lambda without box",5001,0.100574,84.5505,0.124653,0.103921,0,"self"
-"jluna: call lambda with box",5001,0.71216,198.969,0.787106,0.726684,0.74977,"C-API: call lambda without box"
+"C-API: call lambda without box",5001,0.10584,12.2961,0.154551,0.118551,0,"self"
+"jluna: call lambda with box",799,0.743591,229.81,1.28577,0.821066,0.747661,"C-API: call lambda without box"
 

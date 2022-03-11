@@ -1,0 +1,4 @@
+name,count,min,max,average,median,overhead,compared_to
+"C-API: call lambda without box",5001,0.100574,84.5505,0.124653,0.103921,0,"self"
+"jluna: call lambda with box",5001,0.71216,198.969,0.787106,0.726684,0.74977,"C-API: call lambda without box"
+

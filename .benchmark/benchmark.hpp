@@ -67,8 +67,9 @@ namespace jluna
         template<typename Lambda_t>
         static Benchmark::Result run_as_base(const std::string& name, size_t count, Lambda_t lambda, bool log = true)
         {
+            _base = Benchmark::Result();
             auto res = run(name, count, lambda, log);
-            set_last_result_as_base();
+            _base = res;
             return res;
         }
 
@@ -136,11 +137,6 @@ namespace jluna
                 _results.push_back(res);
 
             return _results.back();
-        }
-
-        static void set_last_result_as_base()
-        {
-            _base = _results.back();
         }
 
         static void add_results(const std::string name, Benchmark::Result result)
