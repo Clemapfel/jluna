@@ -9,9 +9,23 @@ namespace jluna
 {
     namespace detail
     {
+        template<typename T, std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
+        T smart_unbox_primitive(Any* in)
+        {
+            return jl_unbox_float64(jl_convert(jl_float64_type, in));
+        }
+
+        template<typename T, std::enable_if_t<std::is_integral_v<T>, bool> = true>
+        T smart_unbox_primitive(Any* in)
+        {
+            return jl_unbox_uint64(jl_convert(jl_uint64_type, in));
+        }
+
+         /*
         template<typename T>
         T smart_unbox_primitive(Any* in)
         {
+            bool first_attempt = true;
             retry:
 
             if (jl_isa(in, (Any*) jl_bool_type))
@@ -42,13 +56,17 @@ namespace jluna
                 return jl_unbox_int32(jl_convert(jl_int32_type, in));
             else
             {
+                if (not first_attempt)
+                    return 0;
+
                 in = jl_try_convert((jl_datatype_t*) jluna::safe_eval(to_julia_type<T>::type_name.c_str()), in);
+                first_attempt = false;
                 goto retry;
-                    // try_convert will throw so this can't deadlock
             }
 
             return 0;
         }
+         */
     }
 
     template<Is<Any*> T>

@@ -13,17 +13,46 @@ using namespace jluna;
 std::vector<Proxy> _proxies;
 void setup();
 
-size_t n_reps = 5000;
+size_t n_reps = 100;
 
 int main()
 {
     State::initialize();
     Benchmark::initialize();
 
-    /*
+    Benchmark::run_as_base("C-API: unbox vector", n_reps, [](){
+
+        jl_gc_pause;
+        jl_array_t* vec = (jl_array_t*) jl_eval_string("Vector{UInt64}([UInt64(i) for i in 1:100000])");
+
+        std::vector<size_t> out;
+        out.reserve(vec->length);
+
+        for (size_t i = 0; i < vec->length; ++i)
+            out.push_back(jl_unbox_uint64(jl_arrayref(vec, i)));
+
+        volatile auto copy = out;
+
+        jl_gc_unpause;
+    });
+
+    Benchmark::run("jluna: unbox vector", n_reps, [](){
+
+        jl_gc_pause;
+        jl_array_t* vec = (jl_array_t*) jl_eval_string("Vector{UInt64}([UInt64(i) for i in 1:100000])");
+        auto out = unbox<std::vector<size_t>>((Any*) vec);
+        jl_gc_unpause;
+    });
+
+    Benchmark::conclude();
+    return 0;
+
+
     // pre-load proxy dict
     for (size_t i = 0; i < 3000; ++i)
         _proxies.push_back(State::new_named_uint64(generate_string(16), generate_number(0, 10000)));
+
+    // ### eval code as strings
 
     Benchmark::run_as_base("jl_eval_string", n_reps, [](){
 
@@ -67,7 +96,7 @@ int main()
         Main.safe_eval(name + std::string(" = undef"));
     });
 
-    // ###
+    // ### calling functions
 
     State::safe_eval(R"(
         function f()
@@ -114,7 +143,7 @@ int main()
         volatile auto res = proxy.safe_call();
     });
 
-    // ###
+    // ### allocating values
 
     Benchmark::run_as_base("C-API: allocate proxy", n_reps, []()
     {
@@ -145,6 +174,8 @@ int main()
     });
 
     _proxies.clear();
+
+    /// ### (un)box: vector
     
     Benchmark::run_as_base("C-API: box vector", n_reps, []()
     {
@@ -177,7 +208,7 @@ int main()
         volatile auto* res = box<std::vector<size_t>>(vec);
     });
 
-     Benchmark::run_as_base("C-API: unbox vector", n_reps, [](){
+    Benchmark::run_as_base("C-API: unbox vector", n_reps, [](){
 
         jl_gc_pause;
         jl_array_t* vec = (jl_array_t*) jl_eval_string("Vector{UInt64}([i for i in 1:10000])");
@@ -198,6 +229,8 @@ int main()
         auto* vec = jl_eval_string("Vector{Int64}([i for i in 1:10000])");
         auto out = unbox<std::vector<size_t>>(vec);
     });
+
+    /// ### (un)box: primitive
 
     Benchmark::run_as_base("C-API: box primitive", n_reps, [](){
 
@@ -231,6 +264,8 @@ int main()
             volatile size_t res = unbox<UInt64>(val);
         }
     });
+
+    /// ### (un)box: string
 
     Benchmark::run_as_base("C-API: box string", n_reps, [](){
 
@@ -269,6 +304,8 @@ int main()
         auto* jl_str = jl_eval_string(str.str().c_str());
         std::string res = unbox<std::string>(jl_str);
     });
+
+    /// ### (un)box: map
 
     Benchmark::run_as_base("C-API: box map", n_reps, [](){
 
@@ -325,6 +362,8 @@ int main()
         volatile auto out = unbox<std::map<size_t, size_t>>(map);
     });
 
+    /// ### (un)box: complex
+
     Benchmark::run_as_base("C-API: box complex", n_reps, [](){
 
         auto value = std::complex<float>(generate_number<float>(), generate_number<float>());
@@ -353,6 +392,8 @@ int main()
         auto* value = jl_eval_string("return Complex(rand(), rand())");
         volatile auto out = unbox<std::complex<float>>(value);
     });
+
+    /// ### (un)box: set
 
     Benchmark::run_as_base("C-API: box set", n_reps, []()
     {
@@ -406,6 +447,8 @@ int main()
         auto out = unbox<std::set<size_t>>(value);
     });
 
+    /// ### (un)box: pair
+
     Benchmark::run_as_base("C-API: unbox pair", n_reps, [](){
 
         jl_gc_pause;
@@ -438,6 +481,8 @@ int main()
         auto value = std::make_pair(generate_number<float>(), generate_number<float>());
         volatile auto out = box<std::pair<float, float>>(value);
     });
+
+    /// ### (un)box: tuple
 
     Benchmark::run_as_base("C-API: unbox tuple", n_reps, [](){
 
@@ -491,6 +536,8 @@ int main()
         volatile auto* out = box<typeof(value)>(value);
     });
 
+    /// ### hash (used for cppcall)
+
     Benchmark::run_as_base("C-API: hash", n_reps, [](){
 
         auto gc = GCSentinel();
@@ -509,7 +556,7 @@ int main()
         volatile size_t res = c_adapter::hash(name);
     });
 
-     */
+    /// ### lambda call overhead
 
     Benchmark::run_as_base("C-API: call lambda without box", n_reps, [](){
 

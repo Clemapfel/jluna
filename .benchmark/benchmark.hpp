@@ -79,6 +79,8 @@ namespace jluna
             if (count % 2 == 0)
                 count += 1;
 
+            State::collect_garbage();
+
             std::vector<Duration> runs;
             runs.reserve(count);
 
@@ -127,7 +129,7 @@ namespace jluna
                 if (a.count() == 0)
                     return 0;
 
-                return (a < b ? (b - a) / (a + b) : -1 *((a - b) / a));
+                return (a < b ? 1 : -1) * (abs(a - b) / a); //(a < b ? (b - a) / (a + b) : -1 *((a - b) / a));
             };
             res._overhead = overhead(_base._median, res._median);
             if (res._overhead != 0)
@@ -135,6 +137,8 @@ namespace jluna
 
             if (log)
                 _results.push_back(res);
+
+            State::collect_garbage();
 
             return _results.back();
         }
