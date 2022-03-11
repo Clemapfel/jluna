@@ -11,31 +11,39 @@ namespace jluna
     {}
 
     template<Boxable V, size_t R>
-    void Array<V, R>::ConstIterator::operator++()
+    auto& Array<V, R>::ConstIterator::operator++()
     {
         if (_index < _owner->get_n_elements())
             ++_index;
+
+        return *this;
     }
 
     template<Boxable V, size_t R>
-    void Array<V, R>::ConstIterator::operator++(int i)
+    auto& Array<V, R>::ConstIterator::operator++(int i)
     {
         if (_index < _owner->get_n_elements())
             _index++;
+
+        return *this;
     }
 
     template<Boxable V, size_t R>
-    void Array<V, R>::ConstIterator::operator--()
+    auto& Array<V, R>::ConstIterator::operator--()
     {
         if (_index > 0)
             --_index;
+
+        return *this;
     }
 
     template<Boxable V, size_t R>
-    void Array<V, R>::ConstIterator::operator--(int i)
+    auto& Array<V, R>::ConstIterator::operator--(int i)
     {
         if (_index > 0)
             _index--;
+
+        return *this;
     }
 
     template<Boxable V, size_t R>

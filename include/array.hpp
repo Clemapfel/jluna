@@ -152,16 +152,16 @@ namespace jluna
                     ConstIterator(size_t i, Array<Value_t, Rank>*);
 
                     /// @brief increment
-                    void operator++();
+                    auto& operator++();
 
                     /// @brief post-fix increment
-                    void operator++(int);
+                    auto& operator++(int);
 
                     /// @brief post-fix decrement
-                    void operator--();
+                    auto& operator--();
 
                     /// @brief post-fix decrement
-                    void operator--(int);
+                    auto& operator--(int);
 
                     /// @brief equality operator
                     /// @param other
