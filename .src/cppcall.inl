@@ -143,7 +143,7 @@ namespace jluna
     template<LambdaType<> Lambda_t>
     Function* register_unnamed_function(const Lambda_t& lambda)
     {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
 
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
@@ -163,7 +163,7 @@ namespace jluna
     template<LambdaType<Any*> Lambda_t>
     Function* register_unnamed_function(const Lambda_t& lambda)
     {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
 
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
@@ -183,7 +183,7 @@ namespace jluna
     template<LambdaType<Any*, Any*> Lambda_t>
     Function* register_unnamed_function(const Lambda_t& lambda)
     {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
 
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
@@ -203,7 +203,7 @@ namespace jluna
     template<LambdaType<Any*, Any*, Any*> Lambda_t>
     Function* register_unnamed_function(const Lambda_t& lambda)
     {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
 
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
@@ -223,7 +223,7 @@ namespace jluna
     template<LambdaType<Any*, Any*, Any*, Any*> Lambda_t>
     Function* register_unnamed_function(const Lambda_t& lambda)
     {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
 
@@ -242,7 +242,7 @@ namespace jluna
     template<LambdaType<std::vector<Any*>> Lambda_t>
     Function* register_unnamed_function(const Lambda_t& lambda)
     {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id);
+        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
 
         static jl_function_t* new_unnamed_function = jl_find_function("jluna._cppcall", "new_unnamed_function");
