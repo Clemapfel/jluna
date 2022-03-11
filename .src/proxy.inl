@@ -101,6 +101,6 @@ namespace jluna
     template<Boxable... Args_t>
     Proxy Proxy::operator()(Args_t&&... args)
     {
-s        return this->safe_call(args...);
+        return this->safe_call(args...);
     }
 }

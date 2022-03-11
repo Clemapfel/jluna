@@ -632,17 +632,10 @@ int main()
         // check behavior if owner proxy gets reassigned during iteration
         // unlike proxy, should segfault
 
-        State::safe_eval("vec =[1:20]");
-        Array3d arr = Main["vec"];
-
+        State::safe_eval("vec = collect(1:20)");
+        Array1d arr = Main["vec"];
         auto it = arr.begin();
-        {
-            size_t i = 0;
-            while (i < 10)
-            {
-                i++;
-            }
-        }
+        while (it++ != arr.end());
 
         State::safe_eval("vec = [1, 2, 3, 4, 5]");
 
@@ -651,7 +644,7 @@ int main()
         {
             size_t as = *it;
         }
-        catch(jluna::JuliaException& )
+        catch(jluna::JuliaException&)
         {
             thrown = true;
         }

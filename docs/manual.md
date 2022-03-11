@@ -4912,7 +4912,7 @@ Usertype<T>::enable                 F
 Usertype<T>::implement              F
 ```
 
-Exact benchmark results that compare most of these features with their only-C-API equivalent can be found [here](../.benchmark/results/results.txt);
+Exact benchmark results that compare most of these features with their only-C-API equivalent can be found [here](../.benchmark/results/results.txt). Experienced users are encouraged to look through the [benchmarks implementation](../.benchmark/main.cpp), as it shows the C-only, optimally performing alternative to many of `jluna`s functionalities.
 
 ---
 
