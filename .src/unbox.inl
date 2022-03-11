@@ -12,6 +12,8 @@ namespace jluna
         template<typename T>
         T smart_unbox_primitive(Any* in)
         {
+            retry:
+
             if (jl_isa(in, (Any*) jl_bool_type))
                 return jl_unbox_bool(in);
             else if (jl_isa(in, (Any*) jl_int8_type))
@@ -36,8 +38,14 @@ namespace jluna
                 return jl_unbox_float64(in);
             else if (jl_isa(in, (Any*) jl_float16_type))
                 return jl_unbox_float32(jl_try_convert(jl_float32_type, in));
+            else if (jl_isa(in, (Any*) jl_char_type))
+                return jl_unbox_int32(jl_convert(jl_int32_type, in));
             else
-                throw std::invalid_argument("INTERNAL ERROR: detail::smart_unbox_primitive called with non-primitive argument");
+            {
+                in = jl_try_convert((jl_datatype_t*) jluna::safe_eval(to_julia_type<T>::type_name.c_str()), in);
+                goto retry;
+                    // try_convert will throw so this can't deadlock
+            }
 
             return 0;
         }
@@ -310,7 +318,7 @@ namespace jluna
         }
 
         template<typename... Ts>
-        std::tuple<Ts...> unbox_tuple_pre(jl_value_t* v, std::tuple<Ts...>&)
+        std::tuple<Ts...> unbox_tuple_pre(jl_value_t* v, std::tuple<Ts...> _)
         {
             return unbox_tuple<Ts...>(v);
         }
@@ -332,8 +340,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto out = T();
-        detail::unbox_tuple_pre(value, out);
+        auto out = detail::unbox_tuple_pre(value, T());
         jl_gc_unpause;
         return out;
     }
