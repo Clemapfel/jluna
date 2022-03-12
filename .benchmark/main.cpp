@@ -15,10 +15,94 @@ void setup();
 
 size_t n_reps = 1000;
 
+
+template<Is<uint64_t> T, bool is_unsafe>
+struct unbox__
+{};
+
+template<Is<uint64_t> T>
+struct unbox__<T, true>
+{
+    inline T operator()(Any* in)
+    {
+        jl_gc_pause;
+        auto res = detail::smart_unbox_primitive<T>(in);
+        jl_gc_unpause;
+        return res;
+    }
+};
+
+template<Is<uint64_t> T>
+struct unbox__<T, false>
+{
+    inline T operator()(Any* in)
+    {
+        return jl_unbox_uint64(in);
+    }
+};
+
+template<Is<uint64_t> T, bool is_unsafe = true>
+T unbox_(Any* in) {return unbox__<T, is_unsafe>()(in);};
+
 int main()
 {
     State::initialize();
+
+    Benchmark::run_as_base("C-API: unbox primitive", n_reps, [](){
+
+        {
+            jl_gc_pause;
+            auto* val = jl_box_uint64(generate_number<size_t>());
+            volatile size_t res = unbox_<size_t, false>(val);
+            jl_gc_unpause;
+        }
+    });
+
+    Benchmark::run("jluna: unbox primitive", n_reps, [](){
+
+        {
+            auto* val = jl_box_uint64(generate_number<size_t>());
+            volatile size_t res = unbox_<size_t>(val);
+        }
+    });
+
+    Benchmark::conclude();
+    return 0;
     Benchmark::initialize();
+
+    Benchmark::run_as_base("C-API: box vector", n_reps, []()
+    {
+        auto vec = std::vector<size_t>();
+        vec.reserve(10000);
+
+        for (size_t i = 0; i < 10000; ++i)
+            vec.push_back(generate_number<size_t>());
+
+        jl_gc_pause;
+        static jl_function_t* make_vector = jl_get_function(jl_base_module, "Vector");
+
+        jl_array_t* out = (jl_array_t*) jl_call2(make_vector, jl_undef_initializer(), jl_box_uint64(vec.size()));
+
+        for (size_t i = 0; i < vec.size(); ++i)
+            jl_arrayset(out, jl_box_uint64(vec.at(i)), i);
+
+        jl_gc_unpause;
+    });
+
+
+    Benchmark::run("jluna: box vector", n_reps, []()
+    {
+        auto vec = std::vector<size_t>();
+        vec.reserve(10000);
+
+        for (size_t i = 0; i < 10000; ++i)
+            vec.push_back(generate_number<size_t>());
+
+        volatile auto* res = box<std::vector<size_t>>(vec);
+    });
+
+    Benchmark::conclude();
+    return 0;
 
     // pre-load proxy dict
     for (size_t i = 0; i < 3000; ++i)
@@ -259,7 +343,7 @@ int main()
         str << "return \"" << generate_string(32) << "\"" << std::endl;
         auto* jl_str = jl_eval_string(str.str().c_str());
         size_t length = jl_length(jl_str);
-st
+
         std::string res;
         res.reserve(length);
         res = jl_string_data(jl_str);

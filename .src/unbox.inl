@@ -208,7 +208,7 @@ namespace jluna
 
         jl_gc_unpause;
         return out;
-    } //°
+    }
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::map<Key_t, Value_t>>, bool>>
     T unbox(Any* value)
