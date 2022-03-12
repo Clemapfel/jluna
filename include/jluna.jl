@@ -470,7 +470,7 @@ module jluna
 
 
     """
-    get_length_of_generator(::Base.Generator) -> Int64
+    `get_length_of_generator(::Base.Generator) -> Int64`
 
     deduce length of Base.Generator object
     """

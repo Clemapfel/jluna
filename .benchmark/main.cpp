@@ -13,40 +13,12 @@ using namespace jluna;
 std::vector<Proxy> _proxies;
 void setup();
 
-size_t n_reps = 100;
+size_t n_reps = 1000;
 
 int main()
 {
     State::initialize();
     Benchmark::initialize();
-
-    Benchmark::run_as_base("C-API: unbox vector", n_reps, [](){
-
-        jl_gc_pause;
-        jl_array_t* vec = (jl_array_t*) jl_eval_string("Vector{UInt64}([UInt64(i) for i in 1:100000])");
-
-        std::vector<size_t> out;
-        out.reserve(vec->length);
-
-        for (size_t i = 0; i < vec->length; ++i)
-            out.push_back(jl_unbox_uint64(jl_arrayref(vec, i)));
-
-        volatile auto copy = out;
-
-        jl_gc_unpause;
-    });
-
-    Benchmark::run("jluna: unbox vector", n_reps, [](){
-
-        jl_gc_pause;
-        jl_array_t* vec = (jl_array_t*) jl_eval_string("Vector{UInt64}([UInt64(i) for i in 1:100000])");
-        auto out = unbox<std::vector<size_t>>((Any*) vec);
-        jl_gc_unpause;
-    });
-
-    Benchmark::conclude();
-    return 0;
-
 
     // pre-load proxy dict
     for (size_t i = 0; i < 3000; ++i)
@@ -234,23 +206,20 @@ int main()
 
     Benchmark::run_as_base("C-API: box primitive", n_reps, [](){
 
-        for (size_t i = 0; i < 10000; ++i)
-            volatile auto* res = jl_box_uint64(i);
+        volatile auto* res = jl_box_uint64(generate_number<size_t>());
     });
     
 
     Benchmark::run("jluna: box primitive", n_reps, [](){
 
-        for (size_t i = 0; i < 10000; ++i)
-            volatile auto* res = box<size_t>(i);
+        volatile auto* res = box<size_t>(generate_number<size_t>());
     });
 
     Benchmark::run_as_base("C-API: unbox primitive", n_reps, [](){
 
-        for (size_t i = 0; i < 10000; ++i)
         {
             jl_gc_pause;
-            auto* val = jl_box_uint64(i);
+            auto* val = jl_box_uint64(generate_number<size_t>());
             volatile size_t res = jl_unbox_uint64(val);
             jl_gc_unpause;
         }
@@ -258,9 +227,8 @@ int main()
 
     Benchmark::run("jluna: unbox primitive", n_reps, [](){
 
-        for (size_t i = 0; i < 10000; ++i)
         {
-            auto* val = jl_box_uint64(i);
+            auto* val = jl_box_uint64(generate_number<size_t>());
             volatile size_t res = unbox<UInt64>(val);
         }
     });
@@ -291,7 +259,7 @@ int main()
         str << "return \"" << generate_string(32) << "\"" << std::endl;
         auto* jl_str = jl_eval_string(str.str().c_str());
         size_t length = jl_length(jl_str);
-
+st
         std::string res;
         res.reserve(length);
         res = jl_string_data(jl_str);

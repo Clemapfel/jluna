@@ -1,3 +1,0 @@
-name,count,min,max,average,median,overhead,compared_to
-"jluna: call lambda with box",3235,0.711622,291.476,0.832376,0.724986,0,"self"
-

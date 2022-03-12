@@ -81,6 +81,7 @@ namespace jluna
 
             State::collect_garbage();
 
+            std::cout << "[C++][LOG] Running \"" << name << "\"" << std::endl;
             std::vector<Duration> runs;
             runs.reserve(count);
 
@@ -138,8 +139,7 @@ namespace jluna
             if (log)
                 _results.push_back(res);
 
-            State::collect_garbage();
-
+            std::cout << "[C++][LOG] done." << std::endl;
             return _results.back();
         }
 
