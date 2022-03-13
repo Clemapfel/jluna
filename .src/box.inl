@@ -113,7 +113,7 @@ namespace jluna
 
         jl_gc_unpause;
         return res;
-    }
+    } //°
 
     template<Is<const char*> T>
     Any* box(T value)

@@ -1,0 +1,682 @@
+clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
+[JULIA][LOG] initialization successfull.
+[C++][LOG] starting benchmarks...
+
+[C++][LOG] Running "jl_eval_string"
+[C++][LOG] done.
+[C++][LOG] Running "jluna::safe_eval"
+[C++][LOG] done.
+[C++][LOG] Running "State::eval"
+[C++][LOG] done.
+[C++][LOG] Running "State::safe_eval"
+[C++][LOG] done.
+[C++][LOG] Running "Module::eval"
+[C++][LOG] done.
+[C++][LOG] Running "Module::safe_eval"
+[C++][LOG] done.
+[C++][LOG] Running "jl_call"
+[C++][LOG] done.
+[C++][LOG] Running "jluna::call"
+[C++][LOG] done.
+[C++][LOG] Running "jluna::safe_call"
+[C++][LOG] done.
+[C++][LOG] Running "Proxy::call"
+[C++][LOG] done.
+[C++][LOG] Running "Proxy::safe_call"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: allocate proxy"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: allocate unnamed proxy"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: allocate named proxy"
+[C++][LOG] done.
+[C++][LOG] Running "State::new_unnamed"
+[C++][LOG] done.
+[C++][LOG] Running "State::new_named"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box vector"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box vector"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox vector"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox vector"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box primitive"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box primitive"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox primitive"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox primitive"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box string"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box string"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox string"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox string"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box map"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box map"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox map"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox map"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box complex"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box complex"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox complex"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox complex"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box set"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box set"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox set"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox set"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox pair"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox pair"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box pair"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box pair"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox tuple"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox tuple"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box tuple"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box tuple"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: hash"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: hash"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: call lambda without box"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: call lambda with box"
+[C++][LOG] done.
+┌────────────────────────────────
+│ jl_eval_string (5001):
+│
+│ Min    : 0.316143ms
+│ Average: 0.34048ms
+│ Max    : 25.9169ms
+│ Median : 0.323568ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna::safe_eval (5001):
+│
+│ Min    : 0.487222ms
+│ Average: 0.525333ms
+│ Max    : 17.5871ms
+│ Median : 0.499824ms
+│
+│ Overhead: 54.4726%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ State::eval (5001):
+│
+│ Min    : 0.505793ms
+│ Average: 0.570027ms
+│ Max    : 103.78ms
+│ Median : 0.521793ms
+│
+│ Overhead: 61.2622%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ State::safe_eval (5001):
+│
+│ Min    : 0.511876ms
+│ Average: 0.557924ms
+│ Max    : 2.2009ms
+│ Median : 0.523829ms
+│
+│ Overhead: 61.8915%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ Module::eval (5001):
+│
+│ Min    : 0.742686ms
+│ Average: 0.820091ms
+│ Max    : 7.89727ms
+│ Median : 0.76286ms
+│
+│ Overhead: 135.765%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ Module::safe_eval (5001):
+│
+│ Min    : 0.745166ms
+│ Average: 0.832493ms
+│ Max    : 5.60076ms
+│ Median : 0.764354ms
+│
+│ Overhead: 136.227%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jl_call (5001):
+│
+│ Min    : 0.007258ms
+│ Average: 0.014184ms
+│ Max    : 16.1788ms
+│ Median : 0.009534ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna::call (5001):
+│
+│ Min    : 0.00924ms
+│ Average: 0.012924ms
+│ Max    : 0.204995ms
+│ Median : 0.012702ms
+│
+│ Overhead: 33.2284%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna::safe_call (5001):
+│
+│ Min    : 0.009339ms
+│ Average: 0.014646ms
+│ Max    : 9.33919ms
+│ Median : 0.012389ms
+│
+│ Overhead: 29.9455%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ Proxy::call (5001):
+│
+│ Min    : 0.136072ms
+│ Average: 0.156106ms
+│ Max    : 3.9652ms
+│ Median : 0.141003ms
+│
+│ Overhead: 1378.95%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ Proxy::safe_call (5001):
+│
+│ Min    : 0.13208ms
+│ Average: 0.150884ms
+│ Max    : 2.45681ms
+│ Median : 0.136676ms
+│
+│ Overhead: 1333.56%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: allocate proxy (5001):
+│
+│ Min    : 0.001756ms
+│ Average: 0.00215ms
+│ Max    : 0.015445ms
+│ Median : 0.001937ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: allocate unnamed proxy (5001):
+│
+│ Min    : 0.008435ms
+│ Average: 0.013925ms
+│ Max    : 21.5278ms
+│ Median : 0.009242ms
+│
+│ Overhead: 377.13%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: allocate named proxy (5001):
+│
+│ Min    : 0.008735ms
+│ Average: 0.010561ms
+│ Max    : 0.397079ms
+│ Median : 0.010096ms
+│
+│ Overhead: 421.218%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ State::new_unnamed (5001):
+│
+│ Min    : 0.008633ms
+│ Average: 0.010431ms
+│ Max    : 0.040571ms
+│ Median : 0.010062ms
+│
+│ Overhead: 419.463%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ State::new_named (5001):
+│
+│ Min    : 0.071447ms
+│ Average: 0.083297ms
+│ Max    : 6.2583ms
+│ Median : 0.072981ms
+│
+│ Overhead: 3667.73%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: box vector (5001):
+│
+│ Min    : 1.32979ms
+│ Average: 1.3635ms
+│ Max    : 7.05242ms
+│ Median : 1.35937ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: box vector (5001):
+│
+│ Min    : 1.52ms
+│ Average: 1.5349ms
+│ Max    : 7.96998ms
+│ Median : 1.52929ms
+│
+│ Overhead: 12.4997%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: unbox vector (5001):
+│
+│ Min    : 0.89434ms
+│ Average: 0.973024ms
+│ Max    : 34.1679ms
+│ Median : 0.946757ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: unbox vector (5001):
+│
+│ Min    : 1.37538ms
+│ Average: 1.42426ms
+│ Max    : 24.2474ms
+│ Median : 1.38854ms
+│
+│ Overhead: 46.6622%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: box primitive (5001):
+│
+│ Min    : 9.3e-05ms
+│ Average: 0.000129ms
+│ Max    : 0.01324ms
+│ Median : 0.000101ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: box primitive (50001):
+│
+│ Min    : 8.9e-05ms
+│ Average: 0.000125ms
+│ Max    : 0.013777ms
+│ Median : 0.0001ms
+│
+│ Overhead: -0.990099%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: unbox primitive (5001):
+│
+│ Min    : 0.000156ms
+│ Average: 0.000197ms
+│ Max    : 0.013476ms
+│ Median : 0.000166ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: unbox primitive (50001):
+│
+│ Min    : 0.000208ms
+│ Average: 0.000261ms
+│ Max    : 0.023896ms
+│ Median : 0.000233ms
+│
+│ Overhead: 40.3614%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: box string (5001):
+│
+│ Min    : 0.003018ms
+│ Average: 0.003621ms
+│ Max    : 0.016844ms
+│ Median : 0.003224ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: box string (5001):
+│
+│ Min    : 0.00305ms
+│ Average: 0.003677ms
+│ Max    : 0.017245ms
+│ Median : 0.003281ms
+│
+│ Overhead: 1.76799%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: unbox string (5001):
+│
+│ Min    : 0.121719ms
+│ Average: 0.136362ms
+│ Max    : 2.54444ms
+│ Median : 0.123587ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: unbox string (5001):
+│
+│ Min    : 0.12157ms
+│ Average: 0.135962ms
+│ Max    : 2.51909ms
+│ Median : 0.123589ms
+│
+│ Overhead: 0.00161829%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: box map (5001):
+│
+│ Min    : 1.09888ms
+│ Average: 1.15074ms
+│ Max    : 99.4658ms
+│ Median : 1.13463ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: box map (5001):
+│
+│ Min    : 1.11199ms
+│ Average: 1.14786ms
+│ Max    : 27.789ms
+│ Median : 1.14118ms
+│
+│ Overhead: 0.577279%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: unbox map (5001):
+│
+│ Min    : 25.8248ms
+│ Average: 40.1111ms
+│ Max    : 990.259ms
+│ Median : 34.61ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: unbox map (5001):
+│
+│ Min    : 34.6708ms
+│ Average: 42.059ms
+│ Max    : 571.911ms
+│ Median : 39.4903ms
+│
+│ Overhead: 14.1009%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: box complex (5001):
+│
+│ Min    : 0.000549ms
+│ Average: 0.002883ms
+│ Max    : 11.3436ms
+│ Median : 0.000568ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: box complex (5001):
+│
+│ Min    : 0.001576ms
+│ Average: 0.007478ms
+│ Max    : 28.8591ms
+│ Median : 0.001667ms
+│
+│ Overhead: 193.486%    // TODO
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: unbox complex (5001):
+│
+│ Min    : 0.156316ms
+│ Average: 0.203867ms
+│ Max    : 33.6429ms
+│ Median : 0.172841ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: unbox complex (5001):
+│
+│ Min    : 0.160317ms
+│ Average: 0.205707ms
+│ Max    : 29.5478ms
+│ Median : 0.173785ms
+│
+│ Overhead: 0.546167%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: box set (5001):
+│
+│ Min    : 9.65108ms
+│ Average: 9.97791ms
+│ Max    : 108.942ms
+│ Median : 9.76824ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: box set (5001):
+│
+│ Min    : 7.56805ms
+│ Average: 7.7798ms
+│ Max    : 400.683ms
+│ Median : 7.65238ms
+│
+│ Overhead: -21.6606%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: unbox set (5001):
+│
+│ Min    : 52.5708ms
+│ Average: 72.4351ms
+│ Max    : 2244.93ms
+│ Median : 66.2702ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: unbox set (5001):
+│
+│ Min    : 54.2185ms
+│ Average: 107.917ms
+│ Max    : 74538.2ms
+│ Median : 69.3646ms
+│
+│ Overhead: 4.66938%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: unbox pair (5001):
+│
+│ Min    : 0.181594ms
+│ Average: 0.581816ms
+│ Max    : 1165.93ms
+│ Median : 0.205349ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: unbox pair (5001):
+│
+│ Min    : 0.18106ms
+│ Average: 0.539973ms
+│ Max    : 1299.76ms
+│ Median : 0.205903ms
+│
+│ Overhead: 0.269785%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: box pair (5001):
+│
+│ Min    : 0.001562ms
+│ Average: 0.271454ms
+│ Max    : 1348.74ms
+│ Median : 0.001614ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: box pair (5001):
+│
+│ Min    : 0.00057ms
+│ Average: 0.001097ms
+│ Max    : 0.947063ms
+│ Median : 0.000852ms
+│
+│ Overhead: -47.2119%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: unbox tuple (5001):
+│
+│ Min    : 0.216294ms
+│ Average: 1.25926ms
+│ Max    : 4024.36ms
+│ Median : 0.257425ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: unbox tuple (5001):
+│
+│ Min    : 0.231988ms
+│ Average: 0.89201ms
+│ Max    : 2598.78ms
+│ Median : 0.26286ms
+│
+│ Overhead: 2.11129%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: box tuple (5001):
+│
+│ Min    : 0.016306ms
+│ Average: 0.607559ms
+│ Max    : 2938.25ms
+│ Median : 0.018594ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: box tuple (5001):
+│
+│ Min    : 0.001026ms
+│ Average: 0.001703ms
+│ Max    : 2.85958ms
+│ Median : 0.001083ms
+│
+│ Overhead: -94.1755%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: hash (5001):
+│
+│ Min    : 0.00298ms
+│ Average: 0.025945ms
+│ Max    : 7.40414ms
+│ Median : 0.005514ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: hash (5001):
+│
+│ Min    : 0.001922ms
+│ Average: 0.023246ms
+│ Max    : 8.41301ms
+│ Median : 0.002737ms
+│
+│ Overhead: -50.3627%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ C-API: call lambda without box (5001):
+│
+│ Min    : 0.085188ms
+│ Average: 0.783214ms
+│ Max    : 2614.78ms
+│ Median : 0.101716ms
+│
+│ Overhead: 0%
+└────────────────────────────────
+
+┌────────────────────────────────
+│ jluna: call lambda with box (5001):
+│
+│ Min    : 0.572225ms
+│ Average: 1.65789ms
+│ Max    : 2488.49ms
+│ Median : 0.692873ms
+│
+│ Overhead: 581.184%
+└────────────────────────────────
+
+[C++][LOG] Benchmark written to /home/clem/Workspace/jluna/.benchmark/results/13-03-2022_00:59:35
+.csv

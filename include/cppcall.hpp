@@ -85,23 +85,6 @@ namespace jluna
     /// @returns julia-side anonymous function wrapping lambda
     template<LambdaType<std::vector<jl_value_t*>> Lambda_t>
     Function* register_unnamed_function(const Lambda_t& lambda);
-    
-    namespace detail
-    {
-        /// @brief forward lambda returning void as jl_nothing
-        /// @param func: lambda
-        /// @param args: arguments
-        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<std::is_same_v<Return_t, void>, Bool> = true>
-        jl_value_t* invoke_lambda(const Lambda_t* func, Args_t... args);
-
-        /// @brief forward lambda returning jl_value_t* as jl_value_t*
-        /// @param func: lambda
-        /// @param args: arguments
-        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<std::is_same_v<Return_t, jl_value_t*>, Bool> = true>
-        jl_value_t* invoke_lambda(const Lambda_t* func, Args_t... args);
-        
-        static inline size_t _unnamed_function_id = 1;
-    }
 }
 
 #include ".src/cppcall.inl"
