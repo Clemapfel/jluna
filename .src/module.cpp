@@ -85,6 +85,7 @@ namespace jluna
         return get()->istopmod;
     }
 
+    /*
     int8_t Module::get_optimization_level() const
     {
         return get()->optlevel;
@@ -99,6 +100,7 @@ namespace jluna
     {
         return get()->infer;
     }
+    */
 
     std::map<Symbol, Proxy> Module::get_bindings() const
     {
