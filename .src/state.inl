@@ -13,11 +13,14 @@ namespace jluna::State
     namespace detail
     {
         template<Is<Any*>... Ts>
-        Proxy create_or_assign(const std::string& symbol, Ts... args)
+        Proxy create_or_assign(const std::string& symbol, Any* value)
         {
+            jl_gc_pause;
             static jl_function_t* create_or_assign = jl_find_function("jluna", "create_or_assign");
-            auto* value = safe_call(create_or_assign, (jl_value_t*) jl_symbol(symbol.c_str()), args...);
-            return Proxy(value, jl_symbol(symbol.c_str()));
+            auto* name = jl_symbol(symbol.c_str());
+            auto* out = jl_call2(create_or_assign, (Any*) name, value);
+            jl_gc_unpause;
+            return Proxy(value, name);
         }
     }
     

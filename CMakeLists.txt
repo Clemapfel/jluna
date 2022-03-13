@@ -178,12 +178,12 @@ add_executable(JLUNA_TEST
 )
 target_link_libraries(JLUNA_TEST jluna ${JULIA_LIB})
 
-#add_executable(JLUNA_BENCHMARK
-#    .benchmark/main.cpp
-#    .benchmark/benchmark.hpp
-#    .benchmark/benchmark_aux.hpp
-#)
-#target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})
+add_executable(JLUNA_BENCHMARK
+    .benchmark/main.cpp
+    .benchmark/benchmark.hpp
+    .benchmark/benchmark_aux.hpp
+)
+target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})
 
 ### INSTALL ###
 

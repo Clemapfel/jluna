@@ -34,25 +34,30 @@ namespace jluna
     {
         throw_if_uninitialized();
 
-        jl_gc_pause;
         static jl_function_t* unsafe_call = jl_find_function("jluna.exception_handler", "unsafe_call");
-        Any* expr = State::eval(("return quote " + command + " end").c_str());
-        auto* res = jluna::call(unsafe_call, expr, (Any*) get());
+        jl_gc_pause;
+        auto* res = jl_call2(unsafe_call, jl_quote(command.c_str()), (Any*) get());
         jl_gc_unpause;
-        return Proxy(res, nullptr);
+        return Proxy(res);
     }
 
     Proxy Module::safe_eval(const std::string& command)
     {
-        throw_if_uninitialized();
+        jluna::throw_if_uninitialized();
+
+        static jl_function_t* safe_call = jl_find_function("jluna.exception_handler", "safe_call");
+        static jl_function_t* has_exception_occurred = jl_find_function("jluna.exception_handler", "has_exception_occurred");
 
         jl_gc_pause;
-        static jl_function_t* safe_call = jl_find_function("jluna.exception_handler", "safe_call");
-        Any* expr = State::safe_eval(("return quote " + command + " end").c_str());
-        auto* res = jluna::safe_call(safe_call, expr, (Any*) get());
-        forward_last_exception();
+        auto* result = jl_call2(safe_call, jl_quote(command.c_str()), (Any*) get());
+
+        if (jl_exception_occurred() or jl_unbox_bool(jl_call0(has_exception_occurred)))
+        {
+            std::cerr << "exception in jluna::State::safe_eval for expression:\n\"" << command << "\"\n" << std::endl;
+            forward_last_exception();
+        }
         jl_gc_unpause;
-        return Proxy(res, nullptr);
+        return Proxy(result, nullptr);
     }
 
     jl_sym_t* Module::get_symbol() const

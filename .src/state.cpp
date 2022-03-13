@@ -109,21 +109,25 @@ namespace jluna::State
     {
         jluna::throw_if_uninitialized();
 
-        std::stringstream str;
-        str << "jluna.exception_handler.unsafe_call(quote " << command << " end)" << std::endl;
-        return Proxy(jl_eval_string(str.str().c_str()), nullptr);
+        static jl_function_t* unsafe_call = jl_find_function("jluna.exception_handler", "unsafe_call");
+        jl_gc_pause;
+        auto* res = jl_call1(unsafe_call, jl_quote(command.c_str()));
+        jl_gc_unpause;
+
+        return Proxy(res);
     }
 
     Proxy safe_eval(const std::string& command)
     {
         jluna::throw_if_uninitialized();
 
-        std::stringstream str;
-        str << "jluna.exception_handler.safe_call(quote " << command << " end)" << std::endl;
+        static jl_function_t* safe_call = jl_find_function("jluna.exception_handler", "safe_call");
+        static jl_function_t* has_exception_occurred = jl_find_function("jluna.exception_handler", "has_exception_occurred");
 
         jl_gc_pause;
-        auto* result = jl_eval_string(str.str().c_str());
-        if (jl_exception_occurred() or jl_unbox_bool(jl_eval_string("jluna.exception_handler.has_exception_occurred()")))
+        auto* result = jl_call1(safe_call, jl_quote(command.c_str()));
+
+        if (jl_exception_occurred() or jl_unbox_bool(jl_call0(has_exception_occurred)))
         {
             std::cerr << "exception in jluna::State::safe_eval for expression:\n\"" << command << "\"\n" << std::endl;
             forward_last_exception();

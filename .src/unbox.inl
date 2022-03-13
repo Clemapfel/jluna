@@ -3,121 +3,172 @@
 // Created on 31.01.22 by clem (mail@clemens-cords.com)
 //
 
+#include <include/gc_sentinel.hpp>
+
 namespace jluna
 {
+    namespace detail
+    {
+        template<typename T>
+        T smart_unbox_primitive(Any* in)
+        {
+            bool first_attempt = true;
+            retry:
+
+            if (jl_isa(in, (Any*) jl_bool_type))
+                return jl_unbox_bool(in);
+            else if (jl_isa(in, (Any*) jl_int8_type))
+                return jl_unbox_int8(in);
+            else if (jl_isa(in, (Any*) jl_int16_type))
+                return jl_unbox_int16(in);
+            else if (jl_isa(in, (Any*) jl_int32_type))
+                return jl_unbox_int32(in);
+            else if (jl_isa(in, (Any*) jl_int64_type))
+                return jl_unbox_int64(in);
+            else if (jl_isa(in, (Any*) jl_uint8_type))
+                return jl_unbox_uint8(in);
+            else if (jl_isa(in, (Any*) jl_uint16_type))
+                return jl_unbox_uint16(in);
+            else if (jl_isa(in, (Any*) jl_uint32_type))
+                return jl_unbox_uint32(in);
+            else if (jl_isa(in, (Any*) jl_uint64_type))
+                return jl_unbox_uint64(in);
+            else if (jl_isa(in, (Any*) jl_float32_type))
+                return jl_unbox_float32(in);
+            else if (jl_isa(in, (Any*) jl_float64_type))
+                return jl_unbox_float64(in);
+            else if (jl_isa(in, (Any*) jl_float16_type))
+                return jl_unbox_float32(jl_try_convert(jl_float32_type, in));
+            else if (jl_isa(in, (Any*) jl_char_type))
+                return jl_unbox_int32(jl_convert(jl_int32_type, in));
+            else
+            {
+                if (not first_attempt)
+                    return 0;
+
+                in = jl_try_convert((jl_datatype_t*) jluna::safe_eval(to_julia_type<T>::type_name.c_str()), in);
+                first_attempt = false;
+                goto retry;
+            }
+
+            return 0;
+        }
+    }
+
+
     template<Is<Any*> T>
     T unbox(Any* in)
     {
         return in;
-    } //°
+    }
 
     template<Is<bool> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res = jl_unbox_bool(jl_try_convert(jl_bool_type, value));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<char> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res = static_cast<char>(jl_unbox_uint8(jl_try_convert(jl_uint8_type, value)));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<uint8_t> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res = jl_unbox_uint8(jl_try_convert(jl_uint8_type, value));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<uint16_t> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_uint16(jl_try_convert(jl_uint16_type, value));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<uint32_t> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_uint32(jl_try_convert(jl_uint32_type, value));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<uint64_t> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_uint64(jl_try_convert(jl_uint64_type, value));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<int8_t> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_int8(jl_try_convert(jl_int8_type, value));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<int16_t> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_int16(jl_try_convert(jl_int16_type, value));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<int32_t> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_int32(jl_try_convert(jl_int32_type, value));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<int64_t> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_int64(jl_try_convert(jl_int64_type, value));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<float> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_float32(jl_try_convert(jl_float32_type, value));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<double> T>
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto res =  jl_unbox_float64(jl_try_convert(jl_float64_type, value));
+        auto res = detail::smart_unbox_primitive<T>(value);
         jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<Is<std::string> T>
     T unbox(Any* value)
@@ -132,7 +183,8 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto* res = jl_try_convert((jl_datatype_t*) jl_eval_string(("return " + to_julia_type<std::complex<Value_t>>::type_name).c_str()), value);
+        static jl_datatype_t* type = (jl_datatype_t*) jl_eval_string(("return " + to_julia_type<std::complex<Value_t>>::type_name).c_str());
+        auto* res = jl_try_convert(type, value);
 
         auto* re = jl_get_nth_field(value, 0);
         auto* im = jl_get_nth_field(value, 1);
@@ -146,18 +198,17 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-
-        static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
+        jl_array_t* in = (jl_array_t*) value;
 
         std::vector<Value_t> out;
-        out.reserve(jl_array_len(value));
+        out.reserve(in->length);
 
-        for (size_t i = 0; i < jl_array_len(value); ++i)
-            out.push_back(unbox<Value_t>(jl_call2(getindex, value, jl_box_uint64(i+1))));
+        for (size_t i = 0; i < in->length; ++i)
+            out.emplace_back(unbox<Value_t>(jl_arrayref(in, i)));
 
         jl_gc_unpause;
         return out;
-    } //°
+    }
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::map<Key_t, Value_t>>, bool>>
     T unbox(Any* value)
@@ -242,8 +293,7 @@ namespace jluna
         template<typename Tuple_t, typename Value_t, size_t i>
         void unbox_tuple_aux_aux(Tuple_t& tuple, jl_value_t* value)
         {
-            static jl_function_t* tuple_at = (jl_function_t*) jl_eval_string("jluna.tuple_at");
-            std::get<i>(tuple) = unbox<std::tuple_element_t<i, Tuple_t>>(safe_call(tuple_at, value, jl_box_uint64(i + 1)));
+            std::get<i>(tuple) = unbox<std::tuple_element_t<i, Tuple_t>>(jl_get_nth_field(value, i));
         }
 
         template<typename Tuple_t, typename Value_t, std::size_t... is>
@@ -261,7 +311,7 @@ namespace jluna
         }
 
         template<typename... Ts>
-        std::tuple<Ts...> unbox_tuple_pre(jl_value_t* v, std::tuple<Ts...>)
+        std::tuple<Ts...> unbox_tuple_pre(jl_value_t* v, std::tuple<Ts...> _)
         {
             return unbox_tuple<Ts...>(v);
         }
@@ -283,7 +333,7 @@ namespace jluna
     T unbox(Any* value)
     {
         jl_gc_pause;
-        auto out = detail::unbox_tuple_pre(jl_try_convert((jl_datatype_t*) jl_eval_string(("return " + to_julia_type<T>::type_name).c_str()), value), T());
+        auto out = detail::unbox_tuple_pre(value, T());
         jl_gc_unpause;
         return out;
     }

@@ -252,9 +252,9 @@ module jluna
     assign variable in main, or if none exist, create it and assign
     """
     function create_or_assign(symbol::Symbol, value::T) ::T where T
-        return Main.eval(:($symbol = $value))
-    end
 
+        return Main.eval(Expr(:(=), symbol, value))
+    end
 
     """
     `serialize(<:AbstractDict{T, U}) -> Vector{Pair{T, U}}`
@@ -470,7 +470,7 @@ module jluna
 
 
     """
-    get_length_of_generator(::Base.Generator) -> Int64
+    `get_length_of_generator(::Base.Generator) -> Int64`
 
     deduce length of Base.Generator object
     """
@@ -516,43 +516,6 @@ module jluna
         const _state = Ref{State}(State(NoException(), "", false));
 
         """
-        `safe_call(::Expr, ::Module = Main) -> Any`
-
-        call any line of code, update the handler then forward the result, if any
-        """
-        function safe_call(expr::Expr, m::Module = Main) ::Any
-
-            if expr.head == :block
-                expr.head = :toplevel
-            end
-
-            result = undef
-            try
-                result = Base.eval(m, expr)
-                update()
-            catch exc
-                result = nothing
-                update(exc)
-            end
-
-            return result
-        end
-
-        """
-        `unsafe_call(::Expr, ::Module = Main) -> Any`
-
-        call any line of code without updating the handler
-        """
-        function unsafe_call(expr::Expr, m::Module = Main) ::Any
-
-            if expr.head == :block
-                expr.head = :toplevel
-            end
-
-            return Base.eval(m, expr);
-        end
-
-        """
         `safe_call(::Function, ::Any...) -> Any`
 
         call any function, update the handler then forward the result, if any
@@ -572,6 +535,34 @@ module jluna
         end
 
         """
+        `safe_call(::Expr, ::Module = Main) -> Any`
+
+        call any line of code, update the handler then forward the result, if any
+        """
+        function safe_call(expr::Expr, m::Module = Main) ::Any
+
+            if expr.head == :block
+                expr.head = :toplevel
+            end
+
+            return safe_call(Base.eval, m, expr);
+        end
+
+        """
+        `unsafe_call(::Expr, ::Module = Main) -> Any`
+
+        call any line of code without updating the handler
+        """
+        function unsafe_call(expr::Expr, m::Module = Main) ::Any
+
+            if expr.head == :block
+                expr.head = :toplevel
+            end
+
+            return Base.eval(m, expr);
+        end
+
+        """
         `update(<:Exception) -> Nothing`
 
         update the handler after an exception was thrown
@@ -579,9 +570,9 @@ module jluna
         function update(exception::Exception) ::Nothing
 
             try
-            global _state[]._last_message = sprint(Base.showerror, exception, catch_backtrace())
-            global _state[]._last_exception = exception
-            global _state[]._exception_occurred = true
+                global _state[]._last_message = sprint(Base.showerror, exception, catch_backtrace())
+                global _state[]._last_exception = exception
+                global _state[]._exception_occurred = true
             catch e end
             return nothing
         end
@@ -593,9 +584,12 @@ module jluna
         """
         function update() ::Nothing
 
-            global _state[]._last_message = ""
-            global _state[]._last_exception = NoException()
-            global _state[]._exception_occurred = false
+            if !(_state[]._last_exception isa NoException)
+
+                global _state[]._last_message = ""
+                global _state[]._last_exception = NoException()
+                global _state[]._exception_occurred = false
+            end
             return nothing
         end
 
