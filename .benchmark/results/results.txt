@@ -2,13 +2,117 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 [JULIA][LOG] initialization successfull.
 [C++][LOG] starting benchmarks...
 
+[C++][LOG] Running "jl_eval_string"
+[C++][LOG] done.
+[C++][LOG] Running "jluna::safe_eval"
+[C++][LOG] done.
+[C++][LOG] Running "State::eval"
+[C++][LOG] done.
+[C++][LOG] Running "State::safe_eval"
+[C++][LOG] done.
+[C++][LOG] Running "Module::eval"
+[C++][LOG] done.
+[C++][LOG] Running "Module::safe_eval"
+[C++][LOG] done.
+[C++][LOG] Running "jl_call"
+[C++][LOG] done.
+[C++][LOG] Running "jluna::call"
+[C++][LOG] done.
+[C++][LOG] Running "jluna::safe_call"
+[C++][LOG] done.
+[C++][LOG] Running "Proxy::call"
+[C++][LOG] done.
+[C++][LOG] Running "Proxy::safe_call"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: allocate proxy"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: allocate unnamed proxy"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: allocate named proxy"
+[C++][LOG] done.
+[C++][LOG] Running "State::new_unnamed"
+[C++][LOG] done.
+[C++][LOG] Running "State::new_named"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box vector"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box vector"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox vector"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox vector"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box primitive"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box primitive"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox primitive"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox primitive"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box string"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box string"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox string"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox string"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box map"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box map"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox map"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox map"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box complex"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box complex"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox complex"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox complex"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box set"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box set"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox set"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox set"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox pair"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox pair"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box pair"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box pair"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: unbox tuple"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: unbox tuple"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: box tuple"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: box tuple"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: hash"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: hash"
+[C++][LOG] done.
+[C++][LOG] Running "C-API: call lambda without box"
+[C++][LOG] done.
+[C++][LOG] Running "jluna: call lambda with box"
+[C++][LOG] done.
 ┌────────────────────────────────
 │ jl_eval_string (5001):
 │
-│ Min    : 0.44956ms
-│ Average: 0.486465ms
-│ Max    : 34.5373ms
-│ Median : 0.460898ms
+│ Min    : 0.316143ms
+│ Average: 0.34048ms
+│ Max    : 25.9169ms
+│ Median : 0.323568ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -16,65 +120,65 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna::safe_eval (5001):
 │
-│ Min    : 0.689874ms
-│ Average: 0.736315ms
-│ Max    : 21.9503ms
-│ Median : 0.704217ms
+│ Min    : 0.487222ms
+│ Average: 0.525333ms
+│ Max    : 17.5871ms
+│ Median : 0.499824ms
 │
-│ Overhead: 20.8837%
+│ Overhead: 54.4726%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ State::eval (5001):
 │
-│ Min    : 0.726882ms
-│ Average: 0.805596ms
-│ Max    : 142.334ms
-│ Median : 0.74105ms
+│ Min    : 0.505793ms
+│ Average: 0.570027ms
+│ Max    : 103.78ms
+│ Median : 0.521793ms
 │
-│ Overhead: 23.3082%
+│ Overhead: 61.2622%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ State::safe_eval (5001):
 │
-│ Min    : 0.730026ms
-│ Average: 0.78743ms
-│ Max    : 2.91028ms
-│ Median : 0.74477ms
+│ Min    : 0.511876ms
+│ Average: 0.557924ms
+│ Max    : 2.2009ms
+│ Median : 0.523829ms
 │
-│ Overhead: 23.5448%
+│ Overhead: 61.8915%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ Module::eval (5001):
 │
-│ Min    : 1.06532ms
-│ Average: 1.15751ms
-│ Max    : 8.56236ms
-│ Median : 1.08374ms
+│ Min    : 0.742686ms
+│ Average: 0.820091ms
+│ Max    : 7.89727ms
+│ Median : 0.76286ms
 │
-│ Overhead: 40.3228%
+│ Overhead: 135.765%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ Module::safe_eval (5001):
 │
-│ Min    : 1.06482ms
-│ Average: 1.17078ms
-│ Max    : 5.52682ms
-│ Median : 1.08596ms
+│ Min    : 0.745166ms
+│ Average: 0.832493ms
+│ Max    : 5.60076ms
+│ Median : 0.764354ms
 │
-│ Overhead: 40.4086%
+│ Overhead: 136.227%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ jl_call (5001):
 │
-│ Min    : 0.00989ms
-│ Average: 0.03656ms
-│ Max    : 89.4688ms
-│ Median : 0.011401ms
+│ Min    : 0.007258ms
+│ Average: 0.014184ms
+│ Max    : 16.1788ms
+│ Median : 0.009534ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -82,54 +186,54 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna::call (5001):
 │
-│ Min    : 0.009928ms
-│ Average: 0.012349ms
-│ Max    : 0.026939ms
-│ Median : 0.011347ms
+│ Min    : 0.00924ms
+│ Average: 0.012924ms
+│ Max    : 0.204995ms
+│ Median : 0.012702ms
 │
-│ Overhead: -0.473643%
+│ Overhead: 33.2284%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ jluna::safe_call (5001):
 │
-│ Min    : 0.013678ms
-│ Average: 0.01966ms
-│ Max    : 9.38951ms
-│ Median : 0.017341ms
+│ Min    : 0.009339ms
+│ Average: 0.014646ms
+│ Max    : 9.33919ms
+│ Median : 0.012389ms
 │
-│ Overhead: 20.6666%
+│ Overhead: 29.9455%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ Proxy::call (5001):
 │
-│ Min    : 0.191125ms
-│ Average: 0.213233ms
-│ Max    : 3.72098ms
-│ Median : 0.196911ms
+│ Min    : 0.136072ms
+│ Average: 0.156106ms
+│ Max    : 3.9652ms
+│ Median : 0.141003ms
 │
-│ Overhead: 89.0539%
+│ Overhead: 1378.95%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ Proxy::safe_call (5001):
 │
-│ Min    : 0.18583ms
-│ Average: 0.21151ms
-│ Max    : 17.4704ms
-│ Median : 0.194051ms
+│ Min    : 0.13208ms
+│ Average: 0.150884ms
+│ Max    : 2.45681ms
+│ Median : 0.136676ms
 │
-│ Overhead: 88.9015%
+│ Overhead: 1333.56%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: allocate proxy (5001):
 │
-│ Min    : 0.00212ms
-│ Average: 0.002407ms
-│ Max    : 0.010463ms
-│ Median : 0.0022ms
+│ Min    : 0.001756ms
+│ Average: 0.00215ms
+│ Max    : 0.015445ms
+│ Median : 0.001937ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -137,54 +241,54 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: allocate unnamed proxy (5001):
 │
-│ Min    : 0.011842ms
-│ Average: 0.017187ms
-│ Max    : 23.0523ms
-│ Median : 0.012307ms
+│ Min    : 0.008435ms
+│ Average: 0.013925ms
+│ Max    : 21.5278ms
+│ Median : 0.009242ms
 │
-│ Overhead: 69.6698%
+│ Overhead: 377.13%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ jluna: allocate named proxy (5001):
 │
-│ Min    : 0.01224ms
-│ Average: 0.013099ms
-│ Max    : 0.341707ms
-│ Median : 0.012692ms
+│ Min    : 0.008735ms
+│ Average: 0.010561ms
+│ Max    : 0.397079ms
+│ Median : 0.010096ms
 │
-│ Overhead: 70.4539%
+│ Overhead: 421.218%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ State::new_unnamed (5001):
 │
-│ Min    : 0.012074ms
-│ Average: 0.012908ms
-│ Max    : 0.027563ms
-│ Median : 0.012544ms
+│ Min    : 0.008633ms
+│ Average: 0.010431ms
+│ Max    : 0.040571ms
+│ Median : 0.010062ms
 │
-│ Overhead: 70.1574%
+│ Overhead: 419.463%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ State::new_named (5001):
 │
-│ Min    : 0.101031ms
-│ Average: 0.114812ms
-│ Max    : 9.07334ms
-│ Median : 0.102818ms
+│ Min    : 0.071447ms
+│ Average: 0.083297ms
+│ Max    : 6.2583ms
+│ Median : 0.072981ms
 │
-│ Overhead: 95.8102%
+│ Overhead: 3667.73%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: box vector (5001):
 │
-│ Min    : 1.86002ms
-│ Average: 1.93506ms
-│ Max    : 8.92534ms
-│ Median : 1.94216ms
+│ Min    : 1.32979ms
+│ Average: 1.3635ms
+│ Max    : 7.05242ms
+│ Median : 1.35937ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -192,21 +296,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: box vector (5001):
 │
-│ Min    : 1.82568ms
-│ Average: 2.14925ms
-│ Max    : 8.03412ms
-│ Median : 2.16514ms
+│ Min    : 1.52ms
+│ Average: 1.5349ms
+│ Max    : 7.96998ms
+│ Median : 1.52929ms
 │
-│ Overhead: 5.42891%
+│ Overhead: 12.4997%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: unbox vector (5001):
 │
-│ Min    : 1.34171ms
-│ Average: 1.39239ms
-│ Max    : 42.3712ms
-│ Median : 1.35625ms
+│ Min    : 0.89434ms
+│ Average: 0.973024ms
+│ Max    : 34.1679ms
+│ Median : 0.946757ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -214,65 +318,65 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: unbox vector (5001):
 │
-│ Min    : 2.27078ms
-│ Average: 2.42597ms
-│ Max    : 453.843ms
-│ Median : 2.29786ms
+│ Min    : 1.37538ms
+│ Average: 1.42426ms
+│ Max    : 24.2474ms
+│ Median : 1.38854ms
 │
-│ Overhead: 25.7686%
+│ Overhead: 46.6622%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: box primitive (5001):
 │
-│ Min    : 0.212172ms
-│ Average: 0.222925ms
-│ Max    : 1.02418ms
-│ Median : 0.217832ms
+│ Min    : 9.3e-05ms
+│ Average: 0.000129ms
+│ Max    : 0.01324ms
+│ Median : 0.000101ms
 │
 │ Overhead: 0%
 └────────────────────────────────
 
 ┌────────────────────────────────
-│ jluna: box primitive (5001):
+│ jluna: box primitive (50001):
 │
-│ Min    : 0.238265ms
-│ Average: 0.248935ms
-│ Max    : 0.979078ms
-│ Median : 0.246062ms
+│ Min    : 8.9e-05ms
+│ Average: 0.000125ms
+│ Max    : 0.013777ms
+│ Median : 0.0001ms
 │
-│ Overhead: 6.08544%
+│ Overhead: -0.990099%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: unbox primitive (5001):
 │
-│ Min    : 0.799222ms
-│ Average: 0.872552ms
-│ Max    : 0.898298ms
-│ Median : 0.874322ms
+│ Min    : 0.000156ms
+│ Average: 0.000197ms
+│ Max    : 0.013476ms
+│ Median : 0.000166ms
 │
 │ Overhead: 0%
 └────────────────────────────────
 
 ┌────────────────────────────────
-│ jluna: unbox primitive (5001):
+│ jluna: unbox primitive (50001):
 │
-│ Min    : 0.900174ms
-│ Average: 0.945483ms
-│ Max    : 140.967ms
-│ Median : 0.912556ms
+│ Min    : 0.000208ms
+│ Average: 0.000261ms
+│ Max    : 0.023896ms
+│ Median : 0.000233ms
 │
-│ Overhead: 2.13971%
+│ Overhead: 40.3614%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: box string (5001):
 │
-│ Min    : 0.003781ms
-│ Average: 0.00436ms
-│ Max    : 0.015579ms
-│ Median : 0.003913ms
+│ Min    : 0.003018ms
+│ Average: 0.003621ms
+│ Max    : 0.016844ms
+│ Median : 0.003224ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -280,21 +384,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: box string (5001):
 │
-│ Min    : 0.003782ms
-│ Average: 0.004324ms
-│ Max    : 0.012053ms
-│ Median : 0.003935ms
+│ Min    : 0.00305ms
+│ Average: 0.003677ms
+│ Max    : 0.017245ms
+│ Median : 0.003281ms
 │
-│ Overhead: 0.280326%
+│ Overhead: 1.76799%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: unbox string (5001):
 │
-│ Min    : 0.171958ms
-│ Average: 0.188693ms
-│ Max    : 2.94942ms
-│ Median : 0.174221ms
+│ Min    : 0.121719ms
+│ Average: 0.136362ms
+│ Max    : 2.54444ms
+│ Median : 0.123587ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -302,21 +406,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: unbox string (5001):
 │
-│ Min    : 0.172124ms
-│ Average: 0.188247ms
-│ Max    : 2.8443ms
-│ Median : 0.174563ms
+│ Min    : 0.12157ms
+│ Average: 0.135962ms
+│ Max    : 2.51909ms
+│ Median : 0.123589ms
 │
-│ Overhead: 0.098055%
+│ Overhead: 0.00161829%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: box map (5001):
 │
-│ Min    : 1.55704ms
-│ Average: 1.63064ms
-│ Max    : 131.252ms
-│ Median : 1.57543ms
+│ Min    : 1.09888ms
+│ Average: 1.15074ms
+│ Max    : 99.4658ms
+│ Median : 1.13463ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -324,21 +428,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: box map (5001):
 │
-│ Min    : 1.6216ms
-│ Average: 1.64787ms
-│ Max    : 41.8279ms
-│ Median : 1.63866ms
+│ Min    : 1.11199ms
+│ Average: 1.14786ms
+│ Max    : 27.789ms
+│ Median : 1.14118ms
 │
-│ Overhead: 1.96727%
+│ Overhead: 0.577279%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: unbox map (5001):
 │
-│ Min    : 36.1933ms
-│ Average: 56.858ms
-│ Max    : 1970.54ms
-│ Median : 49.739ms
+│ Min    : 25.8248ms
+│ Average: 40.1111ms
+│ Max    : 990.259ms
+│ Median : 34.61ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -346,21 +450,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: unbox map (5001):
 │
-│ Min    : 45.1095ms
-│ Average: 70.5671ms
-│ Max    : 82504.6ms
-│ Median : 49.7359ms
+│ Min    : 34.6708ms
+│ Average: 42.059ms
+│ Max    : 571.911ms
+│ Median : 39.4903ms
 │
-│ Overhead: -0.00638935%
+│ Overhead: 14.1009%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: box complex (5001):
 │
-│ Min    : 0.000515ms
-│ Average: 0.002184ms
-│ Max    : 7.85639ms
-│ Median : 0.000546ms
+│ Min    : 0.000549ms
+│ Average: 0.002883ms
+│ Max    : 11.3436ms
+│ Median : 0.000568ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -368,21 +472,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: box complex (5001):
 │
-│ Min    : 0.00165ms
-│ Average: 0.006098ms
-│ Max    : 21.3916ms
-│ Median : 0.001731ms
+│ Min    : 0.001576ms
+│ Average: 0.007478ms
+│ Max    : 28.8591ms
+│ Median : 0.001667ms
 │
-│ Overhead: 52.0422%
+│ Overhead: 193.486%    // TODO
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: unbox complex (5001):
 │
-│ Min    : 0.228839ms
-│ Average: 0.307285ms
-│ Max    : 128.786ms
-│ Median : 0.233246ms
+│ Min    : 0.156316ms
+│ Average: 0.203867ms
+│ Max    : 33.6429ms
+│ Median : 0.172841ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -390,21 +494,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: unbox complex (5001):
 │
-│ Min    : 0.228714ms
-│ Average: 0.281403ms
-│ Max    : 27.8225ms
-│ Median : 0.239751ms
+│ Min    : 0.160317ms
+│ Average: 0.205707ms
+│ Max    : 29.5478ms
+│ Median : 0.173785ms
 │
-│ Overhead: 1.37527%
+│ Overhead: 0.546167%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: box set (5001):
 │
-│ Min    : 12.6745ms
-│ Average: 14.1101ms
-│ Max    : 92.1602ms
-│ Median : 13.7318ms
+│ Min    : 9.65108ms
+│ Average: 9.97791ms
+│ Max    : 108.942ms
+│ Median : 9.76824ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -412,21 +516,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: box set (5001):
 │
-│ Min    : 12.1719ms
-│ Average: 15.0682ms
-│ Max    : 1567.73ms
-│ Median : 13.0684ms
+│ Min    : 7.56805ms
+│ Average: 7.7798ms
+│ Max    : 400.683ms
+│ Median : 7.65238ms
 │
-│ Overhead: -4.83122%
+│ Overhead: -21.6606%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: unbox set (5001):
 │
-│ Min    : 74.0269ms
-│ Average: 138.7ms
-│ Max    : 6858.1ms
-│ Median : 108.367ms
+│ Min    : 52.5708ms
+│ Average: 72.4351ms
+│ Max    : 2244.93ms
+│ Median : 66.2702ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -434,21 +538,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: unbox set (5001):
 │
-│ Min    : 74.6217ms
-│ Average: 215.226ms
-│ Max    : 207622ms
-│ Median : 93.6432ms
+│ Min    : 54.2185ms
+│ Average: 107.917ms
+│ Max    : 74538.2ms
+│ Median : 69.3646ms
 │
-│ Overhead: -13.587%
+│ Overhead: 4.66938%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: unbox pair (5001):
 │
-│ Min    : 0.222091ms
-│ Average: 0.289421ms
-│ Max    : 9.4941ms
-│ Median : 0.233174ms
+│ Min    : 0.181594ms
+│ Average: 0.581816ms
+│ Max    : 1165.93ms
+│ Median : 0.205349ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -456,21 +560,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: unbox pair (5001):
 │
-│ Min    : 0.221753ms
-│ Average: 0.287786ms
-│ Max    : 6.87794ms
-│ Median : 0.234459ms
+│ Min    : 0.18106ms
+│ Average: 0.539973ms
+│ Max    : 1299.76ms
+│ Median : 0.205903ms
 │
-│ Overhead: 0.274788%
+│ Overhead: 0.269785%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: box pair (5001):
 │
-│ Min    : 0.00053ms
-│ Average: 0.002559ms
-│ Max    : 9.91296ms
-│ Median : 0.000544ms
+│ Min    : 0.001562ms
+│ Average: 0.271454ms
+│ Max    : 1348.74ms
+│ Median : 0.001614ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -478,21 +582,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: box pair (5001):
 │
-│ Min    : 0.00054ms
-│ Average: 0.000586ms
-│ Max    : 0.009045ms
-│ Median : 0.000555ms
+│ Min    : 0.00057ms
+│ Average: 0.001097ms
+│ Max    : 0.947063ms
+│ Median : 0.000852ms
 │
-│ Overhead: 1.00091%
+│ Overhead: -47.2119%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: unbox tuple (5001):
 │
-│ Min    : 0.286565ms
-│ Average: 0.369769ms
-│ Max    : 9.45741ms
-│ Median : 0.303056ms
+│ Min    : 0.216294ms
+│ Average: 1.25926ms
+│ Max    : 4024.36ms
+│ Median : 0.257425ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -500,21 +604,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: unbox tuple (5001):
 │
-│ Min    : 0.291173ms
-│ Average: 0.377326ms
-│ Max    : 6.89849ms
-│ Median : 0.307781ms
+│ Min    : 0.231988ms
+│ Average: 0.89201ms
+│ Max    : 2598.78ms
+│ Median : 0.26286ms
 │
-│ Overhead: 0.773529%
+│ Overhead: 2.11129%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: box tuple (5001):
 │
-│ Min    : 0.023132ms
-│ Average: 0.056665ms
-│ Max    : 147.544ms
-│ Median : 0.023505ms
+│ Min    : 0.016306ms
+│ Average: 0.607559ms
+│ Max    : 2938.25ms
+│ Median : 0.018594ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -522,21 +626,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: box tuple (5001):
 │
-│ Min    : 0.001056ms
-│ Average: 0.001152ms
-│ Max    : 0.009179ms
-│ Median : 0.00111ms
+│ Min    : 0.001026ms
+│ Average: 0.001703ms
+│ Max    : 2.85958ms
+│ Median : 0.001083ms
 │
-│ Overhead: -95.2776%
+│ Overhead: -94.1755%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: hash (5001):
 │
-│ Min    : 0.002215ms
-│ Average: 0.003398ms
-│ Max    : 0.016616ms
-│ Median : 0.002885ms
+│ Min    : 0.00298ms
+│ Average: 0.025945ms
+│ Max    : 7.40414ms
+│ Median : 0.005514ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -544,21 +648,21 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: hash (5001):
 │
-│ Min    : 0.002271ms
-│ Average: 0.003231ms
-│ Max    : 0.932387ms
-│ Median : 0.002732ms
+│ Min    : 0.001922ms
+│ Average: 0.023246ms
+│ Max    : 8.41301ms
+│ Median : 0.002737ms
 │
-│ Overhead: -5.30329%
+│ Overhead: -50.3627%
 └────────────────────────────────
 
 ┌────────────────────────────────
 │ C-API: call lambda without box (5001):
 │
-│ Min    : 0.100574ms
-│ Average: 0.124653ms
-│ Max    : 84.5505ms
-│ Median : 0.103921ms
+│ Min    : 0.085188ms
+│ Average: 0.783214ms
+│ Max    : 2614.78ms
+│ Median : 0.101716ms
 │
 │ Overhead: 0%
 └────────────────────────────────
@@ -566,14 +670,13 @@ clem@birdnest:~/Workspace/jluna/cmake-build-debug$ ./JLUNA_BENCHMARK
 ┌────────────────────────────────
 │ jluna: call lambda with box (5001):
 │
-│ Min    : 0.71216ms
-│ Average: 0.787106ms
-│ Max    : 198.969ms
-│ Median : 0.726684ms
+│ Min    : 0.572225ms
+│ Average: 1.65789ms
+│ Max    : 2488.49ms
+│ Median : 0.692873ms
 │
-│ Overhead: 74.977%
+│ Overhead: 581.184%
 └────────────────────────────────
 
-[C++][LOG] Benchmark written to /home/clem/Workspace/jluna/.benchmark/results/11-03-2022_19:39:54
+[C++][LOG] Benchmark written to /home/clem/Workspace/jluna/.benchmark/results/13-03-2022_00:59:35
 .csv
-
