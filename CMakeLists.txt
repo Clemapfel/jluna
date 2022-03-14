@@ -1,79 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
-project(jluna)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Debug)
+project(jluna LANGUAGES CXX)
 
-if (WIN32)
-    message(WARNING "Windows support is experimental, some features my not work correctly. It maybe be necessary to fork jluna and modify jluna/CMakeLists.txt")
-endif()
+# ---- Find Julia ----
 
-### COMPILER SUPPORT ###
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-volatile")
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "10.0.0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts -Wno-volatile")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "19.20")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-else()
-    message(FATAL_ERROR "Currently, the only supported compilers are G++10 (or higher), Clang-12 (or higher) and MSVC 19.30 (experimental)")
-endif()
-
-### JULIA ###
-
-if (WIN32)
-    if (NOT DEFINED ENV{JULIA_PATH})
-        message(FATAL_ERROR "Cannot determine location of julia image. Before running cmake, please manually set the environment variable JULIA_PATH using:\n\tset JULIA_PATH=\"C:/path/to/your/.../julia-1.7.2\"\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))")
-    endif()
-else()
-    # access julia through julia environment variable
-    if (NOT DEFINED ENV{JULIA_PATH})
-        execute_process(
-                COMMAND julia -e "println(joinpath(Sys.BINDIR, \"..\"))"
-                OUTPUT_VARIABLE JULIA_PATH_LOCAL)
-
-        if ("${JULIA_PATH}" STREQUAL "")
-            message(FATAL_ERROR "Cannot determine location of julia image. Before running cmake, please manually set the environment variable JULIA_PATH using\n    export JULIA_PATH=/path/to/your/.../julia\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))
-    For more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
-        endif()
-
-        set(ENV{JULIA_PATH} ${JULIA_PATH_LOCAL})
-    endif()
-endif()
-
-if (WIN32)
-    set(JULIA_LIB "$ENV{JULIA_PATH}/lib/libjulia.dll.a")
-else()
-    set(JULIA_LIB "$ENV{JULIA_PATH}/lib/libjulia.so")
-endif()
-
-set(JULIA_INCLUDE "$ENV{JULIA_PATH}/include/julia")
-set(JULIA_FOUND TRUE)
-
-# verify shared library
-if (NOT EXISTS ${JULIA_LIB})
-    if (WIN32)
-        message(WARNING "Cannot find shared library libjulia.dll.a in $ENV{JULIA_PATH}/lib/")
-    else()
-        message(WARNING "Cannot find shared library libjulia.so in $ENV{JULIA_PATH}/lib/")
-    endif()
-    set(JULIA_FOUND FALSE)
-endif()
-
-# verify header
-if (NOT EXISTS ${JULIA_INCLUDE}/julia.h)
-    message(WARNING "Cannot find library header julia.h in $ENV{JULIA_PATH}/include/julia/")
-    set(JULIA_FOUND FALSE)
-endif()
-
-if (${JULIA_FOUND})
-    message("[LOG] Successfully detected julia image at $ENV{JULIA_PATH}")
-else()
-    message(FATAL_ERROR "Failed to detect julia image. Make sure JULIA_PATH is set correctly and that the julia image is uncompressed and not corrupted.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
-endif()
-
-include_directories(${JULIA_INCLUDE})
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find")
+find_package(Julia REQUIRED)
 
 ### JLUNA ###
 
