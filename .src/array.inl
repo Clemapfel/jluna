@@ -271,7 +271,7 @@ namespace jluna
     template<Boxable V, size_t R>
     void* Array<V, R>::data()
     {
-        return reinterpret_cast<jl_array_t*>(this->operator Any*());
+        return reinterpret_cast<jl_array_t*>(this->operator Any*())->data;
     } //°
 
     // ###
