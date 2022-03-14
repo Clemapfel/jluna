@@ -103,6 +103,12 @@ add_library(
 target_link_libraries(jluna PUBLIC jluna_c_adapter)
 target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>")
 
+# ---- HACK: export all symbols on Windows ----
+
+# FIXME: Exporting all symbols is bad practice. Fix this using the
+#        GenerateExportHeader CMake module and visibility proprties.
+set_target_properties(jluna jluna_c_adapter PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS YES)
+
 # ---- Install rules ----
 
 if(NOT CMAKE_SKIP_INSTALL_RULES)
@@ -121,7 +127,7 @@ elseif(NOT PROJECT_IS_TOP_LEVEL)
 endif()
 
 include(CTest)
-if(BUILD_TESTING)
+if(BUILD_TESTING AND NOT WIN32)
   add_executable(
       jluna_test
       .test/main.cpp
@@ -132,7 +138,7 @@ if(BUILD_TESTING)
 endif()
 
 option(BUILD_BENCHMARK "" ON)
-if(BUILD_BENCHMARK)
+if(BUILD_BENCHMARK AND NOT WIN32)
   add_executable(
       jluna_benchmark
       .benchmark/main.cpp

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <julia.h>
+#include <include/julia_wrapper.hpp>
 
 #include <vector>
 

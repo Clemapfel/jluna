@@ -3,7 +3,7 @@
 // Created on 31.01.22 by clem (mail@clemens-cords.com)
 //
 
-#include <julia.h>
+#include <include/julia_wrapper.hpp>
 
 #include <sstream>
 #include <iostream>
@@ -214,7 +214,7 @@ namespace jluna::State::detail
     Any * get_reference(size_t key)
     {
         static Function* get_reference = jl_find_function("jluna.memory_handler", "get_reference");
-        return jluna::safe_call(get_reference, jl_box_uint64(reinterpret_cast<size_t>(key)));
+        return jluna::safe_call(get_reference, jl_box_uint64(static_cast<size_t>(key)));
     }
 
     void free_reference(size_t key)
@@ -226,7 +226,7 @@ namespace jluna::State::detail
         static Function* free_reference = jl_find_function("jluna.memory_handler", "free_reference");
 
         jl_gc_pause;
-        jluna::safe_call(free_reference, jl_box_uint64(reinterpret_cast<size_t>(key)));
+        jluna::safe_call(free_reference, jl_box_uint64(static_cast<size_t>(key)));
         jl_gc_unpause;
     }
 
