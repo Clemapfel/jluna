@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(jluna LANGUAGES CXX)
 
+include(cmake/project-is-top-level.cmake)
+
 # ---- Find Julia ----
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find")
