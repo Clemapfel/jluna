@@ -7,14 +7,26 @@ project(jluna LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find")
 find_package(Julia REQUIRED)
 
-### JLUNA ###
+# ---- Declare C adapter ----
 
-include_directories(${CMAKE_SOURCE_DIR})
+add_library(
+    jluna_c_adapter SHARED
+    .src/c_adapter.hpp
+    .src/c_adapter.cpp
+)
 
-set(RESOURCE_PATH ${CMAKE_SOURCE_DIR})
-configure_file(${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in ${CMAKE_SOURCE_DIR}/.src/include_julia.inl @ONLY)
+target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
+target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 
-add_library(jluna SHARED
+# NOTE: Julia::Julia is not present in the install interface. Consumers will
+#       have to link to julia manually. Julia doesn't have a CMake package.
+target_link_libraries(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:Julia::Julia>")
+
+# ---- Declare library ----
+
+add_library(
+    jluna SHARED
+
     jluna.hpp
 
     include/exceptions.hpp
@@ -75,31 +87,7 @@ add_library(jluna SHARED
     include/gc_sentinel.hpp
 )
 
-set_target_properties(jluna PROPERTIES
-    LINKER_LANGUAGE C
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
 target_compile_features(jluna PUBLIC cxx_std_20)
-
-### C ADAPTER ##
-
-add_library(jluna_c_adapter SHARED
-    .src/c_adapter.hpp
-    .src/c_adapter.cpp
-)
-
-target_include_directories(jluna_c_adapter
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-    PUBLIC $<BUILD_INTERFACE:${JULIA_INCLUDE}>
-)
-
-target_link_libraries(jluna_c_adapter PUBLIC $<BUILD_INTERFACE:${JULIA_LIB}>)
-
-set_target_properties(jluna_c_adapter PROPERTIES
-    LINKER_LANGUAGE C
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-
 target_link_libraries(jluna PUBLIC jluna_c_adapter)
 
 ### EXECUTABLES ###
