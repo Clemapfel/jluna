@@ -23,6 +23,8 @@ julia_bail_if_false("The Julia executable could not report its location" JULIA_B
 get_filename_component(julia_prefix "${JULIA_BINDIR}" DIRECTORY)
 
 if(WIN32)
+  set(julia_old_CMAKE_FIND_LIBRARY_SUFFIXES "")
+  set(julia_old_CMAKE_FIND_LIBRARY_PREFIXES "")
   if(CMAKE_FIND_LIBRARY_SUFFIXES)
     set(julia_old_CMAKE_FIND_LIBRARY_SUFFIXES "${CMAKE_FIND_LIBRARY_SUFFIXES}")
     list(APPEND CMAKE_FIND_LIBRARY_SUFFIXES .dll.a)
