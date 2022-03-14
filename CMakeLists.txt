@@ -12,6 +12,14 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find")
 find_package(Julia REQUIRED)
 
+# ---- Resource path include ----
+
+# FIXME: This is pointing at the project directory, this obviously will not
+#        work after install. Figure out how to make this work as a relocatable
+#        CMake package with paths being relative to the prefix.
+set(RESOURCE_PATH "${PROJECT_SOURCE_DIR}")
+configure_file(.src/include_julia.inl.in .src/include_julia.inl @ONLY)
+
 # ---- Declare C adapter ----
 
 add_library(
@@ -93,6 +101,7 @@ add_library(
 )
 
 target_link_libraries(jluna PUBLIC jluna_c_adapter)
+target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>")
 
 # ---- Install rules ----
 
