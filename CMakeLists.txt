@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.16)
 project(jluna VERSION 0.0.0 LANGUAGES CXX)
 
 include(cmake/project-is-top-level.cmake)
+if(PROJECT_IS_TOP_LEVEL)
+  option(jluna_DEVELOPER_MODE "Enable developer mode" OFF)
+endif()
 
 # ---- Find Julia ----
 
@@ -97,17 +100,35 @@ if(NOT CMAKE_SKIP_INSTALL_RULES)
   include(cmake/install-rules.cmake)
 endif()
 
-### EXECUTABLES ###
+# ---- Developer mode ----
 
-add_executable(JLUNA_TEST
-    .test/main.cpp
-    .test/test.hpp
-)
-target_link_libraries(JLUNA_TEST jluna ${JULIA_LIB})
+if(NOT jluna_DEVELOPER_MODE)
+  return()
+elseif(NOT PROJECT_IS_TOP_LEVEL)
+  message(
+      AUTHOR_WARNING
+      "Developer mode is intended for developers of jluna"
+  )
+endif()
 
-add_executable(JLUNA_BENCHMARK
-    .benchmark/main.cpp
-    .benchmark/benchmark.hpp
-    .benchmark/benchmark_aux.hpp
-)
-target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})
+include(CTest)
+if(BUILD_TESTING)
+  add_executable(
+      jluna_test
+      .test/main.cpp
+      .test/test.hpp
+  )
+  target_link_libraries(jluna_test PRIVATE jluna)
+  add_test(NAME jluna_test COMMAND jluna_test)
+endif()
+
+option(BUILD_BENCHMARK "" ON)
+if(BUILD_BENCHMARK)
+  add_executable(
+      jluna_benchmark
+      .benchmark/main.cpp
+      .benchmark/benchmark.hpp
+      .benchmark/benchmark_aux.hpp
+  )
+  target_link_libraries(jluna_benchmark PRIVATE jluna)
+endif()
