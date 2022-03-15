@@ -56,9 +56,11 @@ find_path(
 )
 julia_bail_if_false("The Julia header could not be found" JULIA_INCLUDE_DIR)
 
-file(STRINGS "${JULIA_INCLUDE_DIR}/julia_version.h" julia_version LIMIT_COUNT 1 REGEX JULIA_VERSION_STRING)
-string(REGEX REPLACE ".*\"([^\"]+)\".*" "\\1" julia_version "${julia_version}")
-set(JULIA_VERSION "${julia_version}" CACHE STRING "Version of Julia")
+if(NOT DEFINED JULIA_VERSION)
+  file(STRINGS "${JULIA_INCLUDE_DIR}/julia_version.h" julia_version LIMIT_COUNT 1 REGEX JULIA_VERSION_STRING)
+  string(REGEX REPLACE ".*\"([^\"]+)\".*" "\\1" julia_version "${julia_version}")
+  set(JULIA_VERSION "${julia_version}" CACHE STRING "Version of Julia")
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
