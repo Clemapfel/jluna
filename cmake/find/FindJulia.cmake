@@ -10,14 +10,16 @@ endmacro()
 find_program(JULIA_EXECUTABLE julia PATHS ENV JULIA_BINDIR)
 julia_bail_if_false("The Julia executable could not be found" JULIA_EXECUTABLE)
 
-# The executable could be a chocolatey shim, so run some Julia code to report
-# the path of the BINDIR
-execute_process(
-    COMMAND "${JULIA_EXECUTABLE}" -e "print(Sys.BINDIR)"
-    OUTPUT_VARIABLE julia_bindir
-)
-file(TO_CMAKE_PATH "${julia_bindir}" julia_bindir)
-set(JULIA_BINDIR "${julia_bindir}" CACHE PATH "")
+if(NOT DEFINED JULIA_BINDIR)
+  # The executable could be a chocolatey shim, so run some Julia code to report
+  # the path of the BINDIR
+  execute_process(
+      COMMAND "${JULIA_EXECUTABLE}" -e "print(Sys.BINDIR)"
+      OUTPUT_VARIABLE julia_bindir
+  )
+  file(TO_CMAKE_PATH "${julia_bindir}" julia_bindir)
+  set(JULIA_BINDIR "${julia_bindir}" CACHE PATH "")
+endif()
 julia_bail_if_false("The Julia executable could not report its location" JULIA_BINDIR)
 
 get_filename_component(julia_prefix "${JULIA_BINDIR}" DIRECTORY)
