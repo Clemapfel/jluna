@@ -17,8 +17,9 @@ find_package(Julia 1.7.0 REQUIRED)
 # FIXME: This is pointing at the project directory, this obviously will not
 #        work after install. Figure out how to make this work as a relocatable
 #        CMake package with paths being relative to the prefix.
-set(RESOURCE_PATH "${PROJECT_SOURCE_DIR}")
-configure_file(.src/include_julia.inl.in .src/include_julia.inl @ONLY)
+set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}")
+file(READ include/jluna.jl JULIA_SOURCE)
+configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
 
 # ---- Declare C adapter ----
 
@@ -31,6 +32,9 @@ add_library(
 target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
 target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 target_link_libraries(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:Julia::Julia>")
+set_target_properties(jluna_c_adapter PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${C_ADAPTER_PATH}
+)
 
 # ---- Declare library ----
 

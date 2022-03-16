@@ -17,7 +17,6 @@
 #include <include/module.hpp>
 #include <include/type.hpp>
 
-
 namespace jluna::detail
 {
     static void on_exit()
