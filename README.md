@@ -23,6 +23,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
    5.3 [cmake 3.16+](#dependencies)<br>
    5.4 [unix-based OS](#dependencies)<br>
 6. [License](#license)
+7. [Authors](#credits)
    
 ---
 
@@ -250,7 +251,15 @@ I would like to ask people using this library in commercial or university settin
 
 For collaboration or further questions, feel free to [contact me](https://www.clemens-cords.com/contact).
 
-Thank you for your consideration, 
+Thank you for your consideration,
 C.
+
+---
+
+## Credits
+jluna was created by [Clem Cords](https://github.com/Clemapfel)
+
+#### March 2022:<br>
++ cmake improvements by [friendlyanon](https://github.com/friendlyanon)
 
 ---
