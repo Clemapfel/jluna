@@ -1,5 +1,5 @@
 #include <iostream>
-#include <julia.h>
+#include <include/julia_wrapper.hpp>
 #include <ptrhash.h>
 #include <jluna.hpp>
 #include <.test/test.hpp>

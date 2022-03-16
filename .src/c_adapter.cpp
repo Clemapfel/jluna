@@ -1,6 +1,6 @@
 #ifdef __cplusplus
 
-#include <julia.h>
+#include <include/julia_wrapper.hpp>
 
 #include <iostream>
 

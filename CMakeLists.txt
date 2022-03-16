@@ -1,88 +1,45 @@
-cmake_minimum_required(VERSION 3.16)
-project(jluna)
+cmake_minimum_required(VERSION 3.12)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Debug)
+project(jluna VERSION 0.8.4 LANGUAGES CXX)
 
-if (WIN32)
-    message(WARNING "Windows support is experimental, some features my not work correctly. It maybe be necessary to fork jluna and modify jluna/CMakeLists.txt")
+include(cmake/project-is-top-level.cmake)
+if(PROJECT_IS_TOP_LEVEL)
+    option(jluna_DEVELOPER_MODE "Enable developer mode" OFF)
 endif()
 
-### COMPILER SUPPORT ###
+# ---- Find Julia ----
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-volatile")
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "10.0.0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts -Wno-volatile")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "19.20")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-else()
-    message(FATAL_ERROR "Currently, the only supported compilers are G++10 (or higher), Clang-12 (or higher) and MSVC 19.30 (experimental)")
-endif()
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find")
+find_package(Julia 1.7 REQUIRED)
 
-### JULIA ###
+# ---- Resource path include ----
 
-if (WIN32)
-    if (NOT DEFINED ENV{JULIA_PATH})
-        message(FATAL_ERROR "Cannot determine location of julia image. Before running cmake, please manually set the environment variable JULIA_PATH using:\n\tset JULIA_PATH=\"C:/path/to/your/.../julia-1.7.2\"\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))")
-    endif()
-else()
-    # access julia through julia environment variable
-    if (NOT DEFINED ENV{JULIA_PATH})
-        execute_process(
-                COMMAND julia -e "println(joinpath(Sys.BINDIR, \"..\"))"
-                OUTPUT_VARIABLE JULIA_PATH_LOCAL)
+# FIXME: This is pointing at the project directory, this obviously will not
+#        work after install. Figure out how to make this work as a relocatable
+#        CMake package with paths being relative to the prefix.
+set(RESOURCE_PATH "${PROJECT_SOURCE_DIR}")
+configure_file(.src/include_julia.inl.in .src/include_julia.inl @ONLY)
 
-        if ("${JULIA_PATH}" STREQUAL "")
-            message(FATAL_ERROR "Cannot determine location of julia image. Before running cmake, please manually set the environment variable JULIA_PATH using\n    export JULIA_PATH=/path/to/your/.../julia\nIf you are unsure of the location of your julia image, you can access the path from within the julia REPL using\n    println(joinpath(Sys.BINDIR, \"..\"))
-    For more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
-        endif()
+# ---- Declare C adapter ----
 
-        set(ENV{JULIA_PATH} ${JULIA_PATH_LOCAL})
-    endif()
-endif()
+add_library(
+    jluna_c_adapter SHARED
+    .src/c_adapter.hpp
+    .src/c_adapter.cpp
+)
 
-if (WIN32)
-    set(JULIA_LIB "$ENV{JULIA_PATH}/lib/libjulia.dll.a")
-else()
-    set(JULIA_LIB "$ENV{JULIA_PATH}/lib/libjulia.so")
-endif()
+target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
+target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 
-set(JULIA_INCLUDE "$ENV{JULIA_PATH}/include/julia")
-set(JULIA_FOUND TRUE)
+# NOTE: Julia::Julia is not present in the install interface. Consumers will
+#       have to link to julia manually. Julia doesn't have a CMake package.
+target_link_libraries(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:Julia::Julia>")
 
-# verify shared library
-if (NOT EXISTS ${JULIA_LIB})
-    if (WIN32)
-        message(WARNING "Cannot find shared library libjulia.dll.a in $ENV{JULIA_PATH}/lib/")
-    else()
-        message(WARNING "Cannot find shared library libjulia.so in $ENV{JULIA_PATH}/lib/")
-    endif()
-    set(JULIA_FOUND FALSE)
-endif()
+# ---- Declare library ----
 
-# verify header
-if (NOT EXISTS ${JULIA_INCLUDE}/julia.h)
-    message(WARNING "Cannot find library header julia.h in $ENV{JULIA_PATH}/include/julia/")
-    set(JULIA_FOUND FALSE)
-endif()
+add_library(
+    jluna SHARED
 
-if (${JULIA_FOUND})
-    message("[LOG] Successfully detected julia image at $ENV{JULIA_PATH}")
-else()
-    message(FATAL_ERROR "Failed to detect julia image. Make sure JULIA_PATH is set correctly and that the julia image is uncompressed and not corrupted.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
-endif()
-
-include_directories(${JULIA_INCLUDE})
-
-### JLUNA ###
-
-include_directories(${CMAKE_SOURCE_DIR})
-
-set(RESOURCE_PATH ${CMAKE_SOURCE_DIR})
-configure_file(${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in ${CMAKE_SOURCE_DIR}/.src/include_julia.inl @ONLY)
-
-add_library(jluna SHARED
     jluna.hpp
 
     include/exceptions.hpp
@@ -143,71 +100,50 @@ add_library(jluna SHARED
     include/gc_sentinel.hpp
 )
 
-set_target_properties(jluna PROPERTIES
-    LINKER_LANGUAGE C
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-target_compile_features(jluna PUBLIC cxx_std_20)
-
-### C ADAPTER ##
-
-add_library(jluna_c_adapter SHARED
-    .src/c_adapter.hpp
-    .src/c_adapter.cpp
-)
-
-target_include_directories(jluna_c_adapter
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-    PUBLIC $<BUILD_INTERFACE:${JULIA_INCLUDE}>
-)
-
-target_link_libraries(jluna_c_adapter PUBLIC $<BUILD_INTERFACE:${JULIA_LIB}>)
-
-set_target_properties(jluna_c_adapter PROPERTIES
-    LINKER_LANGUAGE C
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-
 target_link_libraries(jluna PUBLIC jluna_c_adapter)
+target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>")
 
-### EXECUTABLES ###
+# ---- HACK: export all symbols on Windows ----
 
-add_executable(JLUNA_TEST
-    .test/main.cpp
-    .test/test.hpp
-)
-target_link_libraries(JLUNA_TEST jluna ${JULIA_LIB})
+# FIXME: Exporting all symbols is bad practice. Fix this using the
+#        GenerateExportHeader CMake module and visibility proprties.
+set_target_properties(jluna jluna_c_adapter PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS YES)
 
-add_executable(JLUNA_BENCHMARK
-    .benchmark/main.cpp
-    .benchmark/benchmark.hpp
-    .benchmark/benchmark_aux.hpp
-)
-target_link_libraries(JLUNA_BENCHMARK jluna ${JULIA_LIB})
+# ---- Install rules ----
 
-### INSTALL ###
-
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/jluna-config.cmake [[
-if (NOT ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "12.0.0") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION STRGREATER_EQUAL "10.0.0")))
-    message(FATAL_ERROR "Currently, the only supported compilers are G++10, G++11 (recommended) and Clang-12")
+if(NOT CMAKE_SKIP_INSTALL_RULES)
+    include(cmake/install-rules.cmake)
 endif()
-include("${CMAKE_CURRENT_LIST_DIR}/jluna-targets.cmake")
-]])
 
-install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/jluna-config.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/jluna
-)
+# ---- Developer mode ----
 
-install(TARGETS jluna jluna_c_adapter EXPORT jluna_targets)
+if(NOT jluna_DEVELOPER_MODE)
+    return()
+elseif(NOT PROJECT_IS_TOP_LEVEL)
+    message(
+        AUTHOR_WARNING
+        "Developer mode is intended for developers of jluna"
+    )
+endif()
 
-install(EXPORT jluna_targets
-    FILE jluna-targets.cmake
-    NAMESPACE jluna::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/jluna
-)
+include(CTest)
+if(BUILD_TESTING AND NOT WIN32)
+    add_executable(
+        jluna_test
+        .test/main.cpp
+        .test/test.hpp
+    )
+    target_link_libraries(jluna_test PRIVATE jluna)
+    add_test(NAME jluna_test COMMAND jluna_test)
+endif()
 
-install(FILES jluna.hpp ${headers} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jluna)
-install(DIRECTORY include .src DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jluna)
-
-target_include_directories(jluna INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/jluna>)
+option(BUILD_BENCHMARK "" ON)
+if(BUILD_BENCHMARK AND NOT WIN32)
+    add_executable(
+        jluna_benchmark
+        .benchmark/main.cpp
+        .benchmark/benchmark.hpp
+        .benchmark/benchmark_aux.hpp
+    )
+    target_link_libraries(jluna_benchmark PRIVATE jluna)
+endif()
