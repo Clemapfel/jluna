@@ -707,7 +707,7 @@ module jluna
 
             println("jluna.memory_handler._refs: ");
             for e in _refs[]
-                println("\t", Int64(e.first), " => ", e.second[], " (", typeof(e.second[]), ")")
+                println("\t", Int64(e.first), " => ", e.second[], " (", typeof(e.second[]), ") ")
             end
         end
 
@@ -809,7 +809,7 @@ module jluna
             State() = new((), nothing)
         end
 
-        _library_name = "<call jluna::State::initialize before using cppcall>"
+        _library_name = "<call State::initialize before using cppcall>"
         _state = Base.Ref{_cppcall.State}(State())
 
         """

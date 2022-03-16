@@ -5,12 +5,12 @@
 
 #pragma once
 
-#cmakedefine C_ADAPTER_PATH "@C_ADAPTER_PATH@"
-
 namespace jluna::detail
 {
-    ///@brief allow julia to load jluna by using C++ #import statement
+    static inline const char* c_adapter_path = "@C_ADAPTER_PATH@";
+
     static inline const char* include = R"(
         @JULIA_SOURCE@
     )";
+
 }

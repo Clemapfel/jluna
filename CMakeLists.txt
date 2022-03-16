@@ -17,8 +17,8 @@ find_package(Julia 1.7.0 REQUIRED)
 # FIXME: This is pointing at the project directory, this obviously will not
 #        work after install. Figure out how to make this work as a relocatable
 #        CMake package with paths being relative to the prefix.
-set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}")
 file(READ include/jluna.jl JULIA_SOURCE)
+set(C_ADAPTER_PATH ${CMAKE_INSTALL_PREFIX})
 configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
 
 # ---- Declare C adapter ----
@@ -30,11 +30,14 @@ add_library(
 )
 
 target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
-target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
+target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
 target_link_libraries(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:Julia::Julia>")
+
 set_target_properties(jluna_c_adapter PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${C_ADAPTER_PATH}
 )
+
+message("[LOG] writing libjluna_c_adapter to globally available directory \"${C_ADAPTER_PATH}\"")
 
 # ---- Declare library ----
 
@@ -101,13 +104,13 @@ add_library(jluna SHARED
 )
 
 target_link_libraries(jluna PUBLIC jluna_c_adapter)
-target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>")
+target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
 
 # ---- HACK: export all symbols on Windows ----
 
 # FIXME: Exporting all symbols is bad practice. Fix this using the
 #        GenerateExportHeader CMake module and visibility proprties.
-set_target_properties(jluna jluna_c_adapter PROPERTIES
+set_target_properties(jluna PROPERTIES
     WINDOWS_EXPORT_ALL_SYMBOLS YES
     LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
 )

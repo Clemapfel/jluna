@@ -13,9 +13,9 @@
 #include <include/exceptions.hpp>
 #include <include/julia_extension.hpp>
 #include <include/proxy.hpp>
-#include <.src/include_julia.inl>
 #include <include/module.hpp>
 #include <include/type.hpp>
+#include "include_julia.inl"
 
 namespace jluna::detail
 {
@@ -44,7 +44,6 @@ namespace jluna::State
         jl_eval_string(jluna::detail::include);
         forward_last_exception();
 
-
         jl_eval_string(R"(
             begin
                 local version = tryparse(Float32, SubString(string(VERSION), 1, 3))
@@ -56,7 +55,10 @@ namespace jluna::State
         )");
         forward_last_exception();
 
-        jl_eval_string(("jluna._cppcall.eval(:(_library_name = \"" + std::string(RESOURCE_PATH) + "/libjluna_c_adapter.so\"))").c_str());
+        std::stringstream str;
+        str << "jluna._cppcall.eval(:(_library_name = \"" << jluna::detail::c_adapter_path << "/libjluna_c_adapter.so\"))";
+
+        jl_eval_string(str.str().c_str());
         forward_last_exception();
 
         jl_eval_string(R"(
