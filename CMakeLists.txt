@@ -10,7 +10,7 @@ endif()
 # ---- Find Julia ----
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find")
-find_package(Julia REQUIRED)
+find_package(Julia 1.7 REQUIRED)
 
 # ---- Resource path include ----
 
