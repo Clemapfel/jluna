@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(jluna VERSION 0.0.0 LANGUAGES CXX)
+project(jluna VERSION 0.8.4 LANGUAGES CXX)
 
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)
