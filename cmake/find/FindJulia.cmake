@@ -54,7 +54,7 @@ find_path(
     JULIA_INCLUDE_DIR julia.h
     HINTS "${julia_prefix}/include" "${julia_prefix}/include/julia"
 )
-julia_bail_if_false("The Julia header could not be found" JULIA_INCLUDE_DIR)
+julia_bail_if_false("Cannot find julia.h. Make sure JULIA_BINDIR is set correctly and that your image is uncompressed.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/docs/installation.md" JULIA_INCLUDE_DIR)
 
 if(NOT DEFINED JULIA_VERSION)
     file(STRINGS "${JULIA_INCLUDE_DIR}/julia_version.h" julia_version LIMIT_COUNT 1 REGEX JULIA_VERSION_STRING)
