@@ -4,13 +4,13 @@ project(jluna VERSION 0.8.4 LANGUAGES CXX)
 
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)
-    option(jluna_DEVELOPER_MODE "Enable developer mode" OFF)
+    option(DEVELOPER_MODE "Enable developer mode" OFF)
 endif()
 
 # ---- Find Julia ----
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find")
-find_package(Julia 1.7 REQUIRED)
+find_package(Julia 1.7.0 REQUIRED)
 
 # ---- Resource path include ----
 
@@ -30,15 +30,11 @@ add_library(
 
 target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
 target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
-
-# NOTE: Julia::Julia is not present in the install interface. Consumers will
-#       have to link to julia manually. Julia doesn't have a CMake package.
 target_link_libraries(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:Julia::Julia>")
 
 # ---- Declare library ----
 
-add_library(
-    jluna SHARED
+add_library(jluna SHARED
 
     jluna.hpp
 
@@ -107,7 +103,10 @@ target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR
 
 # FIXME: Exporting all symbols is bad practice. Fix this using the
 #        GenerateExportHeader CMake module and visibility proprties.
-set_target_properties(jluna jluna_c_adapter PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS YES)
+set_target_properties(jluna jluna_c_adapter PROPERTIES
+    WINDOWS_EXPORT_ALL_SYMBOLS YES
+    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
 
 # ---- Install rules ----
 
@@ -117,7 +116,7 @@ endif()
 
 # ---- Developer mode ----
 
-if(NOT jluna_DEVELOPER_MODE)
+if(NOT DEVELOPER_MODE)
     return()
 elseif(NOT PROJECT_IS_TOP_LEVEL)
     message(
@@ -127,7 +126,7 @@ elseif(NOT PROJECT_IS_TOP_LEVEL)
 endif()
 
 include(CTest)
-if(BUILD_TESTING AND NOT WIN32)
+if(DEVELOPER_MODE)
     add_executable(
         jluna_test
         .test/main.cpp
@@ -135,10 +134,7 @@ if(BUILD_TESTING AND NOT WIN32)
     )
     target_link_libraries(jluna_test PRIVATE jluna)
     add_test(NAME jluna_test COMMAND jluna_test)
-endif()
 
-option(BUILD_BENCHMARK "" ON)
-if(BUILD_BENCHMARK AND NOT WIN32)
     add_executable(
         jluna_benchmark
         .benchmark/main.cpp

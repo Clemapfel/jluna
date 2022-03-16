@@ -2,27 +2,25 @@ macro(julia_bail_if_false message var)
     if(NOT ${var})
         set(Julia_FOUND 0)
         set(Julia_NOT_FOUND_MESSAGE "${message}")
+        message(FATAL_ERROR "${message}")
         return()
     endif()
 endmacro()
 
-# https://docs.julialang.org/en/v1/manual/environment-variables/#JULIA_BINDIR
 find_program(JULIA_EXECUTABLE julia PATHS ENV JULIA_BINDIR)
-julia_bail_if_false("The Julia executable could not be found" JULIA_EXECUTABLE)
+julia_bail_if_false("Unable to detect the julia executable. Make sure JULIA_BINDIR is set correctly.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/docs/installation.md" JULIA_EXECUTABLE)
 
 if(NOT DEFINED JULIA_BINDIR)
     # The executable could be a chocolatey shim, so run some Julia code to report
     # the path of the BINDIR
     execute_process(
         COMMAND "${JULIA_EXECUTABLE}" -e "print(Sys.BINDIR)"
-        OUTPUT_VARIABLE julia_bindir
+        OUTPUT_VARIABLE JULIA_BINDIR_LOCAL
     )
-    file(TO_CMAKE_PATH "${julia_bindir}" julia_bindir)
-    set(JULIA_BINDIR "${julia_bindir}" CACHE PATH "")
+    file(TO_CMAKE_PATH "${JULIA_BINDIR_LOCAL}" JULIA_BINDIR_LOCAL)
+    set(JULIA_BINDIR "${JULIA_BINDIR_LOCAL}" CACHE PATH "")
 endif()
-julia_bail_if_false("The Julia executable could not report its location" JULIA_BINDIR)
-
-get_filename_component(julia_prefix "${JULIA_BINDIR}" DIRECTORY)
+get_filename_component(JULIA_PATH_PREFIX "${JULIA_BINDIR}" DIRECTORY)
 
 if(WIN32)
     set(julia_old_CMAKE_FIND_LIBRARY_SUFFIXES "")
@@ -41,26 +39,27 @@ if(WIN32)
     endif()
 endif()
 
-find_library(JULIA_LIBRARY julia HINTS "${julia_prefix}/lib")
+find_library(JULIA_LIBRARY julia HINTS "${JULIA_PATH_PREFIX}/lib")
 
 if(WIN32)
     set(CMAKE_FIND_LIBRARY_SUFFIXES "${julia_old_CMAKE_FIND_LIBRARY_SUFFIXES}")
     set(CMAKE_FIND_LIBRARY_PREFIXES "${julia_old_CMAKE_FIND_LIBRARY_PREFIXES}")
 endif()
 
-julia_bail_if_false("The Julia library could not be found" JULIA_LIBRARY)
+julia_bail_if_false("Unable to find the julia shared library.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/docs/installation.md" JULIA_LIBRARY)
 
 find_path(
     JULIA_INCLUDE_DIR julia.h
-    HINTS "${julia_prefix}/include" "${julia_prefix}/include/julia"
+    HINTS "${JULIA_PATH_PREFIX}/include" "${JULIA_PATH_PREFIX}/include/julia"
 )
 julia_bail_if_false("Cannot find julia.h. Make sure JULIA_BINDIR is set correctly and that your image is uncompressed.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/docs/installation.md" JULIA_INCLUDE_DIR)
 
-if(NOT DEFINED JULIA_VERSION)
-    file(STRINGS "${JULIA_INCLUDE_DIR}/julia_version.h" julia_version LIMIT_COUNT 1 REGEX JULIA_VERSION_STRING)
-    string(REGEX REPLACE ".*\"([^\"]+)\".*" "\\1" julia_version "${julia_version}")
-    set(JULIA_VERSION "${julia_version}" CACHE STRING "Version of Julia")
-endif()
+
+#if(NOT DEFINED JULIA_VERSION)
+    file(STRINGS "${JULIA_INCLUDE_DIR}/julia_version.h" JULIA_VERSION_LOCAL LIMIT_COUNT 1 REGEX JULIA_VERSION_STRING)
+    string(REGEX REPLACE ".*\"([^\"]+)\".*" "\\1" JULIA_VERSION_LOCAL "${JULIA_VERSION_LOCAL}")
+    set(JULIA_VERSION "${JULIA_VERSION_LOCAL}")
+#endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
