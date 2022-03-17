@@ -2,7 +2,6 @@ macro(julia_bail_if_false message var)
     if(NOT ${var})
         set(Julia_FOUND 0)
         set(Julia_NOT_FOUND_MESSAGE "${message}")
-        message(FATAL_ERROR "${message}")
         return()
     endif()
 endmacro()
@@ -54,11 +53,11 @@ find_path(
 )
 julia_bail_if_false("Cannot find julia.h. Make sure JULIA_BINDIR is set correctly and that your image is uncompressed.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/docs/installation.md" JULIA_INCLUDE_DIR)
 
-#if(NOT DEFINED JULIA_VERSION)
+if(NOT DEFINED JULIA_VERSION)
     file(STRINGS "${JULIA_INCLUDE_DIR}/julia_version.h" JULIA_VERSION_LOCAL LIMIT_COUNT 1 REGEX JULIA_VERSION_STRING)
     string(REGEX REPLACE ".*\"([^\"]+)\".*" "\\1" JULIA_VERSION_LOCAL "${JULIA_VERSION_LOCAL}")
     set(JULIA_VERSION "${JULIA_VERSION_LOCAL}")
-#endif()
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(

@@ -61,6 +61,8 @@ make
 # copy main.cpp, CMakeLists.txt and FindJulia into project folder
 cd ../..
 cp ./jluna/install/resources/CMakeLists.txt ./CMakeLists.txt
+sed -i "s/@PROJECT_NAME@/$project_name/" ./CMakeLists.txt
+
 cp ./jluna/install/resources/main.cpp ./main.cpp
 
 mkdir -p $project_root/$project_name/cmake/find
