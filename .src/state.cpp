@@ -15,7 +15,7 @@
 #include <include/proxy.hpp>
 #include <include/module.hpp>
 #include <include/type.hpp>
-#include "include_julia.inl"
+#include <.src/include_julia.inl>
 
 namespace jluna::detail
 {
