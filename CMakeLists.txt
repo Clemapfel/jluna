@@ -2,13 +2,6 @@ cmake_minimum_required(VERSION 3.12)
 
 project(jluna VERSION 0.8.4 LANGUAGES CXX)
 
-# ###
-#
-#
-#
-#
-
-
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)
     option(DEVELOPER_MODE "Enable developer mode" OFF)
@@ -103,7 +96,7 @@ add_library(jluna SHARED
     include/gc_sentinel.hpp
 )
 
-target_link_libraries(jluna PUBLIC jluna_c_adapter)
+target_link_libraries(jluna PUBLIC jluna_c_adapter "$<BUILD_INTERFACE:Julia::Julia>")
 target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
 
 ### HACK: export all symbols on Windows ###

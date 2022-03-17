@@ -8,7 +8,7 @@ macro(julia_bail_if_false message var)
 endmacro()
 
 find_program(JULIA_EXECUTABLE julia PATHS ENV JULIA_BINDIR)
-julia_bail_if_false("Unable to detect the julia executable. Make sure JULIA_BINDIR is set correctly.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/docs/installation.md" JULIA_EXECUTABLE)
+julia_bail_if_false("Unable to detect the julia executable. Make sure JULIA_BINDIR is set correctly." JULIA_EXECUTABLE)
 
 if(NOT DEFINED JULIA_BINDIR)
     # The executable could be a chocolatey shim, so run some Julia code to report
@@ -46,13 +46,13 @@ if(WIN32)
     set(CMAKE_FIND_LIBRARY_PREFIXES "${julia_old_CMAKE_FIND_LIBRARY_PREFIXES}")
 endif()
 
-julia_bail_if_false("Unable to find the julia shared library.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/docs/installation.md" JULIA_LIBRARY)
+julia_bail_if_false("Unable to find the julia shared library. Make sure JULIA_BINDIR is set correctly and that the julia image is uncompressed" JULIA_LIBRARY)
 
 find_path(
     JULIA_INCLUDE_DIR julia.h
     HINTS "${JULIA_PATH_PREFIX}/include" "${JULIA_PATH_PREFIX}/include/julia"
 )
-julia_bail_if_false("Cannot find julia.h. Make sure JULIA_BINDIR is set correctly and that your image is uncompressed.\nFor more information, visit https://github.com/Clemapfel/jluna/blob/master/docs/installation.md" JULIA_INCLUDE_DIR)
+julia_bail_if_false("Unable to find julia.h. Make sure JULIA_BINDIR is set correctly and that your image is uncompressed." JULIA_INCLUDE_DIR)
 
 #if(NOT DEFINED JULIA_VERSION)
     file(STRINGS "${JULIA_INCLUDE_DIR}/julia_version.h" JULIA_VERSION_LOCAL LIMIT_COUNT 1 REGEX JULIA_VERSION_STRING)
