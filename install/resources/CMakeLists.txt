@@ -15,17 +15,17 @@ find_library(jluna REQUIRED
 	PATHS ${CMAKE_SOURCE_DIR}/jluna/build)
 
 # executable
-add_executable(my_executable ${CMAKE_SOURCE_DIR}/main.cpp)
-target_link_libraries(my_executable PRIVATE
+add_executable(hello_world ${CMAKE_SOURCE_DIR}/main.cpp)
+target_link_libraries(hello_world PRIVATE
     ${jluna}
     "$<BUILD_INTERFACE:Julia::Julia>"
 )
 
 # set C++ standard
-target_compile_features(my_executable PRIVATE cxx_std_20)
+target_compile_features(hello_world PRIVATE cxx_std_20)
 
 # include directories
-target_include_directories(my_executable PRIVATE
+target_include_directories(hello_world PRIVATE
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/jluna
     ${JULIA_INCLUDE_DIR}

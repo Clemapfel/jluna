@@ -18,6 +18,7 @@ if [ -z "$1" ] | [ -z "$2" ]; then
   exit 1
 fi
 
+# default compiler
 if [ -n "$3" ]; then
   compiler="clang++-12"
 else
@@ -77,7 +78,7 @@ make
 
 # execute hello world
 printf "\n"
-./my_executable
+./hello_world
 
 # exit
 exit 0
