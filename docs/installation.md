@@ -45,7 +45,7 @@ We now call:
 
 ```bash
 # in Desktop/jluna/build
-cmake .. -DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
+cmake .. -DCMAKE_CXX_COMPILER=<compiler> [-DCMAKE_INSTALL_PREFIX=<path>]
 ```
 
 Where `<compiler>` is one of:
@@ -55,9 +55,9 @@ Where `<compiler>` is one of:
 
 > Window supports is experimental. This means specifying `MSVC` may work, however this is untested. The [cpp compiler support]() list seems to imply that MSVC 19.30 or newer is required to compile `jluna`.
 
-And `<path>` is the desired install path (for example `/usr/local`). Keep note of this path, as we may need it later.
+And `<path>` is the desired install path. `-DCMAKE_INSTALL_PREFIX=<path>` is optional, if it is specified manually, keep note of this path as we will need it later.
 
-If the command does not recognize the compiler, even though you are are sure it is installed, it may be necessary to specify the full path to the compiler executable, instead of just the name. For example: 
+If the command does not recognize the compiler, even though you are sure it is installed, it may be necessary to specify the full path to the compiler executable instead of just the name. For example: 
 ```
 -DCMAKE_CXX_COMPILER=/usr/bin/g++-10
 ```
@@ -66,25 +66,30 @@ Some errors may appear here, if this is the case, head to [troubleshooting](#tro
 
 ### Make Install
 
-Having succesfully configured cmake, we now call:
+Having successfully configured cmake, we now call:
 
 ```bash
 # in Desktop/jluna/build
 make install
 ```
 
-Which will create  two shared libraries `libjluna.so`, and `libjluna_c_adapter.so` in the install directories. We can now link our own library or executable in our own `CMakeLists.txt`, using
+Which will create  two shared libraries `libjluna.*`, and `libjluna_c_adapter.*` in the install directories, where `*` is platform dependent, usually `.so` on unix and `.lib` or `.dll` on windows. We can now link our own library to our own `CMakeLists.txt`, using
 
 ```cmake
-# in users own CMakeLists.txt 
-set(JLUNA_DIR "<install path>")
+# in users own CMakeLists.txt
+find_library(jluna REQUIRED)
+```
+
+If a custom install directory was specified, we need to make cmake aware of that using:
+
+```cmake
+# in users own CMakeLists.txt
 find_library(jluna REQUIRED 
-    NAMES libjluna.so libjluna.dll libjluna.dll.a libjluna.lib 
-    PATHS ${JLUNA_DIR}
+    PATHS <install path>
 )
 ```
 
-Where `<install path>` is the path specified as `-DCMAKE_INSTALL_PREFIX` during configuration.
+Where `<install path>` is the path specified as `-DCMAKE_INSTALL_PREFIX` during configuration before.
 
 After `find_library`, we link our own library `my_library` using:
 
