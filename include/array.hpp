@@ -318,5 +318,5 @@ namespace jluna
     }
 }
 
-#include <.src/array.inl"
-#include <.src/array_iterator.inl"
+#include <.src/array.inl>
+#include <.src/array_iterator.inl>

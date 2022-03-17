@@ -406,4 +406,4 @@ namespace jluna::State
     [[deprecated("use State::safe_eval instead")]] Proxy safe_script(const std::string&);
 }
 
-#include <.src/state.inl"
+#include <.src/state.inl>

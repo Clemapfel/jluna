@@ -86,4 +86,4 @@ namespace jluna
     };
 }
 
-#include <.src/usertype.inl"
+#include <.src/usertype.inl>

@@ -197,4 +197,4 @@ namespace jluna
     };
 }
 
-#include <.src/box.inl"
+#include <.src/box.inl>
