@@ -18,6 +18,6 @@ target_link_libraries(my_executable PRIVATE
 target_compile_features(my_executable PUBLIC cxx_std_20)
 target_include_directories(my_executable PRIVATE
     "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>"
-    ${CMAKE_SOURCE_DIR}/../.. #TODO
+    ${CMAKE_SOURCE_DIR}/../..
     ${JULIA_INCLUDE_DIR}
 )
