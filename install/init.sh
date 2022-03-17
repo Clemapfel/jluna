@@ -31,7 +31,7 @@ mkdir -p build
 cd build
 
 cmake .. -DCMAKE_CXX_COMPILER=clang++-12 -DCMAKE_INSTALL_PREFIX="$project_root/$project_name/jluna"
-make install
+make
 
 cd ../..
 cp ./jluna/install/resources/CMakeLists.txt ./CMakeLists.txt
