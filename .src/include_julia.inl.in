@@ -12,5 +12,4 @@ namespace jluna::detail
     static inline const char* include = R"(
         @JULIA_SOURCE@
     )";
-
 }
