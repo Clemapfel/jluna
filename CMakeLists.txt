@@ -4,7 +4,7 @@ project(jluna VERSION 0.8.4 LANGUAGES CXX)
 
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)
-    option(DEVELOPER_MODE "Enable developer mode" OFF)
+    option(jluna_DEVELOPER_MODE "Enable developer mode" OFF)
 endif()
 
 ### Find Julia ###
@@ -114,7 +114,7 @@ endif()
 
 ### Developer mode ###
 
-if(NOT DEVELOPER_MODE)
+if(NOT jluna_DEVELOPER_MODE)
     return()
 elseif(NOT PROJECT_IS_TOP_LEVEL)
     message(
@@ -124,7 +124,7 @@ elseif(NOT PROJECT_IS_TOP_LEVEL)
 endif()
 
 include(CTest)
-if(DEVELOPER_MODE)
+if(jluna_DEVELOPER_MODE)
     add_executable(
         jluna_test
         .test/main.cpp
