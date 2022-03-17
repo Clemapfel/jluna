@@ -199,9 +199,11 @@ A step-by-step tutorial on how to create, compile, and link a new C++ Project wi
 
 ### Creating a new Project from Scratch
 
+`jluna` offers a one-line wizard for installing it and creating a new project, along with its own, finished `CMakeLists.txt` and a hello world. 
+
 > this feature is only available on unix systems
 
-Download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). 
+To do so, download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). 
 
 Then execute (in the same folder you downloaded `init.sh` to):
 
@@ -210,13 +212,12 @@ Then execute (in the same folder you downloaded `init.sh` to):
 ```
 Where
 + `<Project Name>` is the name of your desired project folder, for example `MyProject`
-+ `<Projects Path>` is the root path to your new project folder, for exmaple `/home/user/Desktop`
++ `<Projects Path>` is the root path to your new project folder, for example `/home/user/Desktop`
 + `<C++ Compiler>` is one of `g++-10`, `g++-11`, `clang++-12`
 
-The bash script will create a folder in `<Project Path>/<Project Name>` (i.e. `/home/user/Desktop/MyProject`), clone jluna, build it, then create for you a full project with a working `hello world` for you. `init.sh` even compiles the new project for you once to make sure everything works.
+The bash script will create a folder in `<Project Path>/<Project Name>` (i.e. `/home/user/Desktop/MyProject`), clone jluna, build it, then, create for you a full project with a working `hello world`. `init.sh` even compiles the new project once. to make sure everything works.
 
 If errors appear at any point, head to [troubleshooting](./docs/installation.md#troubleshooting).
-
 
 ### Installing `jluna` Globally
 
@@ -246,11 +247,12 @@ target_link_libraries(<Your Library> ${jluna} ${<Julia>})
 ```
 
 Where 
-+ `<Install Path>` is the same path specified during `cmake ..`, before
++ `<Install Path>` is the same path specified during configuration before
 + `<Julia>` is the Julia Package
++ `<Your Library>` is the name of your library or executable
   
 
-It may be instructive to check out [this basic template cmake](./install/resources/CMakeLists.txt). A `FindJulia.cmake` can be found [here](./install/resources/FindJulia.cmake).Download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). 
+It may be instructive to check out [this basic template cmake](./install/resources/CMakeLists.txt). A `FindJulia.cmake` can be found [here](./install/resources/FindJulia.cmake). Download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). 
 
 If errors appear at any point, head to [troubleshooting](./docs/installation.md#troubleshooting).
 

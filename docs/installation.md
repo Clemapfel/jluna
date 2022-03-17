@@ -80,7 +80,7 @@ Which will create  two shared libraries `libjluna.so`, and `libjluna_c_adapter.s
 set(JLUNA_DIR "<install path>")
 find_library(jluna REQUIRED 
     NAMES libjluna.so libjluna.dll libjluna.dll.a libjluna.lib 
-    HINTS ${JLUNA_DIR}
+    PATHS ${JLUNA_DIR}
 )
 ```
 
