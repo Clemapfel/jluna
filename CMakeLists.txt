@@ -2,26 +2,30 @@ cmake_minimum_required(VERSION 3.12)
 
 project(jluna VERSION 0.8.4 LANGUAGES CXX)
 
+# ###
+#
+#
+#
+#
+
+
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)
     option(DEVELOPER_MODE "Enable developer mode" OFF)
 endif()
 
-# ---- Find Julia ----
+### Find Julia ###
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find")
 find_package(Julia 1.7.0 REQUIRED)
 
-# ---- Resource path include ----
+### Configure Files ###
 
-# FIXME: This is pointing at the project directory, this obviously will not
-#        work after install. Figure out how to make this work as a relocatable
-#        CMake package with paths being relative to the prefix.
 file(READ include/jluna.jl JULIA_SOURCE)
 set(C_ADAPTER_PATH ${CMAKE_INSTALL_PREFIX})
 configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
 
-# ---- Declare C adapter ----
+### Declare C adapter ###
 
 add_library(
     jluna_c_adapter SHARED
@@ -33,13 +37,9 @@ target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
 target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
 target_link_libraries(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:Julia::Julia>")
 
-set_target_properties(jluna_c_adapter PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${C_ADAPTER_PATH}
-)
-
 message("[LOG] writing libjluna_c_adapter to globally available directory \"${C_ADAPTER_PATH}\"")
 
-# ---- Declare library ----
+### Declare Library ###
 
 add_library(jluna SHARED
 
@@ -106,22 +106,20 @@ add_library(jluna SHARED
 target_link_libraries(jluna PUBLIC jluna_c_adapter)
 target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
 
-# ---- HACK: export all symbols on Windows ----
+### HACK: export all symbols on Windows ###
 
-# FIXME: Exporting all symbols is bad practice. Fix this using the
-#        GenerateExportHeader CMake module and visibility proprties.
-set_target_properties(jluna PROPERTIES
+set_target_properties(jluna jluna_c_adapter PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${C_ADAPTER_PATH}
     WINDOWS_EXPORT_ALL_SYMBOLS YES
-    LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
-# ---- Install rules ----
+### Install rules ###
 
 if(NOT CMAKE_SKIP_INSTALL_RULES)
     include(cmake/install-rules.cmake)
 endif()
 
-# ---- Developer mode ----
+### Developer mode ###
 
 if(NOT DEVELOPER_MODE)
     return()
