@@ -6,7 +6,7 @@ project(MyProject VERSION 0.0.0 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/find")
 find_package(Julia 1.7.0 REQUIRED)
-find_library(jluna REQUIRED NAMES libjluna.so libjluna.dll.a libjluna.dll libjluna.lib HINTS ${CMAKE_SOURCE_DIR}/jluna/build)
+find_library(jluna REQUIRED NAMES libjluna.so libjluna.dll.a libjluna.dll libjluna.lib HINTS ${CMAKE_SOURCE_DIR}/jluna)
 
 ### Declare Executable
 
