@@ -20,9 +20,9 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 5. [Dependencies](#dependencies)<br>
    5.1 [julia 1.7.0+](#dependencies)<br>
    5.2 [Supported Compilers: gcc10, gcc11, clang12](#dependencies)<br>
-   5.3 [cmake 3.16+](#dependencies)<br>
-   5.4 [unix-based OS](#dependencies)<br>
+   5.3 [cmake 3.12+](#dependencies)<br>
 6. [License](#license)
+7. [Authors](#credits)
    
 ---
 
@@ -146,6 +146,7 @@ NonJuliaType(["new"])
 Some of the many advantages `jluna` has over the C-API include:
 
 + expressive, generic syntax
++ automatically detects and links julia
 + call C++ functions from julia using any julia-type
 + assigning C++-side proxies also mutates the corresponding variable julia-side
 + any C++ type can be moved between Julia and C++. Any julia-type can be wrapped
@@ -183,9 +184,8 @@ Advanced users are encouraged to check the headers (available in `jluna/include/
 
 For `jluna` you'll need:
 + [**Julia 1.7.0**](https://julialang.org/downloads/#current_stable_release) (or higher)
-+ [**cmake 3.16**](https://cmake.org/download/) (or higher)
++ [**cmake 3.12**](https://cmake.org/download/) (or higher)
 + C++ Compiler (see below)
-+ unix-based* 64-bit operating system
 
 Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang++-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are fully supported. g++-11 is the primary compiler used for development of `jluna` and is thus recommended. MSVC is untested but may work.
 
@@ -197,50 +197,62 @@ Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-1
 
 A step-by-step tutorial on how to create, compile, and link a new C++ Project with `jluna` can be found [here](./docs/installation.md). It is recommended that you follow this guide closely, instead of trying to resolve issues on your own.
 
-### For Advanced Users Only
+### Creating a new Project from Scratch
 
-Users familiar with C++ and cmake can go through the following steps (on unix-based operating systems):
+> this feature is only available on unix systems
 
-Install:
+Download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). 
 
-+ `g++-11` (or `clang++-12`)
-+ `julia 1.7+`
-+ `cmake 3.16+`
-
-Then execute (in the same directory as your `CMakeLists.txt`):
-
-```bash
-git clone https://github.com/Clemapfel/jluna.git
-
-export JULIA_PATH=$(julia -e "println(joinpath(Sys.BINDIR, \"..\"))")
-
-mkdir build
-cd build
-cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang++-12
-make
-
-./JLUNA_TEST
-
-cd ..
-rm -r build
-```
-
-Where `JULIA_PATH` needs to be set at the time of compilation.
-
-Link against `jluna/libjluna.so`, `jluna/libjluna_c_adapter.so` and `$ENV{JULIA_PATH}/lib/libjulia.so`.
-
-Add `"${CMAKE_SOURCE_DIR}/jluna"` and `"$ENV{JULIA_PATH}/include/julia"` to your include directories.
-
-Then you can make `jluna` available to your library using:
+Then execute (in the same folder you downloaded `init.sh` to):
 
 ```cpp
-#include <julia.h>
-#include <jluna.hpp>
+/bin/bash init.sh <Project Name> <Projects Path> [<C++ Compiler> = clang++-12]
+```
+Where
++ `<Project Name>` is the name of your desired project folder, for example `MyProject`
++ `<Projects Path>` is the root path to your new project folder, for exmaple `/home/user/Desktop`
++ `<C++ Compiler>` is one of `g++-10`, `g++-11`, `clang++-12`
+
+The bash script will create a folder in `<Project Path>/<Project Name>` (i.e. `/home/user/Desktop/MyProject`), clone jluna, build it, then create for you a full project with a working `hello world` for you. `init.sh` even compiles the new project for you once to make sure everything works.
+
+If errors appear at any point, head to [troubleshooting](./docs/installation.md#troubleshooting).
+
+
+### Installing `jluna` Globally
+
+Execute, in any public directory
+
+```bash
+git clone https://github.com/Clemapfel/jluna
+cd jluna
+mkdir build
+cd build
+cmake .. -DCMAKE_CXX_COMPILER=<C++ Compiler> -DCMAKE_INSTALL_PREFIX=<Install Path>
+make install
 ```
 
-If errors appear at any point, head to the [step-by-step guide](./docs/installation.md).
+Where 
++ `<C++ Compiler>` is one of `g++-10`, `g++-11`, `clang++-12`
++ `<Install Path>` is the install directory, for example `usr/local`
 
----
+Afterwards, you can make `jluna` available to your library using 
+
+```cmake
+find_library(jluna REQUIRED
+    NAMES libjluna.so libjluna.dll.a libjluna.dll libjluna.lib
+    PATHS <Install Path>)
+
+target_link_libraries(<Your Library> ${jluna} ${<Julia>})
+```
+
+Where 
++ `<Install Path>` is the same path specified during `cmake ..`, before
++ `<Julia>` is the Julia Package
+  
+
+It may be instructive to check out [this basic template cmake](./install/resources/CMakeLists.txt). A `FindJulia.cmake` can be found [here](./install/resources/FindJulia.cmake).Download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). 
+
+If errors appear at any point, head to [troubleshooting](./docs/installation.md#troubleshooting).
 
 ## License
 
