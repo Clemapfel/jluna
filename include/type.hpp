@@ -206,4 +206,4 @@ namespace jluna
     inline Type WeakRef_t;
 }
 
-#include ".src/type.inl"
+#include <.src/type.inl"

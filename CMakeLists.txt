@@ -124,7 +124,6 @@ endif()
 include(CTest)
 if(jluna_DEVELOPER_MODE)
 
-    #TODO: add proper CTest for TESTING_BUILD
     add_executable(
         jluna_test
         .test/main.cpp

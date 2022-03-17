@@ -68,4 +68,4 @@ namespace jluna
     };
 }
 
-#include ".src/symbol.inl"
+#include <.src/symbol.inl"
