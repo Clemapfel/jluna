@@ -46,7 +46,7 @@ add_library(
 )
 
 target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
-target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
+target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 target_link_libraries(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:Julia::Julia>")
 
 ### Declare Library ###
