@@ -18,10 +18,10 @@ namespace jluna
     template<Boxable Value_t, size_t Rank>
     class Array : public Proxy
     {
-        friend class ConstIterator;
-        class Iterator;
-
         public:
+            friend class ConstIterator;
+            class Iterator;
+
             /// @brief value type
             using value_type = Value_t;
 
@@ -143,6 +143,7 @@ namespace jluna
             void throw_if_index_out_of_range(int index, size_t dimension) const;
             size_t get_dimension(int) const;
 
+        public:
             class ConstIterator
             {
                 public:
