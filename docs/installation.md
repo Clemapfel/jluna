@@ -70,13 +70,11 @@ make install
 
 Which will create two shared libraries `libjluna.*`, and `libjluna_c_adapter.*`, where `*` is the platform-dependent library suffix.
 
-Now that `jluna` is installed on our system, we can link any executable or library inside any non-`jluna` `CMakeLists.txt` using:
+Now that `jluna` is installed on our system, we can access it using:
 
 ```cmake
 # in users own CMakeLists.txt
-find_library(jluna REQUIRED 
-    NAMES jluna
-)
+find_library(jluna REQUIRED)
 ```
 
 If a custom install directory was specified, we need to make cmake aware of this:
@@ -106,12 +104,15 @@ target_link_libraries(my_library PRIVATE
     "${<julia package>}"
 )
 target_include_directories(my_library PRIVATE 
-    "${JLUNA_DIR}" 
+    "${<jluna include directory>}" 
     "${<julia include directory>}"
 )
 ```
 
-Where `<julia package>` is the library/package containing the julia C-API and `<julia include directory>` is the folder containing `julia.h`.
+Where 
++ `<jluna include directory>` is the folder containing `jluna.hpp`
++ `<julia package>` is the library/package containing the julia C-API 
++ `<julia include directory>` is the folder containing `julia.h`.
 
 The shared julia library location is usually 
 + `${JULIA_BINDIR}/../lib` 
