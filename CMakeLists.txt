@@ -35,7 +35,7 @@ find_package(Julia 1.7.0 REQUIRED)
 
 file(READ include/jluna.jl JULIA_SOURCE)
 set(C_ADAPTER_PATH ${CMAKE_INSTALL_PREFIX})
-configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
+configure_file(.src/include_julia.inl.in .src/include_julia.inl @ONLY)
 
 ### Declare C adapter ###
 
@@ -46,7 +46,7 @@ add_library(
 )
 
 target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
-target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
+target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 target_link_libraries(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:Julia::Julia>")
 
 ### Declare Library ###
@@ -114,7 +114,7 @@ add_library(jluna SHARED
 )
 
 target_link_libraries(jluna PUBLIC jluna_c_adapter)
-target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
+target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 
 ### HACK: export all symbols on Windows ###
 
