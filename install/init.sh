@@ -55,7 +55,7 @@ mkdir -p $project_name
 cd $project_name
 
 # clone jluna
-git clone -b cmake_rework https://github.com/Clemapfel/jluna.git
+git clone https://github.com/Clemapfel/jluna.git
 
 # build jluna
 cd jluna
@@ -88,7 +88,3 @@ printf "\n"
 
 # exit
 exit 0
-
-
-
-
