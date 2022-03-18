@@ -71,7 +71,7 @@ namespace jluna::State
         forward_last_exception();
 
         std::stringstream str;
-        str << "jluna._cppcall.eval(:(_library_name = \"" << jluna::detail::c_adapter_path << "/libjluna_c_adapter.so\"))";
+        str << "jluna._cppcall.eval(:(_library_name = \"" << jluna::detail::c_adapter_path << "\"))";
 
         jl_eval_string(str.str().c_str());
         forward_last_exception();

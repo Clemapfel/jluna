@@ -40,7 +40,14 @@ find_package(Julia 1.7.0 REQUIRED)
 
 ### Configure Files ###
 
+# TODO: don't hardcode this, use CMAKE_LIBRARY_SUFFIX
+
 set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}")
+if (WIN32)
+    set(C_ADAPTER_NAME "${CMAKE_INSTALL_PREFIX}/jluna_c_adapter.lib")
+else()
+    set(C_ADAPTER_NAME "${CMAKE_INSTALL_PREFIX}/libjluna_c_adapter.so")
+endif()
 
 file(READ
     include/julia/01_common.jl
