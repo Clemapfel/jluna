@@ -129,7 +129,7 @@ During `make install`, or during execution of the bash script, your OS may notif
 When calling:
 
 ```bash
-# in Desktop/jluna/build
+# in ~/Desktop/jluna/build
 cmake .. -DCMAKE_COMPILER=g++-10 # or other compiler
 ```
 
