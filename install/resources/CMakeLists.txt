@@ -12,12 +12,12 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES_UNIX ".so")
 
 find_library(jluna REQUIRED
 	NAMES jluna
-	PATHS ${CMAKE_SOURCE_DIR}/jluna/build)
+	PATHS "${CMAKE_SOURCE_DIR}/jluna/build")
 
 # executable
-add_executable(hello_world ${CMAKE_SOURCE_DIR}/main.cpp)
+add_executable(hello_world "${CMAKE_SOURCE_DIR}/main.cpp")
 target_link_libraries(hello_world PRIVATE
-    ${jluna}
+    "${jluna}"
     "$<BUILD_INTERFACE:Julia::Julia>"
 )
 
@@ -26,7 +26,7 @@ target_compile_features(hello_world PRIVATE cxx_std_20)
 
 # include directories
 target_include_directories(hello_world PRIVATE
-    ${CMAKE_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/jluna
-    ${JULIA_INCLUDE_DIR}
+    "${CMAKE_SOURCE_DIR}"
+    "${CMAKE_SOURCE_DIR}/jluna"
+    "${JULIA_INCLUDE_DIR}"
 )
