@@ -10,7 +10,7 @@
 #ifdef __cplusplus
 
 #include <map>
-#include <julia.h>
+#include <include/julia_wrapper.hpp>
 #include <functional>
 #include <string>
 

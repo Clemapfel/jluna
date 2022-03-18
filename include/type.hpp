@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <julia.h>
+#include <include/julia_wrapper.hpp>
 #include <include/typedefs.hpp>
 #include <include/proxy.hpp>
 #include <include/symbol.hpp>
@@ -206,4 +206,4 @@ namespace jluna
     inline Type WeakRef_t;
 }
 
-#include ".src/type.inl"
+#include <.src/type.inl>

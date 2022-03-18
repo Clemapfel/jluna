@@ -28,6 +28,9 @@ namespace jluna
 
 namespace jluna::State
 {
+    /// @brief manually set the C-adapter path
+    void set_c_adapter_path(const std::string& path);
+
     /// @brief initialize environment
     void initialize();
 
@@ -406,4 +409,4 @@ namespace jluna::State
     [[deprecated("use State::safe_eval instead")]] Proxy safe_script(const std::string&);
 }
 
-#include ".src/state.inl"
+#include <.src/state.inl>

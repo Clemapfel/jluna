@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <julia.h>
+#include <include/julia_wrapper.hpp>
 
 #include <include/concepts.hpp>
 #include <include/typedefs.hpp>
@@ -154,4 +154,4 @@ namespace jluna
     };
 }
 
-#include ".src/unbox.inl"
+#include <.src/unbox.inl>

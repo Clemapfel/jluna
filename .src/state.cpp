@@ -3,7 +3,7 @@
 // Created on 31.01.22 by clem (mail@clemens-cords.com)
 //
 
-#include <julia.h>
+#include <include/julia_wrapper.hpp>
 
 #include <sstream>
 #include <iostream>
@@ -13,10 +13,9 @@
 #include <include/exceptions.hpp>
 #include <include/julia_extension.hpp>
 #include <include/proxy.hpp>
-#include <.src/include_julia.inl>
 #include <include/module.hpp>
 #include <include/type.hpp>
-
+#include <.src/include_julia.inl>
 
 namespace jluna::detail
 {
@@ -30,6 +29,11 @@ namespace jluna::detail
 
 namespace jluna::State
 {
+    void set_c_adapter_path(const std::string& path)
+    {
+        jluna::detail::c_adapter_path_override = path;
+    }
+
     void initialize()
     {
         initialize("");
@@ -42,9 +46,23 @@ namespace jluna::State
         else
             jl_init_with_image(path.c_str(), NULL);
 
-        jl_eval_string(jluna::detail::include);
-        forward_last_exception();
+        { // execute jluna julia code in pieces
+            using namespace jluna::detail;
+            std::stringstream str;
+            str << module_start;
+                str << include_01;
+                str << include_02;
+                str << include_03;
+                str << include_04;
+                str << include_05;
+            str << module_end;
 
+            str << include_06;
+
+            jl_eval_string(str.str().c_str());
+        }
+
+        forward_last_exception();
 
         jl_eval_string(R"(
             begin
@@ -57,7 +75,12 @@ namespace jluna::State
         )");
         forward_last_exception();
 
-        jl_eval_string(("jluna._cppcall.eval(:(_library_name = \"" + std::string(RESOURCE_PATH) + "/libjluna_c_adapter.so\"))").c_str());
+        std::stringstream str;
+        str << "jluna._cppcall.eval(:(_library_name = \"";
+        str << (jluna::detail::c_adapter_path_override.empty() ?  jluna::detail::c_adapter_path : jluna::detail::c_adapter_path_override);
+        str << "\"))";
+
+        jl_eval_string(str.str().c_str());
         forward_last_exception();
 
         jl_eval_string(R"(
@@ -214,7 +237,7 @@ namespace jluna::State::detail
     Any * get_reference(size_t key)
     {
         static Function* get_reference = jl_find_function("jluna.memory_handler", "get_reference");
-        return jluna::safe_call(get_reference, jl_box_uint64(reinterpret_cast<size_t>(key)));
+        return jluna::safe_call(get_reference, jl_box_uint64(static_cast<size_t>(key)));
     }
 
     void free_reference(size_t key)
@@ -226,7 +249,7 @@ namespace jluna::State::detail
         static Function* free_reference = jl_find_function("jluna.memory_handler", "free_reference");
 
         jl_gc_pause;
-        jluna::safe_call(free_reference, jl_box_uint64(reinterpret_cast<size_t>(key)));
+        jluna::safe_call(free_reference, jl_box_uint64(static_cast<size_t>(key)));
         jl_gc_unpause;
     }
 

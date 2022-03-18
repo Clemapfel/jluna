@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <julia.h>
+#include <include/julia_wrapper.hpp>
 
 #include <vector>
 
@@ -87,4 +87,4 @@ namespace jluna
     Function* register_unnamed_function(const Lambda_t& lambda);
 }
 
-#include ".src/cppcall.inl"
+#include <.src/cppcall.inl>

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <julia.h>
+#include <include/julia_wrapper.hpp>
 
 #include <memory>
 #include <deque>
@@ -207,4 +207,4 @@ namespace jluna
     };
 }
 
-#include ".src/proxy.inl"
+#include <.src/proxy.inl>

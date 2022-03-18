@@ -18,10 +18,10 @@ namespace jluna
     template<Boxable Value_t, size_t Rank>
     class Array : public Proxy
     {
-        friend class ConstIterator;
-        class Iterator;
-
         public:
+            friend class ConstIterator;
+            class Iterator;
+
             /// @brief value type
             using value_type = Value_t;
 
@@ -143,6 +143,7 @@ namespace jluna
             void throw_if_index_out_of_range(int index, size_t dimension) const;
             size_t get_dimension(int) const;
 
+        public:
             class ConstIterator
             {
                 public:
@@ -173,16 +174,15 @@ namespace jluna
                     /// @returns bool
                     bool operator!=(const ConstIterator&) const;
 
-                    /// @brief decays into value_type
-                    template<Unboxable T = Value_t>
-                    T operator*() const;
-
                     /// @brief forward to self
+                    auto operator*() const;
+
+                    /// @brief forward to assignable
                     auto operator*();
 
                     /// @brief decay into unboxed value
                     /// @tparam value-type, not necessarily the same as declared in the array type
-                    template<Unboxable T = Value_t, std::enable_if_t<not std::is_same_v<T, Proxy>, bool> = true>
+                    template<Unboxable T = Value_t, std::enable_if_t<not Is<Proxy, T>, bool> = true>
                     operator T() const;
 
                     /// @brief decay into proxy
@@ -318,5 +318,5 @@ namespace jluna
     }
 }
 
-#include ".src/array.inl"
-#include ".src/array_iterator.inl"
+#include <.src/array.inl>
+#include <.src/array_iterator.inl>

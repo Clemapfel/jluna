@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <set>
 
-#include <julia.h>
+#include <include/julia_wrapper.hpp>
 
 #include <include/concepts.hpp>
 #include <include/typedefs.hpp>
@@ -197,4 +197,4 @@ namespace jluna
     };
 }
 
-#include ".src/box.inl"
+#include <.src/box.inl>

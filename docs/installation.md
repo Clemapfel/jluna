@@ -1,269 +1,193 @@
 # Creating a Project with jluna
 
-The following is a step-by-step guide to creating an application using `jluna` from scratch.
+The following is a step-by-step guide on how to install jluna, and how to create our own C++ application using jluna from scratch.
 
 ### Table of Contents
-1. [Creating the Project](#creating-the-project)
-2. [Setting JULIA_PATH](#setting-julia_path)
-3. [Recompiling `jluna`](#building-jluna)
-4. [Linking `jluna`](#linking-jluna)<br>
-    4.1 [main.cpp](#linking-jluna)<br>
-    4.2 [CMakeLists.txt](#linking-jluna)<br>
-5. [Troubleshooting](#troubleshooting)<br>
-    5.1 [CMake: Cannot determine location of julia image](#cannot-determine-location-of-julia-image)<br>
-    5.2 [CMake: Cannot find julia.h / libjulia.so](#cannot-find-juliah--libjuliaso)<br>
-    5.3 [C++: Cannot find <julia.h> / <jluna.hpp>](#cannot-find-juliah--jlunahpp)<br>
-    5.4 [C++: State::initialize fails](#stateinitialize-fails)<br>
-6. [Creating an Issue](#)
+1. [Installing jluna](#installing-jluna)<br>
+   1.1 [Cloning from Git](#cloning-from-git)<br>
+   1.2 [Configuring CMake](#configure-cmake)<br>
+   1.3 [make install](#make-install)<br>
+2. [Troubleshooting](#troubleshooting)<br>
+    2.1 [Permission Denied](#permission-denied)<br>
+    2.2 [Unable to Detect Julia Executable](#unable-to-detect-the-julia-executable)<br>
+    2.3 [Found Unsuitable Version](#could-not-find-julia-found-unsuitable-version)<br>
+    2.4 [Could NOT find Julia: Missing X](#could-not-find-julia-missing-x)<br>
+    2.5 [Could not find `julia.h` / `jluna.hpp`](#cannot-find-juliah--jlunahpp)<br>
+    2.6 [Could not find libjluna_c_adapter](#when-trying-to-initialize-jlunacppcall-cannot-find-libjluna_c_adapter)<br>
+   
+## Installing jluna
 
-### Creating the Project
+This section will guide users on how to install `jluna`, either globally or in a folder-contained manner.
 
-First, we create our workspace directory. For the remainder of this section, this will be assumed to be `~/my_project`. We now execute:
+### Cloning from Git
 
-```bash
-cd ~/my_project
-git clone https://github.com/Clemapfel/jluna.git
-```
-
-This adds the folder `jluna/` to our directory. We now need to compile `jluna`.
-
-### Setting JULIA_PATH
-
-To tell `jluna` where to find julia, we need to set the environment variable `JULIA_PATH`, which contains the path to the local julia image. We set it in bash using:
+We first need to download `jluna`, to do this we navigate into any public folder (henceforth assumed to be `Desktop`) and execute:
 
 ```bash
-export JULIA_PATH=$(julia -e "println(joinpath(Sys.BINDIR, \"..\"))")
-```
-
-Here, we're calling the julia REPL inline to output the global variable `Sys.BINDIR`, which contains the path to the currently used julia binary. We verify `JULIA_PATH` was set correctly by using:
-
-```bash
-echo $JULIA_PATH
-```
-```
-/home/user/Applications/julia/bin/..
-```
-Of course, this path will be different for each user. <br>Note the prefix `/` which designates an absolute path starting at root and that there is no post-fix `/`. If `JULIA_PATH` reports an empty string, it may be because the `julia` command is not available on a system level. If this is the case, we can simply call the above command from within the julia REPL manually
-
-```julia
-println(joinpath(Sys.BINDIR, ".."))
-```
-```
-/path/to/your/julia/bin/..
-```
-
-And copy-paste the resulting output to assign `JULIA_PATH` in bash like so:
-
-```bash
-export JULIA_PATH=/path/to/your/julia/bin/..
-```
-
-We can now continue to compiling `jluna` using cmake, being sure to stay in the same bash session where we set `JULIA_PATH`. To set `JULIA_PATH` globally, consider consulting [this guide](https://unix.stackexchange.com/questions/117467/how-to-permanently-set-environmental-variables). This way, it does not have to re-set anytime a bash session ends.
-
-### Building `jluna`
-
-With `JULIA_PATH` set correctly, we navigate into `~/my_project/jluna/` and create a new build directory, then call cmake from within that directory:
-
-```bash
-cd ~/my_project/jluna
+git clone https://github.com/clemapfel/jluna.git
+cd jluna
 mkdir build
 cd build
-cmake -D CMAKE_CXX_COMPILER=g++-11 .. # or clang++-12
-make
 ```
 
-You may need to specify the absolute path to `g++-11` / `clang-12` if their respective executables are not available in the default search paths.
+This will have cloned the `jluna` git repository into the folder `Desktop/jluna`. 
 
-When compiling, warnings of the following type may appear:
+### Configure CMake
 
-```
-(...)
-/home/user/Applications/julia/bin/../include/julia/julia_locks.h:72:32: warning: ‘++’ expression of ‘volatile’-qualified type is deprecated [-Wvolatile]
-   72 |         jl_current_task->ptls->defer_signal++;  \
-(...)
-```
-
-This is because the official julia header `julia.h` is slightly out of date. The warning is unrelated to `jluna`s codebase, `jluna` itself should report no warnings or errors. If this is not the case, head to [troubleshooting](#troubleshooting).
-
-We verify everything works by running `JLUNA_TEST` which we just compiled:
+We now call:
 
 ```bash
-# in ~/my_project/jluna/build/
-./JLUNA_TEST
+# in Desktop/jluna/build
+cmake .. -DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
 ```
 
-A lot of output will appear. At the very end it should show: 
+Where `<compiler>` is one of:
++ `g++-10`
++ `g++-11`
++ `clang++-12`
+
+And `<path>` is the desired install path. `-DCMAKE_INSTALL_PREFIX=<path>` is optional, if it is specified manually (not recommended), keep note of this path as we will need it later.
+
+
+> Window supports is experimental. This means using MSVC may work, however this is currently untested. The [cpp compiler support]() page seems to imply that MSVC 19.30 or newer is required to compile `jluna`.
+
+Some errors may appear here, if this is the case, head to [troubleshooting](#troubleshooting).
+
+If the command does not recognize the compiler, even though you are sure it is installed, it may be necessary to specify the full path to the compiler executable instead, like so:
 
 ```
-Number of tests unsuccessful: 0
+-DCMAKE_CXX_COMPILER=/usr/bin/g++-10
 ```
 
-This means everything works!
+### Make Install
 
-We then clean up the build files using:
+Having successfully configured cmake, we now call:
 
 ```bash
-# in ~/my_project/jluna/build
-cd ..
-rm -r build
+# in Desktop/jluna/build
+make install
 ```
 
-We have now compiled and verified `jluna` and are left with a shiny new `libjluna.so` and `libjluna_c_adapter.so` in `~/my_project/jluna/`. These are the shared libraries that contain `jluna`s functionality. 
+Which will create two shared libraries `libjluna.*`, and `libjluna_c_adapter.*`, where `*` is the platform-dependent library suffix.
 
-Advanced users can stop this tutorial now and simply link their library against `libjluna.so`, `libjluna_c_adapter.so` (both in '`~/my_project/jluna/`) and against `libjulia.so`, which is in the directory `$ENV{JULIA_PATH}/lib/`.
-
-
-For people who aren't yet as familiar with cmake and linking, let's continue:
-
-### Linking `jluna`
-
-We now need to create our own application. First we create a `main.cpp`:
-
-```bash
-cd ~/my_project
-gedit main.cpp
-```
-
-This will open a GUI editor, if `gedit` is unavailable, any other editor (`vim`, `nano`, `emacs`, etc.) can be used. 
-
-We replace the contents of `main.cpp` with the following:
-
-```cpp
-#include <jluna.hpp>
-
-using namespace jluna;
-
-int main()
-{
-    State::initialize();
-    Base["println"]("hello julia");
-}
-```
-
-then safe and close the file. 
-
-To compile our project, we again use cmake. We first create `CMakeLists.txt`:
-
-```bash
-# in ~/my_project/
-gedit CMakeLists.txt
-```
-
-And replace its contents with the following:
+Now that `jluna` is installed on our system, we can access it using:
 
 ```cmake
-cmake_minimum_required(VERSION 3.16)
+# in users own CMakeLists.txt
+find_library(jluna REQUIRED)
+```
 
-# name of our project
-project(MyProject)
+If a custom install directory was specified, we need to make cmake aware of this:
 
-# julia
-if (NOT DEFINED ENV{JULIA_PATH})
-    message(WARNING "JULIA_PATH was not set correctly. Consider re-reading the jluna installation tutorial at https://github.com/Clemapfel/jluna/blob/master/docs/installation.md#setting-julia_path to fix this issue")
-endif()
+```cmake
+# in users own CMakeLists.txt
+find_library(jluna REQUIRED 
+    NAMES jluna
+    PATHS <install path>
+)
+```
 
-set(JULIA_INCLUDE "$ENV{JULIA_PATH}/include/julia")
+Where `<install path>` is the path specified as `-DCMAKE_INSTALL_PREFIX` during configuration before.
 
-set(JULIA_LIB "$ENV{JULIA_PATH}/lib/libjulia.so")
+Note that `jlunas` install rules also export is as a package, so it will be available through `find_package` on systems where it was installed globally like so:
 
+```cmake
 find_package(jluna REQUIRED)
-
-# add our executable
-add_executable(MY_EXECUTABLE ${CMAKE_SOURCE_DIR}/main.cpp)
-
-target_include_directories(MY_EXECUTABLE PRIVATE ${JULIA_INCLUDE})
-
-# link executable with jluna, jluna_c_adapter and julia
-target_link_libraries(MY_EXECUTABLE jluna::jluna ${JULIA_LIB})
 ```
 
-We again save and close the file, then create our own build folder and run cmake, just like we did with `jluna` before
+After `find_library` or `find_package`, we link our own library like so:
 
-```bash
-# in ~/my_project
-mkdir build
-cd build
-cmake -D CMAKE_CXX_COMPILER=g++-11 ..
-make
+```cmake
+# in users own CMakeLists.txt
+target_link_libraries(my_library PRIVATE 
+    "${jluna}" 
+    "${<julia package>}"
+)
+target_include_directories(my_library PRIVATE 
+    "${<jluna include directory>}" 
+    "${<julia include directory>}"
+)
 ```
 
-If errors appear, be sure `JULIA_PATH` is still set correctly, as it is needed to find `julia.h`. Otherwise, head to [troubleshooting](#troubleshooting).
+Where 
++ `<jluna include directory>` is the folder containing `jluna.hpp`
++ `<julia package>` is the library/package containing the julia C-API 
++ `<julia include directory>` is the folder containing `julia.h`.
 
-After compilation succeeded, the directory should now have the following layout:
+The shared julia library location is usually 
++ `${JULIA_BINDIR}/../lib` 
+  
+while the julia include directory is usually 
++ `${JULIA_BINDIR}/../include/` or 
++ `${JULIA_BINDIR}/../include/julia/`
 
-```
-my_project/
-    CMakeLists.txt
-    main.cpp
-    jluna/
-        libjluna.so
-        libjluna_c_adapter.so
-        jluna.hpp
-        (...)
-    build/
-        MY_EXECUTABLE
-        (...)
-```
-Where names with a `/` suffix are folders.
-
-We can now run our application using:
-
-```bash
-# in ~/my_project/build
-./MY_EXECUTABLE
-```
-```
-[JULIA][LOG] initialization successfull.
-hello julia
-```
-
-`State::initialize()` may fail. If this is the case, head to [troubleshooting](#troubleshooting). Otherwise, congratulations! We are done and can now start developing our own application with the aid of julia and `jluna`.
+If building your library triggers linker or compiler errors, head to [troubleshoot](#troubleshooting).
 
 ---
 
 ## Troubleshooting
 
-### Cannot determine location of julia image
+### Permission Denied
 
-When compiling `jluna`, the following error may occur:
+During `make install`, or during execution of the bash script, your OS may notify you that it was unable to write to a folder due to missing permissions. To fix this, either run `make install` as `sudo` (or as administrator on windows), or specify a different folder using `-DCMAKE_INSTALL_PREFIX` for which `jluna` or cmake does have write/read permission.
 
-```
- Cannot determine location of julia image.  Before running cmake, please
-  manually set the environment variable JULIA_PATH using
+### Unable to detect the Julia executable
 
-      export JULIA_PATH=/path/to/your/.../julia
+When calling:
 
-  If you are unsure of the location of your julia image, you can access the
-  path from within the julia REPL using
-
-      println(joinpath(Sys.BINDIR, ".."))
-
-  For more information, visit
-  https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting
+```bash
+# in ~/Desktop/jluna/build
+cmake .. -DCMAKE_COMPILER=g++-10 # or other compiler
 ```
 
-This is because `JULIA_PATH` is not properly set. Repeat the section on [setting `JULIA_PATH`](#setting-julia_path) to resolve this issue.
-
-###  Cannot find julia.h / libjulia.so
-
-When building `jluna`, the following warnings may appear:
+You may encounter the following error:
 
 ```
-CMake Warning at CMakeLists.txt:37 (message):
-  Cannot find library header julia.h in (...)
+CMake Error at cmake/find/FindJulia.cmake:5 (message):
+  Unable to detect the julia executable.  Make sure JULIA_BINDIR is set
+  correctly.
 ```
 
-This means verification of the directory specified through `JULIA_PATH` failed. We can make sure the path is correct by verifying:
+This error appears, because `jluna` was unable to locate the julia package on your system. To make `jluna` aware of the location manually, we can pass the following variable to the cmake command:
 
-+ the path is an absolute path starting at root
-+ the path has a prefix `/`
-+ the path has no suffix `/`
-+ the path is the same as reported in the julia REPL
+```bash
+cmake .. -DJULIA_BINDIR=path/to/your/julia/bin -DCMAKE_COMPILER=g++-10
+```
 
-If all of these are true, it may be that your julia image is corrupted or compressed. The julia folder should have the following layout:
+Where `path/to/your/julia/bin` is the path of the binary directory of your julia image. If you are unsure of its location, you can execute
+
+```julia
+println(Sys.BINDIR)
+```
+
+From inside the julia REPL.
+
+### Found unsuitable version
+
+During the cmake configuration step, the following error may appear:
 
 ```
-julia/
+CMake Error at /home/(...)/FindPackageHandleStandardArgs.cmake:218 (message):
+  Could NOT find Julia: Found unsuitable version "1.5.1", but required is at
+  least "1.7.0" (found /home/clem/Applications/julia/lib/libjulia.so)
+```
+
+Where `1.5.1` could instead be any version before `1.7.0`. This means your julia version is out of date, either update it through your packet manager or download the latest version [here](https://julialang.org/downloads/), install it, then make sure `JULIA_BINDIR` is pointing to the newer version.
+
+### Could NOT find Julia (missing: X)
+
+Where X can be any of :
++ `JULIA_LIBRARY` 
++ `JULIA_EXECUTABLE` 
++ `JULIA_BINDIR` 
++ `JULIA_INCLUDE_DIR`
+
+This means that either `JULIA_BINDIR` was not set correctly or the directory it is pointing to is not the julia binary directory. Verify that the value of `JULIA_BINDIR` starts at root (`/` on unix and `C:/` on windows), ends in `/bin`, and that your julia image folder is uncompressed. 
+
+Make sure the folder `JULIA_BINDIR` points to, has the following layout:
+
+```
+julia*/
     bin/
        julia 
     include/
@@ -276,7 +200,8 @@ julia/
     
     (...)
 ```
-Where names with a suffix `/` are folders. If your julia folder looks different, redownload the latest official release [here](https://julialang.org/downloads/#current_stable_release) and reassign `JULIA_PATH` accordingly.
+
+Where `*` may be a version suffix, such as `julia-1.7.2`.
 
 ### Cannot find <julia.h> / <jluna.hpp>
 
@@ -298,97 +223,60 @@ fatal error: jluna.hpp: No such file or directory
 compilation terminated.
 ```
 
-This means the `include_directories` in cmake where set improperly. Make sure the following lines are present in your `CMakeLists.txt`:
+This means the `include_directories` in your `CMakeLists.txt` were set improperly. Make sure the following lines are present in your `CMakeLists.txt`:
 
 ```
-include_directories("${CMAKE_SOURCE_DIR}/jluna")
-include_directories("$ENV{JULIA_PATH}/include/julia")
+target_include_directories(<your target> PRIVATE
+    "<path to jluna>" 
+    "<path to julia>"
+)
 ``` 
+Where 
 
-Furthermore, make sure your directory has the following structure:
++ <your target> is the build target, a library or executable
++ `<path to jluna>` is the install path of the `jluna` shared libary, possibly specified during cmake configuration using `-DCMAKE_INSTALL_PREFIX`
++ `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
 
-```
-my_project/
-    main.cpp
-    CMakeLists.txt
-    jluna/
-        libjluna.so
-        libjluna_c_adapter.so
-        jluna.hpp
-        include/
-            (...)
-        (...)
-    build/
-        (...)
-```
+### Cannot find libjluna_c_adapter
 
-And make sure `JULIA_PATH` is set correctly (see above). 
-
-### State::initialize fails
-
-#### AssertionError("jluna requires julia v1.7.0 or higher")
-
-`jluna` asserts wether the correct version of julia is present on initialization. If the following exception occurs when calling `State::initialize`:
-
-```
-terminate called after throwing an instance of 'jluna::JuliaException'
-  what():  [JULIA][EXCEPTION] AssertionError("jluna requires julia v1.7.0 or higher, but v1.6.2 was detected. Please download the latest julia release at https://julialang.org/downloads/#current_stable_release, set JULIA_PATH accordingly, then recompile jluna using cmake. For more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting")
-
-signal (6): Aborted
-in expression starting at none:0
-(...)
-```
-
-It means that your julia version is out of date. [Download the latest version](https://julialang.org/downloads/#current_stable_release), set `JULIA_PATH` to point to it, then recompile `jluna` as outlined [above](#building-jluna).
-
-### ERROR: could not load library 
-
-When calling `State::initialize`, julias C-API may report an error of the following type:
-
-```
-ERROR: could not load library "(...)/lib/julia/sys.so"
-(...)/lib/julia/sys.so: cannot open shared object file: No such file or directory
-```
-
-This can mean three things
-
-+ A) `JULIA_PATH` was set incorrectly (see above)
-+ B) your executable `MY_EXECUTABLE` does not have read permission for the folders in `JULIA_PATH`
-+ C) julia is not installed on a system level
-    
-If C is true, replace `State::initialize()` with its overload:
+When calling
 
 ```cpp
-State::initialize("/path/to/(...)/julia/bin")
+State::initialize()
 ```
-Where `/path/to/(...)` is replaced with the absolute path to your image of julia. This will tell the C-API to load julia from that image, rather than from the default system image.
 
-## Creating an Issue
+The following error may appear:
 
-If your problem still persists, it may be appropriate to open a github issue. First, please verify that:
+```
+AssertionError: when trying to initialize jluna.cppcall: cannot find /home/Desktop/jluna/libjluna_c_adapter.so
+Stacktrace:
+ [1] verify_library()
+   @ Main.jluna._cppcall ./none:951
+ [2] top-level scope
+   @ none:2
+[JULIA][ERROR] initialization failed.
+terminate called after throwing an instance of 'jluna::JuliaException'
+  what():  [JULIA][EXCEPTION] AssertionError("[JULIA][ERROR] initialization failed.")
 
-+ you are on a linux-based, 64-bit operating system
-+ julia 1.7.0 (or higher) is installed and no older version exists on your machine
-+ cmake 3.16 (or higher) is installed and no older version exists on your machine
-+ g++-10 or g++-11 is installed 
-+ gcc-9 (or higher) is installed
-+ when building with cmake, you specified `-D CMAKE_CXX_COMPILER=g++-11` correctly
-    - cmake is able to find the executable `g++-11` in the default search paths
-    - the same applies to `-D CMAKE_C_COMPILER=gcc-9` as well
-    - any given issue may be compiler specific, consider trying `clang-12` instead
-+ `~/my_project/CMakeLists.txt` is identical to the code in [installation](#linking-jluna)
-+ `State::initialize` and `JULIA_PATH` are modified as outlined [above](#stateinitialize-fails)
-+ `jluna` was freshly pulled from the git repo and recompiled
-+ `~/my_project/jluna/` contains `libjluna.so` and `libjluna_c_adapter.so`
-+ `~/my_project/jluna/build/JLUNA_TEST` was ran
-+ your issue is not otherwise covered in [troubleshooting](#troubleshooting), or any other already resolved issue
+signal (6): Aborted
+```
 
-If and only if all of the above apply, head to the [issues tab](https://github.com/Clemapfel/jluna/issues). There, please create an issue and
-+ describe your problem
-+ state your operating system, distro and compiler version
-+ copy-paste the output of `JLUNA_TEST` (even if all tests are `OK`)
-+ provide a minimum working example of your project that recreates the bug
+To allow the local julia state to interface with `jluna`, it needs the shared C-adapter-library to be available. During `make install`, `jluna` modifies its own code to keep track of the location of the C-adapter. If it was moved, `jluna` may no longer be able to find it.
+To fix this, recompile jluna, as detailed [above](#make-install). 
 
-We will try to resolve your problem as soon as possible and are thankful for your input and collaboration.
+
+The C-adapter library is always installed into the directory specified by `CMAKE_INSTALL_PREFIX`, regardless of cmake presets used. Be aware of this.
+
+> **HACK**: Some IDEs and modern versions of cmake may override `CMAKE_INSTALL_PREFIX` between the time of configuration and build. As a hacky fix (March, 2022), you can override the C-adapter shared library location manually, **before calling `State::initialize`**, using `State::set_c_adapter_path`:
+> ```cpp
+> int main()
+> {
+>   State::set_c_adapter_path("C:/actual/path/to/jluna_c_adapter.dll")
+>   State::initialize();
+>   (...)
+> ```
+> A future release of `jluna` will provide a proper solution for this.
 
 ---
+
+If your particular problem was not addressed in this section, feel free to [open an issue on GitHub](https://github.com/Clemapfel/jluna/issues).
