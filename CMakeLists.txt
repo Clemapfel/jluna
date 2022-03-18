@@ -1,23 +1,30 @@
 cmake_minimum_required(VERSION 3.12)
 
-#
-# Build jluna. This cmake attempts to automatically detect the julia image
-# If this is not possible, manually specify the path to the julia binary
-# using:
-#
-# `-DJULIA_BINDIR=/path/to/.../julia/bin`
-#
-# If you are unsure of the location of this folder, you can access
-# it from within the REPL using:
-#
-# `println(Sys.BINDIR)`
-#
-# ### Options ##
-#
-# jluna_DEVELOPER_MODE      : enable building test and benchmark executables. Off by default
-# BUILD_TESTING             : build jluna_test, as CTest. On by default
-# BUILD_BENCHMARK           : build jluna_benchmark. On by default
-#
+#[=======================================================================[.rst:
+
+Build jluna
+-----------
+
+This cmake attempts to automatically detect the julia image.
+If this is not possible, manually specify the path to the julia binary using:
+
+    ``-DJULIA_BINDIR=/path/to/.../julia/bin``
+
+If you are unsure of the location of this folder, you can access
+it from within the REPL using:
+
+    ``println(Sys.BINDIR)``
+
+Options
+^^^^^^^
+``jluna_DEVELOPER_MODE``
+    enable building test and benchmark executables. Off by default
+``BUILD_TESTING``
+    build jluna_test, as CTest. On by default
+``BUILD_BENCHMARK``
+    build jluna_benchmark. On by default
+
+#]=======================================================================]
 
 project(jluna VERSION 0.8.4 LANGUAGES CXX)
 
