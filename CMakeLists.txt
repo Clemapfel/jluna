@@ -1,5 +1,24 @@
 cmake_minimum_required(VERSION 3.12)
 
+#
+# Build jluna. This cmake attempts to automatically detect the julia image
+# If this is not possible, manually specify the path to the julia binary
+# using:
+#
+# `-DJULIA_BINDIR=/path/to/.../julia/bin`
+#
+# If you are unsure of the location of this folder, you can access
+# it from within the REPL using:
+#
+# `println(Sys.BINDIR)`
+#
+# ### Options ##
+#
+# jluna_DEVELOPER_MODE      : enable building test and benchmark executables. Off by default
+# BUILD_TESTING             : build jluna_test, as CTest. On by default
+# BUILD_BENCHMARK           : build jluna_benchmark. On by default
+#
+
 project(jluna VERSION 0.8.4 LANGUAGES CXX)
 
 include(cmake/project-is-top-level.cmake)
@@ -124,19 +143,29 @@ endif()
 include(CTest)
 if(jluna_DEVELOPER_MODE)
 
-    add_executable(
-        jluna_test
-        .test/main.cpp
-        .test/test.hpp
-    )
-    target_link_libraries(jluna_test PRIVATE jluna)
-    add_test(NAME jluna_test COMMAND jluna_test)
+    ### Declare Test ###
 
-    add_executable(
-        jluna_benchmark
-        .benchmark/main.cpp
-        .benchmark/benchmark.hpp
-        .benchmark/benchmark_aux.hpp
-    )
-    target_link_libraries(jluna_benchmark PRIVATE jluna)
+    option(BUILD_TESTING "Enable jluna_test" ON)
+    if (BUILD_TESTING)
+        add_executable(
+            jluna_test
+            .test/main.cpp
+            .test/test.hpp
+        )
+        target_link_libraries(jluna_test PRIVATE jluna)
+        add_test(NAME jluna_test COMMAND jluna_test)
+    endif()
+
+    ### Declare Benchmark ###
+
+    option(BUILD_BENCHMARK "Enable jluna_benchmark" ON)
+    if (BUILD_BENCHMARK)
+        add_executable(
+            jluna_benchmark
+            .benchmark/main.cpp
+            .benchmark/benchmark.hpp
+            .benchmark/benchmark_aux.hpp
+        )
+        target_link_libraries(jluna_benchmark PRIVATE jluna)
+    endif()
 endif()

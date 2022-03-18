@@ -54,7 +54,7 @@ Where `<compiler>` is one of:
 + `g++-11`
 + `clang++-12`
 
-And `<path>` is the desired install path. `-DCMAKE_INSTALL_PREFIX=<path>` is optional, if it is specified manually, keep note of this path as we will need it later.
+And `<path>` is the desired install path. `-DCMAKE_INSTALL_PREFIX=<path>` is optional, if it is specified manually (not recommended), keep note of this path as we will need it later.
 
 
 > Window supports is experimental. This means using MSVC may work, however this is currently untested. The [cpp compiler support]() page seems to imply that MSVC 19.30 or newer is required to compile `jluna`.
@@ -106,7 +106,13 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES_WIN32 ".lib;.dll;.dll.a;")
 set(CMAKE_FIND_LIBRARY_SUFFIXES_UNIX ".so")
 ```
 
-After `find_library`, we link our own library (here assumed to be named `my_library`), using:
+Note that `jlunas` install rules also export is as a package, so it will be available through `find_package` on systems where it was installed globally like so:
+
+```cmake
+find_package(jluna REQUIRED)
+```
+
+After `find_library` or `find_package`, we link our own library (here assumed to be named `my_library`), using:
 
 ```cmake
 # in users own CMakeLists.txt
@@ -114,9 +120,9 @@ target_link_libraries(my_library ${jluna} ${<julia package>})
 target_include_directories(${JLUNA_DIR} ${<julia include directory>})
 ```
 
-Where `<julia package>` is the package containing the julia C-API and `<julia include directory>` is the folder containing `julia.h`.
+Where `<julia package>` is the library/package containing the julia C-API and `<julia include directory>` is the folder containing `julia.h`.
 
-The shared library location is usually 
+The shared julia library location is usually 
 + `${JULIA_BINDIR}/../lib` 
   
 while the julia include directory is usually 

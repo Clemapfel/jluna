@@ -1,3 +1,22 @@
+#
+# This FindJulia.cmake is intended to detect julia as a package.
+#
+# Use
+# `list(APPEND CMAKE_MODULE_PATH "path/to/this/file")`
+# `find_package(Julia 1.7.0 REQUIRED)`
+#
+# to make the julia target available through:
+# `"$<BUILD_INTERFACE:Julia::Julia>"`
+#
+# Furthermore the following variables will be set on
+# successful detection:
+#
+# JULIA_LIBRARY         : julia shared library
+# JULIA_EXECUTABLE      : julia REPL executable
+# JULIA_BINDIR          : directory to julia binary
+# JULIA_INCLUDE_DIR     : directory that contains julia.h
+#
+
 macro(julia_bail_if_false message var)
     if(NOT ${var})
         set(Julia_FOUND 0)
@@ -6,9 +25,11 @@ macro(julia_bail_if_false message var)
     endif()
 endmacro()
 
+# detect julia executable
 find_program(JULIA_EXECUTABLE julia PATHS ENV JULIA_BINDIR)
 julia_bail_if_false("Unable to detect the julia executable. Make sure JULIA_BINDIR is set correctly." JULIA_EXECUTABLE)
 
+# detect julia binary dir
 if(NOT DEFINED JULIA_BINDIR)
     # The executable could be a chocolatey shim, so run some Julia code to report
     # the path of the BINDIR
@@ -38,6 +59,7 @@ if(WIN32)
     endif()
 endif()
 
+# detect julia library
 find_library(JULIA_LIBRARY julia HINTS "${JULIA_PATH_PREFIX}/lib")
 
 if(WIN32)
@@ -47,17 +69,19 @@ endif()
 
 julia_bail_if_false("Unable to find the julia shared library. Make sure JULIA_BINDIR is set correctly and that the julia image is uncompressed" JULIA_LIBRARY)
 
+# detect julia include dir
 find_path(
     JULIA_INCLUDE_DIR julia.h
     HINTS "${JULIA_PATH_PREFIX}/include" "${JULIA_PATH_PREFIX}/include/julia"
 )
 julia_bail_if_false("Unable to find julia.h. Make sure JULIA_BINDIR is set correctly and that your image is uncompressed." JULIA_INCLUDE_DIR)
 
-#if(NOT DEFINED JULIA_VERSION)
+# detect julia version
+if(NOT DEFINED JULIA_VERSION)
     file(STRINGS "${JULIA_INCLUDE_DIR}/julia_version.h" JULIA_VERSION_LOCAL LIMIT_COUNT 1 REGEX JULIA_VERSION_STRING)
     string(REGEX REPLACE ".*\"([^\"]+)\".*" "\\1" JULIA_VERSION_LOCAL "${JULIA_VERSION_LOCAL}")
     set(JULIA_VERSION "${JULIA_VERSION_LOCAL}")
-#endif()
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
@@ -66,6 +90,7 @@ find_package_handle_standard_args(
     VERSION_VAR JULIA_VERSION
 )
 
+# detect target properties
 if(NOT TARGET Julia::Julia)
     set(julia_has_implib NO)
     set(julia_library_type STATIC)
@@ -102,4 +127,5 @@ if(NOT TARGET Julia::Julia)
     endif()
 endif()
 
+# finish
 mark_as_advanced(JULIA_EXECUTABLE JULIA_BINDIR JULIA_LIBRARY JULIA_INCLUDE_DIR JULIA_VERSION JULIA_LIBRARY_DLL)

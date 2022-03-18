@@ -1,3 +1,7 @@
+#
+# Install rules for jluna/CMakeLists.txt
+#
+
 # find_package(<package>) call for consumers to find this project
 set(package jluna)
 
