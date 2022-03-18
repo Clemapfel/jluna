@@ -125,6 +125,10 @@ target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR
 
 ### HACK: export all symbols on Windows ###
 
+# TODO:
+# Exporting all symbols is bad practice.
+# Fix this using the GenerateExportHeader CMake module and visibility properties.
+
 set_target_properties(jluna jluna_c_adapter PROPERTIES
     WINDOWS_EXPORT_ALL_SYMBOLS YES
     LIBRARY_OUTPUT_DIRECTORY ${C_ADAPTER_PATH}
