@@ -29,6 +29,11 @@ namespace jluna::detail
 
 namespace jluna::State
 {
+    void set_c_adapter_path(const std::string& path)
+    {
+        jluna::detail::c_adapter_path_override = path;
+    }
+
     void initialize()
     {
         initialize("");
@@ -71,7 +76,9 @@ namespace jluna::State
         forward_last_exception();
 
         std::stringstream str;
-        str << "jluna._cppcall.eval(:(_library_name = \"" << jluna::detail::c_adapter_path << "\"))";
+        str << "jluna._cppcall.eval(:(_library_name = \"";
+        str << (jluna::detail::c_adapter_path_override.empty() ?  jluna::detail::c_adapter_path : jluna::detail::c_adapter_path_override);
+        str << "\"))";
 
         jl_eval_string(str.str().c_str());
         forward_last_exception();

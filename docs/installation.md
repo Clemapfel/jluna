@@ -267,6 +267,16 @@ To fix this, recompile jluna, as detailed [above](#make-install).
 
 The C-adapter library is always installed into the directory specified by `CMAKE_INSTALL_PREFIX`, regardless of cmake presets used. Be aware of this.
 
+> **HACK**: Some IDEs and modern versions of cmake may override `CMAKE_INSTALL_PREFIX` between the time of configuration and build. As a hacky fix (March, 2022), you can override the C-adapter shared library location manually, **before calling `State::initialize`**, using `State::set_c_adapter_path`:
+> ```cpp
+> int main()
+> {
+>   State::set_c_adapter_path("C:/actual/path/to/jluna_c_adapter.dll")
+>   State::initialize();
+>   (...)
+> ```
+> A future release of `jluna` will provide a proper solution for this.
+
 ---
 
 If your particular problem was not addressed in this section, feel free to [open an issue on GitHub](https://github.com/Clemapfel/jluna/issues).

@@ -28,6 +28,9 @@ namespace jluna
 
 namespace jluna::State
 {
+    /// @brief manually set the C-adapter path
+    void set_c_adapter_path(const std::string& path);
+
     /// @brief initialize environment
     void initialize();
 
