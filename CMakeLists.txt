@@ -114,7 +114,7 @@ add_library(jluna SHARED
 )
 
 target_link_libraries(jluna PUBLIC jluna_c_adapter)
-target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
+target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 
 ### HACK: export all symbols on Windows ###
 
