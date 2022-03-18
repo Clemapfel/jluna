@@ -42,7 +42,7 @@ find_package(Julia 1.7.0 REQUIRED)
 
 file(READ include/jluna.jl JULIA_SOURCE)
 set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}")
-configure_file(.src/include_julia.inl.in .src/include_julia.inl @ONLY)
+configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
 
 ### Declare C adapter ###
 
