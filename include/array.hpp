@@ -174,16 +174,15 @@ namespace jluna
                     /// @returns bool
                     bool operator!=(const ConstIterator&) const;
 
-                    /// @brief decays into value_type
-                    template<Unboxable T = Value_t>
-                    T operator*() const;
-
                     /// @brief forward to self
+                    auto operator*() const;
+
+                    /// @brief forward to assignable
                     auto operator*();
 
                     /// @brief decay into unboxed value
                     /// @tparam value-type, not necessarily the same as declared in the array type
-                    template<Unboxable T = Value_t, std::enable_if_t<not std::is_same_v<T, Proxy>, bool> = true>
+                    template<Unboxable T = Value_t, std::enable_if_t<not Is<Proxy, T>, bool> = true>
                     operator T() const;
 
                     /// @brief decay into proxy

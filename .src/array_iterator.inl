@@ -59,17 +59,15 @@ namespace jluna
     }
 
     template<Boxable V, size_t R>
-    template<Unboxable T>
-    T Array<V, R>::ConstIterator::operator*() const
-    {
-        static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        return unbox<T>(jluna::safe_call(getindex, _owner->operator const jl_value_t *(), box(_index + 1)));
-    }
-
-    template<Boxable V, size_t R>
     auto Array<V, R>::ConstIterator::operator*()
     {
         return Iterator(_index, const_cast<Array<V, R>*>(_owner));
+    }
+
+    template<Boxable V, size_t R>
+    auto Array<V, R>::ConstIterator::operator*() const
+    {
+        return *this;
     }
 
     template<Boxable V, size_t R>
@@ -88,10 +86,11 @@ namespace jluna
     }
 
     template<Boxable V, size_t R>
-    template<Unboxable T, std::enable_if_t<not std::is_same_v<T, Proxy>, bool>>
+    template<Unboxable T, std::enable_if_t<not Is<Proxy, T>, bool>>
     Array<V, R>::ConstIterator::operator T() const
     {
-        return operator*<T>();
+        static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
+        return unbox<T>(jluna::safe_call(getindex, _owner->operator const jl_value_t *(), box(_index + 1)));
     }
 
     template<Boxable V, size_t R>
