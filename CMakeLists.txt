@@ -118,8 +118,9 @@ target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
 
 ### HACK: export all symbols on Windows ###
 
-set_target_properties(jluna PROPERTIES
+set_target_properties(jluna jluna_c_adapter PROPERTIES
     WINDOWS_EXPORT_ALL_SYMBOLS YES
+    LIBRARY_OUTPUT_DIRECTORY ${C_ADAPTER_PATH}
 )
 
 ### Install rules ###
