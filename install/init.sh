@@ -10,6 +10,7 @@
 # @param $1: project name (i.e. "MyProject")
 # @param $2: project root path (i.e "/home/user/Desktop")
 # @param $3: (optional) compiler. One of: "g++-10", "g++-11", "clang++-12"
+# @param $4: (optional) If `TRUE`, overwrites folder if it already exists.
 #
 
 # catch input
@@ -37,8 +38,13 @@ project_root="$2"
 
 # prevent accidental deletion
 if [ -d "$project_root/$project_name" ]; then
-  printf "Folder $project_root/$project_name already exists. Please first delete it manually or specify a different directory\n"
-  exit 0
+
+  if [ "$4" == "TRUE" ]; then
+    rm -r "$project_root/$project_name"
+  else
+    printf "Folder $project_root/$project_name already exists. Please first delete it manually or specify a different directory\n"
+    exit 0
+  fi
 fi
 
 # setup project folder
