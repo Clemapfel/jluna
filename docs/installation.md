@@ -101,8 +101,14 @@ After `find_library` or `find_package`, we link our own library like so:
 
 ```cmake
 # in users own CMakeLists.txt
-target_link_libraries(my_library "${jluna}" "${<julia package>}")
-target_include_directories("${JLUNA_DIR}" "${<julia include directory>}")
+target_link_libraries(my_library PRIVATE 
+    "${jluna}" 
+    "${<julia package>}"
+)
+target_include_directories(my_library PRIVATE 
+    "${JLUNA_DIR}" 
+    "${<julia include directory>}"
+)
 ```
 
 Where `<julia package>` is the library/package containing the julia C-API and `<julia include directory>` is the folder containing `julia.h`.
@@ -219,11 +225,14 @@ compilation terminated.
 This means the `include_directories` in your `CMakeLists.txt` were set improperly. Make sure the following lines are present in your `CMakeLists.txt`:
 
 ```
-target_include_directories(<path to jluna>)
-target_include_directories(<path to julia>)
+target_include_directories(<your target> PRIVATE
+    "<path to jluna>" 
+    "<path to julia>"
+)
 ``` 
 Where 
 
++ <your target> is the build target, a library or executable
 + `<path to jluna>` is the install path of the `jluna` shared libary, possibly specified during cmake configuration using `-DCMAKE_INSTALL_PREFIX`
 + `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
 
