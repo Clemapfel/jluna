@@ -40,8 +40,38 @@ find_package(Julia 1.7.0 REQUIRED)
 
 ### Configure Files ###
 
-file(READ include/jluna.jl JULIA_SOURCE)
 set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}")
+
+file(READ
+    include/julia/01_common.jl
+    01_COMMON
+)
+
+file(READ
+    include/julia/02_common.jl
+    02_COMMON
+)
+
+file(READ
+    include/julia/03_exception_handler.jl
+    03_EXCEPTION_HANDLER
+)
+
+file(READ
+    include/julia/04_memory_handler.jl
+    04_MEMORY_HANDLER
+)
+
+file(READ
+    include/julia/05_cppcall.jl
+    05_CPPCALL
+)
+
+file(READ
+    include/julia/06_public.jl
+    06_PUBLIC
+)
+
 configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
 
 ### Declare C adapter ###

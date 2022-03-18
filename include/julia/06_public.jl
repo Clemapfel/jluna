@@ -1,24 +1,3 @@
-#
-# Copyright 2021 Clemens Cords
-# Created on 26.12.2021 by clem (mail@clemens-cords.com)
-#
-
-"""
-module with julia-functionality needed by the C++ side of jluna.
-Most end-user should not call any function in this module, with `cppcall` being the only exception
-"""
-module jluna
-
-
-
-
-
-
-
-
-
-
-
 using Main.jluna;
 
 """

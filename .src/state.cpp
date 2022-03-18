@@ -41,7 +41,22 @@ namespace jluna::State
         else
             jl_init_with_image(path.c_str(), NULL);
 
-        jl_eval_string(jluna::detail::include);
+        { // execute jluna julia code in pieces
+            using namespace jluna::detail;
+            std::stringstream str;
+            str << module_start;
+                str << include_01;
+                str << include_02;
+                str << include_03;
+                str << include_04;
+                str << include_05;
+            str << module_end;
+
+            str << include_06;
+
+            jl_eval_string(str.str().c_str());
+        }
+
         forward_last_exception();
 
         jl_eval_string(R"(
