@@ -59,7 +59,6 @@ target_link_libraries(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:Julia::Julia>")
 ### Declare Library ###
 
 add_library(jluna SHARED
-
     jluna.hpp
 
     include/exceptions.hpp
@@ -125,14 +124,13 @@ target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR
 
 ### HACK: export all symbols on Windows ###
 
-# TODO:
-# Exporting all symbols is bad practice.
-# Fix this using the GenerateExportHeader CMake module and visibility properties.
-
 set_target_properties(jluna jluna_c_adapter PROPERTIES
-    WINDOWS_EXPORT_ALL_SYMBOLS YES
+    WINDOWS_EXPORT_ALL_SYMBOLS YES # TODO
+    VERSION "${PROJECT_VERSION}"
+    SOVERSION "${PROJECT_VERSION}"
     LIBRARY_OUTPUT_DIRECTORY ${C_ADAPTER_PATH}
 )
+# Fix this using the GenerateExportHeader CMake module and visibility properties.
 
 ### Install rules ###
 
