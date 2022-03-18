@@ -231,13 +231,11 @@ If errors appear at any point, head to [troubleshooting](./docs/installation.md#
 
 ### Creating a Project from Scratch
 
-`jluna` offers a one-line wizard for installing it  and creating a new project using it.
+`jluna` offers a one-line wizard for installing it and creating a new project. This option is only recommended for novice users, more experienced users should create the project themself and link it as detailed above.
 
 > this feature is only available on unix systems
 
-To do so, download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). 
-
-Then execute (in the same folder you downloaded `init.sh` to):
+Download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). Then, execute (in the same folder you downloaded `init.sh` to):
 
 ```cpp
 /bin/bash init.sh <Project Name> <Projects Path> <C++ Compiler>
