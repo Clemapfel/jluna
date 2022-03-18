@@ -195,31 +195,8 @@ Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-1
 
 ## [Installation & Troubleshooting](./docs/installation.md)
 
-A step-by-step tutorial on how to create, compile, and link a new C++ Project with `jluna` can be found [here](./docs/installation.md). It is recommended that you follow this guide closely, instead of trying to resolve issues on your own.
 
-### Creating a new Project from Scratch
-
-`jluna` offers a one-line wizard for installing it and creating a new project, along with its own, finished `CMakeLists.txt` and a hello world. 
-
-> this feature is only available on unix systems
-
-To do so, download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). 
-
-Then execute (in the same folder you downloaded `init.sh` to):
-
-```cpp
-/bin/bash init.sh <Project Name> <Projects Path> [<C++ Compiler> = clang++-12]
-```
-Where
-+ `<Project Name>` is the name of your desired project folder, for example `MyProject`
-+ `<Projects Path>` is the root path to your new project folder, for example `/home/user/Desktop`
-+ `<C++ Compiler>` is one of `g++-10`, `g++-11`, `clang++-12`
-
-The bash script will create a folder in `<Project Path>/<Project Name>` (i.e. `/home/user/Desktop/MyProject`), clone jluna, build it, then, create for you a full project with a working `hello world`. `init.sh` even compiles the new project once. to make sure everything works.
-
-If errors appear at any point, head to [troubleshooting](./docs/installation.md#troubleshooting).
-
-### Installing `jluna` Globally
+> A step-by-step guide intended for users unfamiliar with cmake is available [here](./docs/installation.md)
 
 Execute, in any public directory
 
@@ -228,31 +205,49 @@ git clone https://github.com/Clemapfel/jluna
 cd jluna
 mkdir build
 cd build
-cmake .. -DCMAKE_CXX_COMPILER=<C++ Compiler> -DCMAKE_INSTALL_PREFIX=<Install Path>
+cmake .. -DCMAKE_CXX_COMPILER=<C++ Compiler>
 make install
 ```
 
 Where 
 + `<C++ Compiler>` is one of `g++-10`, `g++-11`, `clang++-12`
-+ `<Install Path>` is the install directory, for example `usr/local`
 
 Afterwards, you can make `jluna` available to your library using 
 
 ```cmake
-find_library(jluna REQUIRED
-    NAMES libjluna.so libjluna.dll.a libjluna.dll libjluna.lib
-    PATHS <Install Path>)
-
-target_link_libraries(<Your Library> ${jluna} ${<Julia>})
+# inside your own CMakeLists.txt
+find_library(jluna REQUIRED)
+target_link_libraries(<Your Library> PRIVATE
+    "${jluna}" 
+    "${<Julia>}")
 ```
-
 Where 
-+ `<Install Path>` is the same path specified during configuration before
-+ `<Julia>` is the Julia Package
++ `<Julia>` is the Julia Library (usually available in `"${JULIA_BINDIR}/../lib"`)
 + `<Your Library>` is the name of your library or executable
-  
 
-It may be instructive to check out [this basic template cmake](./install/resources/CMakeLists.txt). A `FindJulia.cmake` can be found [here](./install/resources/FindJulia.cmake). Download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). 
+If errors appear at any point, head to [troubleshooting](./docs/installation.md#troubleshooting).
+
+---
+
+### Creating a Project from Scratch
+
+`jluna` offers a one-line wizard for installing it  and creating a new project using it.
+
+> this feature is only available on unix systems
+
+To do so, download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). 
+
+Then execute (in the same folder you downloaded `init.sh` to):
+
+```cpp
+/bin/bash init.sh <Project Name> <Projects Path> <C++ Compiler>
+```
+Where
++ `<Project Name>` is the name of your desired project folder, for example `MyProject`
++ `<Projects Path>` is the root path to your new project folder, for example `/home/user/Desktop`
++ `<C++ Compiler>` is one of `g++-10`, `g++-11`, `clang++-12`
+
+The bash script will create a folder in `<Project Path>/<Project Name>`, install jluna in that folder and setup a working hello_world executable for you.
 
 If errors appear at any point, head to [troubleshooting](./docs/installation.md#troubleshooting).
 
