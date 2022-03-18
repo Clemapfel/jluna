@@ -141,31 +141,28 @@ elseif(NOT PROJECT_IS_TOP_LEVEL)
 endif()
 
 include(CTest)
-if(jluna_DEVELOPER_MODE)
+### Declare Test ###
 
-    ### Declare Test ###
+option(BUILD_TESTING "Enable jluna_test" ON)
+if (BUILD_TESTING)
+    add_executable(
+        jluna_test
+        .test/main.cpp
+        .test/test.hpp
+    )
+    target_link_libraries(jluna_test PRIVATE jluna)
+    add_test(NAME jluna_test COMMAND jluna_test)
+endif()
 
-    option(BUILD_TESTING "Enable jluna_test" ON)
-    if (BUILD_TESTING)
-        add_executable(
-            jluna_test
-            .test/main.cpp
-            .test/test.hpp
-        )
-        target_link_libraries(jluna_test PRIVATE jluna)
-        add_test(NAME jluna_test COMMAND jluna_test)
-    endif()
+### Declare Benchmark ###
 
-    ### Declare Benchmark ###
-
-    option(BUILD_BENCHMARK "Enable jluna_benchmark" ON)
-    if (BUILD_BENCHMARK)
-        add_executable(
-            jluna_benchmark
-            .benchmark/main.cpp
-            .benchmark/benchmark.hpp
-            .benchmark/benchmark_aux.hpp
-        )
-        target_link_libraries(jluna_benchmark PRIVATE jluna)
-    endif()
+option(BUILD_BENCHMARK "Enable jluna_benchmark" ON)
+if (BUILD_BENCHMARK)
+    add_executable(
+        jluna_benchmark
+        .benchmark/main.cpp
+        .benchmark/benchmark.hpp
+        .benchmark/benchmark_aux.hpp
+    )
+    target_link_libraries(jluna_benchmark PRIVATE jluna)
 endif()
