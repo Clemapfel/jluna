@@ -128,7 +128,7 @@ set_target_properties(jluna jluna_c_adapter PROPERTIES
     WINDOWS_EXPORT_ALL_SYMBOLS YES # TODO
     VERSION "${PROJECT_VERSION}"
     SOVERSION "${PROJECT_VERSION}"
-    LIBRARY_OUTPUT_DIRECTORY ${C_ADAPTER_PATH}
+    LIBRARY_OUTPUT_DIRECTORY "${C_ADAPTER_PATH}"
 )
 # Fix this using the GenerateExportHeader CMake module and visibility properties.
 
