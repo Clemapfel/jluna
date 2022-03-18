@@ -40,14 +40,9 @@ find_package(Julia 1.7.0 REQUIRED)
 
 ### Configure Files ###
 
-# TODO: don't hardcode this, use CMAKE_LIBRARY_SUFFIX
-
+# TODO: don't hardcode these
 set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}")
-if (WIN32)
-    set(C_ADAPTER_NAME "${CMAKE_INSTALL_PREFIX}/jluna_c_adapter.lib")
-else()
-    set(C_ADAPTER_NAME "${CMAKE_INSTALL_PREFIX}/libjluna_c_adapter.so")
-endif()
+set(C_ADAPTER_NAME "${C_ADAPTER_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna_c_adapter${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 file(READ
     include/julia/01_common.jl
@@ -203,7 +198,7 @@ endif()
 ### Declare Benchmark ###
 
 option(BUILD_BENCHMARK "Enable jluna_benchmark" ON)
-if (BUILD_BENCHMARK)
+if (BUILD_BENCHMARK AND NOT WIN32)
     add_executable(
         jluna_benchmark
         .benchmark/main.cpp
