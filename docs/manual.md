@@ -63,15 +63,16 @@ Please navigate to the appropriate section by clicking the links below:
     12.3 [Enabling the Interface](#step-2-enabling-the-interface)<br>
     12.4 [Adding Property Routines](#step-3-adding-property-routines)<br>
     12.5 [Implementing the Type](#step-4-implementing-the-type)<br>
-13. [~~**Paralell Execution**~~](#performance)<br>
-14. [**Performance**](#performance)<br>
-    14.1 [Cheat Sheet](#cheat-sheet)<br>
-    14.2 [Avoiding String Parsing](#avoid-string-parsing)<br>
-    14.3 [Staying Julia-Side](#stay-julia-side)<br>
-    14.4 [(Un)Boxing](#minimize-unboxing)<br>
-    14.5 [Proxy Construction](#minimize-proxy-construction)<br>
-    14.6 [Using the C-Library](#use-the-c-library)<br>
-    14.7 [Benchmarking Results](#)
+13. [~~**Paralell Execution**~~](#performance)<br> [**Performance**](#performance)<br>
+14. [**Unsafe Overloads**](#the-unsafe-library)<br>
+15. [**Performance**](#performance)<br>
+    15.1 [Cheat Sheet](#cheat-sheet)<br>
+    15.2 [Avoiding String Parsing](#avoid-string-parsing)<br>
+    15.3 [Staying Julia-Side](#stay-julia-side)<br>
+    15.4 [(Un)Boxing](#minimize-unboxing)<br>
+    15.5 [Proxy Construction](#minimize-proxy-construction)<br>
+    15.6 [Using the C-Library](#use-the-c-library)<br>
+    15.7 [Benchmarking Results](#)
 
 ## Initialization
 
@@ -2538,13 +2539,13 @@ Please navigate to the appropriate section by clicking the links below:
     12.4 [Adding Property Routines](#step-3-adding-property-routines)<br>
     12.5 [Implementing the Type](#step-4-implementing-the-type)<br>
 13. [~~**Paralell Execution**~~](#performance)<br>
-14. [**Performance**](#performance)<br>
-    14.1 [Cheat Sheet](#cheat-sheet)<br>
-    14.2 [Avoiding String Parsing](#avoid-string-parsing)<br>
-    14.3 [Staying Julia-Side](#stay-julia-side)<br>
-    14.4 [(Un)Boxing](#minimize-unboxing)<br>
-    14.5 [Proxy Construction](#minimize-proxy-construction)<br>
-    14.6 [Using the C-Library](#use-the-c-library)<br>
+15. [**Performance**](#performance)<br>
+    15.1 [Cheat Sheet](#cheat-sheet)<br>
+    15.2 [Avoiding String Parsing](#avoid-string-parsing)<br>
+    15.3 [Staying Julia-Side](#stay-julia-side)<br>
+    15.4 [(Un)Boxing](#minimize-unboxing)<br>
+    15.5 [Proxy Construction](#minimize-proxy-construction)<br>
+    15.6 [Using the C-Library](#use-the-c-library)<br>
 
 ## Initialization
 
@@ -4844,6 +4845,31 @@ Ted
 ```
 
 The complete code for this example is available [here](./frog_tadpole_example.cpp).
+
+---
+
+## The Unsafe Library
+
+(this section is not yet complete)
+
+> This section is only recommended for users who are 
+> + highly familiar with C and memory safety and 
+> + after truly optimal performance<br>
+> 
+> Misuse of this part of `jluna` can lead to memory leaks, exception-less crashes and data corruption, however, if navigated properly, also achieves overheads in the range of 0 - 1%, allowing for runtime performance that is sometimes faster than the C-API itself
+
+One of `jluna`s most central design conceits is that of safety. This is great for most users, but it also introduces a perfomance overhead that is, in rare applications, unacceptable. To address this, `jluna` provides a "guru"-interface, which offers bleeding-edge performance versions of common applications. 
+
+All functions in this section exist in the namespace `jluna::unsafe`. They are not part of the classes they operate on as most users should not interact with them carelessly. We'll go over most of them, how they are used, and how much faster they are, compared to doing things the safe way, here.
+
+### Moving Arrays Between States
+
+One of the most common applications in almost any field is dealing with very larges matrices or arrays. So far we either had the option to `box` and `unbox` such data, which, of course, would invoke a copy of it. This isn't possible sometimes, if we're manipulating a 16gb data-table using julia, we can't just copy and past it without incurring a huge overhead or running out of memory. 
+
+To address this, `jluna::unsafe` contains two functions that let us directly manipulate the underlying memory a julia-side array has:
+
+```cpp
+Array<Float64, 1> julia_side_array = 
 
 ---
 
