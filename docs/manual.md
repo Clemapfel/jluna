@@ -2026,7 +2026,7 @@ Having added all properties to the usertype interface, we make the Julia state a
 Usertype<RGBA>::implement();
 ```
 
-This creates a new type Julia-side type that has the architecture we just gave it. For end-users, this happens behind the scene, however, internally, the following expression is assembled and evaluated:
+This creates a new Julia-side type that has the architecture we just gave it. For end-users, this happens behind the scene, however, internally, the following expression is assembled and evaluated:
 
 ```julia
 mutable struct RGBA
