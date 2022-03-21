@@ -81,7 +81,7 @@ const char* frogs_dot_jl = R"(
 
 // box cpp Frog::Tadpole to julia Tadpole
 template<Is<Frog::Tadpole> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
@@ -90,13 +90,13 @@ Any* box(T in)
 
     static auto* setfield = jl_find_function("Base", "setfield!");
     static auto field_symbol = Symbol("_name");
-    jluna::safe_call(setfield, out, (Any*) field_symbol, box<std::string>(in._name));
+    jluna::safe_call(setfield, out, (unsafe::Value*) field_symbol, box<std::string>(in._name));
     return out;
 }
 
 // box cpp Frog to julia Frog
 template<Is<Frog> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* frog_ctor = jl_find_function("Main", "generate_frog");
@@ -107,13 +107,13 @@ Any* box(T in)
 
 // unbox julia Tadpole to cpp Frog::Tadpole
 template<Is<Frog::Tadpole> T>
-T unbox(Any* in)
+T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();
     static auto* getfield = jl_find_function("Base", "getfield");
     static auto field_symbol = Symbol("_name");
 
-    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+    unsafe::Value* julia_side_name = jluna::safe_call(getfield, in, (unsafe::Value*) field_symbol);
 
     auto out = Frog::Tadpole();
     out._name = unbox<std::string>(julia_side_name);
@@ -122,13 +122,13 @@ T unbox(Any* in)
 
 // unbox julia Frog to cpp Frog
 template<Is<Frog> T>
-T unbox(Any* in)
+T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();
     static auto* getfield = jl_find_function("Base", "getfield");
     static auto field_symbol = Symbol("_name");
 
-    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+    unsafe::Value* julia_side_name = jluna::safe_call(getfield, in, (unsafe::Value*) field_symbol);
 
     auto tadpole = Frog::Tadpole();
     tadpole._name = unbox<std::string>(julia_side_name);

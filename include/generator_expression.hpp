@@ -40,14 +40,14 @@ namespace jluna
         protected:
             /// @brief ctor
             /// @param pointer to Base.Generator
-            GeneratorExpression(Any*);
+            GeneratorExpression(unsafe::Value*);
 
         private:
             Int64 _length;
 
-            Any* get() const;
+            unsafe::Value* get() const;
             size_t _value_key;
-            Any* _value_ref;
+            unsafe::Value* _value_ref;
 
             static inline jl_function_t* _iterate = nullptr;
     };
@@ -62,7 +62,7 @@ namespace jluna
             ForwardIterator(const GeneratorExpression*, Int64);
 
             /// @brief dereference to julia object
-            Any* operator*();
+            unsafe::Value* operator*();
 
             /// @brief cast to C++ type
             template<Unboxable T>

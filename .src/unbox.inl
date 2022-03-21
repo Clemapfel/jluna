@@ -10,36 +10,36 @@ namespace jluna
     namespace detail
     {
         template<typename T>
-        T smart_unbox_primitive(Any* in)
+        T smart_unbox_primitive(unsafe::Value* in)
         {
             bool first_attempt = true;
             retry:
 
-            if (jl_isa(in, (Any*) jl_bool_type))
+            if (jl_isa(in, (unsafe::Value*) jl_bool_type))
                 return jl_unbox_bool(in);
-            else if (jl_isa(in, (Any*) jl_int8_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_int8_type))
                 return jl_unbox_int8(in);
-            else if (jl_isa(in, (Any*) jl_int16_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_int16_type))
                 return jl_unbox_int16(in);
-            else if (jl_isa(in, (Any*) jl_int32_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_int32_type))
                 return jl_unbox_int32(in);
-            else if (jl_isa(in, (Any*) jl_int64_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_int64_type))
                 return jl_unbox_int64(in);
-            else if (jl_isa(in, (Any*) jl_uint8_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_uint8_type))
                 return jl_unbox_uint8(in);
-            else if (jl_isa(in, (Any*) jl_uint16_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_uint16_type))
                 return jl_unbox_uint16(in);
-            else if (jl_isa(in, (Any*) jl_uint32_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_uint32_type))
                 return jl_unbox_uint32(in);
-            else if (jl_isa(in, (Any*) jl_uint64_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_uint64_type))
                 return jl_unbox_uint64(in);
-            else if (jl_isa(in, (Any*) jl_float32_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_float32_type))
                 return jl_unbox_float32(in);
-            else if (jl_isa(in, (Any*) jl_float64_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_float64_type))
                 return jl_unbox_float64(in);
-            else if (jl_isa(in, (Any*) jl_float16_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_float16_type))
                 return jl_unbox_float32(jl_try_convert(jl_float32_type, in));
-            else if (jl_isa(in, (Any*) jl_char_type))
+            else if (jl_isa(in, (unsafe::Value*) jl_char_type))
                 return jl_unbox_int32(jl_convert(jl_int32_type, in));
             else
             {
@@ -56,14 +56,14 @@ namespace jluna
     }
 
 
-    template<Is<Any*> T>
-    T unbox(Any* in)
+    template<Is<unsafe::Value*> T>
+    T unbox(unsafe::Value* in)
     {
         return in;
     }
 
     template<Is<bool> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -72,7 +72,7 @@ namespace jluna
     }
 
     template<Is<char> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -81,7 +81,7 @@ namespace jluna
     }
 
     template<Is<uint8_t> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -90,7 +90,7 @@ namespace jluna
     }
 
     template<Is<uint16_t> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -99,7 +99,7 @@ namespace jluna
     }
 
     template<Is<uint32_t> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -108,7 +108,7 @@ namespace jluna
     }
 
     template<Is<uint64_t> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -117,7 +117,7 @@ namespace jluna
     }
 
     template<Is<int8_t> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -126,7 +126,7 @@ namespace jluna
     }
 
     template<Is<int16_t> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -135,7 +135,7 @@ namespace jluna
     }
 
     template<Is<int32_t> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -144,7 +144,7 @@ namespace jluna
     }
 
     template<Is<int64_t> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -153,7 +153,7 @@ namespace jluna
     }
 
     template<Is<float> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -162,7 +162,7 @@ namespace jluna
     }
 
     template<Is<double> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res = detail::smart_unbox_primitive<T>(value);
@@ -171,7 +171,7 @@ namespace jluna
     }
 
     template<Is<std::string> T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto res =  std::string(jl_to_string(value));
@@ -180,7 +180,7 @@ namespace jluna
     } //°
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         static jl_datatype_t* type = (jl_datatype_t*) jl_eval_string(("return " + to_julia_type<std::complex<Value_t>>::type_name).c_str());
@@ -195,7 +195,7 @@ namespace jluna
     }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         jl_array_t* in = (jl_array_t*) value;
@@ -211,7 +211,7 @@ namespace jluna
     }
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::map<Key_t, Value_t>>, bool>>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         static jl_function_t* iterate = jl_get_function(jl_base_module, "iterate");
 
@@ -219,7 +219,7 @@ namespace jluna
         auto out = std::map<Key_t, Value_t>();
         auto* it_res = jl_nothing;
 
-        Any* next_i = jl_box_int64(1);
+        unsafe::Value* next_i = jl_box_int64(1);
         while(true)
         {
             it_res = jl_call2(iterate, value, next_i);
@@ -235,7 +235,7 @@ namespace jluna
     } //°
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::unordered_map<Key_t, Value_t>>, bool>>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         static jl_function_t* iterate = jl_get_function(jl_base_module, "iterate");
 
@@ -243,7 +243,7 @@ namespace jluna
         auto out = std::unordered_map<Key_t, Value_t>();
         auto* it_res = jl_nothing;
 
-        Any* next_i = jl_box_int64(1);
+        unsafe::Value* next_i = jl_box_int64(1);
         while(true)
         {
             it_res = jl_call2(iterate, value, next_i);
@@ -259,7 +259,7 @@ namespace jluna
     } //°
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool>>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
 
@@ -275,7 +275,7 @@ namespace jluna
     }
 
     template<IsPair T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
 
@@ -319,18 +319,18 @@ namespace jluna
 
     class Symbol;
     template<Is<Symbol> T>
-    T unbox(Any*);
+    T unbox(unsafe::Value*);
 
     class Module;
     template<Is<Module> T>
-    T unbox(Any*);
+    T unbox(unsafe::Value*);
 
     class Type;
     template<Is<Type> T>
-    T unbox(Any*);
+    T unbox(unsafe::Value*);
 
     template<IsTuple T>
-    T unbox(Any* value)
+    T unbox(unsafe::Value* value)
     {
         jl_gc_pause;
         auto out = detail::unbox_tuple_pre(value, T());

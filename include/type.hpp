@@ -52,14 +52,6 @@ namespace jluna
             /// @returns vector
             std::vector<std::pair<Symbol, Type>> get_parameters() const;
 
-            /// @brief get number of methods
-            /// @returns size_t
-            //size_t get_n_methods() const;
-
-            /// @brief methods
-            /// @returns vector of jluna::Methods
-            //std::vector<Method> get_methods() const;
-
             /// @brief get number of fields
             /// @returns size_t
             size_t get_n_fields() const;
@@ -70,7 +62,7 @@ namespace jluna
 
             /// @brief if type is singleton, get instance of that singleton
             /// @returns instance ptr if singleton-type, nullptr otherwise
-            Any* get_singleton_instance() const;
+            unsafe::Value* get_singleton_instance() const;
 
             /// @brief this <: other
             /// @param other

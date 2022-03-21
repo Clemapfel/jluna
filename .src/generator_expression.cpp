@@ -20,7 +20,7 @@ namespace jluna
         forward_last_exception();
 
         static jl_datatype_t* generator_type = (jl_datatype_t*) jl_eval_string("Base.Generator");
-        if (not jl_isa(res, (Any*) generator_type))
+        if (not jl_isa(res, (unsafe::Value*) generator_type))
         {
             std::stringstream error_str;
             error_str << "[C++][Exception] When parsing generator expression from string \"" << in << "\": result is not a generator expression object" << std::endl;
@@ -32,7 +32,7 @@ namespace jluna
         return out;
     }
 
-    GeneratorExpression::GeneratorExpression(Any* val)
+    GeneratorExpression::GeneratorExpression(unsafe::Value* val)
     {
         if (_iterate == nullptr)
             _iterate = jl_get_function(jl_base_module, "iterate");
@@ -53,7 +53,7 @@ namespace jluna
         State::detail::free_reference(_value_key);
     }
 
-    Any* GeneratorExpression::get() const
+    unsafe::Value* GeneratorExpression::get() const
     {
         return jl_ref_value(_value_ref);
     }
@@ -77,7 +77,7 @@ namespace jluna
         : _owner(owner), _state(state), _is_end(_state)
     {}
 
-    Any* GeneratorExpression::ForwardIterator::operator*()
+    unsafe::Value* GeneratorExpression::ForwardIterator::operator*()
     {
         jl_gc_pause;
         auto* out = jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 0);

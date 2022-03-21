@@ -6,36 +6,18 @@
 namespace jluna
 {
     template<typename... Args_t>
-    Any* call(Function* function, Args_t... args)
+    unsafe::Value* safe_call(unsafe::Function* function, Args_t... args)
     {
         throw_if_uninitialized();
 
         auto before = jl_gc_is_enabled();
         jl_gc_enable(false);
 
-        std::vector<Any*> params;
-        (params.push_back((Any*) args), ...);
-
-        auto* res = jl_call(function, params.data(), params.size());
-        forward_last_exception();
-
-        jl_gc_enable(true);
-        return res;
-    }
-
-    template<typename... Args_t>
-    Any* safe_call(Function* function, Args_t... args)
-    {
-        throw_if_uninitialized();
-
-        auto before = jl_gc_is_enabled();
-        jl_gc_enable(false);
-
-        std::vector<Any*> params;
+        std::vector<unsafe::Value*> params;
         params.push_back(function);
-        (params.push_back((Any*) args), ...);
+        (params.push_back((unsafe::Value*) args), ...);
 
-        static Function* safe_call = jl_get_function((jl_module_t*) jl_eval_string("jluna.exception_handler"), "safe_call");
+        static unsafe::Function* safe_call = jl_get_function((jl_module_t*) jl_eval_string("jluna.exception_handler"), "safe_call");
         auto* res = jl_call(safe_call, params.data(), params.size());
         forward_last_exception();
 

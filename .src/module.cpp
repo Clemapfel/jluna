@@ -11,13 +11,13 @@ namespace jluna
     Module::Module(jl_module_t* value)
         : Proxy((jl_value_t*) value, value->name)
     {
-        jl_assert_type((Any*) value, jl_module_type);
+        jl_assert_type((unsafe::Value*) value, jl_module_type);
     }
 
     Module::Module(Proxy* owner)
         : Proxy(*owner)
     {
-        jl_assert_type(owner->operator Any*(), jl_module_type);
+        jl_assert_type(owner->operator unsafe::Value*(), jl_module_type);
     }
 
     jl_module_t * Module::get() const
@@ -36,7 +36,7 @@ namespace jluna
 
         static jl_function_t* unsafe_call = jl_find_function("jluna.exception_handler", "unsafe_call");
         jl_gc_pause;
-        auto* res = jl_call2(unsafe_call, jl_quote(command.c_str()), (Any*) get());
+        auto* res = jl_call2(unsafe_call, jl_quote(command.c_str()), (unsafe::Value*) get());
         jl_gc_unpause;
         return Proxy(res);
     }
@@ -49,7 +49,7 @@ namespace jluna
         static jl_function_t* has_exception_occurred = jl_find_function("jluna.exception_handler", "has_exception_occurred");
 
         jl_gc_pause;
-        auto* result = jl_call2(safe_call, jl_quote(command.c_str()), (Any*) get());
+        auto* result = jl_call2(safe_call, jl_quote(command.c_str()), (unsafe::Value*) get());
 
         if (jl_exception_occurred() or jl_unbox_bool(jl_call0(has_exception_occurred)))
         {

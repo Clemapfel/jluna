@@ -129,10 +129,10 @@ int main()
     });
     
 
-    Benchmark::run("jluna::call", n_reps, [](){
+    Benchmark::run("jluna::unsafe::call", n_reps, [](){
 
         static jl_function_t* f = jl_get_function(jl_main_module, "f");
-        volatile auto* out = jluna::call(f);
+        volatile auto* out = jluna::unsafe::call(f);
     });
 
     Benchmark::run("jluna::safe_call", n_reps, [](){
@@ -335,7 +335,7 @@ int main()
                 jl_arrayset(vec, jl_call2(make_pair, jl_box_uint64(pair.first), jl_box_uint64(pair.second)), i++);
         }
 
-        volatile auto* out = jl_call1(make_map, (Any*) vec);
+        volatile auto* out = jl_call1(make_map, (unsafe::Value*) vec);
         jl_gc_unpause;
     });
 

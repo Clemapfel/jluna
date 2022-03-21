@@ -85,7 +85,7 @@ int main()
 
     test_box_unbox("Pair", std::pair<size_t, std::string>(12, "abc"));
     test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(12, "abc", 0.01));
-    test_box_unbox("Proxy", Proxy((Any*) jl_main_module, nullptr));
+    test_box_unbox("Proxy", Proxy((unsafe::Value*) jl_main_module, nullptr));
     test_box_unbox("Symbol", Symbol("abc"));
 
     auto test_box_unbox_iterable = []<typename T>(const std::string& name, T&& value){
@@ -923,7 +923,7 @@ int main()
     auto test_type = []<typename T>(Type& a, T b) {
 
         std::string name = "Type Constant: ";
-        name += jl_to_string((Any*) a);
+        name += jl_to_string((unsafe::Value*) a);
 
         Test::test(name, [&](){
             return a.operator jl_datatype_t*() == reinterpret_cast<jl_datatype_t*>(b);

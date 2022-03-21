@@ -37,10 +37,10 @@ namespace jluna
             _fieldnames_in_order.push_back(symbol);
 
         _mapping.insert({symbol, {
-            [box_get](T& instance) -> Any* {
+            [box_get](T& instance) -> unsafe::Value* {
                 return jluna::box<Field_t>(box_get(instance));
             },
-            [unbox_set](T& instance, Any* value) -> void {
+            [unbox_set](T& instance, unsafe::Value* value) -> void {
                 unbox_set(instance, jluna::unbox<Field_t>(value));
             },
             Type((jl_datatype_t*) jl_eval_string(to_julia_type<Field_t>::type_name.c_str()))
@@ -71,7 +71,7 @@ namespace jluna
         static jl_function_t* setfield = jl_get_function(jl_base_module, "setindex!");
 
         auto default_instance = T();
-        auto* template_proxy = jluna::safe_call(new_proxy, _name->operator Any*());
+        auto* template_proxy = jluna::safe_call(new_proxy, _name->operator unsafe::Value*());
 
         for (auto& field_name : _fieldnames_in_order)
             jluna::safe_call(setfield, template_proxy, std::get<0>(_mapping.at(field_name))(default_instance), field_name);
@@ -88,7 +88,7 @@ namespace jluna
     }
 
     template<typename T>
-    Any* Usertype<T>::box(T& in)
+    unsafe::Value* Usertype<T>::box(T& in)
     {
         if (not _implemented)
             implement();
@@ -96,7 +96,7 @@ namespace jluna
         jl_gc_pause;
         static jl_function_t* setfield = jl_get_function(jl_base_module, "setfield!");
 
-        Any* out = jl_call0(_type->operator Any*());
+        unsafe::Value* out = jl_call0(_type->operator unsafe::Value*());
 
         for (auto& pair : _mapping)
             jluna::safe_call(setfield, out, pair.first, std::get<0>(pair.second)(in));
@@ -106,7 +106,7 @@ namespace jluna
     }
 
     template<typename T>
-    T Usertype<T>::unbox(Any* in)
+    T Usertype<T>::unbox(unsafe::Value* in)
     {
         if (not _implemented)
             implement();
@@ -124,13 +124,13 @@ namespace jluna
     }
 
     template<IsUsertype T>
-    T unbox(Any* in)
+    T unbox(unsafe::Value* in)
     {
        return Usertype<T>::unbox(in);
     }
 
     template<IsUsertype T>
-    Any* box(T in)
+    unsafe::Value* box(T in)
     {
         return Usertype<T>::box(in);
     }

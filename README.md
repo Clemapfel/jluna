@@ -67,7 +67,7 @@ State::script("println(array)");
 
 // julia style list indexing
 auto sub_array = cpp_array[{6, 5, 4, 3, 2}];
-Base["println"]((Any*) sub_array);
+Base["println"]((unsafe::Value*) sub_array);
 
 // even supports comprehension
 auto comprehended_vec = Vector<Int64>("(i for i in 1:10 if i % 2 == 0)"_gen);
@@ -83,7 +83,7 @@ auto comprehended_vec = Vector<Int64>("(i for i in 1:10 if i % 2 == 0)"_gen);
 
 ```cpp
 /// register lambda and bind to julia-side variable
-State::new_named_undef("lambda") = [](Any* x, Any* y) -> Any*
+State::new_named_undef("lambda") = [](unsafe::Value* x, unsafe::Value* y) -> unsafe::Value*
 {
     auto as_string = unbox<std::string>(x);
     std::cout << "cpp prints " << as_string << " and returns: " << std::endl;

@@ -394,14 +394,14 @@ namespace jluna::State
     {
         constexpr char _id_marker = '#';
 
-        size_t create_reference(Any* in);
-        Any* get_reference(size_t key);
+        size_t create_reference(unsafe::Value* in);
+        unsafe::Value* get_reference(size_t key);
         void free_reference(size_t key);
 
         void initialize_modules();
         void initialize_types();
 
-        template<Is<Any*>... Ts>
+        template<Is<unsafe::Value*>... Ts>
         Proxy create_or_assign(const std::string& symbol, Ts... args);
     }
 

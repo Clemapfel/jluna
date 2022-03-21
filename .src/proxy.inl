@@ -3,20 +3,22 @@
 // Created on 31.01.22 by clem (mail@clemens-cords.com)
 //
 
+#include <include/unsafe_utilities.hpp>
+
 namespace jluna
 {
     /// @brief unbox to proxy
     template<Is<Proxy> T>
-    inline T unbox(Any* value)
+    inline T unbox(unsafe::Value* value)
     {
         return Proxy(value, nullptr);
     }
 
     /// @brief box jluna::Proxy to Base.Any
     template<Is<Proxy> T>
-    inline Any* box(T value)
+    inline unsafe::Value* box(T value)
     {
-        return value.operator Any*();
+        return value.operator unsafe::Value*();
     }
 
     /// @brief type deduction
@@ -70,7 +72,7 @@ namespace jluna
         return Proxy(
             _content.get()->get_field(symbol),
             _content,
-            (Any*) symbol
+            (unsafe::Value*) symbol
         );
     }
 
@@ -86,7 +88,7 @@ namespace jluna
         static jl_module_t* jluna_module = (jl_module_t*) jl_eval_string("return jluna");
         static jl_function_t* invoke = jl_get_function(jluna_module, "invoke");
 
-        return Proxy(jluna::call(invoke, _content->value(), box(args)...), nullptr);
+        return Proxy(jluna::unsafe::call(invoke, _content->value(), box(args)...), nullptr);
     }
 
     template<Boxable... Args_t>

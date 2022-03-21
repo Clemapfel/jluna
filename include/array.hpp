@@ -36,7 +36,7 @@ namespace jluna
 
             /// @brief ctor from proxy
             /// @param proxy
-            Array(Any* value, jl_sym_t* = nullptr);
+            Array(unsafe::Value* value, jl_sym_t* = nullptr);
 
             /// @brief linear indexing, no bounds checking
             /// @param index, 0-based
@@ -130,8 +130,8 @@ namespace jluna
             /// @returns true if 0 element, false otherwise
             bool empty() const;
 
-            /// @brief cast to Any*
-            using Proxy::operator Any*;
+            /// @brief cast to unsafe::Value*
+            using Proxy::operator unsafe::Value*;
 
         protected:
             using Proxy::_content;
@@ -217,9 +217,9 @@ namespace jluna
     };
 
     /// typedefs of vectors that can attach to anything
-    using Array1d = Array<Any*, 1>;
-    using Array2d = Array<Any*, 2>;
-    using Array3d = Array<Any*, 3>;
+    using Array1d = Array<unsafe::Value*, 1>;
+    using Array2d = Array<unsafe::Value*, 2>;
+    using Array3d = Array<unsafe::Value*, 3>;
 
     /// @brief vector typedef
     template<Boxable Value_t>
@@ -244,7 +244,7 @@ namespace jluna
             /// @brief ctor
             /// @param value
             /// @param symbol
-            Vector(Any* value, jl_sym_t* = nullptr);
+            Vector(unsafe::Value* value, jl_sym_t* = nullptr);
 
             /// @brief insert
             /// @param linear index, 0-based
@@ -267,8 +267,8 @@ namespace jluna
             template<Boxable T = Value_t>
             void push_back(T value);
 
-            /// @brief: cast to Any*
-            using Array<Value_t, 1>::operator Any*;
+            /// @brief: cast to unsafe::Value*
+            using Array<Value_t, 1>::operator unsafe::Value*;
 
         protected:
             using Array<Value_t, 1>::_content;
@@ -287,9 +287,9 @@ namespace jluna
         typename Value_t = typename T::value_type,
         size_t Rank = T::rank,
         std::enable_if_t<std::is_same_v<T, Array<Value_t, Rank>>, bool> = true>
-    Any* box(T value)
+    unsafe::Value* box(T value)
     {
-        return value.operator Any*();
+        return value.operator unsafe::Value*();
     }
 
     /// @brief box vector
@@ -298,9 +298,9 @@ namespace jluna
     template<typename T,
         typename Value_t = typename T::value_type,
         std::enable_if_t<std::is_same_v<T, Vector<Value_t>>, bool> = true>
-    Any* box(T value)
+    unsafe::Value* box(T value)
     {
-        return value.operator Any*();
+        return value.operator unsafe::Value*();
     }
 
     /// @brief box matrix
@@ -309,9 +309,9 @@ namespace jluna
     template<typename T,
         typename Value_t = typename T::value_type,
         std::enable_if_t<std::is_same_v<T, Matrix<Value_t>>, bool> = true>
-    Any* box(T value)
+    unsafe::Value* box(T value)
     {
-        return value.operator Any*();
+        return value.operator unsafe::Value*();
     }
 
     namespace unsafe

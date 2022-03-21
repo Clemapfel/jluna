@@ -15,7 +15,7 @@ namespace jluna
     }
 
     template<Boxable V, size_t R>
-    Array<V, R>::Array(Any* value, jl_sym_t* symbol)
+    Array<V, R>::Array(unsafe::Value* value, jl_sym_t* symbol)
         : Proxy(value, symbol)
     {
         static jl_datatype_t* array_t = (jl_datatype_t*) jl_eval_string("return Base.Array");
@@ -27,7 +27,7 @@ namespace jluna
         : Proxy(*proxy)
     {
         static jl_datatype_t* array_t = (jl_datatype_t*) jl_eval_string("return Base.Array");
-        jl_assert_type(proxy->operator Any*(), array_t);
+        jl_assert_type(proxy->operator unsafe::Value*(), array_t);
     }
 
     template<Boxable T, size_t Rank>
@@ -110,7 +110,7 @@ namespace jluna
             jl_arrayset(out, jl_box_uint64(range.at(i)+1), i);
         }
 
-        return Vector<V>(jl_call2(getindex, _content->value(), (Any*) out));
+        return Vector<V>(jl_call2(getindex, _content->value(), (unsafe::Value*) out));
 
         jl_gc_unpause;
     }
@@ -259,21 +259,14 @@ namespace jluna
     template<Boxable V, size_t R>
     size_t Array<V, R>::get_n_elements() const
     {
-        return reinterpret_cast<const jl_array_t*>(this->operator const Any*())->length;
+        return reinterpret_cast<const jl_array_t*>(this->operator const unsafe::Value*())->length;
     } //°
 
     template<Boxable V, size_t R>
     bool Array<V, R>::empty() const
     {
-        return reinterpret_cast<const jl_array_t*>(this->operator const Any*())->length == 0;
+        return reinterpret_cast<const jl_array_t*>(this->operator const unsafe::Value*())->length == 0;
     } //°
-
-    template<Boxable V, size_t R>
-    void* Array<V, R>::data()
-    {
-        return ;
-    } //°
-
 
     namespace unsafe
     {
@@ -297,7 +290,7 @@ namespace jluna
         template<Boxable V, size_t R>
         V* get_array_data(Array<V, R>& array)
         {
-            return reinterpret_cast<V*>(reinterpret_cast<jl_array_t*>(array.operator Any*())->data);
+            return reinterpret_cast<V*>(reinterpret_cast<jl_array_t*>(array.operator unsafe::Value*())->data);
         }
     }
 
@@ -318,7 +311,7 @@ namespace jluna
         : Array<V, 1>(owner)
     {
         static jl_datatype_t* vector_t = (jl_datatype_t*) jl_eval_string("return Vector");
-        jl_assert_type(owner->operator Any*(), vector_t);
+        jl_assert_type(owner->operator unsafe::Value*(), vector_t);
     }
 
     template<Boxable V>

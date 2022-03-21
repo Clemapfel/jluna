@@ -7,7 +7,7 @@ namespace jluna
 {
     /// @brief unbox to type
     template<Is<Type> T>
-    inline T unbox(Any* value)
+    inline T unbox(unsafe::Value* value)
     {
         static jl_datatype_t* type_t = (jl_datatype_t*) jl_eval_string("return Type");
         jl_assert_type(value, type_t);
@@ -16,9 +16,9 @@ namespace jluna
 
     /// @brief box jluna::Type to Base.Type
     template<Is<Type> T>
-    inline Any* box(T value)
+    inline unsafe::Value* box(T value)
     {
-        return value.operator Any*();
+        return value.operator unsafe::Value*();
     }
 
     /// @brief type deduction

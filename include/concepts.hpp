@@ -50,7 +50,7 @@ namespace jluna
         std::is_same_v<T, jl_function_t*> or
         std::is_same_v<T, jl_sym_t*>;
 
-    /// @concept can be cast to Any*
+    /// @concept can be cast to unsafe::Value*
     template<typename T>
     concept IsAnyPtrCastable = requires(T t)
     {

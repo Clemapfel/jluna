@@ -158,12 +158,12 @@ Because of this, when transferring memory from one languages state to the others
 
 ```cpp
 template<typename T>
-Any* box(T);
+unsafe::Value* box(T);
 
 template<typename T>
-T unbox(Any*);
+T unbox(unsafe::Value*);
 ```
-where `Any*` is an address of Julia-side memory of arbitrary type (but not necessarily of type `Base.Any`).
+where `unsafe::Value*` is an address of Julia-side memory of arbitrary type (but not necessarily of type `Base.Any`).
 
 All box/unbox functions have exactly this signature, ambiguity is resolved via [C++ concepts](https://en.cppreference.com/w/cpp/language/constraints), [SFINAE](https://en.cppreference.com/w/cpp/types/enable_if) and general template magic. Feel free to check the [source code](../.src/unbox.inl) to get a feel for how it is done behind the scenes, for a more user-friendly overview, see the [section on usertypes](#usertypes).
 
@@ -172,14 +172,14 @@ All box/unbox functions have exactly this signature, ambiguity is resolved via [
 The property of being (un)boxable is represented in C++ as two concepts:
 
 ```cpp
-// an "unboxable" is any T for whom unbox<T>(Any*) -> T is defined
+// an "unboxable" is any T for whom unbox<T>(unsafe::Value*) -> T is defined
 template<typename T>
-concept Unboxable = requires(T t, Any* v)
+concept Unboxable = requires(T t, unsafe::Value* v)
 {
     {unbox<T>(v)};
 };
 
-/// a "boxable" is any T for whom box(T) -> Any* is defined
+/// a "boxable" is any T for whom box(T) -> unsafe::Value* is defined
 template<typename T>
 concept Boxable = requires(T t)
 {
@@ -193,7 +193,7 @@ Given this, we can box/unbox any object that fulfills the above requirements lik
 size_t cpp_side = 1001;
 
 // C++ -> Julia: boxing
-Any* jl_side = box(cpp_side);
+unsafe::Value* jl_side = box(cpp_side);
 
 // Julia -> C++: unboxing
 size_t back_cpp_side = unbox<size_t>(jl_side);
@@ -211,10 +211,10 @@ This also means that for a 3rd party class `MyClass` to be compatible with `jlun
 
 ```cpp
 template<Is<MyClass> T> 
-Any* box(T value);
+unsafe::Value* box(T value);
 
 template<Is<MyClass> T>
-T unbox(Any* value);
+T unbox(unsafe::Value* value);
 ```
 
 Where `Is<T, U>` is a concept that resolves to true if `U` and `T` are the same type.
@@ -231,7 +231,7 @@ jl_module_t*             => Module
 jl_function_t*           => Function
 jl_sym_t*                => Symbol
 
-Any*                     => Any
+unsafe::Value*                     => Any
 
 bool                     => Bool
 char                     => Char
@@ -268,11 +268,11 @@ std::set<T>              => Set{T, U}       [1]
 [2] where R is the rank of the array
 
 std::function<T()>                       => function () -> T  [3]
-std::function<T(Any*)>                   => function (::Any) -> T  [3]
-std::function<T(Any*, Any*)>             => function (::Any, ::Any) -> T  [3]
-std::function<T(Any*, Any*, Any*)>       => function (::Any, ::Any, ::Any) -> T  [3]
-std::function<T(Any*, Any*, Any*, Any*)> => function (::Any, ::Any, ::Any, ::Any) -> T  [3]
-std::function<T(std::vector<Any*>)>      => function (::Vector{Any}) -> T  [3]
+std::function<T(unsafe::Value*)>                   => function (::Any) -> T  [3]
+std::function<T(unsafe::Value*, unsafe::Value*)>             => function (::Any, ::Any) -> T  [3]
+std::function<T(unsafe::Value*, unsafe::Value*, unsafe::Value*)>       => function (::Any, ::Any, ::Any) -> T  [3]
+std::function<T(unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*)> => function (::Any, ::Any, ::Any, ::Any) -> T  [3]
+std::function<T(std::vector<unsafe::Value*>)>      => function (::Vector{Any}) -> T  [3]
         
 [3] where T is a Boxable
         
@@ -308,7 +308,7 @@ State::eval("var = 1234")
 To access the value of this variable, we could use the C-API. By calling `jl_eval_string`, we return a pointer to the memory `var` holds. We then `unbox` that pointer:
 
 ```cpp
-Any* var_ptr = jl_eval_string("return var");
+unsafe::Value* var_ptr = jl_eval_string("return var");
 auto as_int = unbox<int>(var_ptr);
 
 std::cout << as_int << std::endl;
@@ -342,7 +342,7 @@ auto proxy = State::eval("return var")
 ```
 Use of `auto` simplifies the declaration and is encouraged whenever possible.<br>
 
-Now that we have the proxy, we need to convert it to a value. Unlike with the C-APIs `jl_value_t*` (aka. `Any*`) we *do not* need to call `box`/`unbox<T>`:
+Now that we have the proxy, we need to convert it to a value. Unlike with the C-APIs `jl_value_t*` (aka. `unsafe::Value*`) we *do not* need to call `box`/`unbox<T>`:
 
 ```cpp
 // all following statements are exactly equivalent:
@@ -843,7 +843,7 @@ int8_t get_compile_status() const;
 int8_t get_type_inference_status() const;
 
 // hidden C-property: bindings
-[[nodiscard]] std::map<Symbol, Any*> get_bindings() const;
+[[nodiscard]] std::map<Symbol, unsafe::Value*> get_bindings() const;
 
 // hidden C-property: usings
 [[nodiscard]] std::vector<Module> get_usings() const;
@@ -902,7 +902,7 @@ var1 => 0
 var2 => 0
 ```
 
-where `jl_to_string` is a C-function that takes an `Any*` and calls `Base.string`, returning the resulting string.
+where `jl_to_string` is a C-function that takes an `unsafe::Value*` and calls `Base.string`, returning the resulting string.
 
 Because the proxies hold ownership of the bound values and are unnamed, the result of `get_bindings` is a stable snapshot of a module. Even if the module continues to be modified, the map returned by `get_bindings` stays the same. This means `get_bindings` gives us a way to save the current state of the module.
 
@@ -1044,7 +1044,7 @@ To call a specific C++ lambda from Julia, we first need to *register* it.
 #### Registering Functions
 ```cpp
 // always specify trailing return type manually
-register_function("add_2_to_vector", [](Any* in) -> Any* {
+register_function("add_2_to_vector", [](unsafe::Value* in) -> unsafe::Value* {
 
     // convert in to jluna::Vector
     Vector<size_t> vec = in;
@@ -1054,11 +1054,11 @@ register_function("add_2_to_vector", [](Any* in) -> Any* {
         e = e.operator size_t() + 2;
 
     // return vector to Julia
-    return vec.operator Any*(); // box or cast to Any*
+    return vec.operator unsafe::Value*(); // box or cast to unsafe::Value*
 });
 ```
 
-Note the explicit trailing return type `-> Any*`. It is recommended to always specify it when using lambdas in `jluna` (and, for style reasons only, in C++ in general). Specifying `-> void` will make the function return `nothing` to Julia, specifying `-> Any*` will make the return value available to Julia, regardless of its type.
+Note the explicit trailing return type `-> unsafe::Value*`. It is recommended to always specify it when using lambdas in `jluna` (and, for style reasons only, in C++ in general). Specifying `-> void` will make the function return `nothing` to Julia, specifying `-> unsafe::Value*` will make the return value available to Julia, regardless of its type.
 
 #### Calling Functions
 
@@ -1080,7 +1080,7 @@ We will learn more about how to make our own custom types compatible with functi
 Let's call our above example function. It takes an arbitrary vector of integers and adds 2 to each element, then returns that vector:
 
 ```cpp
-register_function("add_2_to_vector", [](Any* in) -> Any* {
+register_function("add_2_to_vector", [](unsafe::Value* in) -> unsafe::Value* {
 
     Vector<size_t> vec = in;
 
@@ -1125,25 +1125,25 @@ Only the following signatures for lambdas are allowed (this is enforced at compi
 
 ```cpp
 () -> void
-(Any*) -> void
-(std::vector<Any*>) -> void
-(Any*, Any*) -> void
-(Any*, Any*, Any*) -> void
-(Any*, Any*, Any*, Any*) -> void
+(unsafe::Value*) -> void
+(std::vector<unsafe::Value*>) -> void
+(unsafe::Value*, unsafe::Value*) -> void
+(unsafe::Value*, unsafe::Value*, unsafe::Value*) -> void
+(unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*) -> void
 
-() -> Any*
-(Any*) -> Any*
-(std::vector<Any*>) -> Any*
-(Any*, Any*) -> Any*
-(Any*, Any*, Any*) -> Any*
-(Any*, Any*, Any*, Any*) -> Any*
+() -> unsafe::Value*
+(unsafe::Value*) -> unsafe::Value*
+(std::vector<unsafe::Value*>) -> unsafe::Value*
+(unsafe::Value*, unsafe::Value*) -> unsafe::Value*
+(unsafe::Value*, unsafe::Value*, unsafe::Value*) -> unsafe::Value*
+(unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*) -> unsafe::Value*
 ```  
 
 Templated lambdas will be supported in a future version but are currently disallowed as of `jluna v0.7`. The correct signature is enforced at compile time.
 
 #### Using Non-Julia Objects in Functions
 
-While this may seem limiting at first, as stated, it is not. We are restricted to `Any*` for **arguments**, however we can instead access arbitrary C++ objects by reference or by value through **captures**, which are unrestricted: 
+While this may seem limiting at first, as stated, it is not. We are restricted to `unsafe::Value*` for **arguments**, however we can instead access arbitrary C++ objects by reference or by value through **captures**, which are unrestricted: 
 
 ```cpp
 // a C++-object, incompatible with Julia
@@ -1161,7 +1161,7 @@ struct IncompatibleObject
 IncompatibleObject instance;
 
 // wrap instance in mutable std::ref and hand it to lambda via capture
-register_function("call_object", [instance_ref = std::ref(instance)](Any* in) -> void 
+register_function("call_object", [instance_ref = std::ref(instance)](unsafe::Value* in) -> void 
 {
     instance_ref.operator()(unbox<size_t>(in));
 });
@@ -1189,7 +1189,7 @@ T template_function(T in)
 }
 
 // overload for T = Int32
-register_function("template_function_int32" [](Any* in) -> Any* {
+register_function("template_function_int32" [](unsafe::Value* in) -> unsafe::Value* {
     
     auto unbox = unbox<Int32>(in);
     auto res = template_function<Int32>(unbox);
@@ -1197,7 +1197,7 @@ register_function("template_function_int32" [](Any* in) -> Any* {
 });
 
 // overload for T = float
-register_function("template_function_float" [](Any* in) -> Any* {
+register_function("template_function_float" [](unsafe::Value* in) -> unsafe::Value* {
     
     auto unbox = unbox<float>(in);
     auto res = template_function<float>(unbox);
@@ -1205,7 +1205,7 @@ register_function("template_function_float" [](Any* in) -> Any* {
 })
 
 // overloaf for T = std::vector<float>
-register_function("template_function_vector_float_" [](Any* in) -> Any* {
+register_function("template_function_vector_float_" [](unsafe::Value* in) -> unsafe::Value* {
     
     auto unbox = unbox<std::vector<float>>(in);
     auto res = template_function<std::vector<float>>(unbox);
@@ -1289,12 +1289,12 @@ Note that instead of `auto`, we declared `unnamed` and `named` to be explicitly 
 auto array = State::eval("return array").as<Array<Int64, 3>();
 ```
 
-We can use the generic value type `Any*` to make it possible for the array proxy to attach any Julia-side array, regardless of value type. `jluna` provides 3 convenient typedefs for this:
+We can use the generic value type `unsafe::Value*` to make it possible for the array proxy to attach any Julia-side array, regardless of value type. `jluna` provides 3 convenient typedefs for this:
 
 ```cpp
-using Array1d = Array<Any*, 1>;
-using Array2d = Array<Any*, 2>;
-using Array3d = Array<Any*, 3>;
+using Array1d = Array<unsafe::Value*, 1>;
+using Array2d = Array<unsafe::Value*, 2>;
+using Array3d = Array<unsafe::Value*, 3>;
 ```
 
 This is useful when the value type of the array is not know at the point of proxy declaration or if the actual value type of each element is non-homogenous, as this is a feature of Julias array but not possible using `std::vector` or similar classes. 
@@ -1497,7 +1497,7 @@ for (auto i : "(i for i in 1:10 if i % 2 == 0)"_gen)
 10
 ```
 
-Where `i` needs to be unboxed manually and behaves exactly like an `Any*`. While this is convenient, the true power of generator expressions lies in its interfacing with `jluna::Vector`. We can:
+Where `i` needs to be unboxed manually and behaves exactly like an `unsafe::Value*`. While this is convenient, the true power of generator expressions lies in its interfacing with `jluna::Vector`. We can:
 
 ```cpp
 // ...initialize a vector from a generator expression
@@ -1933,7 +1933,7 @@ The second argument is the **boxing routine**. This function is called during `b
 
 ```cpp
 auto instance = RGBA();
-Any* boxed = box<RGBA>(instance);
+unsafe::Value* boxed = box<RGBA>(instance);
 
 // calls [](RGBA& in) -> float {return in._red;} with in = instance
 // then assigns boxed._red with result
@@ -1945,7 +1945,7 @@ The third argument is the **unboxing routine**. This lambda has the signature `(
 
 ```cpp
 auto instance = RGBA();
-Any* boxed = box<RGBA>(instance);
+unsafe::Value* boxed = box<RGBA>(instance);
 RGBA unboxed = unbox<RGBA>(boxed);
 
 // calls [](RGBA& out, float in) with out = unboxed, in = unboxed._red
@@ -2184,29 +2184,29 @@ We now want to implement boxing and unboxing for both frogs and tadpoles. When d
 
 ```cpp
 template<Is<U> T>
-Any* box(T);
+unsafe::Value* box(T);
 
 template<Is<U> T>
-T unbox(Any*);
+T unbox(unsafe::Value*);
 ```
 
 Where `Is<U>` is a concept that enforces `T` to be equal to `U`. We need to use concepts and template functions here, so the syntax `box<U>(/*...*/)` and `unbox<U>(/*...*/)` are valid, which is required by `jluna`s functions. The `box` and `unbox` signatures for `Frog` and `Frog::Tadpole` then look like this:
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {}
 
 template<Is<Frog> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {}
 
 template<Is<Frog::Tadpole> T>
-T unbox(Any* in)
+T unbox(unsafe::Value* in)
 {}
 
 template<Is<Frog> T>
-T unbox(Any* in)
+T unbox(unsafe::Value* in)
 {}
 ```
 
@@ -2214,13 +2214,13 @@ Because we are handling raw C-pointers and not proxies, we need to manually prot
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
 }
 
 template<Is<Frog> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
 }
@@ -2230,7 +2230,7 @@ To instance the Julia-side versions of the classes, we need access to their Juli
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
@@ -2239,7 +2239,7 @@ Any* box(T in)
 }
 
 template<Is<Frog> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* frog_ctor = jl_find_function("Main", "Frog");
@@ -2248,7 +2248,7 @@ Any* box(T in)
 }
 ```
 
-We run into a problem. `Frog` does not have a no-argument constructor. The only way to construct a frog, is from a tadpole. We cannot ask for a tadpole as an argument to the box function, though, because we have to strictly adhere to the `(T) -> Any*` signature. The only way to solve this conundrum, is to create a new Julia-side function that constructs a frog for us, in a round-about way:
+We run into a problem. `Frog` does not have a no-argument constructor. The only way to construct a frog, is from a tadpole. We cannot ask for a tadpole as an argument to the box function, though, because we have to strictly adhere to the `(T) -> unsafe::Value*` signature. The only way to solve this conundrum, is to create a new Julia-side function that constructs a frog for us, in a round-about way:
 
 ```julia 
 function generate_frog(name::String) ::Frog
@@ -2263,7 +2263,7 @@ Accessing and calling the function inside `box<Is<Frog>>`:
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
@@ -2272,7 +2272,7 @@ Any* box(T in)
 }
 
 template<Is<Frog> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* frog_ctor = jl_find_function("Main", "generate_frog");
@@ -2287,7 +2287,7 @@ Lastly, we need to update the newly created Julia-side instance with the actual 
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
@@ -2296,12 +2296,12 @@ Any* box(T in)
     
     static auto* setfield = jl_find_function("Base", "setfield!");
     static auto field_symbol = Symbol("_name");
-    jluna::safe_call(setfield, out, (Any*) field_symbol, box<std::string>(in._name));
+    jluna::safe_call(setfield, out, (unsafe::Value*) field_symbol, box<std::string>(in._name));
     return out;
 }
 
 template<Is<Frog> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* frog_ctor = jl_find_function("Main", "generate_frog");
@@ -2317,13 +2317,13 @@ Now that we have box fully written, we can turn our attention to unbox. Unboxing
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-T unbox(Any* in)
+T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();
     static auto* getfield = jl_find_function("Base", "getfield");
     static auto field_symbol = Symbol("_name");
     
-    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+    unsafe::Value* julia_side_name = jluna::safe_call(getfield, in, (unsafe::Value*) field_symbol);
     
     auto out = Tadpole();
     out._name = unbox<std::string>(julia_side_name);
@@ -2331,13 +2331,13 @@ T unbox(Any* in)
 }
 
 template<Is<Frog::Tadpole> T>
-T unbox(Any* in)
+T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();
     static auto* getfield = jl_find_function("Base", "getfield");
     static auto field_symbol = Symbol("_name");
     
-    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+    unsafe::Value* julia_side_name = jluna::safe_call(getfield, in, (unsafe::Value*) field_symbol);
     
     auto tadpole = Tadpole();
     tadpole._name = unbox<std::string>(julia_side_name);
@@ -2399,7 +2399,7 @@ GeneratorExpression                 F
 
 // ### accessing Julia-side values ###
 Array<T, N>::operator[](size_t)     A+
-Proxy::operator Any*()              A+
+Proxy::operator unsafe::Value*()              A+
 State::safe_return                  A
 Proxy::operator[](size_t)           A
 Proxy::operator[](std::string)      A-
@@ -2467,7 +2467,7 @@ All performance critical code should be inside a Julia file. All C++ should do, 
 ### Minimize (Un)Boxing
 
 By far the easiest way to completely tank a programs' performance is to unnecessarily box/unbox values constantly. If our program requires operation `A`, `B`, `C` Julia-side and `X`, `Y`, `Z` C++-side, it's very important to execute everything in a way that minimizes the number of box/unbox calls. So:
-`ABC <unbox> XYZ <box>` rather than `A <unbox> X <box> B <unbox> Y <box>`, etc.. This may seem obvious when abstracted like this, but in a complex application, it's easy to forget. Knowing what calls cause box/unboxing is essential to avoiding pitfalls, because of this it sometimes encouraged to not shy away from handling pure `Any*`, just make sure to also manually control the garbage collector.
+`ABC <unbox> XYZ <box>` rather than `A <unbox> X <box> B <unbox> Y <box>`, etc.. This may seem obvious when abstracted like this, but in a complex application, it's easy to forget. Knowing what calls cause box/unboxing is essential to avoiding pitfalls, because of this it sometimes encouraged to not shy away from handling pure `unsafe::Value*`, just make sure to also manually control the garbage collector.
 
 Lastly, though it is cumbersome, manually implementing box/unbox calls instead of going through `Usertype<T>` often gives more freedom to optimize. Advanced users are therefore encouraged to consider this method more frequently, at the cost of convenience.
 
@@ -2631,12 +2631,12 @@ Because of this, when transferring memory from one languages state to the others
 
 ```cpp
 template<typename T>
-Any* box(T);
+unsafe::Value* box(T);
 
 template<typename T>
-T unbox(Any*);
+T unbox(unsafe::Value*);
 ```
-where `Any*` is an address of Julia-side memory of arbitrary type (but not necessarily of type `Base.Any`).
+where `unsafe::Value*` is an address of Julia-side memory of arbitrary type (but not necessarily of type `Base.Any`).
 
 All box/unbox functions have exactly this signature, ambiguity is resolved via [C++ concepts](https://en.cppreference.com/w/cpp/language/constraints), [SFINAE](https://en.cppreference.com/w/cpp/types/enable_if) and general template magic. Feel free to check the [source code](../.src/unbox.inl) to get a feel for how it is done behind the scenes, for a more user-friendly overview, see the [section on usertypes](#usertypes).
 
@@ -2645,14 +2645,14 @@ All box/unbox functions have exactly this signature, ambiguity is resolved via [
 The property of being (un)boxable is represented in C++ as two concepts:
 
 ```cpp
-// an "unboxable" is any T for whom unbox<T>(Any*) -> T is defined
+// an "unboxable" is any T for whom unbox<T>(unsafe::Value*) -> T is defined
 template<typename T>
-concept Unboxable = requires(T t, Any* v)
+concept Unboxable = requires(T t, unsafe::Value* v)
 {
     {unbox<T>(v)};
 };
 
-/// a "boxable" is any T for whom box(T) -> Any* is defined
+/// a "boxable" is any T for whom box(T) -> unsafe::Value* is defined
 template<typename T>
 concept Boxable = requires(T t)
 {
@@ -2666,7 +2666,7 @@ Given this, we can box/unbox any object that fulfills the above requirements lik
 size_t cpp_side = 1001;
 
 // C++ -> Julia: boxing
-Any* jl_side = box(cpp_side);
+unsafe::Value* jl_side = box(cpp_side);
 
 // Julia -> C++: unboxing
 size_t back_cpp_side = unbox<size_t>(jl_side);
@@ -2684,10 +2684,10 @@ This also means that for a 3rd party class `MyClass` to be compatible with `jlun
 
 ```cpp
 template<Is<MyClass> T> 
-Any* box(T value);
+unsafe::Value* box(T value);
 
 template<Is<MyClass> T>
-T unbox(Any* value);
+T unbox(unsafe::Value* value);
 ```
 
 Where `Is<T, U>` is a concept that resolves to true if `U` and `T` are the same type.
@@ -2704,7 +2704,7 @@ jl_module_t*             => Module
 jl_function_t*           => Function
 jl_sym_t*                => Symbol
 
-Any*                     => Any
+unsafe::Value*                     => Any
 
 bool                     => Bool
 char                     => Char
@@ -2741,18 +2741,18 @@ std::set<T>              => Set{T, U}       *
 ° where R is the rank of the array
 
 std::function<void()>                       => function () -> Nothing     
-std::function<void(Any*)>                   => function (::Any) -> Nothing
-std::function<void(Any*, Any*)>             => function (::Any, ::Any) -> Nothing
-std::function<void(Any*, Any*, Any*)>       => function (::Any, ::Any, ::Any) -> Nothing
-std::function<void(Any*, Any*, Any*, Any*)> => function (::Any, ::Any, ::Any, ::Any) -> Nothing
-std::function<void(std::vector<Any*>)>      => function (::Vector{Any}) -> Nothing
+std::function<void(unsafe::Value*)>                   => function (::Any) -> Nothing
+std::function<void(unsafe::Value*, unsafe::Value*)>             => function (::Any, ::Any) -> Nothing
+std::function<void(unsafe::Value*, unsafe::Value*, unsafe::Value*)>       => function (::Any, ::Any, ::Any) -> Nothing
+std::function<void(unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*)> => function (::Any, ::Any, ::Any, ::Any) -> Nothing
+std::function<void(std::vector<unsafe::Value*>)>      => function (::Vector{Any}) -> Nothing
 
-std::function<Any*()>                       => function () -> Any  
-std::function<Any*(Any*)>                   => function (::Any) -> Any
-std::function<Any*(Any*, Any*)>             => function (::Any, ::Any) -> Any
-std::function<Any*(Any*, Any*, Any*)>       => function (::Any, ::Any, ::Any) -> Any
-std::function<Any*(Any*, Any*, Any*, Any*)> => function (::Any, ::Any, ::Any, ::Any) -> Any
-std::function<Any*(std::vector<Any*>)>      => function (::Vector{Any}) ::Any
+std::function<unsafe::Value*()>                       => function () -> Any  
+std::function<unsafe::Value*(unsafe::Value*)>                   => function (::Any) -> Any
+std::function<unsafe::Value*(unsafe::Value*, unsafe::Value*)>             => function (::Any, ::Any) -> Any
+std::function<unsafe::Value*(unsafe::Value*, unsafe::Value*, unsafe::Value*)>       => function (::Any, ::Any, ::Any) -> Any
+std::function<unsafe::Value*(unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*)> => function (::Any, ::Any, ::Any, ::Any) -> Any
+std::function<unsafe::Value*(std::vector<unsafe::Value*>)>      => function (::Vector{Any}) ::Any
         
 Usertype<T>::original_type                  => T °
         
@@ -2786,7 +2786,7 @@ State::eval("var = 1234")
 To access the value of this variable, we could use the C-API. By calling `jl_eval_string`, we return a pointer to the memory `var` holds. We then `unbox` that pointer:
 
 ```cpp
-Any* var_ptr = jl_eval_string("return var");
+unsafe::Value* var_ptr = jl_eval_string("return var");
 auto as_int = unbox<int>(var_ptr);
 
 std::cout << as_int << std::endl;
@@ -2820,7 +2820,7 @@ auto proxy = State::eval("return var")
 ```
 Use of `auto` simplifies the declaration and is encouraged whenever possible.<br>
 
-Now that we have the proxy, we need to convert it to a value. Unlike with the C-APIs `jl_value_t*` (aka. `Any*`) we *do not* need to call `box`/`unbox<T>`:
+Now that we have the proxy, we need to convert it to a value. Unlike with the C-APIs `jl_value_t*` (aka. `unsafe::Value*`) we *do not* need to call `box`/`unbox<T>`:
 
 ```cpp
 // all following statements are exactly equivalent:
@@ -3321,7 +3321,7 @@ int8_t get_compile_status() const;
 int8_t get_type_inference_status() const;
 
 // hidden C-property: bindings
-[[nodiscard]] std::map<Symbol, Any*> get_bindings() const;
+[[nodiscard]] std::map<Symbol, unsafe::Value*> get_bindings() const;
 
 // hidden C-property: usings
 [[nodiscard]] std::vector<Module> get_usings() const;
@@ -3380,7 +3380,7 @@ var1 => 0
 var2 => 0
 ```
 
-where `jl_to_string` is a C-function that takes an `Any*` and calls `Base.string`, returning the resulting string.
+where `jl_to_string` is a C-function that takes an `unsafe::Value*` and calls `Base.string`, returning the resulting string.
 
 Because the proxies hold ownership of the bound values and are unnamed, the result of `get_bindings` is a stable snapshot of a module. Even if the module continues to be modified, the map returned by `get_bindings` stays the same. This means `get_bindings` gives us a way to save the current state of the module.
 
@@ -3522,7 +3522,7 @@ To call a specific C++ lambda from Julia, we first need to *register* it.
 #### Registering Functions
 ```cpp
 // always specify trailing return type manually
-register_function("add_2_to_vector", [](Any* in) -> Any* {
+register_function("add_2_to_vector", [](unsafe::Value* in) -> unsafe::Value* {
 
     // convert in to jluna::Vector
     Vector<size_t> vec = in;
@@ -3532,11 +3532,11 @@ register_function("add_2_to_vector", [](Any* in) -> Any* {
         e = e.operator size_t() + 2;
 
     // return vector to Julia
-    return vec.operator Any*(); // box or cast to Any*
+    return vec.operator unsafe::Value*(); // box or cast to unsafe::Value*
 });
 ```
 
-Note the explicit trailing return type `-> Any*`. It is recommended to always specify it when using lambdas in `jluna` (and, for style reasons only, in C++ in general). Specifying `-> void` will make the function return `nothing` to Julia, specifying `-> Any*` will make the return value available to Julia, regardless of its type.
+Note the explicit trailing return type `-> unsafe::Value*`. It is recommended to always specify it when using lambdas in `jluna` (and, for style reasons only, in C++ in general). Specifying `-> void` will make the function return `nothing` to Julia, specifying `-> unsafe::Value*` will make the return value available to Julia, regardless of its type.
 
 #### Calling Functions
 
@@ -3558,7 +3558,7 @@ We will learn more about how to make our own custom types compatible with functi
 Let's call our above example function. It takes an arbitrary vector of integers and adds 2 to each element, then returns that vector:
 
 ```cpp
-register_function("add_2_to_vector", [](Any* in) -> Any* {
+register_function("add_2_to_vector", [](unsafe::Value* in) -> unsafe::Value* {
 
     Vector<size_t> vec = in;
 
@@ -3603,25 +3603,25 @@ Only the following signatures for lambdas are allowed (this is enforced at compi
 
 ```cpp
 () -> void
-(Any*) -> void
-(std::vector<Any*>) -> void
-(Any*, Any*) -> void
-(Any*, Any*, Any*) -> void
-(Any*, Any*, Any*, Any*) -> void
+(unsafe::Value*) -> void
+(std::vector<unsafe::Value*>) -> void
+(unsafe::Value*, unsafe::Value*) -> void
+(unsafe::Value*, unsafe::Value*, unsafe::Value*) -> void
+(unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*) -> void
 
-() -> Any*
-(Any*) -> Any*
-(std::vector<Any*>) -> Any*
-(Any*, Any*) -> Any*
-(Any*, Any*, Any*) -> Any*
-(Any*, Any*, Any*, Any*) -> Any*
+() -> unsafe::Value*
+(unsafe::Value*) -> unsafe::Value*
+(std::vector<unsafe::Value*>) -> unsafe::Value*
+(unsafe::Value*, unsafe::Value*) -> unsafe::Value*
+(unsafe::Value*, unsafe::Value*, unsafe::Value*) -> unsafe::Value*
+(unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*) -> unsafe::Value*
 ```  
 
 Templated lambdas will be supported in a future version but are currently disallowed as of `jluna v0.7`. The correct signature is enforced at compile time.
 
 #### Using Non-Julia Objects in Functions
 
-While this may seem limiting at first, as stated, it is not. We are restricted to `Any*` for **arguments**, however we can instead access arbitrary C++ objects by reference or by value through **captures**, which are unrestricted: 
+While this may seem limiting at first, as stated, it is not. We are restricted to `unsafe::Value*` for **arguments**, however we can instead access arbitrary C++ objects by reference or by value through **captures**, which are unrestricted: 
 
 ```cpp
 // a C++-object, incompatible with Julia
@@ -3639,7 +3639,7 @@ struct IncompatibleObject
 IncompatibleObject instance;
 
 // wrap instance in mutable std::ref and hand it to lambda via capture
-register_function("call_object", [instance_ref = std::ref(instance)](Any* in) -> void 
+register_function("call_object", [instance_ref = std::ref(instance)](unsafe::Value* in) -> void 
 {
     instance_ref.operator()(unbox<size_t>(in));
 });
@@ -3667,7 +3667,7 @@ T template_function(T in)
 }
 
 // overload for T = Int32
-register_function("template_function_int32" [](Any* in) -> Any* {
+register_function("template_function_int32" [](unsafe::Value* in) -> unsafe::Value* {
     
     auto unbox = unbox<Int32>(in);
     auto res = template_function<Int32>(unbox);
@@ -3675,7 +3675,7 @@ register_function("template_function_int32" [](Any* in) -> Any* {
 });
 
 // overload for T = float
-register_function("template_function_float" [](Any* in) -> Any* {
+register_function("template_function_float" [](unsafe::Value* in) -> unsafe::Value* {
     
     auto unbox = unbox<float>(in);
     auto res = template_function<float>(unbox);
@@ -3683,7 +3683,7 @@ register_function("template_function_float" [](Any* in) -> Any* {
 })
 
 // overloaf for T = std::vector<float>
-register_function("template_function_vector_float_" [](Any* in) -> Any* {
+register_function("template_function_vector_float_" [](unsafe::Value* in) -> unsafe::Value* {
     
     auto unbox = unbox<std::vector<float>>(in);
     auto res = template_function<std::vector<float>>(unbox);
@@ -3767,12 +3767,12 @@ Note that instead of `auto`, we declared `unnamed` and `named` to be explicitly 
 auto array = State::eval("return array").as<Array<Int64, 3>();
 ```
 
-We can use the generic value type `Any*` to make it possible for the array proxy to attach any Julia-side array, regardless of value type. `jluna` provides 3 convenient typedefs for this:
+We can use the generic value type `unsafe::Value*` to make it possible for the array proxy to attach any Julia-side array, regardless of value type. `jluna` provides 3 convenient typedefs for this:
 
 ```cpp
-using Array1d = Array<Any*, 1>;
-using Array2d = Array<Any*, 2>;
-using Array3d = Array<Any*, 3>;
+using Array1d = Array<unsafe::Value*, 1>;
+using Array2d = Array<unsafe::Value*, 2>;
+using Array3d = Array<unsafe::Value*, 3>;
 ```
 
 This is useful when the value type of the array is not know at the point of proxy declaration or if the actual value type of each element is non-homogenous, as this is a feature of Julias array but not possible using `std::vector` or similar classes. 
@@ -3975,7 +3975,7 @@ for (auto i : "(i for i in 1:10 if i % 2 == 0)"_gen)
 10
 ```
 
-Where `i` needs to be unboxed manually and behaves exactly like an `Any*`. While this is convenient, the true power of generator expressions lies in its interfacing with `jluna::Vector`. We can:
+Where `i` needs to be unboxed manually and behaves exactly like an `unsafe::Value*`. While this is convenient, the true power of generator expressions lies in its interfacing with `jluna::Vector`. We can:
 
 ```cpp
 // ...initialize a vector from a generator expression
@@ -4411,7 +4411,7 @@ The second argument is the **boxing routine**. This function is called during `b
 
 ```cpp
 auto instance = RGBA();
-Any* boxed = box<RGBA>(instance);
+unsafe::Value* boxed = box<RGBA>(instance);
 
 // calls [](RGBA& in) -> float {return in._red;} with in = instance
 // then assigns boxed._red with result
@@ -4423,7 +4423,7 @@ The third argument is the **unboxing routine**. This lambda has the signature `(
 
 ```cpp
 auto instance = RGBA();
-Any* boxed = box<RGBA>(instance);
+unsafe::Value* boxed = box<RGBA>(instance);
 RGBA unboxed = unbox<RGBA>(boxed);
 
 // calls [](RGBA& out, float in) with out = unboxed, in = unboxed._red
@@ -4662,29 +4662,29 @@ We now want to implement boxing and unboxing for both frogs and tadpoles. When d
 
 ```cpp
 template<Is<U> T>
-Any* box(T);
+unsafe::Value* box(T);
 
 template<Is<U> T>
-T unbox(Any*);
+T unbox(unsafe::Value*);
 ```
 
 Where `Is<U>` is a concept that enforces `T` to be equal to `U`. We need to use concepts and template functions here, so the syntax `box<U>(/*...*/)` and `unbox<U>(/*...*/)` are valid, which is required by `jluna`s functions. The `box` and `unbox` signatures for `Frog` and `Frog::Tadpole` then look like this:
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {}
 
 template<Is<Frog> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {}
 
 template<Is<Frog::Tadpole> T>
-T unbox(Any* in)
+T unbox(unsafe::Value* in)
 {}
 
 template<Is<Frog> T>
-T unbox(Any* in)
+T unbox(unsafe::Value* in)
 {}
 ```
 
@@ -4692,13 +4692,13 @@ Because we are handling raw C-pointers and not proxies, we need to manually prot
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
 }
 
 template<Is<Frog> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
 }
@@ -4708,7 +4708,7 @@ To instance the Julia-side versions of the classes, we need access to their Juli
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
@@ -4717,7 +4717,7 @@ Any* box(T in)
 }
 
 template<Is<Frog> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* frog_ctor = jl_find_function("Main", "Frog");
@@ -4726,7 +4726,7 @@ Any* box(T in)
 }
 ```
 
-We run into a problem. `Frog` does not have a no-argument constructor. The only way to construct a frog, is from a tadpole. We cannot ask for a tadpole as an argument to the box function, though, because we have to strictly adhere to the `(T) -> Any*` signature. The only way to solve this conundrum, is to create a new Julia-side function that constructs a frog for us, in a round-about way:
+We run into a problem. `Frog` does not have a no-argument constructor. The only way to construct a frog, is from a tadpole. We cannot ask for a tadpole as an argument to the box function, though, because we have to strictly adhere to the `(T) -> unsafe::Value*` signature. The only way to solve this conundrum, is to create a new Julia-side function that constructs a frog for us, in a round-about way:
 
 ```julia 
 function generate_frog(name::String) ::Frog
@@ -4741,7 +4741,7 @@ Accessing and calling the function inside `box<Is<Frog>>`:
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
@@ -4750,7 +4750,7 @@ Any* box(T in)
 }
 
 template<Is<Frog> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* frog_ctor = jl_find_function("Main", "generate_frog");
@@ -4765,7 +4765,7 @@ Lastly, we need to update the newly created Julia-side instance with the actual 
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* tadpole_ctor = jl_find_function("Main", "Tadpole");
@@ -4774,12 +4774,12 @@ Any* box(T in)
     
     static auto* setfield = jl_find_function("Base", "setfield!");
     static auto field_symbol = Symbol("_name");
-    jluna::safe_call(setfield, out, (Any*) field_symbol, box<std::string>(in._name));
+    jluna::safe_call(setfield, out, (unsafe::Value*) field_symbol, box<std::string>(in._name));
     return out;
 }
 
 template<Is<Frog> T>
-Any* box(T in)
+unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
     static auto* frog_ctor = jl_find_function("Main", "generate_frog");
@@ -4795,13 +4795,13 @@ Now that we have box fully written, we can turn our attention to unbox. Unboxing
 
 ```cpp
 template<Is<Frog::Tadpole> T>
-T unbox(Any* in)
+T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();
     static auto* getfield = jl_find_function("Base", "getfield");
     static auto field_symbol = Symbol("_name");
     
-    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+    unsafe::Value* julia_side_name = jluna::safe_call(getfield, in, (unsafe::Value*) field_symbol);
     
     auto out = Tadpole();
     out._name = unbox<std::string>(julia_side_name);
@@ -4809,13 +4809,13 @@ T unbox(Any* in)
 }
 
 template<Is<Frog::Tadpole> T>
-T unbox(Any* in)
+T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();
     static auto* getfield = jl_find_function("Base", "getfield");
     static auto field_symbol = Symbol("_name");
     
-    Any* julia_side_name = jluna::safe_call(getfield, in, (Any*) field_symbol);
+    unsafe::Value* julia_side_name = jluna::safe_call(getfield, in, (unsafe::Value*) field_symbol);
     
     auto tadpole = Tadpole();
     tadpole._name = unbox<std::string>(julia_side_name);
@@ -4850,13 +4850,11 @@ The complete code for this example is available [here](./frog_tadpole_example.cp
 
 ## The Unsafe Library
 
-(this section is not yet complete)
-
 > This section is only recommended for users who are 
 > + highly familiar with C and memory safety and 
 > + after truly optimal performance<br>
 > 
-> Misuse of this part of `jluna` can lead to memory leaks, exception-less crashes and data corruption, however, if navigated properly, also achieves overheads in the range of 0 - 1%, allowing for runtime performance that is sometimes faster than the C-API itself
+> Misuse of this part of `jluna` can lead to memory leaks, exception-less crashes and data corruption. If navigated properly, it also achieves near 0-overhead compared to **Julia**, allowing for runtime performance that is sometimes faster than the C-API itself
 
 One of `jluna`s most central design conceits is that of safety. This is great for most users, but it also introduces a perfomance overhead that is, in rare applications, unacceptable. To address this, `jluna` provides a "guru"-interface, which offers bleeding-edge performance versions of common applications. 
 
@@ -4902,7 +4900,7 @@ GeneratorExpression                 F
 
 // ### accessing Julia-side values ###
 Array<T, N>::operator[](size_t)     A+
-Proxy::operator Any*()              A+
+Proxy::operator unsafe::Value*()              A+
 State::safe_return                  A
 Proxy::operator[](size_t)           A
 Proxy::operator[](std::string)      A-
@@ -4973,7 +4971,7 @@ All performance critical code should be inside a Julia file. All C++ should do, 
 ### Minimize (Un)Boxing
 
 By far the easiest way to completely tank a programs' performance is to unnecessarily box/unbox values constantly. If our program requires operation `A`, `B`, `C` Julia-side and `X`, `Y`, `Z` C++-side, it's very important to execute everything in a way that minimizes the number of box/unbox calls. So:
-`ABC <unbox> XYZ <box>` rather than `A <unbox> X <box> B <unbox> Y <box>`, etc.. This may seem obvious when abstracted like this, but in a complex application, it's easy to forget. Knowing what calls cause box/unboxing is essential to avoiding pitfalls, because of this it sometimes encouraged to not shy away from handling pure `Any*`, just make sure to also manually control the garbage collector.
+`ABC <unbox> XYZ <box>` rather than `A <unbox> X <box> B <unbox> Y <box>`, etc.. This may seem obvious when abstracted like this, but in a complex application, it's easy to forget. Knowing what calls cause box/unboxing is essential to avoiding pitfalls, because of this it sometimes encouraged to not shy away from handling pure `unsafe::Value*`, just make sure to also manually control the garbage collector.
 
 Lastly, though it is cumbersome, manually implementing box/unbox calls instead of going through `Usertype<T>` often gives more freedom to optimize. Advanced users are therefore encouraged to consider this method more frequently, at the cost of convenience.
 
@@ -4982,7 +4980,7 @@ Lastly, though it is cumbersome, manually implementing box/unbox calls instead o
 `jluna` triggers implicit conversion behind the scenes, consider the following code:
 
 ```cpp
-Any* jl_side_vec = "[i for i in 1:100000]"_eval;
+unsafe::Value* jl_side_vec = "[i for i in 1:100000]"_eval;
 std::vector<size_t> cpp_side_vec = unbox<std::vector<size_t>>(jl_side_vec);
 ```
 
@@ -5054,7 +5052,7 @@ We do not create any proxy at all, increasing performance by up to 6 times. Of c
 auto a_proxy = jluna::Proxy(jluna::safe_eval("Main.Module1.Module2.vector_var[1].field"));
 size_t a_value = a_proxy;
 ```
-This calls the proxy constructor using a pure `Any*`, returned through `safe_eval`, thereby reducing the number of proxies constructed from 6 named to only 1 unnamed.
+This calls the proxy constructor using a pure `unsafe::Value*`, returned through `safe_eval`, thereby reducing the number of proxies constructed from 6 named to only 1 unnamed.
 
 ### Use the C-Library
 

@@ -21,7 +21,7 @@ namespace jluna
         return _message.c_str();
     }
 
-    JuliaException::operator Any*()
+    JuliaException::operator unsafe::Value*()
     {
         return _value;
     }
@@ -59,7 +59,7 @@ namespace jluna
         }
     }
 
-    Any* safe_eval(const char* str)
+    unsafe::Value* safe_eval(const char* str)
     {
         jluna::throw_if_uninitialized();
 
@@ -77,7 +77,7 @@ namespace jluna
         return result;
     }
 
-    Any* operator""_eval(const char* str, size_t _)
+    unsafe::Value* operator""_eval(const char* str, size_t _)
     {
         return safe_eval(str);
     }

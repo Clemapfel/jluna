@@ -15,7 +15,7 @@
 namespace jluna
 {
     // no owner
-    Proxy::ProxyValue::ProxyValue(Any* value, jl_sym_t* id)
+    Proxy::ProxyValue::ProxyValue(unsafe::Value* value, jl_sym_t* id)
         : _is_mutating(id != nullptr)
     {
         if (value == nullptr)
@@ -32,7 +32,7 @@ namespace jluna
         if (id == nullptr)
             _id_key = State::detail::create_reference(jl_call1(make_unnamed_proxy_id, jl_box_uint64(_value_key)));
         else
-            _id_key = State::detail::create_reference(jl_call2(make_named_proxy_id, (Any*) id, jl_nothing));
+            _id_key = State::detail::create_reference(jl_call2(make_named_proxy_id, (unsafe::Value*) id, jl_nothing));
 
         _id_ref = State::detail::get_reference(_id_key);
 
@@ -40,7 +40,7 @@ namespace jluna
     }
 
     // with owner
-    Proxy::ProxyValue::ProxyValue(Any* value, std::shared_ptr<ProxyValue>& owner, Any* id)
+    Proxy::ProxyValue::ProxyValue(unsafe::Value* value, std::shared_ptr<ProxyValue>& owner, unsafe::Value* id)
     {
         jl_gc_pause;
 
@@ -64,25 +64,25 @@ namespace jluna
         State::detail::free_reference(_id_key);
     }
 
-    Any * Proxy::ProxyValue::value() const
+    unsafe::Value* Proxy::ProxyValue::value() const
     {
         return jl_ref_value(_value_ref);
     }
 
-    Any * Proxy::ProxyValue::id() const
+    unsafe::Value* Proxy::ProxyValue::id() const
     {
-        if (value() == (Any*) jl_main_module)
+        if (value() == (unsafe::Value*) jl_main_module)
             return jl_nothing;
 
         return jl_ref_value(_id_ref);
     }
 
-    Any * Proxy::ProxyValue::get_field(jl_sym_t* symbol)
+    unsafe::Value* Proxy::ProxyValue::get_field(jl_sym_t* symbol)
     {
         static jl_function_t* dot = jl_find_function("jluna", "dot");
 
         jl_gc_pause;
-        auto* res = jluna::safe_call(dot, value(), (Any*) symbol);
+        auto* res = jluna::safe_call(dot, value(), (unsafe::Value*) symbol);
         jl_gc_unpause;
 
         return res;
@@ -94,11 +94,11 @@ namespace jluna
         : Proxy(jl_nothing, nullptr)
     {}
 
-    Proxy::Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, Any* symbol)
+    Proxy::Proxy(unsafe::Value* value, std::shared_ptr<ProxyValue>& owner, unsafe::Value* symbol)
         : _content(new ProxyValue(value, owner, symbol))
     {}
 
-    Proxy::Proxy(Any* value, jl_sym_t* symbol)
+    Proxy::Proxy(unsafe::Value* value, jl_sym_t* symbol)
         : _content(new ProxyValue(value, symbol))
     {}
 
@@ -122,7 +122,7 @@ namespace jluna
         );
     }
 
-    Proxy::operator Any*()
+    Proxy::operator unsafe::Value*()
     {
         jl_gc_pause;
         auto* res = _content->value();
@@ -133,7 +133,7 @@ namespace jluna
             return res;
     }
 
-    Proxy::operator const Any*() const
+    Proxy::operator const unsafe::Value*() const
     {
         jl_gc_pause;
         auto* res = _content->value();
@@ -159,7 +159,7 @@ namespace jluna
     std::vector<std::string> Proxy::get_field_names() const
     {
         jl_gc_pause;
-        auto* svec = jl_field_names((jl_datatype_t*) (jl_isa(_content->value(), (Any*) jl_datatype_type) ? _content->value() : jl_typeof(_content->value())));
+        auto* svec = jl_field_names((jl_datatype_t*) (jl_isa(_content->value(), (unsafe::Value*) jl_datatype_type) ? _content->value() : jl_typeof(_content->value())));
         std::vector<std::string> out;
         for (size_t i = 0; i < jl_svec_len(svec); ++i)
             out.push_back(std::string(jl_symbol_name((jl_sym_t*) jl_svecref(svec, i))));
@@ -178,7 +178,7 @@ namespace jluna
         return _content->_is_mutating;
     }
 
-    Proxy & Proxy::operator=(Any* new_value)
+    Proxy & Proxy::operator=(unsafe::Value* new_value)
     {
         static jl_function_t* assign = jl_find_function("jluna.memory_handler", "assign");
         static jl_function_t* set_reference = jl_find_function("jluna.memory_handler", "set_reference");

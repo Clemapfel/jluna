@@ -31,13 +31,13 @@ namespace jluna
             /// @brief construct with no owner, reserved for global temporaries and main
             /// @param value
             /// @param symbol
-            Proxy(Any* value, jl_sym_t* symbol = nullptr);
+            Proxy(unsafe::Value* value, jl_sym_t* symbol = nullptr);
 
             /// @brief construct with owner
             /// @param value
             /// @param owner: shared pointer to owner
             /// @param symbol
-            Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, Any* name_or_index);
+            Proxy(unsafe::Value* value, std::shared_ptr<ProxyValue>& owner, unsafe::Value* name_or_index);
 
             /// @brief dtor
             ~Proxy();
@@ -77,10 +77,10 @@ namespace jluna
             T operator[](size_t);
 
             /// @brief cast to Any
-            operator Any*();
+            operator unsafe::Value*();
 
             /// @brief cast to const Any
-            operator const Any*() const;
+            operator const unsafe::Value*() const;
 
             /// @brief cast to string using julias Base.string
             virtual operator std::string() const;
@@ -132,9 +132,9 @@ namespace jluna
             bool is_mutating() const;
 
             /// @brief assign value to proxy, this modifies the value julia-side
-            /// @param Any*
+            /// @param unsafe::Value*
             /// @returns reference to self
-            Proxy& operator=(Any*);
+            Proxy& operator=(unsafe::Value*);
 
             /// @brief assign value to proxy, this modifies the value julia-side
             /// @param T: value
@@ -169,29 +169,29 @@ namespace jluna
 
             /// @brief get value
             /// @returns pointer to value
-            Any* value() const;
+            unsafe::Value* value() const;
 
             /// @brief get id
             /// @returns pointer to jluna.memory_handler.ProxyID
-            Any* id() const;
+            unsafe::Value* id() const;
 
         protected:
             /// @brief ctor without owner
             /// @param value: pointer to value
             /// @param id: jluna.memory_handler.ProxyID object
-            ProxyValue(Any* value, jl_sym_t* id);
+            ProxyValue(unsafe::Value* value, jl_sym_t* id);
 
             /// @brief ctor with owner and proper name
             /// @param value: pointer to value
             /// @param id: jluna.memory_handler.ProxyID object
-            ProxyValue(Any* value, std::shared_ptr<ProxyValue>& owner, Any* symbol_or_index);
+            ProxyValue(unsafe::Value* value, std::shared_ptr<ProxyValue>& owner, unsafe::Value* symbol_or_index);
 
             ProxyValue(const ProxyValue&);
 
             /// @brief access field
             /// @param symbol: name of field
             /// @returns pointer to field data
-            Any* get_field(jl_sym_t*);
+            unsafe::Value* get_field(jl_sym_t*);
 
             /// @brief owner
             std::shared_ptr<ProxyValue> _owner;
@@ -202,8 +202,8 @@ namespace jluna
             size_t _id_key;
             size_t _value_key;
 
-            mutable Any* _id_ref;
-            mutable Any* _value_ref;
+            mutable unsafe::Value* _id_ref;
+            mutable unsafe::Value* _value_ref;
     };
 }
 

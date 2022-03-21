@@ -41,8 +41,8 @@ namespace jluna
 
             /// @brief add field
             /// @param name: julia-side name of field
-            /// @param box_get: lambda with signature (T&) -> Any*
-            /// @param unbox_set: lambda with signature (T&, Any*) -> void
+            /// @param box_get: lambda with signature (T&) -> unsafe::Value*
+            /// @param unbox_set: lambda with signature (T&, unsafe::Value*) -> void
             template<typename Field_t>
             static void add_property(
                 const std::string& name,
@@ -62,13 +62,13 @@ namespace jluna
             /// @param T&: instance
             /// @returns boxed value
             /// @note this function will call implement() if it has not been called before, incurring a tremendous overhead on first execution, once
-            static Any* box(T&);
+            static unsafe::Value* box(T&);
 
             /// @brief box interface
-            /// @param Any*
+            /// @param unsafe::Value*
             /// @returns unboxed value
             /// @note this function will call implement() if it has not been called before, incurring a tremendous overhead on first execution, once
-            static T unbox(Any*);
+            static T unbox(unsafe::Value*);
 
         private:
             static void initialize();
@@ -79,8 +79,8 @@ namespace jluna
 
             static inline std::vector<Symbol> _fieldnames_in_order = {};
             static inline std::map<Symbol, std::tuple<
-                std::function<Any*(T&)>,        // getter
-                std::function<void(T&, Any*)>,   // setter
+                std::function<unsafe::Value*(T&)>,        // getter
+                std::function<void(T&, unsafe::Value*)>,   // setter
                 Type
             >> _mapping = {};
     };

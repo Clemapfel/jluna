@@ -61,9 +61,20 @@ namespace jluna
     /// @brief 64-bit double interpreted as Float64 julia-side
     using Float64 = double;
 
-    /// @brief address of julia-side memory
-    using Any = jl_value_t;
+    namespace unsafe
+    {
+        /// @brief address of julia-side memory
+        using Value = jl_value_t;
 
-    /// @brief address of julia-side function
-    using Function = jl_function_t;
+        /// @brief address of julia-side function
+        using Function = jl_function_t;
+
+        /// @brief julia-side, non-proxy symbol
+        using Symbol = jl_sym_t;
+
+        /// @brief julia-side, non-proxy module
+        using Module = jl_module_t;
+    }
+
+    /* [[deprecated]] */ using Any = unsafe::Value;
 }

@@ -18,7 +18,7 @@ namespace jluna
         : Proxy(*owner)
     {
         static jl_datatype_t* type_t = (jl_datatype_t*) jl_eval_string("return Type");
-        jl_assert_type(owner->operator Any*(), type_t);
+        jl_assert_type(owner->operator unsafe::Value*(), type_t);
     }
 
     Type Type::unroll() const
@@ -71,7 +71,7 @@ namespace jluna
         return unbox<size_t>(jluna::safe_call(get_n_fields, get()));
     }
 
-    Any* Type::get_singleton_instance() const
+    unsafe::Value* Type::get_singleton_instance() const
     {
         return get()->instance;
     }
