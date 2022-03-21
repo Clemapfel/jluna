@@ -74,6 +74,9 @@ namespace jluna
 
         /// @brief julia-side, non-proxy module
         using Module = jl_module_t;
+
+        /// @brief julia-side expression
+        using Expression = jl_expr_t;
     }
 
     /* [[deprecated]] */ using Any = unsafe::Value;

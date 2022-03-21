@@ -20,6 +20,12 @@ namespace jluna
     template<typename T, typename U>
     concept Is = std::is_same<T, U>::value or std::is_same_v<T, const U>;
 
+    template<typename T, typename U>
+    concept IsReinterpretableTo = requires(T t)
+    {
+        {reinterpret_cast<U>(t)};
+    };
+
     /// @concept: has default ctor
     template<typename T>
     concept IsDefaultConstructible = requires(T)
