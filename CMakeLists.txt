@@ -100,6 +100,10 @@ add_library(jluna SHARED
     include/typedefs.hpp
     .src/typedefs.inl
 
+    include/unsafe_utilities.hpp
+    .src/unsafe_utilities.inl
+    .src/unsafe_utilities.cpp
+
     include/concepts.hpp
     include/julia_extension.hpp
 
@@ -138,9 +142,6 @@ add_library(jluna SHARED
     include/type.hpp
     .src/type.cpp
     .src/type.inl
-
-    include/function.hpp
-    .src/function.cpp
 
     include/generator_expression.hpp
     .src/generator_expression.cpp
