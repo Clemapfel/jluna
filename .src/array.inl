@@ -271,8 +271,35 @@ namespace jluna
     template<Boxable V, size_t R>
     void* Array<V, R>::data()
     {
-        return reinterpret_cast<jl_array_t*>(this->operator Any*())->data;
+        return ;
     } //°
+
+
+    namespace unsafe
+    {
+        template<typename T, Boxable V, size_t R>
+        void set_array_data(Array<V, R>& array, T* new_data, size_t new_data_size)
+        {
+            jl_gc_pause;
+            jl_array_t* current = reinterpret_cast<jl_array_t*>(array.operator jl_value_t*());
+            size_t current_size = jl_array_len(current);
+
+            if (current_size > new_data_size)
+                jl_array_del_end(current, current_size - new_data_size);
+            else
+                jl_array_sizehint(current, new_data_size);
+
+            auto* before = current->data;
+            current->data = new_data;
+            jl_gc_unpause;
+        }
+
+        template<Boxable V, size_t R>
+        V* get_array_data(Array<V, R>& array)
+        {
+            return reinterpret_cast<V*>(reinterpret_cast<jl_array_t*>(array.operator Any*())->data);
+        }
+    }
 
     // ###
 

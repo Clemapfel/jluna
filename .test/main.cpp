@@ -613,6 +613,17 @@ int main()
         Test::assert_that(test(2, 2, 3));
     });
 
+    Test::test("array: swap c-data", [](){
+
+        Array<Float64, 1> arr =  jl_eval_string("jl_arr = Float64[1, 2, 3, 4, 5]");
+        std::vector<Float64> new_arr = {6, 7, 8, 9};
+
+        unsafe::set_array_data(arr, new_arr.data(), 4);
+
+        Test::assert_that(arr.size() == 4);
+        Test::assert_that(static_cast<Float64>(arr.at(3)) == 9);
+    });
+
     Test::test("array_iterator: +/-", [](){
 
         State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
@@ -710,6 +721,16 @@ int main()
             Test::assert_that(it.operator int() % 2 == 0);
     });
 
+    Test::test("array: set C-data", [](){
+
+        Array<Float64, 1> arr =  jl_eval_string("jl_arr = Float64[1, 2, 3, 4, 5]");
+        std::vector<Float64> new_arr = {6, 7, 8, 9};
+
+        unsafe::set_array_data(arr, new_arr.data(), 4);
+
+        Test::assert_that(arr.size() == 4);
+        Test::assert_that(static_cast<Float64>(arr.at(3)) == 9);
+    });
 
     Test::test("vector: insert", [](){
 

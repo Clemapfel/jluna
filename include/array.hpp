@@ -133,9 +133,6 @@ namespace jluna
             /// @brief cast to Any*
             using Proxy::operator Any*;
 
-            /// @brief expose C-data
-            void* data();
-
         protected:
             using Proxy::_content;
 
@@ -315,6 +312,21 @@ namespace jluna
     Any* box(T value)
     {
         return value.operator Any*();
+    }
+
+    namespace unsafe
+    {
+        /// @brief replace data without invoking a copy or unbox
+        /// @tparam value type of new array value
+        /// @param new_data: pointer to new c-style array with data
+        /// @param new_data_size: size of new c-style array
+        template<typename T, Boxable Value_t, size_t Rank>
+        void set_array_data(Array<Value_t, Rank>& array, T* new_data, size_t new_data_size);
+
+        /// @brief expose the raw C-array data of an array
+        /// @returns pointer to data
+        template<Boxable Value_t, size_t Rank>
+        Value_t* get_array_data(Array<Value_t, Rank>& array);
     }
 }
 
