@@ -29,4 +29,129 @@ namespace jluna::unsafe
         static unsafe::Function* expr = get_function(jl_base_module, "Expr"_sym);
         return (unsafe::Expression*) call(expr, first, other...);
     }
+
+    namespace detail
+    {
+        inline nullptr_t gc_init()
+        {
+            jl_eval_string(R"(
+                if ! (isdefined(Main, :__jluna_heap) && isdefined(Main, :__jluna_heap_index))
+                    Main.eval(:(__jluna_heap = Dict{UInt64, Base.RefValue{Any}}()));
+                    Main.eval(:(__jluna_heap_index = Ref(UInt64(0))));
+                end
+            )");
+
+            return nullptr;
+        }
+    }
+
+    template<IsReinterpretableTo<unsafe::Value*> T>
+    size_t gc_preserve(T value)
+    {
+        static auto _ = detail::gc_init();
+        static unsafe::Value* heap = get_value(jl_main_module, "__jluna_heap"_sym);
+        static unsafe::Value* heap_index = get_value(jl_main_module, "__jluna_heap_index"_sym);
+
+        static unsafe::Function* ref = get_function(jl_base_module, "Ref"_sym);
+        static unsafe::Function* pointer_from_objref = get_function(jl_base_module, "unsafe_pointer_to_objref"_sym);
+        static unsafe::Function* setindex = get_function(jl_base_module, "setindex!"_sym);
+
+        call(setindex, heap, call(ref, value), jl_get_nth_field(heap_index, 0));
+
+        size_t new_index = jl_unbox_uint64(heap_index) + 1;
+        jl_set_nth_field(heap_index, 0, jl_box_uint64(new_index));
+        return new_index;
+    }
+
+    template<Is<size_t>... Dims>
+    unsafe::Array* new_array(unsafe::Value* value_type, Dims... size_per_dimension)
+    {
+        static unsafe::Function* new_array = get_function("jluna"_sym, "new_array"_sym);
+        return (unsafe::Array*) call(new_array, value_type, jl_box_uint64(size_per_dimension)...);
+    }
+
+    template<Is<size_t>... Dims>
+    void resize_array(unsafe::Array* array, Dims... dims)
+    {
+        size_t current_size = jl_array_len(array);
+        size_t new_size = 1;
+        for (size_t i : {dims...})
+            new_size *= i;
+
+        if (array->flags.ndims == 1)
+        {
+            jl_array_sizehint(array, new_size);
+            if (current_size < new_size)
+                jl_array_grow_end(array, new_size - current_size);
+            else
+                jl_array_del_end(array, current_size - new_size);
+        }
+        else if (array->flags.ndims == 2)
+        {
+            //static unsafe::Function* reshape
+        }
+    }
+
+    template<Is<size_t>... Dims>
+    void reshape_array(unsafe::Array* array, Dims... dims)
+    {
+        if (sizeof...(dims) == 1 and array->flags.ndims == 1)
+        {
+            size_t new_size = std::get<0>(dims...);
+            size_t current_size = jl_array_len(array);
+
+            if (new_size > current_size)
+                jl_array_grow_end(array, new_size - current_size);
+            else
+                jl_array_del_end(array, current_size - new_size);
+        }
+        else if (sizeof...(dims) == 2 and array->flags.ndims == 2)
+        {
+            size_t current_x = jl_array_dim(array, 0);
+            size_t new_x = std::get<0>(dims...);
+
+            for (size_t i = 0; i < std::max(array->ncols, new_x); ++i)
+                if (new_x > current_x)
+                jl_array_grow_end(array, new_x - current_x);
+            else
+                jl_array_del_end(array, current_x - new_x);
+
+            size_t current_y = jl_array_dim(array, 0);
+            size_t new_y = std::get<0>(dims...);
+
+            for (size_t i = 0; i < std::max(array->ncols, new_y); ++i)
+                if (new_y > current_y)
+                jl_array_grow_end(array, new_y - current_y);
+            else
+                jl_array_del_end(array, current_y - new_y);
+        }
+        else
+        {
+            static unsafe::Function* reshape = get_function(jl_base_module, "reshape"_sym);
+            //auto* new_res = reshape_array
+        }
+
+
+    }
+
+    template<Is<size_t>... Index>
+    unsafe::Value* get_index(unsafe::Array*, Index... index_per_dimension)
+    {
+        /*
+
+        std::array<size_t, R> indices = {size_t(in)...};
+        size_t index = 0;
+        size_t mul = 1;
+
+        for (size_t i = 0; i < R; ++i)
+        {
+            index += (indices.at(i)) * mul;
+            size_t dim = get_dimension(i);
+            mul *= dim;
+        }
+
+        return operator[](index);
+         */
+    }
+
 }

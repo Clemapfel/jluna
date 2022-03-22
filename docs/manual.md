@@ -4882,6 +4882,8 @@ Provided here is a grading of most of `jluna`s features in terms of runtime perf
 ```cpp
 // function or feature              // grade
 
+anything in jluna::unsafe           A+
+
 // ### executing Julia code ###
 jluna::call                         A+
 jluna::safe_call                    A
@@ -4900,7 +4902,7 @@ GeneratorExpression                 F
 
 // ### accessing Julia-side values ###
 Array<T, N>::operator[](size_t)     A+
-Proxy::operator unsafe::Value*()              A+
+Proxy::operator unsafe::Value*()    A+
 State::safe_return                  A
 Proxy::operator[](size_t)           A
 Proxy::operator[](std::string)      A-

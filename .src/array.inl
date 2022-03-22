@@ -268,6 +268,7 @@ namespace jluna
         return reinterpret_cast<const jl_array_t*>(this->operator const unsafe::Value*())->length == 0;
     } //°
 
+    /*
     namespace unsafe
     {
         template<typename T, Boxable V, size_t R>
@@ -293,6 +294,7 @@ namespace jluna
             return reinterpret_cast<V*>(reinterpret_cast<jl_array_t*>(array.operator unsafe::Value*())->data);
         }
     }
+     */
 
     // ###
 

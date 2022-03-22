@@ -199,3 +199,17 @@ function get_length_of_generator(gen::Base.Generator) ::Int64
         end
     end
 end
+
+"""
+`new_array(::Type, dims::Int64...) -> Array{Type, length(dims))`
+"""
+function new_array(value_type::Type, lengths::Int64...)
+
+    length = 1;
+    for i in lengths
+        length *= i
+    end
+
+    out = Array{value_type, 1}(undef, length)
+    return reshape(out, lengths...)
+end

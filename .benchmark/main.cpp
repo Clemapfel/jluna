@@ -46,6 +46,7 @@ int main()
         jl_arr = box(vec);
     });
 
+    /*
     Benchmark::run("array: set C-data", n_reps, []()
     {
         auto jl_arr = Array<Float64, 1>(jl_eval_string("arr = Float64[]"));
@@ -57,6 +58,7 @@ int main()
 
         unsafe::set_array_data(jl_arr, vec.data(), vec.size());
     });
+     */
 
     Benchmark::conclude();
     return 0;

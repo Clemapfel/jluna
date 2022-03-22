@@ -22,6 +22,100 @@ int main()
     State::initialize();
     Test::initialize();
 
+    Test::test("unsafe: gc", [](){
+
+        auto* value = jl_eval_string("return [123, 434, 342]");
+        auto id = unsafe::gc_preserve(value);
+
+        State::collect_garbage();
+
+        auto after = unbox<std::vector<size_t>>(value);
+        Test::assert_that(after.at(2) == 342);
+
+        unsafe::gc_release(id);
+    });
+
+    return 0;
+
+    Test::test("unsafe: _sym", [](){
+
+        using namespace unsafe;
+
+        jl_gc_pause;
+        auto* symbol = jl_eval_string("return Symbol(\"test\")");
+        Test::assert_that("test"_sym == (jl_sym_t*) symbol);
+        jl_gc_unpause;
+    });
+
+    Test::test("unsafe: get_function", [](){
+
+        using namespace unsafe;
+
+        jl_gc_pause;
+        jl_eval_string(R"(
+            module __M
+                function f()
+                    return 1234;
+                end
+            end
+        )");
+
+        auto* f_true = jl_eval_string("return __M.f");
+        auto* f_a = unsafe::get_function("__M"_sym, "f"_sym);
+        auto* m = (jl_module_t*) jl_eval_string("return __M");
+        auto* f_b = unsafe::get_function(m, "f"_sym);
+
+        Test::assert_that(f_true == f_a);
+        Test::assert_that(f_true == f_b);
+        jl_gc_unpause;
+    });
+
+    Test::test("unsafe: Expr & eval", [](){
+
+        using namespace unsafe;
+
+        jl_gc_pause;
+        auto* expr_true = (jl_expr_t*) jl_eval_string("Expr(:call, :+, 100, 100)");
+        auto* expr = Expr("call"_sym, "+"_sym, jl_box_int64(100), jl_box_int64(100));
+
+        Test::assert_that(expr_true == expr);
+        Test::assert_that(unsafe::eval(expr) == jl_box_int64(200));
+        jl_gc_unpause;
+    });
+
+    Test::test("unsafe: get/set value", [](){
+
+        using namespace unsafe;
+
+        jl_gc_pause;
+        auto* res = jl_eval_string("__M.eval(:(value = 1234))");
+        auto* m = (unsafe::Module*) unsafe::get_value(jl_main_module, "__M"_sym);
+        auto* get = unsafe::get_value(m, "value"_sym);
+        Test::assert_that(get == res);
+
+        unsafe::set_value(m, "value"_sym, jl_box_int64(4567));
+        Test::assert_that(jl_unbox_bool(jl_eval_string("return __M.value == 4567")));
+        jl_gc_unpause;
+    });
+
+    Test::test("unsafe: get_field", [](){
+
+        using namespace unsafe;
+
+    });
+
+    Test::test("unsafe: call", [](){
+
+        using namespace unsafe;
+
+        auto* range = unsafe::call(unsafe::get_function(jl_base_module, "range"_sym), jl_box_int64(1), jl_box_int64(10));
+        auto* sum = unsafe::call(unsafe::get_function(jl_base_module, "sum"_sym), range);
+        Test::assert_that(jl_unbox_int64(sum) == 55);
+    });
+
+    Test::conclude();
+    return 0;
+
     Test::test("catch c exception", [](){
 
         Test::assert_that_throws<JuliaException>([](){
@@ -40,7 +134,7 @@ int main()
 
     Test::test("call", [](){
         Test::assert_that_throws<JuliaException>([]() {
-            call(jl_find_function("Base", "throw"), jl_eval_string("return ErrorException(\"\")"));
+            jluna::unsafe::call(jl_find_function("Base", "throw"), jl_eval_string("return ErrorException(\"\")"));
         });
     });
 
@@ -613,6 +707,7 @@ int main()
         Test::assert_that(test(2, 2, 3));
     });
 
+    /*
     Test::test("array: swap c-data", [](){
 
         Array<Float64, 1> arr =  jl_eval_string("jl_arr = Float64[1, 2, 3, 4, 5]");
@@ -623,6 +718,7 @@ int main()
         Test::assert_that(arr.size() == 4);
         Test::assert_that(static_cast<Float64>(arr.at(3)) == 9);
     });
+     */
 
     Test::test("array_iterator: +/-", [](){
 
@@ -721,6 +817,7 @@ int main()
             Test::assert_that(it.operator int() % 2 == 0);
     });
 
+    /*
     Test::test("array: set C-data", [](){
 
         Array<Float64, 1> arr =  jl_eval_string("jl_arr = Float64[1, 2, 3, 4, 5]");
@@ -731,6 +828,7 @@ int main()
         Test::assert_that(arr.size() == 4);
         Test::assert_that(static_cast<Float64>(arr.at(3)) == 9);
     });
+     */
 
     Test::test("vector: insert", [](){
 
