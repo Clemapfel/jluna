@@ -124,15 +124,9 @@ namespace jluna::unsafe
     /// @brief modify element, linear indexing
     /// @param array
     /// @param new_value
-    /// @params linear_index
-    void set_index(unsafe::Array*, unsafe::Value* value, size_t linear_index);
-
-    /// @brief modify element, linear indexing
-    /// @param array
-    /// @param new_value
     /// @params index_per_dimension
     template<Is<size_t>... Index>
-    void get_index(unsafe::Array*, unsafe::Value* value, Index... index_per_dimension);
+    void set_index(unsafe::Array*, unsafe::Value* value, Index... index_per_dimension);
 
     /// @brief access raw array data
     /// @param array

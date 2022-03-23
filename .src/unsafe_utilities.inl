@@ -128,30 +128,42 @@ namespace jluna::unsafe
         else
         {
             static unsafe::Function* reshape = get_function(jl_base_module, "reshape"_sym);
-            //auto* new_res = reshape_array
+
         }
-
-
     }
 
     template<Is<size_t>... Index>
-    unsafe::Value* get_index(unsafe::Array*, Index... index_per_dimension)
+    unsafe::Value* get_index(unsafe::Array* array, Index... index_per_dimension)
     {
-        /*
-
-        std::array<size_t, R> indices = {size_t(in)...};
+        std::array<size_t, sizeof...(Index)> indices = {size_t(index_per_dimension)...};
         size_t index = 0;
         size_t mul = 1;
 
-        for (size_t i = 0; i < R; ++i)
+        for (size_t i = 0; i < array->flags.ndims; ++i)
         {
             index += (indices.at(i)) * mul;
-            size_t dim = get_dimension(i);
+            size_t dim = jl_array_dim(array, i);
             mul *= dim;
         }
 
-        return operator[](index);
-         */
+        return jl_arrayref(array, index);
+    }
+
+    template<Is<size_t>... Index>
+    void set_index(unsafe::Array* array, unsafe::Value* new_value, Index... index_per_dimension)
+    {
+        std::array<size_t, sizeof...(Index)> indices = {size_t(index_per_dimension)...};
+        size_t index = 0;
+        size_t mul = 1;
+
+        for (size_t i = 0; i < array->flags.ndims; ++i)
+        {
+            index += (indices.at(i)) * mul;
+            size_t dim = jl_array_dim(array, i);
+            mul *= dim;
+        }
+
+        jl_arrayset(array, new_value, index);
     }
 
 }
