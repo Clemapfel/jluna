@@ -172,6 +172,13 @@ extern "C"
         return jl_unbox_int64(jl_call1(sizeof_, in)) * 8;
     }
 
+    /// @brief get value type of array
+    inline jl_value_t* jl_array_value_t(jl_array_t* arr)
+    {
+        static jl_function_t* get_value_type_of_array = jl_find_function("jluna", "get_value_type_of_array");
+        return jl_call1(get_value_type_of_array, (jl_value_t*) arr);
+    }
+
     /// @brief pause gc and save current state
     #define jl_gc_pause bool _b_e_f_o_r_e_ = jl_gc_is_enabled(); if (_b_e_f_o_r_e_) jl_gc_enable(false);
                              // weird naming to avoid potential name-collision when used in C++

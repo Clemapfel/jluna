@@ -95,14 +95,41 @@ namespace jluna::unsafe
     /// @param value_type
     /// @params size_per_dimension
     /// @returns array
-    template<Is<size_t>... Dims>
+    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool> = true>
     unsafe::Array* new_array(unsafe::Value* value_type, Dims... size_per_dimension);
+
+    /// @brief allocate 1d array
+    /// @param value_type
+    /// @params size
+    /// @returns array
+    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d);
+
+    /// @brief allocate 2d array
+    /// @param value_type
+    /// @params x_dimension
+    /// @params y_dimension
+    /// @returns array
+    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d);
+
+    /// @brief allocate 23d array
+    /// @param value_type
+    /// @params x_dimension
+    /// @params y_dimension
+    /// @params z_dimension
+    /// @returns array
+    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d, size_t three_d);
 
     /// @brief reshape array along all dimensions
     /// @param array
     /// @param size_per_dimension: size along each dimension, number of dimension is denoted by the number of sizes
-    template<Is<size_t>... Dims>
+    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool> = true>
     void resize_array(unsafe::Array* array, Dims...);
+    void resize_array(unsafe::Array* array, size_t one_d);
+    void resize_array(unsafe::Array* array, size_t one_d, size_t two_d);
+    void resize_array(unsafe::Array* array, size_t one_d, size_t two_d, size_t three_d);
+
+
+    void override_array(unsafe::Array* overridden, const unsafe::Array* constant);
 
     /// @brief get number of elements in array
     /// @param array

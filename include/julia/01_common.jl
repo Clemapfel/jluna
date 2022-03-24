@@ -1,14 +1,4 @@
 """
-`get_value_type_of_array(::Array{T}) -> Type`
-
-forward value type of array
-"""
-function get_value_type_of_array(_::Array{T}) ::Type where T
-
-    return T
-end
-
-"""
 `get_reference_value(::Base.RefValue{T}) -> T`
 
 forward value of reference

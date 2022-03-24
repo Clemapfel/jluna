@@ -85,6 +85,77 @@ namespace jluna::unsafe
         return reinterpret_cast<unsafe::Value*>(array->data);
     }
 
+    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d)
+    {
+        return jl_alloc_array_1d(value_type, one_d);
+    }
+
+    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d)
+    {
+        return jl_alloc_array_2d(value_type, one_d, two_d);
+    }
+
+    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d, size_t three_d)
+    {
+        return jl_alloc_array_3d(value_type, one_d, two_d, three_d);
+    }
+
+    void override_array(unsafe::Array* overridden, const unsafe::Array* constant)
+    {
+        memcpy(overridden->data, constant->data, constant->length);
+        overridden->length = constant->length;
+        overridden->nrows = constant->nrows;
+        overridden->ncols = constant->ncols;
+        overridden->flags = constant->flags;
+        overridden->offset = constant->offset;
+        overridden->elsize = constant->elsize;
+        overridden->maxsize = constant->maxsize;
+    }
+
+    void resize_array(unsafe::Array* array, size_t one_d)
+    {
+        if (jl_array_ndims(array) != 1)
+        {
+            std::array<size_t, 1> dims = {one_d};
+            override_array(array, jl_reshape_array(jl_array_value_t(array), array, dims.data()));
+            return;
+        }
+
+        size_t current_size = array->length;
+
+        if (one_d > current_size)
+            jl_array_grow_end(array, one_d - current_size);
+        else
+            jl_array_del_end(array, current_size - one_d);
+    }
+
+    void resize_array(unsafe::Array* array, size_t one_d, size_t two_d)
+    {
+        if (jl_array_ndims(array) != 2)
+        {
+            std::array<size_t, 2> dims = {one_d, two_d};
+            override_array(array, jl_reshape_array(jl_array_value_t(array), array, dims.data()));
+            return;
+        }
+
+        size_t current_size = array->nrows
+
+        if (one_d > current_size)
+            jl_array_grow_end(array, one_d - current_size);
+        else
+            jl_array_del_end(array, current_size - one_d);
+    }
+
+    void resize_array(unsafe::Array* array, size_t one_d, size_t two_d, size_t three_d)
+    {
+        if (jl_array_ndims(array) != 3)
+        {
+            std::array<size_t, 3> dims = {one_d, two_d, three_d};
+            override_array(array, jl_reshape_array(jl_array_value_t(array), array, dims.data()));
+            return;
+        }
+    }
+
     void set_array_data(unsafe::Array* array, unsafe::Value* new_data, size_t new_size)
     {
         /*

@@ -213,3 +213,13 @@ function new_array(value_type::Type, lengths::Int64...)
     out = Array{value_type, 1}(undef, length)
     return reshape(out, lengths...)
 end
+
+"""
+`get_value_type_of_array(::Array{T}) -> Type`
+
+forward value type of array
+"""
+function get_value_type_of_array(_::Array{T}) ::Type where T
+
+    return T
+end

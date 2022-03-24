@@ -63,35 +63,24 @@ namespace jluna::unsafe
         return new_index;
     }
 
-    template<Is<size_t>... Dims>
+    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool>>
     unsafe::Array* new_array(unsafe::Value* value_type, Dims... size_per_dimension)
     {
         static unsafe::Function* new_array = get_function("jluna"_sym, "new_array"_sym);
         return (unsafe::Array*) call(new_array, value_type, jl_box_uint64(size_per_dimension)...);
     }
 
-    template<Is<size_t>... Dims>
+    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool>>
     void resize_array(unsafe::Array* array, Dims... dims)
     {
-        size_t current_size = jl_array_len(array);
-        size_t new_size = 1;
-        for (size_t i : {dims...})
-            new_size *= i;
-
-        if (array->flags.ndims == 1)
-        {
-            jl_array_sizehint(array, new_size);
-            if (current_size < new_size)
-                jl_array_grow_end(array, new_size - current_size);
-            else
-                jl_array_del_end(array, current_size - new_size);
-        }
-        else if (array->flags.ndims == 2)
-        {
-            //static unsafe::Function* reshape
-        }
+        static unsafe::Function* reshape = get_function(jl_base_module, "reshape"_sym);
+        std::array<size_t, sizeof...(Dims)> dims_array = {dims...};
+        auto* res = jl_reshape_array(jl_array_value_t(array), array, dims_array);
+        override_array(array, res);
     }
 
+
+    /*
     template<Is<size_t>... Dims>
     void reshape_array(unsafe::Array* array, Dims... dims)
     {
@@ -131,6 +120,7 @@ namespace jluna::unsafe
 
         }
     }
+     */
 
     template<Is<size_t>... Index>
     unsafe::Value* get_index(unsafe::Array* array, Index... index_per_dimension)
