@@ -43,14 +43,14 @@ namespace jluna::unsafe
     /// @param function
     /// @param args
     /// @returns result
-    template<IsReinterpretableTo<unsafe::Value*>... Args_t>
+    template<typename... Args_t>
     unsafe::Value* call(unsafe::Function* function, Args_t... args);
 
     /// @brief ctor julia-side expression
     /// @param symbol
     /// @params arguments (optional)
     /// @returns pointer to julia-side expression
-    template<IsReinterpretableTo<unsafe::Value*>... Args_t>
+    template<typename... Args_t>
     unsafe::Expression* Expr(unsafe::Symbol*, Args_t...);
 
     /// @brief eval expression in module scope

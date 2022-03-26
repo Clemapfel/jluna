@@ -35,8 +35,8 @@ namespace jluna::unsafe
 
     unsafe::Value* get_value(unsafe::Module* module, unsafe::Symbol* name)
     {
-        static unsafe::Function* eval = get_function(jl_base_module, "eval"_sym);
-        return call(eval, module, name);
+        static auto* eval = unsafe::get_function(jl_base_module, "eval"_sym);
+        return call(eval, (unsafe::Value*) module, name);
     }
 
     unsafe::Value* get_value(unsafe::Symbol* module, unsafe::Symbol* name)

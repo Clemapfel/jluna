@@ -7,41 +7,44 @@
 
 namespace jluna::unsafe
 {
-    template<IsReinterpretableTo<unsafe::Value*>... Args_t>
+    template<typename... Args_t>
     unsafe::Value* call(Function* function, Args_t... args)
     {
         std::array<jl_value_t*, sizeof...(Args_t)> wrapped;
-        static auto set = [&](size_t i, auto args)
+        static auto set = [&](size_t i, jl_value_t* arg)
         {
-            wrapped.at(i) = reinterpret_cast<jl_value_t*>(args);
+            wrapped[i] = arg;
         };
 
         {
             size_t i = 0;
-            (set(i++, args), ...);
+            (set(i++, (jl_value_t*) args), ...);
         }
 
         return jl_call(function, wrapped.data(), wrapped.size());
     }
 
-    template<IsReinterpretableTo<unsafe::Value*>... Args_t>
+    template<typename... Args_t>
     unsafe::Expression* Expr(unsafe::Symbol* first, Args_t... other)
     {
         static unsafe::Function* expr = get_function(jl_base_module, "Expr"_sym);
-        return (unsafe::Expression*) call(expr, first, other...);
+        return (unsafe::Expression*) call(expr, first, ((unsafe::Value*) other)...);
     }
 
     namespace detail
     {
         inline nullptr_t gc_init()
         {
-            jl_eval_string(R"(
-                if ! (isdefined(Main, :__jluna_heap) && isdefined(Main, :__jluna_heap_index))
-                    Main.eval(:(__jluna_heap = Dict{UInt64, Base.RefValue{Any}}()));
-                    Main.eval(:(__jluna_heap_index = Ref(UInt64(0))));
-                end
-            )");
+            static bool initialized = false;
 
+            if (initialized)
+                return nullptr;
+
+            jl_eval_string(R"(
+                __jluna_heap = Dict{UInt64, Base.RefValue{Any}}()
+                __jluna_heap_index = Base.RefValue(Uint64(0))
+            )");
+            initialized = true;
             return nullptr;
         }
     }
@@ -49,6 +52,7 @@ namespace jluna::unsafe
     template<IsReinterpretableTo<unsafe::Value*> T>
     size_t gc_preserve(T value)
     {
+        jl_gc_pause;
         static auto _ = detail::gc_init();
         static unsafe::Value* heap = get_value(jl_main_module, "__jluna_heap"_sym);
         static unsafe::Value* heap_index = get_value(jl_main_module, "__jluna_heap_index"_sym);
@@ -61,6 +65,7 @@ namespace jluna::unsafe
 
         size_t new_index = jl_unbox_uint64(heap_index) + 1;
         jl_set_nth_field(heap_index, 0, jl_box_uint64(new_index));
+        jl_gc_unpause;
         return new_index;
     }
 

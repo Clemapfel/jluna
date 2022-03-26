@@ -223,3 +223,5 @@ function get_value_type_of_array(_::Array{T}) ::Type where T
 
     return T
 end
+
+_eval = Base.eval;
