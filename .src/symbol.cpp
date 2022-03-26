@@ -7,11 +7,6 @@
 
 namespace jluna
 {
-    jl_sym_t* operator""_sym(const char* str, size_t)
-    {
-        return jl_symbol(str);
-    }
-
     Symbol::Symbol()
         : Symbol("")
     {}

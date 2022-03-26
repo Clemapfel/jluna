@@ -27,7 +27,7 @@ namespace jluna
             Module(Proxy*);
 
             /// @brief decay to C-type
-            explicit operator jl_module_t*();
+            operator jl_module_t*();
 
             /// @brief eval string in module scope without exception forwarding
             /// @param code

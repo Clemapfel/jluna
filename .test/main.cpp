@@ -22,6 +22,23 @@ int main()
     State::initialize();
     Test::initialize();
 
+    jl_gc_pause;
+
+    auto* arr_1d = (jl_array_t*) jl_eval_string("return [i for i in 1:25]");
+    arr_1d->length = 20;
+    arr_1d->nrows = 20;
+    arr_1d->flags.isaligned = 0;
+    jl_println((jl_value_t*) arr_1d);
+
+    auto* arr_2d = (jl_array_t*) jl_eval_string("return reshape([i for i in 1:25], 5, 5)");
+    //jl_array_grow_end(arr, 5);
+    arr_2d->ncols = 7;
+
+    jl_println((jl_value_t*) arr_2d);
+    jl_gc_unpause;
+
+    return 0;
+
     Test::test("unsafe: gc", [](){
 
         auto* value = jl_eval_string("return [123, 434, 342]");

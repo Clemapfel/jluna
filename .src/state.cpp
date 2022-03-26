@@ -316,6 +316,7 @@ namespace jluna::State::detail
         Unsigned_t = Type(unroll("Core.Unsigned"));
         VecElement_t = Type(unroll("Core.VecElement"));
         WeakRef_t = Type(unroll("Core.WeakRef"));
+
         jl_gc_unpause;
     }
 

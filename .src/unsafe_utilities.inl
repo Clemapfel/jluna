@@ -3,13 +3,14 @@
 // Created on 21.03.22 by clem (mail@clemens-cords.com)
 //
 
+#include <include/julia_extension.hpp>
+
 namespace jluna::unsafe
 {
     template<IsReinterpretableTo<unsafe::Value*>... Args_t>
     unsafe::Value* call(Function* function, Args_t... args)
     {
         std::array<jl_value_t*, sizeof...(Args_t)> wrapped;
-
         static auto set = [&](size_t i, auto args)
         {
             wrapped.at(i) = reinterpret_cast<jl_value_t*>(args);
@@ -66,8 +67,15 @@ namespace jluna::unsafe
     template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool>>
     unsafe::Array* new_array(unsafe::Value* value_type, Dims... size_per_dimension)
     {
-        static unsafe::Function* new_array = get_function("jluna"_sym, "new_array"_sym);
-        return (unsafe::Array*) call(new_array, value_type, jl_box_uint64(size_per_dimension)...);
+        std::array<jl_value_t*, sizeof...(Dims)> dims = {jl_box_uint64(size_per_dimension)...};
+        return jl_new_array(jl_apply_array_type(value_type, sizeof...(Dims)), dims.data());
+    }
+
+    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool>>
+    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, Dims... size_per_dimension)
+    {
+        std::array<jl_value_t*, sizeof...(Dims)> dims = {jl_box_uint64(size_per_dimension)...};
+        return jl_ptr_to_array(jl_apply_array_type(value_type, 2), data, (jl_value_t*) dims.data(), 0);
     }
 
     template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool>>
@@ -78,49 +86,6 @@ namespace jluna::unsafe
         auto* res = jl_reshape_array(jl_array_value_t(array), array, dims_array);
         override_array(array, res);
     }
-
-
-    /*
-    template<Is<size_t>... Dims>
-    void reshape_array(unsafe::Array* array, Dims... dims)
-    {
-        if (sizeof...(dims) == 1 and array->flags.ndims == 1)
-        {
-            size_t new_size = std::get<0>(dims...);
-            size_t current_size = jl_array_len(array);
-
-            if (new_size > current_size)
-                jl_array_grow_end(array, new_size - current_size);
-            else
-                jl_array_del_end(array, current_size - new_size);
-        }
-        else if (sizeof...(dims) == 2 and array->flags.ndims == 2)
-        {
-            size_t current_x = jl_array_dim(array, 0);
-            size_t new_x = std::get<0>(dims...);
-
-            for (size_t i = 0; i < std::max(array->ncols, new_x); ++i)
-                if (new_x > current_x)
-                jl_array_grow_end(array, new_x - current_x);
-            else
-                jl_array_del_end(array, current_x - new_x);
-
-            size_t current_y = jl_array_dim(array, 0);
-            size_t new_y = std::get<0>(dims...);
-
-            for (size_t i = 0; i < std::max(array->ncols, new_y); ++i)
-                if (new_y > current_y)
-                jl_array_grow_end(array, new_y - current_y);
-            else
-                jl_array_del_end(array, current_y - new_y);
-        }
-        else
-        {
-            static unsafe::Function* reshape = get_function(jl_base_module, "reshape"_sym);
-
-        }
-    }
-     */
 
     template<Is<size_t>... Index>
     unsafe::Value* get_index(unsafe::Array* array, Index... index_per_dimension)
@@ -155,5 +120,4 @@ namespace jluna::unsafe
 
         jl_arrayset(array, new_value, index);
     }
-
 }

@@ -5,6 +5,14 @@
 
 #include <include/unsafe_utilities.hpp>
 
+namespace jluna
+{
+    unsafe::Symbol* operator""_sym(const char* str, size_t)
+    {
+        return jl_symbol(str);
+    }
+}
+
 namespace jluna::unsafe
 {
     unsafe::Function* get_function(unsafe::Module* module, unsafe::Symbol* name)
@@ -17,11 +25,6 @@ namespace jluna::unsafe
     {
         static jl_function_t* eval = jl_get_function(jl_base_module, "eval");
         return unsafe::call(eval, unsafe::call(eval, jl_main_module, module_name), function_name);
-    }
-
-    unsafe::Symbol* operator""_sym(const char* str, size_t)
-    {
-        return jl_symbol(str);
     }
 
     unsafe::Value* eval(unsafe::Expression* expr, unsafe::Module* module)
@@ -64,12 +67,6 @@ namespace jluna::unsafe
         call(delete_key, heap, jl_box_uint64(id));
     }
 
-    unsafe::Array* new_array(unsafe::Value* value_type, size_t size)
-    {
-        static unsafe::Function* new_array = get_function("jluna"_sym, "new_array"_sym);
-        return (unsafe::Array*) call(new_array, value_type, jl_box_uint64(size));
-    }
-
     size_t get_array_size(unsafe::Array* array)
     {
         return array->length;
@@ -87,22 +84,29 @@ namespace jluna::unsafe
 
     unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d)
     {
-        return jl_alloc_array_1d(value_type, one_d);
+        return jl_alloc_array_1d(jl_apply_array_type(value_type, 1), one_d);
     }
 
     unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d)
     {
-        return jl_alloc_array_2d(value_type, one_d, two_d);
+        return jl_alloc_array_2d(jl_apply_array_type(value_type, 2), one_d, two_d);
     }
 
-    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d, size_t three_d)
+    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d)
     {
-        return jl_alloc_array_3d(value_type, one_d, two_d, three_d);
+        return jl_ptr_to_array_1d(jl_apply_array_type(value_type, 1), data, one_d, 0);
+    }
+
+    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d, size_t two_d)
+    {
+        std::array<jl_value_t*, 2> dims = {jl_box_uint64(one_d), jl_box_uint64(two_d)};
+        return jl_ptr_to_array(jl_apply_array_type(value_type, 2), data, (jl_value_t*) dims.data(), 0);
     }
 
     void override_array(unsafe::Array* overridden, const unsafe::Array* constant)
     {
-        memcpy(overridden->data, constant->data, constant->length);
+        //memcpy(overridden->data, constant->data, constant->length);
+        overridden->data = constant->data;
         overridden->length = constant->length;
         overridden->nrows = constant->nrows;
         overridden->ncols = constant->ncols;
@@ -116,85 +120,30 @@ namespace jluna::unsafe
     {
         if (jl_array_ndims(array) != 1)
         {
-            std::array<size_t, 1> dims = {one_d};
-            override_array(array, jl_reshape_array(jl_array_value_t(array), array, dims.data()));
+            std::array<jl_value_t*, 1> dims = {jl_box_uint64(one_d)};
+            override_array(array, jl_reshape_array(jl_array_value_t(array), array, (jl_value_t*) dims.data()));
             return;
         }
 
-        size_t current_size = array->length;
-
-        if (one_d > current_size)
-            jl_array_grow_end(array, one_d - current_size);
-        else
-            jl_array_del_end(array, current_size - one_d);
+        array->ncols = 1;
+        array->nrows = one_d;
+        array->length = one_d;
+        array->flags.isaligned = 0;
     }
 
     void resize_array(unsafe::Array* array, size_t one_d, size_t two_d)
     {
         if (jl_array_ndims(array) != 2)
         {
-            std::array<size_t, 2> dims = {one_d, two_d};
-            override_array(array, jl_reshape_array(jl_array_value_t(array), array, dims.data()));
+            std::array<jl_value_t*, 2> dims = {jl_box_uint64(one_d), jl_box_uint64(two_d)};
+            override_array(array, jl_reshape_array(jl_array_value_t(array), array, (jl_value_t*) dims.data()));
             return;
         }
 
-        size_t current_size = array->nrows
-
-        if (one_d > current_size)
-            jl_array_grow_end(array, one_d - current_size);
-        else
-            jl_array_del_end(array, current_size - one_d);
+        array->ncols += array->ncols - one_d;
+        array->nrows += array->nrows - two_d;
+        array->length = one_d * two_d;
+        array->flags.isaligned = 0;
     }
-
-    void resize_array(unsafe::Array* array, size_t one_d, size_t two_d, size_t three_d)
-    {
-        if (jl_array_ndims(array) != 3)
-        {
-            std::array<size_t, 3> dims = {one_d, two_d, three_d};
-            override_array(array, jl_reshape_array(jl_array_value_t(array), array, dims.data()));
-            return;
-        }
-    }
-
-    void set_array_data(unsafe::Array* array, unsafe::Value* new_data, size_t new_size)
-    {
-        /*
-        size_t current_size = jl_array_len(array);
-
-        if (current_size > new_size)
-            jl_array_del_end(current, current_size - new_size);
-        else
-            jl_array_sizehint(current, new_size);
-
-        auto* before = current->data;
-        current->data = new_data;
-         */
-    }
-
-
-
-
-
-        /*
-        size_t current_size = jl_array_len(array);
-        size_t new_size = 1;
-        for (size_t i : {size_per_dimension...})
-            new_size *= i;
-
-        jl_array_sizehint(array, new_size);
-
-        if (current_size < new_size)
-            jl_array_grow_end(array, new_size - current_size);
-        else
-            jl_array_del_end(array, current_size - new_size);
-
-        array->flags.how = 2;
-        array->flags.ndims = sizeof...(Dims);
-    }
-         */
-
-
-
-
 }
 

@@ -8,6 +8,12 @@
 #include <include/typedefs.hpp>
 #include <include/concepts.hpp>
 
+namespace jluna
+{
+    /// @brief string suffix operator to create a symbol from a string
+    unsafe::Symbol* operator""_sym(const char*, size_t);
+}
+
 namespace jluna::unsafe
 {
     /// @brief preserve a julia-heap allocated object until gc_free is called
@@ -19,9 +25,6 @@ namespace jluna::unsafe
     /// @brief free a preserved object
     /// @param id: id of object, result of gc_preserve
     void gc_release(size_t id);
-
-    /// @brief string suffix operator to create a symbol from a string
-    unsafe::Symbol* operator""_sym(const char*, size_t);
 
     /// @brief access function in module
     /// @param module
@@ -95,7 +98,7 @@ namespace jluna::unsafe
     /// @param value_type
     /// @params size_per_dimension
     /// @returns array
-    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool> = true>
+    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool> = true>
     unsafe::Array* new_array(unsafe::Value* value_type, Dims... size_per_dimension);
 
     /// @brief allocate 1d array
@@ -111,24 +114,51 @@ namespace jluna::unsafe
     /// @returns array
     unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d);
 
-    /// @brief allocate 23d array
+    /// @brief create an array from already existing data without invoking a copy
     /// @param value_type
+    /// @param data: pointer to the data, no verification is performed that the data is properly aligned or of the given value type
+    /// @param size_per_dimension
+    /// @returns pointer to the array
+    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool> = true>
+    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, Dims... size_per_dimension);
+
+    /// @brief allocate 1d array
+    /// @param value_type
+    /// @param data
+    /// @params size
+    /// @returns array
+    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d);
+
+    /// @brief allocate 2d array
+    /// @param value_type
+    /// @param data
     /// @params x_dimension
     /// @params y_dimension
-    /// @params z_dimension
     /// @returns array
-    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d, size_t three_d);
+    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d, size_t two_d);
 
     /// @brief reshape array along all dimensions
     /// @param array
     /// @param size_per_dimension: size along each dimension, number of dimension is denoted by the number of sizes
-    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool> = true>
+    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool> = true>
     void resize_array(unsafe::Array* array, Dims...);
+
+    /// @brief reshape array to 1d
+    /// @param array
+    /// @param one_d: number of rows
+    /// @note optimal performance is only achieved, is already 1d
     void resize_array(unsafe::Array* array, size_t one_d);
+
+    /// @brief reshape array to 2d
+    /// @param array
+    /// @param one_d: number of rows
+    /// @param two_d: number of cols
+    /// @note optimal performance is only achieved, is already 2d
     void resize_array(unsafe::Array* array, size_t one_d, size_t two_d);
-    void resize_array(unsafe::Array* array, size_t one_d, size_t two_d, size_t three_d);
 
-
+    /// @brief replace one arrays content with another, does not cause allocation
+    /// @param overridden: array that is modified
+    /// @param constant: unmodified array whos data will be written to the argument
     void override_array(unsafe::Array* overridden, const unsafe::Array* constant);
 
     /// @brief get number of elements in array
