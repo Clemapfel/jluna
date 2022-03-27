@@ -22,6 +22,15 @@ int main()
     State::initialize();
     Test::initialize();
 
+    jl_gc_pause;
+
+    auto* value = jl_eval_string("return Int64[123, 434, 342]");
+    auto id = unsafe::gc_preserve(value);
+
+    State::collect_garbage();
+
+    jl_println(unsafe::get_index((unsafe::Array*) value, 2));
+
     Test::test("unsafe: gc", [](){
 
         auto* value = jl_eval_string("return [123, 434, 342]");
@@ -34,6 +43,8 @@ int main()
 
         unsafe::gc_release(id);
     });
+
+    jl_gc_unpause;
 
     return 0;
 

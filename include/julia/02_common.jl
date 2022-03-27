@@ -224,4 +224,9 @@ function get_value_type_of_array(_::Array{T}) ::Type where T
     return T
 end
 
-_eval = Base.eval;
+"""
+`new_empty_ref() -> Ref{Any}(undef)`
+"""
+function new_ref()
+    return Ref{Any}()
+end

@@ -19,12 +19,22 @@ namespace jluna::unsafe
     /// @brief preserve a julia-heap allocated object until gc_free is called
     /// @param object, pointer
     /// @returns id, keep track of this as it is needed to free the object
-    template<IsReinterpretableTo<unsafe::Value*> T>
+    template<typename T>
     size_t gc_preserve(T value);
 
     /// @brief free a preserved object
     /// @param id: id of object, result of gc_preserve
     void gc_release(size_t id);
+
+    /// @brief set garbage collection to paused
+    void gc_disable();
+
+    /// @brief set garbage collection to active
+    void gc_enable();
+
+    /// @brief is garbage collection enabled
+    /// @returns true if active, false otherwise
+    bool gc_is_enabled();
 
     /// @brief access function in module
     /// @param module
@@ -98,7 +108,7 @@ namespace jluna::unsafe
     /// @param value_type
     /// @params size_per_dimension
     /// @returns array
-    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool> = true>
+    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool> = true>
     unsafe::Array* new_array(unsafe::Value* value_type, Dims... size_per_dimension);
 
     /// @brief allocate 1d array
@@ -119,7 +129,7 @@ namespace jluna::unsafe
     /// @param data: pointer to the data, no verification is performed that the data is properly aligned or of the given value type
     /// @param size_per_dimension
     /// @returns pointer to the array
-    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool> = true>
+    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool> = true>
     unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, Dims... size_per_dimension);
 
     /// @brief allocate 1d array
@@ -140,7 +150,7 @@ namespace jluna::unsafe
     /// @brief reshape array along all dimensions
     /// @param array
     /// @param size_per_dimension: size along each dimension, number of dimension is denoted by the number of sizes
-    template<Is<size_t>... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool> = true>
+    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool> = true>
     void resize_array(unsafe::Array* array, Dims...);
 
     /// @brief reshape array to 1d
@@ -175,14 +185,14 @@ namespace jluna::unsafe
     /// @param array
     /// @params index_per_dimension
     /// @returns pointer to array, nullptr if inaccessible
-    template<Is<size_t>... Index>
+    template<typename... Index>
     unsafe::Value* get_index(unsafe::Array*, Index... index_per_dimension);
 
     /// @brief modify element, linear indexing
     /// @param array
     /// @param new_value
     /// @params index_per_dimension
-    template<Is<size_t>... Index>
+    template<typename... Index>
     void set_index(unsafe::Array*, unsafe::Value* value, Index... index_per_dimension);
 
     /// @brief access raw array data
