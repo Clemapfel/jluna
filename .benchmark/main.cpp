@@ -18,47 +18,24 @@ int main()
     State::initialize();
     Benchmark::initialize();
 
-    Benchmark::run_as_base("array: fill with C", n_reps, [](){
+    Benchmark::run_as_base("unsafe: preserve through disable", n_reps, [](){
 
-        auto jl_arr = Array<Float64, 1>(jl_eval_string("arr = Float64[]"));
-
-        static std::vector<Float64> vec;
-        if (vec.empty())
-            for (size_t i = 0; i < 10000; ++i)
-                vec.push_back(i);
-
-        jl_array_t* array_ptr = (jl_array_t*) jl_arr.operator jl_value_t*();
-
-        jl_array_sizehint(array_ptr, vec.size());
-        for (Float64 i : vec)
-            jl_arrayset(array_ptr, jl_box_float64(i), i);
+        jl_gc_pause;
+        volatile auto* arr = jl_eval_string("return collect(1:1000)");
+        jl_gc_unpause;
     });
 
-    Benchmark::run("array: fill manually", n_reps, [](){
+    Benchmark::run("unsafe: preserve ", n_reps, [](){
 
-        auto jl_arr = Array<Float64, 1>(jl_eval_string("arr = Float64[]"));
-
-        static std::vector<Float64> vec;
-        if (vec.empty())
-            for (size_t i = 0; i < 10000; ++i)
-                vec.push_back(i);
-
-        jl_arr = box(vec);
+        volatile auto* arr = jl_eval_string("return collect(1:1000)");
+        auto id = unsafe::gc_preserve(arr);
+        unsafe::gc_release(id);
     });
 
-    /*
-    Benchmark::run("array: set C-data", n_reps, []()
-    {
-        auto jl_arr = Array<Float64, 1>(jl_eval_string("arr = Float64[]"));
+    Benchmark::run("unsafe: preserve with proxy", n_reps, [](){
 
-        static std::vector<Float64> vec;
-        if (vec.empty())
-            for (size_t i = 0; i < 10000; ++i)
-                vec.push_back(i);
-
-        unsafe::set_array_data(jl_arr, vec.data(), vec.size());
+        volatile auto proxy = Proxy(jl_eval_string("return collect(1:1000)"));
     });
-     */
 
     Benchmark::conclude();
     return 0;
