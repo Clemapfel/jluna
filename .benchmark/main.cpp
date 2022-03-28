@@ -18,6 +18,8 @@ int main()
     State::initialize();
     Benchmark::initialize();
 
+
+    /*
     Benchmark::run_as_base("unsafe: preserve through disable", n_reps, [](){
 
         jl_gc_pause;
@@ -25,7 +27,7 @@ int main()
         jl_gc_unpause;
     });
 
-    Benchmark::run("unsafe: preserve ", n_reps, [](){
+    Benchmark::run("unsafe: gc_preserve", n_reps, [](){
 
         volatile auto* arr = jl_eval_string("return collect(1:1000)");
         auto id = unsafe::gc_preserve(arr);
@@ -36,6 +38,46 @@ int main()
 
         volatile auto proxy = Proxy(jl_eval_string("return collect(1:1000)"));
     });
+
+    Benchmark::run_as_base("unsafe: get_function C-API", n_reps, []()
+    {
+       volatile auto* println = jl_get_function(jl_main_module, "println");
+       volatile auto* println_2 = jl_get_function((jl_module_t*) jl_eval_string("Main"), "println");
+    });
+
+    Benchmark::run("unsafe: get_function", n_reps, []()
+    {
+       volatile auto* println = unsafe::get_function(jl_main_module, "println"_sym);
+       volatile auto* println_2 = unsafe::get_function("Main"_sym, "println"_sym);
+    });
+
+
+    Benchmark::run("unsafe: get_function eval", n_reps, []{
+
+        volatile auto* println = jl_eval_string("return Main.println");
+        volatile auto* println_2 = jl_eval_string("return Main.println");
+    });
+
+    Benchmark::run_as_base("unsafe:: get_value C-API", n_reps, [](){
+
+        volatile auto* _ = jl_eval_string("temp = [i for i in 1:1000]");
+        volatile auto* res = jl_eval_string("return temp");
+    });
+
+    Benchmark::run("unsafe:: get_value", n_reps, [](){
+
+        volatile auto* _ = jl_eval_string("temp = [i for i in 1:1000]");
+        volatile auto* res = unsafe::get_value(jl_main_module, "temp"_sym);
+    });
+
+    Benchmark::run("unsafe:: get_value Proxy", n_reps, [](){
+
+        volatile auto* _ = jl_eval_string("temp = [i for i in 1:1000]");
+        volatile auto res = Main["temp"];
+    });
+     */
+
+    Benchmark::run_as_base
 
     Benchmark::conclude();
     return 0;

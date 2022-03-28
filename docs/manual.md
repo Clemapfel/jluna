@@ -4854,20 +4854,34 @@ The complete code for this example is available [here](./frog_tadpole_example.cp
 > + highly familiar with C and memory safety and 
 > + after truly optimal performance<br>
 > 
-> Misuse of this part of `jluna` can lead to memory leaks, exception-less crashes and data corruption. If navigated properly, it also achieves near 0-overhead compared to **Julia**, allowing for runtime performance that is sometimes faster than the C-API itself
+> Misuse of this part of `jluna` can lead to memory leaks, exception-less crashes and data corruption. If navigated properly, it also achieves near 0-overhead compared to **Julia** (as opposed to just the C-API), allowing for truly optimal runtime performance
 
-One of `jluna`s most central design conceits is that of safety. This is great for most users, but it also introduces a perfomance overhead that is, in rare applications, unacceptable. To address this, `jluna` provides a "guru"-interface, which offers bleeding-edge performance versions of common applications. 
+One of `jluna`s most central design conceits is that of safety. This is great for most users, as it makes debugging and writing code so much easier. It has a downside, however: it introduces a perfomance overhead.
+Most of this overhead comes from try-catching blocks of code, sanity-checking arguments and exception-handling. On average, regular `jluna` has about a 10 - 20% overhead compared to using the pure C-Library. If an operation takes 1ms, 15% overhead is not very important. If your operation is modifying a 20GB matrix on a cluster for 7 days, 15% overhead is unacceptable. 
 
-All functions in this section exist in the namespace `jluna::unsafe`. They are not part of the classes they operate on as most users should not interact with them carelessly. We'll go over most of them, how they are used, and how much faster they are, compared to doing things the safe way, here.
+For these rare cases, `jluna` offers the `unsafe` library. These are functions and types in the namespace `jluna::unsafe`, all of which offer **bleeding-edge performance**. The term "bleeding-edge" refers to the fact that, while these functions are incredibly fast, they also have the potential to hurt their users, much like a very sharp knife. If mishandled, it can lead to very bad things happening. If handled properly, however, the results are unparalleled in terms of performance.
 
-### Moving Arrays Between States
+### `unsafe` Types
 
-One of the most common applications in almost any field is dealing with very larges matrices or arrays. So far we either had the option to `box` and `unbox` such data, which, of course, would invoke a copy of it. This isn't possible sometimes, if we're manipulating a 16gb data-table using julia, we can't just copy and past it without incurring a huge overhead or running out of memory. 
+Every type in `jluna` has an unsafe equivalent, denoted by the `unsafe::` namespacing. This section will discuss all of these.
 
-To address this, `jluna::unsafe` contains two functions that let us directly manipulate the underlying memory a julia-side array has:
+#### `unsafe::Value*`
 
-```cpp
-Array<Float64, 1> julia_side_array = 
+A C++-side value of type `unsafe::Value*` is a pointer to Julia-side memory. This memory can be an object of any type, but not necessarily of type `Base.Any`. Note that there is no mechanism to keep a C++-side value of type `unsafe::Value*` safe from the garbage collector. As long as the only object in either state that points to the memory is a C++-Side `unsafe::Value*`, the memory may be deallocated at any moment. We will learn soon how to prevent this
+
+#### `unsafe::Function*`
+
+A C++-side value of this type is assumed to be pointing to a Julia-side object that is *callable*, that is, for a value named `f`, there existst a tuple of types `(...)` such that `f(...)` is valid Julia-syntax. This is just a fancy way to say "we can use this value as a function", which, for most people, will be an intuitive statement. Note that there is no mechanism to assert that any memory pointed to by a C++-side `unsafe::Function*` is actually a function. If it is not and we call it, a segfault will occur.
+
+#### `unsafe::Array*`
+
+Variables in the C++ state that have this types are assumed to be pointing to a Julia-side object that of type T such that `T <: Base.Array`. Unlike most usertypes, `unsafe::Array*` are directly equivalent to C-style arrays. This means, that their data is allocated in-sequence, in column-major order. We will learn how to handle arrays soon, however for now it is important to realize that, when accessing array data, there is no mechanism in place to verify that access of data is congruent with the actual value type of the array. An example:
+
+Let `arr` be a 10-element, Julia-side array with value type `Float64`. The values are: `[Float64(1), Float64(2), ..., Float64(10)]`. Each `Float64` is, of course, 64bit long. Because of this, we know that the total data of the array is `10 * 64` bits long. When we want to access the 3rd element of the array, we travel `3 * 64` bits from the start of the data, and interpret the next 64bits as the 3rd element.
+
+This all makes sense, however lets say a user erroneously assumes that the array actually has the valuetype `UInt8`. If we access the 3rd element of the array using this assumption, we will travel `3 * 8` bits from the start of that data, and interpret the next 8 bits as the 3rd element. These 8 bits are of course not an actual number, because we're actually looking at the last 8bits of the 1st `Float64`, however, in `jluna::unsafe` this doesn't matter. The array will return those 8bits as a `UInt8` without asking questions. The user is required to make sure any access is valid, if this is not the case, the result of array access will either be invalid, or a segfault will occurr.
+
+
 
 ---
 

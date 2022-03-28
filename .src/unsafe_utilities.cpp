@@ -51,6 +51,18 @@ namespace jluna::unsafe
         return call(eval, call(eval, jl_main_module, module), name);
     }
 
+    unsafe::Value* set_value(unsafe::Module* module, unsafe::Symbol* name, unsafe::Value* value)
+    {
+        static unsafe::Function* eval = get_function(jl_base_module, "eval"_sym);
+        call(eval, module, Expr("="_sym, name, value));
+    }
+
+    unsafe::Value* set_value(unsafe::Symbol* module, unsafe::Symbol* name, unsafe::Value* value)
+    {
+        static unsafe::Function* eval = get_function(jl_base_module, "eval"_sym);
+        call(eval, call(eval, jl_main_module, module), Expr("="_sym, name, value));
+    }
+
     unsafe::Value* get_field(unsafe::Value* x, unsafe::Symbol* field)
     {
         auto gc = GCSentinel();
