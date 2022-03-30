@@ -59,6 +59,15 @@ namespace jluna::unsafe
         return res;
     }
 
+    template<IsJuliaValuePointer... Ts, std::enable_if_t<(sizeof...(Ts) > 2), bool>>
+    std::vector<size_t> gc_preserve(Ts... values)
+    {
+        std::vector<size_t> out;
+        out.reserve(sizeof...(Ts));
+        (out.push_back(gc_preserve(values)), ...);
+        return out;
+    }
+
     template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool>>
     unsafe::Array* new_array(unsafe::Value* value_type, Dims... size_per_dimension)
     {
@@ -148,6 +157,7 @@ namespace jluna::unsafe
     void set_array_data(unsafe::Array* array, T* new_data, size_t new_size)
     {
         array->data = new_data;
+        jl_gc_wb(array, new_data);
         array->length = new_size;
     }
 }

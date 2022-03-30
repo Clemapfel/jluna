@@ -39,17 +39,16 @@ int main()
 
         using namespace unsafe;
 
-        jl_gc_pause;
         auto* symbol = jl_eval_string("return Symbol(\"test\")");
+        size_t symbol_id = unsafe::gc_preserve(symbol);
         Test::assert_that("test"_sym == (jl_sym_t*) symbol);
-        jl_gc_unpause;
+        unsafe::gc_release(symbol_id);
     });
 
     Test::test("unsafe: get_function", [](){
 
         using namespace unsafe;
 
-        jl_gc_pause;
         jl_eval_string(R"(
             module __M1
                 function f()
@@ -65,7 +64,6 @@ int main()
 
         Test::assert_that(f_true == f_a);
         Test::assert_that(f_true == f_b);
-        jl_gc_unpause;
     });
 
     Test::test("unsafe: Expr & eval", [](){
@@ -74,17 +72,21 @@ int main()
 
         jl_gc_pause;
         auto* expr_true = (jl_expr_t*) jl_eval_string("Expr(:call, :+, Int64(100), Int64(100))");
+        auto expr_true_id = unsafe::gc_preserve(expr_true);
         auto* expr = unsafe::Expr("call"_sym, "+"_sym, jl_box_int64(100), jl_box_int64(100));
+        auto expr_id = unsafe::gc_preserve(expr);
 
         Test::assert_that(jl_is_equal((unsafe::Value*) expr_true, (unsafe::Value*) expr));
         Test::assert_that(unsafe::eval(expr) == jl_box_int64(200));
+
+        unsafe::gc_release(expr_true_id);
+        unsafe::gc_release(expr_id);
         jl_gc_unpause;
     });
 
     Test::test("unsafe: get/set value", [](){
 
         using namespace unsafe;
-        jl_gc_pause;
         auto* res = jl_eval_string(R"(
             module __M2
                 value = 1234
@@ -97,13 +99,11 @@ int main()
 
         unsafe::set_value(m, "value"_sym, jl_box_int64(4567));
         Test::assert_that(jl_unbox_bool(jl_eval_string("return __M2.value == 4567")));
-        jl_gc_unpause;
     });
 
     Test::test("unsafe: get_field", [](){
 
         using namespace unsafe;
-        jl_gc_pause;
         auto* instance = jl_eval_string(R"(
 
             struct get_field_inner
@@ -118,12 +118,13 @@ int main()
 
             return get_field_outer()
         )");
+        auto instance_id = gc_preserve(instance);
 
         auto* member = unsafe::get_field(unsafe::get_field(instance, "_member"_sym), "_member"_sym);
         auto* member_true = jl_get_nth_field(jl_get_nth_field(instance, 0), 0);
 
         Test::assert_that(jl_is_equal(member, member_true));
-        jl_gc_unpause;
+        gc_release(instance_id);
     });
 
     Test::test("unsafe: set_field", []() {

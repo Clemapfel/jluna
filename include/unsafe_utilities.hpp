@@ -17,14 +17,24 @@ namespace jluna
 namespace jluna::unsafe
 {
     /// @brief preserve a julia-heap allocated object until gc_free is called
-    /// @param object, pointer
+    /// @param object: pointer
     /// @returns id, keep track of this as it is needed to free the object
     template<IsJuliaValue T>
-    size_t gc_preserve(T* value);
+    [[nodiscard]] size_t gc_preserve(T* value);
+
+    /// @brief preserve multiple values
+    /// @param values: pointer
+    /// @returns vector of ids, needed to free the objects
+    template<IsJuliaValuePointer... Ts, std::enable_if_t<(sizeof...(Ts) > 2), bool> = true>
+    [[nodiscard]] std::vector<size_t> gc_preserve(Ts... values);
 
     /// @brief free a preserved object
     /// @param id: id of object, result of gc_preserve
     void gc_release(size_t id);
+
+    /// @brief free preserved objects
+    /// @param vector of ids
+    void gc_release(std::vector<size_t>& ids);
 
     /// @brief set garbage collection to paused
     void gc_disable();
