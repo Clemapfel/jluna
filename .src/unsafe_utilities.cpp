@@ -54,13 +54,13 @@ namespace jluna::unsafe
     unsafe::Value* set_value(unsafe::Module* module, unsafe::Symbol* name, unsafe::Value* value)
     {
         static unsafe::Function* eval = get_function(jl_base_module, "eval"_sym);
-        call(eval, module, Expr("="_sym, name, value));
+        return call(eval, module, Expr("="_sym, name, value));
     }
 
     unsafe::Value* set_value(unsafe::Symbol* module, unsafe::Symbol* name, unsafe::Value* value)
     {
         static unsafe::Function* eval = get_function(jl_base_module, "eval"_sym);
-        call(eval, call(eval, jl_main_module, module), Expr("="_sym, name, value));
+        return call(eval, call(eval, jl_main_module, module), Expr("="_sym, name, value));
     }
 
     unsafe::Value* get_field(unsafe::Value* x, unsafe::Symbol* field)
@@ -142,6 +142,7 @@ namespace jluna::unsafe
     {
         //memcpy(overridden->data, constant->data, constant->length);
         overridden->data = constant->data;
+        jl_gc_wb(overridden, constant->data);
         overridden->length = constant->length;
         overridden->nrows = constant->nrows;
         overridden->ncols = constant->ncols;
@@ -151,12 +152,54 @@ namespace jluna::unsafe
         overridden->maxsize = constant->maxsize;
     }
 
+    void swap_array_data(unsafe::Array* a, unsafe::Array* b)
+    {
+        jl_gc_pause;
+        auto temp_data = a->data;
+        auto temp_length = a->length;
+        auto temp_nrows = a->nrows;
+        auto temp_ncols = a->ncols;
+        auto temp_flags = a->flags;
+        auto temp_offset = a->offset;
+        auto temp_elsize = a->elsize;
+        auto temp_maxsize = a->maxsize;
+
+        a->data = b->data;
+        a->length = b->length;
+        a->nrows = b->nrows;
+        a->ncols = b->ncols;
+        a->flags = b->flags;
+        a->offset = b->offset;
+        a->elsize = b->elsize;
+        a->maxsize = b->maxsize;
+
+        b->data = temp_data;
+        b->length = temp_length;
+        b->nrows = temp_nrows;
+        b->ncols = temp_ncols;
+        b->flags = temp_flags;
+        b->offset = temp_offset;
+        b->elsize = temp_elsize;
+        b->maxsize = temp_maxsize;
+        jl_gc_unpause;
+    }
+
     void resize_array(unsafe::Array* array, size_t one_d)
     {
         if (jl_array_ndims(array) != 1)
         {
-            std::array<jl_value_t*, 1> dims = {jl_box_uint64(one_d)};
-            override_array(array, jl_reshape_array(jl_array_value_t(array), array, (jl_value_t*) dims.data()));
+           jl_gc_pause;
+            static auto* tuple_type = [&](){
+                std::array<jl_value_t*, 1> types;
+                for (size_t i = 0; i < types.size(); ++i)
+                    types.at(i) = (jl_value_t*) jl_uint64_type;
+
+                return jl_apply_tuple_type_v(types.data(), types.size());
+            }();
+            auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(one_d));
+            auto* res = jl_reshape_array(jl_apply_array_type(jl_array_value_t(array), 1), array, tuple);
+            override_array(array, res);
+            jl_gc_unpause;
             return;
         }
 
@@ -170,8 +213,18 @@ namespace jluna::unsafe
     {
         if (jl_array_ndims(array) != 2)
         {
-            std::array<jl_value_t*, 2> dims = {jl_box_uint64(one_d), jl_box_uint64(two_d)};
-            override_array(array, jl_reshape_array(jl_array_value_t(array), array, (jl_value_t*) dims.data()));
+            jl_gc_pause;
+            static auto* tuple_type = [&](){
+                std::array<jl_value_t*, 2> types;
+                for (size_t i = 0; i < types.size(); ++i)
+                    types.at(i) = (jl_value_t*) jl_uint64_type;
+
+                return jl_apply_tuple_type_v(types.data(), types.size());
+            }();
+            auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(one_d));
+            auto* res = jl_reshape_array(jl_apply_array_type(jl_array_value_t(array), 2), array, tuple);
+            override_array(array, res);
+            jl_gc_unpause;
             return;
         }
 

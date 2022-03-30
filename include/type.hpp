@@ -196,65 +196,6 @@ namespace jluna
     inline Type Unsigned_t;
     inline Type VecElement_t;
     inline Type WeakRef_t;
-    
-    namespace unsafe
-    {
-        static inline unsafe::Value* AbstractArray_t;
-        static inline unsafe::Value* AbstractChar_t;
-        static inline unsafe::Value* AbstractFloat_t;
-        static inline unsafe::Value* AbstractString_t;
-        static inline unsafe::Value* Any_t;
-        static inline unsafe::Value* Array_t;
-        static inline unsafe::Value* Bool_t;
-        static inline unsafe::Value* Char_t;
-        static inline unsafe::Value* DataType_t;
-        static inline unsafe::Value* DenseArray_t;
-        static inline unsafe::Value* Exception_t;
-        static inline unsafe::Value* Expr_t;
-        static inline unsafe::Value* Float16_t;
-        static inline unsafe::Value* Float32_t;
-        static inline unsafe::Value* Float64_t;
-        static inline unsafe::Value* Function_t;
-        static inline unsafe::Value* GlobalRef_t;
-        static inline unsafe::Value* IO_t;
-        static inline unsafe::Value* Int128_t;
-        static inline unsafe::Value* Int16_t;
-        static inline unsafe::Value* Int32_t;
-        static inline unsafe::Value* Int64_t;
-        static inline unsafe::Value* Int8_t;
-        static inline unsafe::Value* Integer_t;
-        static inline unsafe::Value* LineNumberNode_t;
-        static inline unsafe::Value* Method_t;
-        static inline unsafe::Value* Module_t;
-        static inline unsafe::Value* NTuple_t;
-        static inline unsafe::Value* NamedTuple_t;
-        static inline unsafe::Value* Nothing_t;
-        static inline unsafe::Value* Number_t;
-        static inline unsafe::Value* Pair_t;
-        static inline unsafe::Value* Ptr_t;
-        static inline unsafe::Value* QuoteNode_t;
-        static inline unsafe::Value* Real_t;
-        static inline unsafe::Value* Ref_t;
-        static inline unsafe::Value* Signed_t;
-        static inline unsafe::Value* String_t;
-        static inline unsafe::Value* Symbol_t;
-        static inline unsafe::Value* Task_t;
-        static inline unsafe::Value* Tuple_t;
-        static inline unsafe::Value* Type_t;
-        static inline unsafe::Value* TypeVar_t;
-        static inline unsafe::Value* UInt128_t;
-        static inline unsafe::Value* UInt16_t;
-        static inline unsafe::Value* UInt32_t;
-        static inline unsafe::Value* UInt64_t;
-        static inline unsafe::Value* UInt8_t;
-        static inline unsafe::Value* UndefInitializer_t;
-        static inline unsafe::Value* Union_t;
-        static inline unsafe::Value* UnionAll_t;
-        static inline unsafe::Value* UnionEmpty_t;
-        static inline unsafe::Value* Unsigned_t;
-        static inline unsafe::Value* VecElement_t;
-        static inline unsafe::Value* WeakRef_t;
-    }
 }
 
 #include <.src/type.inl>

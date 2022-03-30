@@ -53,15 +53,19 @@ namespace jluna
     concept IsJuliaValuePointer =
         std::is_same_v<T, jl_value_t*> or
         std::is_same_v<T, jl_module_t*> or
+        std::is_same_v<T, jl_datatype_t*> or
         std::is_same_v<T, jl_function_t*> or
-        std::is_same_v<T, jl_sym_t*>;
+        std::is_same_v<T, jl_sym_t*> or
+        std::is_same_v<T, jl_expr_t*>;
 
-    /// @concept can be cast to unsafe::Value*
     template<typename T>
-    concept IsAnyPtrCastable = requires(T t)
-    {
-        static_cast<jl_value_t*>(t);
-    };
+    concept IsJuliaValue =
+        std::is_same_v<T, jl_value_t> or
+        std::is_same_v<T, jl_module_t> or
+        std::is_same_v<T, jl_datatype_t> or
+        std::is_same_v<T, jl_function_t> or
+        std::is_same_v<T, jl_sym_t> or
+        std::is_same_v<T, jl_expr_t>;
 
     /// @concept is primitive
     template<typename T>

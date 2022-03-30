@@ -19,8 +19,8 @@ namespace jluna::unsafe
     /// @brief preserve a julia-heap allocated object until gc_free is called
     /// @param object, pointer
     /// @returns id, keep track of this as it is needed to free the object
-    template<typename T>
-    size_t gc_preserve(T value);
+    template<IsJuliaValue T>
+    size_t gc_preserve(T* value);
 
     /// @brief free a preserved object
     /// @param id: id of object, result of gc_preserve
@@ -179,7 +179,7 @@ namespace jluna::unsafe
     /// @brief get array size along dimension
     /// @param dimension_index
     /// @returns size along that dimension
-    size_t get_array_size(unsafe::Array*, size_t dimension_index = 0);
+    size_t get_array_size(unsafe::Array*, size_t dimension_index);
 
     /// @brief access element, linear indexing
     /// @param array
@@ -210,7 +210,8 @@ namespace jluna::unsafe
     /// @param new_data: pointer to new data
     /// @param new_size: size of new_data
     /// @note if value types mismatch, the behavior is undefined
-    void set_array_data(unsafe::Array* array, unsafe::Value* new_data, size_t new_size);
+    template<typename T>
+    void set_array_data(unsafe::Array* array, T* new_data, size_t new_size);
 }
 
 #include <.src/unsafe_utilities.inl>

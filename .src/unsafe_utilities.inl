@@ -59,27 +59,55 @@ namespace jluna::unsafe
         return res;
     }
 
-    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool>>
+    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool>>
     unsafe::Array* new_array(unsafe::Value* value_type, Dims... size_per_dimension)
     {
-        std::array<jl_value_t*, sizeof...(Dims)> dims = {jl_box_uint64(size_per_dimension)...};
-        return jl_new_array(jl_apply_array_type(value_type, sizeof...(Dims)), dims.data());
+        jl_gc_pause;
+        static auto* tuple_type = [&](){
+            std::array<jl_value_t*, sizeof...(Dims)> types;
+            for (size_t i = 0; i < types.size(); ++i)
+                types.at(i) = (jl_value_t*) jl_uint64_type;
+
+            return jl_apply_tuple_type_v(types.data(), types.size());
+        }();
+        auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+        auto* res = jl_new_array(jl_apply_array_type(value_type, sizeof...(Dims)), tuple);
+        jl_gc_unpause;
+        return res;
     }
 
-    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool>>
+    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool>>
     unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, Dims... size_per_dimension)
     {
-        std::array<jl_value_t*, sizeof...(Dims)> dims = {jl_box_uint64(size_per_dimension)...};
-        return jl_ptr_to_array(jl_apply_array_type(value_type, 2), data, (jl_value_t*) dims.data(), 0);
+        jl_gc_pause;
+        static auto* tuple_type = [&](){
+            std::array<jl_value_t*, sizeof...(Dims)> types;
+            for (size_t i = 0; i < types.size(); ++i)
+                types.at(i) = (jl_value_t*) jl_uint64_type;
+
+            return jl_apply_tuple_type_v(types.data(), types.size());
+        }();
+        auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+        auto* res = jl_ptr_to_array(jl_apply_array_type(value_type, sizeof...(Dims)), data, tuple, 0);
+        jl_gc_unpause;
+        return res;
     }
 
-    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 3), bool>>
-    void resize_array(unsafe::Array* array, Dims... dims)
+    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool>>
+    void resize_array(unsafe::Array* array, Dims... size_per_dimension)
     {
-        static unsafe::Function* reshape = get_function(jl_base_module, "reshape"_sym);
-        std::array<size_t, sizeof...(Dims)> dims_array = {dims...};
-        auto* res = jl_reshape_array(jl_array_value_t(array), array, dims_array);
+        jl_gc_pause;
+        static auto* tuple_type = [&](){
+            std::array<jl_value_t*, sizeof...(Dims)> types;
+            for (size_t i = 0; i < types.size(); ++i)
+                types.at(i) = (jl_value_t*) jl_uint64_type;
+
+            return jl_apply_tuple_type_v(types.data(), types.size());
+        }();
+        auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+        auto* res = jl_reshape_array(jl_apply_array_type(jl_array_value_t(array), sizeof...(Dims)), array, tuple);
         override_array(array, res);
+        jl_gc_unpause;
     }
 
     template<typename... Index>
@@ -114,5 +142,12 @@ namespace jluna::unsafe
         }
 
         jl_arrayset(array, new_value, index);
+    }
+
+    template<typename T>
+    void set_array_data(unsafe::Array* array, T* new_data, size_t new_size)
+    {
+        array->data = new_data;
+        array->length = new_size;
     }
 }
