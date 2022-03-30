@@ -195,15 +195,19 @@ namespace jluna::unsafe
     /// @param array
     /// @params index_per_dimension
     /// @returns pointer to array, nullptr if inaccessible
-    template<typename... Index>
+    template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool> = true>
     unsafe::Value* get_index(unsafe::Array*, Index... index_per_dimension);
+    unsafe::Value* get_index(unsafe::Array*, size_t);
+    unsafe::Value* get_index(unsafe::Array*, size_t, size_t);
 
     /// @brief modify element, linear indexing
     /// @param array
     /// @param new_value
     /// @params index_per_dimension
-    template<typename... Index>
+    template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool> = true>
     void set_index(unsafe::Array*, unsafe::Value* value, Index... index_per_dimension);
+    void set_index(unsafe::Array*, unsafe::Value* value, size_t);
+    void set_index(unsafe::Array*, unsafe::Value* value, size_t, size_t);
 
     /// @brief access raw array data
     /// @param array

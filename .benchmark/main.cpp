@@ -10,13 +10,65 @@
 
 using namespace jluna;
 
-constexpr size_t n_reps = 5000;
+constexpr size_t n_reps = 10000;
 std::vector<Proxy> _proxies;
 
 int main()
 {
     State::initialize();
     Benchmark::initialize();
+
+    Benchmark::run_as_base("unsafe: Allocate Array C-API", n_reps, [](){
+
+        volatile auto* array = jl_alloc_array_1d(jl_apply_array_type((jl_value_t*) jl_float64_type, 1), 50000);
+    });
+
+    Benchmark::run("unsafe: Allocate Array", n_reps, [](){
+
+        volatile auto* array = unsafe::new_array((unsafe::Value*) jl_float64_type, 50000);
+    });
+
+    Benchmark::run("unsafe: Allocate jluna::Array", n_reps, [](){
+
+        volatile auto array = jluna::Array<Float64, 1>(jl_eval_string("return [i for i in 1:50000]"));
+    });
+
+    Benchmark::run_as_base("unsafe: get_index C-API", n_reps, [](){
+
+        static auto* array = (jl_array_t*) jl_eval_string("return [i for i in 1:10000]");
+
+        for (size_t i = 0; i < 100; ++i)
+            volatile auto* res = jl_arrayref(array, 234);
+    });
+
+    Benchmark::run("unsafe: get_index", n_reps, [](){
+
+        static auto* array = (jl_array_t*) jl_eval_string("return [i for i in 1:10000]");
+
+        for (size_t i = 0; i < 100; ++i)
+            volatile auto* res = jl_arrayref(array, 234);
+    });
+
+    Benchmark::run_as_base("unsafe: set_index C-API", n_reps, [](){
+
+        static auto* array = (jl_array_t*) jl_eval_string("return [i for i in 1:10000]");
+
+        for (size_t i = 0; i < 100; ++i)
+            jl_arrayset(array, jl_box_int64(12), generate_number(0, 5000));
+    });
+
+    Benchmark::run("unsafe: set_index", n_reps, [](){
+
+        static auto* array = (jl_array_t*) jl_eval_string("return [i for i in 1:10000]");
+
+        for (size_t i = 0; i < 100; ++i)
+            unsafe::set_index(array, jl_box_int64(12), generate_number(0, 5000));
+    });
+
+
+
+
+
 
 
     /*
@@ -76,8 +128,6 @@ int main()
         volatile auto res = Main["temp"];
     });
      */
-
-    Benchmark::run_as_base
 
     Benchmark::conclude();
     return 0;

@@ -119,7 +119,7 @@ namespace jluna::unsafe
         jl_gc_unpause;
     }
 
-    template<typename... Index>
+    template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool> = true>
     unsafe::Value* get_index(unsafe::Array* array, Index... index_per_dimension)
     {
         std::array<size_t, sizeof...(Index)> indices = {size_t(index_per_dimension)...};
@@ -136,7 +136,17 @@ namespace jluna::unsafe
         return jl_arrayref(array, index);
     }
 
-    template<typename... Index>
+    inline unsafe::Value* get_index(unsafe::Array* array, size_t i)
+    {
+        return jl_arrayref(array, i);
+    }
+
+    inline unsafe::Value* get_index(unsafe::Array* array, size_t i, size_t j)
+    {
+        return jl_arrayref(array, i + array->ncols * (j-1));
+    }
+
+    template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool>>
     void set_index(unsafe::Array* array, unsafe::Value* new_value, Index... index_per_dimension)
     {
         std::array<size_t, sizeof...(Index)> indices = {size_t(index_per_dimension)...};
@@ -151,6 +161,11 @@ namespace jluna::unsafe
         }
 
         jl_arrayset(array, new_value, index);
+    }
+
+    inline void set_index(unsafe::Array* array, unsafe::Value* value, size_t i)
+    {
+        jl_arrayset(array, value, i);
     }
 
     template<typename T>

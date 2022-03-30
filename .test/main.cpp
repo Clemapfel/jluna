@@ -22,7 +22,7 @@ int main()
     State::initialize();
     Test::initialize();
 
-    Test::test("unsafe: gc", [](){
+    Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");
         auto id = unsafe::gc_preserve(value);
@@ -35,7 +35,7 @@ int main()
         unsafe::gc_release(id);
     });
 
-    Test::test("unsafe: _sym", [](){
+    Test::test("unsafe: _sym", []() {
 
         using namespace unsafe;
 
@@ -45,17 +45,17 @@ int main()
         unsafe::gc_release(symbol_id);
     });
 
-    Test::test("unsafe: get_function", [](){
+    Test::test("unsafe: get_function", []() {
 
         using namespace unsafe;
 
         jl_eval_string(R"(
-            module __M1
-                function f()
-                    return 1234;
-                end
+        module __M1
+            function f()
+                return 1234;
             end
-        )");
+        end
+    )");
 
         auto* f_true = jl_eval_string("return __M1.f");
         auto* f_a = unsafe::get_function("__M1"_sym, "f"_sym);
@@ -66,11 +66,10 @@ int main()
         Test::assert_that(f_true == f_b);
     });
 
-    Test::test("unsafe: Expr & eval", [](){
+    Test::test("unsafe: Expr & eval", []() {
 
         using namespace unsafe;
 
-        jl_gc_pause;
         auto* expr_true = (jl_expr_t*) jl_eval_string("Expr(:call, :+, Int64(100), Int64(100))");
         auto expr_true_id = unsafe::gc_preserve(expr_true);
         auto* expr = unsafe::Expr("call"_sym, "+"_sym, jl_box_int64(100), jl_box_int64(100));
@@ -81,18 +80,17 @@ int main()
 
         unsafe::gc_release(expr_true_id);
         unsafe::gc_release(expr_id);
-        jl_gc_unpause;
     });
 
-    Test::test("unsafe: get/set value", [](){
+    Test::test("unsafe: get/set value", []() {
 
         using namespace unsafe;
         auto* res = jl_eval_string(R"(
-            module __M2
-                value = 1234
-            end
-            return __M2.value;
-        )");
+        module __M2
+            value = 1234
+        end
+        return __M2.value;
+    )");
         auto* m = (unsafe::Module*) unsafe::get_value(jl_main_module, "__M2"_sym);
         auto* get = unsafe::get_value(m, "value"_sym);
         Test::assert_that(get == res);
@@ -101,23 +99,23 @@ int main()
         Test::assert_that(jl_unbox_bool(jl_eval_string("return __M2.value == 4567")));
     });
 
-    Test::test("unsafe: get_field", [](){
+    Test::test("unsafe: get_field", []() {
 
         using namespace unsafe;
         auto* instance = jl_eval_string(R"(
 
-            struct get_field_inner
-                _member::Int64
-                get_field_inner() = new(1234)
-            end
+        struct get_field_inner
+            _member::Int64
+            get_field_inner() = new(1234)
+        end
 
-            struct get_field_outer
-                _member::get_field_inner
-                get_field_outer() = new(get_field_inner())
-            end
+        struct get_field_outer
+            _member::get_field_inner
+            get_field_outer() = new(get_field_inner())
+        end
 
-            return get_field_outer()
-        )");
+        return get_field_outer()
+    )");
         auto instance_id = gc_preserve(instance);
 
         auto* member = unsafe::get_field(unsafe::get_field(instance, "_member"_sym), "_member"_sym);
@@ -132,56 +130,54 @@ int main()
         using namespace unsafe;
         auto* instance = jl_eval_string(R"(
 
-            mutable struct set_field_inner
-                _member::Int64
-                set_field_inner() = new(1234)
-            end
+        mutable struct set_field_inner
+            _member::Int64
+            set_field_inner() = new(1234)
+        end
 
-            struct set_field_outer
-                _member::get_field_inner
-                set_field_outer() = new(get_field_inner())
-            end
+        struct set_field_outer
+            _member::get_field_inner
+            set_field_outer() = new(get_field_inner())
+        end
 
-            return set_field_outer()
-        )");
+        return set_field_outer()
+    )");
 
         unsafe::set_field(jl_get_nth_field(instance, 0), "_member"_sym, jl_box_uint64(4567));
         Test::assert_that(jl_is_equal(jl_get_nth_field(jl_get_nth_field(instance, 0), 0), jl_box_uint64(1234)));
     });
 
-    Test::test("unsafe: call", [](){
+    Test::test("unsafe: call", []() {
 
         using namespace unsafe;
 
-        auto* range = unsafe::call(unsafe::get_function(jl_base_module, "range"_sym), jl_box_int64(1), jl_box_int64(10));
+        auto* range = unsafe::call(unsafe::get_function(jl_base_module, "range"_sym), jl_box_int64(1),
+                                   jl_box_int64(10));
         auto* sum = unsafe::call(unsafe::get_function(jl_base_module, "sum"_sym), range);
         Test::assert_that(jl_unbox_int64(sum) == 55);
     });
 
-    Test::test("unsafe: new_array", [](){
+    Test::test("unsafe: new_array", []() {
 
         using namespace unsafe;
 
-        jl_gc_pause;
         auto* one_d = new_array(Float64_t, 15);
         Test::assert_that(jl_array_len(one_d) == 15);
         Test::assert_that(jl_array_ndims(one_d) == 1);
 
         auto* two_d = new_array(Float64_t, 15, 15);
-        Test::assert_that(jl_array_len(two_d) == 15*15);
+        Test::assert_that(jl_array_len(two_d) == 15 * 15);
         Test::assert_that(jl_array_ndims(two_d) == 2);
 
         auto* six_d = new_array(Float64_t, 15, 15, 15, 15, 15, 15);
         Test::assert_that(jl_array_len(six_d) == pow(15, 6));
         Test::assert_that(jl_array_ndims(six_d) == 6);
-        jl_gc_unpause;
     });
 
-    Test::test("unsafe: new_array_from_data", [](){
+    Test::test("unsafe: new_array_from_data", []() {
 
         using namespace unsafe;
 
-        jl_gc_pause;
         std::vector<size_t> one_d_vec;
         for (size_t i = 0; i < 10; ++i)
             one_d_vec.push_back(i);
@@ -197,45 +193,38 @@ int main()
         Test::assert_that(jl_unbox_uint64(jl_arrayref(two_d, 9)) == 9);
 
         std::vector<size_t> four_d_vec;
-        for (size_t i = 0; i < 4*4*4*4; ++i)
+        for (size_t i = 0; i < 4 * 4 * 4 * 4; ++i)
             four_d_vec.push_back(i);
 
         auto* four_d = unsafe::new_array_from_data(UInt64_t, four_d_vec.data(), 4, 4, 4, 4);
         Test::assert_that(jl_unbox_uint64(jl_arrayref(four_d, 9)) == 9);
-        jl_gc_unpause;
     });
 
-        Test::test("unsafe: override_array", [](){
+    Test::test("unsafe: override_array", []() {
 
-        jl_gc_pause;
         jl_array_t* arr01 = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
         jl_array_t* arr02 = (jl_array_t*) jl_eval_string("return Int64[i for i in 25:(25+25)]");
 
         unsafe::override_array(arr02, arr01);
         for (size_t i = 0; i < 25; ++i)
-            Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == i+1);
-        jl_gc_unpause;
+            Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == i + 1);
     });
 
-    Test::test("unsafe: swap_array_data", [](){
+    Test::test("unsafe: swap_array_data", []() {
 
-        jl_gc_pause;
         jl_array_t* arr01 = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
         jl_array_t* arr02 = (jl_array_t*) jl_eval_string("return Int64[i for i in -1:-1:-25]");
 
         unsafe::swap_array_data(arr01, arr02);
         for (size_t i = 0; i < 25; ++i)
         {
-            Test::assert_that(jl_unbox_int64(jl_arrayref(arr01, i)) == -(i+1));
-            Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == +(i+1));
+            Test::assert_that(jl_unbox_int64(jl_arrayref(arr01, i)) == -(i + 1));
+            Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == +(i + 1));
         }
-
-        jl_gc_unpause;
     });
 
-    Test::test("unsafe: set_array_data", [](){
+    Test::test("unsafe: set_array_data", []() {
 
-        jl_gc_pause;
         jl_array_t* arr01 = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
         std::vector<Int64> new_data;
         for (size_t i = 0; i < 30; ++i)
@@ -245,13 +234,9 @@ int main()
 
         for (size_t i = 0; i < new_data.size(); ++i)
             Test::assert_that(jl_unbox_int64(jl_arrayref(arr01, i)) == new_data.at(i));
-
-        jl_gc_unpause;
     });
 
-    Test::test("unsafe: resize_array: reshape", [](){
-
-        jl_gc_pause;
+    Test::test("unsafe: resize_array: reshape", []() {
         jl_array_t* arr = (jl_array_t*) jl_eval_string("return [i for i in 1:(5*5*5)]");
         unsafe::resize_array(arr, 5, 5, 5);
         Test::assert_that(jl_array_ndims(arr) == 3);
@@ -263,41 +248,36 @@ int main()
         arr = (jl_array_t*) jl_eval_string("return reshape([i for i in 1:(5*5)], 5, 5)");
         unsafe::resize_array(arr, 25);
         Test::assert_that(jl_array_ndims(arr) == 1);
-        jl_gc_unpause;
     });
 
-    Test::test("unsafe: resize_array: grow", [](){
+    Test::test("unsafe: resize_array: grow", []() {
 
-        jl_gc_pause;
         jl_array_t* arr = (jl_array_t*) jl_eval_string("return [i for i in 1:(5*5*5)]");
-        unsafe::resize_array(arr, 5*5);
-        Test::assert_that(jl_array_len(arr) == 5*5);
-        unsafe::resize_array(arr, 5*5*5);
-        Test::assert_that(jl_array_len(arr) == 5*5*5);
+        unsafe::resize_array(arr, 5 * 5);
+        Test::assert_that(jl_array_len(arr) == 5 * 5);
+        unsafe::resize_array(arr, 5 * 5 * 5);
+        Test::assert_that(jl_array_len(arr) == 5 * 5 * 5);
 
         arr = (jl_array_t*) jl_eval_string("return reshape([i for i in 1:(5*5)], 5, 5)");
         unsafe::resize_array(arr, 4, 4);
-        Test::assert_that(jl_array_len(arr) == 4*4);
+        Test::assert_that(jl_array_len(arr) == 4 * 4);
         unsafe::resize_array(arr, 6, 6);
-        Test::assert_that(jl_array_len(arr) == 6*6);
-        jl_gc_unpause;
+        Test::assert_that(jl_array_len(arr) == 6 * 6);
     });
 
-    Test::test("unsafe: array: get_index", [](){
-
-        jl_gc_pause;
+    Test::test("unsafe: array: get_index", []() {
         jl_array_t* arr = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
         for (size_t i = 0; i < 25; ++i)
-            Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, i)) == i+1);
+            Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, i)) == i + 1);
+
+        arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(6*8)], 6, 8)");
+        Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, 3, 3)) == 15);
 
         arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(4*4*4*4)], 4, 4, 4, 4)");
-        Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, 3, 3, 3, 3)) == 4*4*4*4);
-        jl_gc_unpause;
+        Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, 3, 3, 3, 3)) == 4 * 4 * 4 * 4);
     });
 
-    Test::test("unsafe: get_array_size", [](){
-
-        jl_gc_pause;
+    Test::test("unsafe: get_array_size", []() {
         jl_array_t* arr = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
         Test::assert_that(unsafe::get_array_size(arr) == 25);
 
@@ -305,7 +285,6 @@ int main()
         Test::assert_that(unsafe::get_array_size(arr, 0) == 3);
         Test::assert_that(unsafe::get_array_size(arr, 1) == 5);
         Test::assert_that(unsafe::get_array_size(arr, 2) == 4);
-        jl_gc_unpause;
     });
 
     Test::conclude();
