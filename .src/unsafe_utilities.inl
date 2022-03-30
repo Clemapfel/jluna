@@ -45,8 +45,8 @@ namespace jluna::unsafe
         }
     }
 
-    template<typename T>
-    size_t gc_preserve(T in)
+    template<IsJuliaValue T>
+    size_t gc_preserve(T* in)
     {
         auto* value = (unsafe::Value*) in;
         jl_gc_pause;

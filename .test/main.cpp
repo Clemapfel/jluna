@@ -22,6 +22,141 @@ int main()
     State::initialize();
     Test::initialize();
 
+    Test::test("unsafe: gc", [](){
+
+        auto* value = jl_eval_string("return [123, 434, 342]");
+        auto id = unsafe::gc_preserve(value);
+
+        State::collect_garbage();
+
+        auto after = unbox<std::vector<size_t>>(value);
+        Test::assert_that(after.at(2) == 342);
+
+        unsafe::gc_release(id);
+    });
+
+    Test::test("unsafe: _sym", [](){
+
+        using namespace unsafe;
+
+        jl_gc_pause;
+        auto* symbol = jl_eval_string("return Symbol(\"test\")");
+        Test::assert_that("test"_sym == (jl_sym_t*) symbol);
+        jl_gc_unpause;
+    });
+
+    Test::test("unsafe: get_function", [](){
+
+        using namespace unsafe;
+
+        jl_gc_pause;
+        jl_eval_string(R"(
+            module __M1
+                function f()
+                    return 1234;
+                end
+            end
+        )");
+
+        auto* f_true = jl_eval_string("return __M1.f");
+        auto* f_a = unsafe::get_function("__M1"_sym, "f"_sym);
+        auto* m = (jl_module_t*) jl_eval_string("return __M1");
+        auto* f_b = unsafe::get_function(m, "f"_sym);
+
+        Test::assert_that(f_true == f_a);
+        Test::assert_that(f_true == f_b);
+        jl_gc_unpause;
+    });
+
+    Test::test("unsafe: Expr & eval", [](){
+
+        using namespace unsafe;
+
+        jl_gc_pause;
+        auto* expr_true = (jl_expr_t*) jl_eval_string("Expr(:call, :+, Int64(100), Int64(100))");
+        auto* expr = unsafe::Expr("call"_sym, "+"_sym, jl_box_int64(100), jl_box_int64(100));
+
+        Test::assert_that(jl_is_equal((unsafe::Value*) expr_true, (unsafe::Value*) expr));
+        Test::assert_that(unsafe::eval(expr) == jl_box_int64(200));
+        jl_gc_unpause;
+    });
+
+    Test::test("unsafe: get/set value", [](){
+
+        using namespace unsafe;
+        jl_gc_pause;
+        auto* res = jl_eval_string(R"(
+            module __M2
+                value = 1234
+            end
+            return __M2.value;
+        )");
+        auto* m = (unsafe::Module*) unsafe::get_value(jl_main_module, "__M2"_sym);
+        auto* get = unsafe::get_value(m, "value"_sym);
+        Test::assert_that(get == res);
+
+        unsafe::set_value(m, "value"_sym, jl_box_int64(4567));
+        Test::assert_that(jl_unbox_bool(jl_eval_string("return __M2.value == 4567")));
+        jl_gc_unpause;
+    });
+
+    Test::test("unsafe: get_field", [](){
+
+        using namespace unsafe;
+        jl_gc_pause;
+        auto* instance = jl_eval_string(R"(
+
+            struct get_field_inner
+                _member::Int64
+                get_field_inner() = new(1234)
+            end
+
+            struct get_field_outer
+                _member::get_field_inner
+                get_field_outer() = new(get_field_inner())
+            end
+
+            return get_field_outer()
+        )");
+
+        auto* member = unsafe::get_field(unsafe::get_field(instance, "_member"_sym), "_member"_sym);
+        auto* member_true = jl_get_nth_field(jl_get_nth_field(instance, 0), 0);
+
+        Test::assert_that(jl_is_equal(member, member_true));
+        jl_gc_unpause;
+    });
+
+    Test::test("unsafe: set_field", []() {
+
+        using namespace unsafe;
+        auto* instance = jl_eval_string(R"(
+
+            mutable struct set_field_inner
+                _member::Int64
+                set_field_inner() = new(1234)
+            end
+
+            struct set_field_outer
+                _member::get_field_inner
+                set_field_outer() = new(get_field_inner())
+            end
+
+            return set_field_outer()
+        )");
+
+        unsafe::set_field(jl_get_nth_field(instance, 0), "_member"_sym, jl_box_uint64(4567));
+        Test::assert_that(jl_is_equal(jl_get_nth_field(jl_get_nth_field(instance, 0), 0), jl_box_uint64(1234)));
+    });
+
+    Test::test("unsafe: call", [](){
+
+        using namespace unsafe;
+
+        auto* range = unsafe::call(unsafe::get_function(jl_base_module, "range"_sym), jl_box_int64(1), jl_box_int64(10));
+        auto* sum = unsafe::call(unsafe::get_function(jl_base_module, "sum"_sym), range);
+        Test::assert_that(jl_unbox_int64(sum) == 55);
+    });
+
     Test::test("unsafe: new_array", [](){
 
         using namespace unsafe;
@@ -170,145 +305,6 @@ int main()
         Test::assert_that(unsafe::get_array_size(arr, 1) == 5);
         Test::assert_that(unsafe::get_array_size(arr, 2) == 4);
         jl_gc_unpause;
-    });
-
-
-    Test::conclude();
-    return 0;
-
-    Test::test("unsafe: gc", [](){
-
-        auto* value = jl_eval_string("return [123, 434, 342]");
-        auto id = unsafe::gc_preserve(value);
-
-        State::collect_garbage();
-
-        auto after = unbox<std::vector<size_t>>(value);
-        Test::assert_that(after.at(2) == 342);
-
-        unsafe::gc_release(id);
-    });
-
-    Test::test("unsafe: _sym", [](){
-
-        using namespace unsafe;
-
-        jl_gc_pause;
-        auto* symbol = jl_eval_string("return Symbol(\"test\")");
-        Test::assert_that("test"_sym == (jl_sym_t*) symbol);
-        jl_gc_unpause;
-    });
-
-    Test::test("unsafe: get_function", [](){
-
-        using namespace unsafe;
-
-        jl_gc_pause;
-        jl_eval_string(R"(
-            module __M1
-                function f()
-                    return 1234;
-                end
-            end
-        )");
-
-        auto* f_true = jl_eval_string("return __M1.f");
-        auto* f_a = unsafe::get_function("__M1"_sym, "f"_sym);
-        auto* m = (jl_module_t*) jl_eval_string("return __M1");
-        auto* f_b = unsafe::get_function(m, "f"_sym);
-
-        Test::assert_that(f_true == f_a);
-        Test::assert_that(f_true == f_b);
-        jl_gc_unpause;
-    });
-
-    Test::test("unsafe: Expr & eval", [](){
-
-        using namespace unsafe;
-
-        jl_gc_pause;
-        auto* expr_true = (jl_expr_t*) jl_eval_string("Expr(:call, :+, Int64(100), Int64(100))");
-        auto* expr = unsafe::Expr("call"_sym, "+"_sym, jl_box_int64(100), jl_box_int64(100));
-
-        Test::assert_that(jl_is_equal((unsafe::Value*) expr_true, (unsafe::Value*) expr));
-        Test::assert_that(unsafe::eval(expr) == jl_box_int64(200));
-        jl_gc_unpause;
-    });
-
-    Test::test("unsafe: get/set value", [](){
-
-        using namespace unsafe;
-        jl_gc_pause;
-        auto* res = jl_eval_string(R"(
-            module __M2
-                value = 1234
-            end
-            return __M2.value;
-        )");
-        auto* m = (unsafe::Module*) unsafe::get_value(jl_main_module, "__M2"_sym);
-        auto* get = unsafe::get_value(m, "value"_sym);
-        Test::assert_that(get == res);
-
-        unsafe::set_value(m, "value"_sym, jl_box_int64(4567));
-        Test::assert_that(jl_unbox_bool(jl_eval_string("return __M2.value == 4567")));
-        jl_gc_unpause;
-    });
-
-    Test::test("unsafe: get_field", [](){
-
-        using namespace unsafe;
-        jl_gc_pause;
-        auto* instance = jl_eval_string(R"(
-
-            struct get_field_inner
-                _member::Int64
-                get_field_inner() = new(1234)
-            end
-
-            struct get_field_outer
-                _member::get_field_inner
-                get_field_outer() = new(get_field_inner())
-            end
-
-            return get_field_outer()
-        )");
-
-        auto* member = unsafe::get_field(unsafe::get_field(instance, "_member"_sym), "_member"_sym);
-        auto* member_true = jl_get_nth_field(jl_get_nth_field(instance, 0), 0);
-
-        Test::assert_that(jl_is_equal(member, member_true));
-        jl_gc_unpause;
-    });
-
-    Test::test("unsafe: set_field", []() {
-
-        using namespace unsafe;
-        auto* instance = jl_eval_string(R"(
-
-            mutable struct set_field_inner
-                _member::Int64
-                set_field_inner() = new(1234)
-            end
-
-            struct set_field_outer
-                _member::get_field_inner
-                set_field_outer() = new(get_field_inner())
-            end
-
-            return set_field_outer()
-        )");
-
-        unsafe::set_field(jl_get_nth_field(instance, 0), "_member"_sym, jl_box_uint64(4567));
-        Test::assert_that(jl_is_equal(jl_get_nth_field(jl_get_nth_field(instance, 0), 0), jl_box_uint64(1234)));
-    });
-
-    Test::test("unsafe: call", [](){
-
-        using namespace unsafe;
-
-        auto* range = unsafe::call(unsafe::get_function(jl_base_module, "range"_sym), jl_box_int64(1), jl_box_int64(10));
-        auto* sum = unsafe::call(unsafe::get_function(jl_base_module, "sum"_sym), range);
-        Test::assert_that(jl_unbox_int64(sum) == 55);
     });
 
     Test::conclude();
