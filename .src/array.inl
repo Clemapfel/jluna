@@ -30,6 +30,12 @@ namespace jluna
         jl_assert_type(proxy->operator unsafe::Value*(), array_t);
     }
 
+    template<Boxable V, size_t R>
+    template<typename... Dims>
+    Array<V, R>::Array(V** data, Dims... size_per_dimension)
+        : Proxy(unsafe::new_array_from_data(to_julia_type<V>::type, data, size_per_dimension...))
+    {}
+
     template<Boxable T, size_t Rank>
     size_t Array<T, Rank>::get_dimension(int index) const
     {

@@ -38,6 +38,12 @@ namespace jluna
             /// @param proxy
             Array(unsafe::Value* value, jl_sym_t* = nullptr);
 
+            /// @brief ctor from data, does not invoke copy
+            /// @param data
+            /// @param size_per_dimension
+            template<typename... Dims>
+            Array(Value_t**, Dims... size_per_dimension);
+
             /// @brief linear indexing, no bounds checking
             /// @param index, 0-based
             /// @returns assignable iterator to element
@@ -272,12 +278,6 @@ namespace jluna
 
         protected:
             using Array<Value_t, 1>::_content;
-    };
-
-    template<Boxable Value_t>
-    class Matrix : public Array<Value_t, 2>
-    {
-        // this feature is not yet implemented, consider using Array<T, 2> instead
     };
 
     /// @brief box array

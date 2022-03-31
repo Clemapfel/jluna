@@ -40,8 +40,7 @@ find_package(Julia 1.7.0 REQUIRED)
 
 ### Configure Files ###
 
-# TODO: don't hardcode these
-set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}")
+set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}") # TODO: don't hardcode these
 set(C_ADAPTER_NAME "${C_ADAPTER_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna_c_adapter${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 file(READ
