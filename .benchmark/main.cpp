@@ -65,13 +65,6 @@ int main()
             unsafe::set_index(array, jl_box_int64(12), generate_number(0, 5000));
     });
 
-
-
-
-
-
-
-    /*
     Benchmark::run_as_base("unsafe: preserve through disable", n_reps, [](){
 
         jl_gc_pause;
@@ -81,7 +74,7 @@ int main()
 
     Benchmark::run("unsafe: gc_preserve", n_reps, [](){
 
-        volatile auto* arr = jl_eval_string("return collect(1:1000)");
+        auto* arr = jl_eval_string("return collect(1:1000)");
         auto id = unsafe::gc_preserve(arr);
         unsafe::gc_release(id);
     });
@@ -127,7 +120,6 @@ int main()
         volatile auto* _ = jl_eval_string("temp = [i for i in 1:1000]");
         volatile auto res = Main["temp"];
     });
-     */
 
     Benchmark::conclude();
     return 0;

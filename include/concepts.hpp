@@ -53,6 +53,7 @@ namespace jluna
     concept IsJuliaValuePointer =
         std::is_same_v<T, jl_value_t*> or
         std::is_same_v<T, jl_module_t*> or
+        std::is_same_v<T, jl_array_t*> or
         std::is_same_v<T, jl_datatype_t*> or
         std::is_same_v<T, jl_function_t*> or
         std::is_same_v<T, jl_sym_t*> or
@@ -62,6 +63,7 @@ namespace jluna
     concept IsJuliaValue =
         std::is_same_v<T, jl_value_t> or
         std::is_same_v<T, jl_module_t> or
+        std::is_same_v<T, jl_array_t> or
         std::is_same_v<T, jl_datatype_t> or
         std::is_same_v<T, jl_function_t> or
         std::is_same_v<T, jl_sym_t> or

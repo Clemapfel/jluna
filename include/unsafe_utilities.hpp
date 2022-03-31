@@ -63,7 +63,7 @@ namespace jluna::unsafe
     /// @param function
     /// @param args
     /// @returns result
-    template<typename... Args_t>
+    template<IsJuliaValuePointer... Args_t>
     unsafe::Value* call(unsafe::Function* function, Args_t... args);
 
     /// @brief ctor julia-side expression
@@ -226,6 +226,18 @@ namespace jluna::unsafe
     /// @note if value types mismatch, the behavior is undefined
     template<typename T>
     void set_array_data(unsafe::Array* array, T* new_data, size_t new_size);
+
+    /// @brief box without type checking
+    /// @param value
+    /// @returns julia-side value of equivalent type to C++ arg
+    template<IsJuliaValue T>
+    unsafe::Value* unsafe_box(T*);
+
+    /// @brief unbox without type checking
+    /// @param julia_value_ptr
+    /// @returns unbox value
+    template<typename T>
+    T unsafe_unbox(unsafe::Value*);
 }
 
 #include <.src/unsafe_utilities.inl>

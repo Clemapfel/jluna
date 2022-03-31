@@ -266,15 +266,18 @@ int main()
     });
 
     Test::test("unsafe: array: get_index", []() {
+
         jl_array_t* arr = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
         for (size_t i = 0; i < 25; ++i)
             Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, i)) == i + 1);
 
-        arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(6*8)], 6, 8)");
-        Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, 3, 3)) == 15);
+        static unsafe::Function* getindex = unsafe::get_function(jl_base_module, "getindex"_sym);
 
-        arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(4*4*4*4)], 4, 4, 4, 4)");
-        Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, 3, 3, 3, 3)) == 4 * 4 * 4 * 4);
+        arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(6*8)], 6, 8)");
+        Test::assert_that(jl_unbox_int64(unsafe::call(getindex, arr, jl_box_int64(4), jl_box_int64(4))) == jl_unbox_int64(unsafe::get_index(arr, 3, 3)));
+
+        arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(3*4*5*6)], 3, 4, 5, 6)");
+        Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, 2, 2, 2, 2)) == jl_unbox_int64(unsafe::call(getindex, arr, jl_box_int64(3), jl_box_int64(3), jl_box_int64(3), jl_box_int64(3))));
     });
 
     Test::test("unsafe: get_array_size", []() {

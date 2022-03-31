@@ -7,7 +7,7 @@
 
 namespace jluna::unsafe
 {
-    template<typename... Args_t>
+    template<IsJuliaValuePointer... Args_t>
     unsafe::Value* call(Function* function, Args_t... args)
     {
         std::array<jl_value_t*, sizeof...(Args_t)> wrapped = {(unsafe::Value*) args...};
@@ -23,7 +23,7 @@ namespace jluna::unsafe
 
     namespace detail
     {
-        inline nullptr_t gc_init()
+        nullptr_t gc_init()
         {
             static bool initialized = false;
 
@@ -119,7 +119,7 @@ namespace jluna::unsafe
         jl_gc_unpause;
     }
 
-    template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool> = true>
+    template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool>>
     unsafe::Value* get_index(unsafe::Array* array, Index... index_per_dimension)
     {
         std::array<size_t, sizeof...(Index)> indices = {size_t(index_per_dimension)...};
@@ -136,14 +136,14 @@ namespace jluna::unsafe
         return jl_arrayref(array, index);
     }
 
-    inline unsafe::Value* get_index(unsafe::Array* array, size_t i)
+    unsafe::Value* get_index(unsafe::Array* array, size_t i)
     {
         return jl_arrayref(array, i);
     }
 
-    inline unsafe::Value* get_index(unsafe::Array* array, size_t i, size_t j)
+    unsafe::Value* get_index(unsafe::Array* array, size_t i, size_t j)
     {
-        return jl_arrayref(array, i + array->ncols * (j-1));
+        return jl_arrayref(array, i + jl_array_dim(array, 0) * j);
     }
 
     template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool>>
@@ -163,7 +163,7 @@ namespace jluna::unsafe
         jl_arrayset(array, new_value, index);
     }
 
-    inline void set_index(unsafe::Array* array, unsafe::Value* value, size_t i)
+    void set_index(unsafe::Array* array, unsafe::Value* value, size_t i)
     {
         jl_arrayset(array, value, i);
     }
@@ -174,5 +174,155 @@ namespace jluna::unsafe
         array->data = new_data;
         jl_gc_wb(array, new_data);
         array->length = new_size;
+    }
+
+    template<IsJuliaValue T>
+    unsafe::Value* unsafe_box(T* in)
+    {
+        return in;
+    }
+
+    template<Is<bool> T>
+    unsafe::Value* unsafe_box(bool in)
+    {
+        return jl_box_bool(in);
+    }
+
+    template<Is<char> T>
+    unsafe::Value* unsafe_box(char in)
+    {
+        return jl_box_char(in);
+    }
+
+    template<Is<int8_t> T>
+    unsafe::Value* unsafe_box(int8_t in)
+    {
+        return jl_box_int8(in);
+    }
+
+    template<Is<int16_t> T>
+    unsafe::Value* unsafe_box(int16_t in)
+    {
+        return jl_box_int16(in);
+    }
+
+    template<Is<int32_t> T>
+    unsafe::Value* unsafe_box(int32_t in)
+    {
+        return jl_box_int32(in);
+    }
+    
+    template<Is<int64_t> T>
+    unsafe::Value* unsafe_box(int64_t in)
+    {
+        return jl_box_int64(in);
+    }
+
+    template<Is<uint8_t> T>
+    unsafe::Value* unsafe_box(uint8_t in)
+    {
+        return jl_box_uint8(in);
+    }
+
+    template<Is<uint16_t> T>
+    unsafe::Value* unsafe_box(uint16_t in)
+    {
+        return jl_box_uint16(in);
+    }
+
+    template<Is<uint32_t> T>
+    unsafe::Value* unsafe_box(uint32_t in)
+    {
+        return jl_box_uint32(in);
+    }
+
+    template<Is<uint64_t> T>
+    unsafe::Value* unsafe_box(uint64_t in)
+    {
+        return jl_box_uint64(in);
+    }
+
+    template<Is<float> T>
+    unsafe::Value* unsafe_box(float in)
+    {
+        return jl_box_float32(in);
+    }
+    
+    template<Is<double> T>
+    unsafe::Value* unsafe_box(double in)
+    {
+        return jl_box_float64(in);
+    }
+
+    template<Is<bool> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return jl_unbox_bool(in);
+    }
+
+    template<Is<char> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return char(jl_unbox_uint32(in));
+    }
+
+    template<Is<int8_t> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return *(reinterpret_cast<int8_t*>(in));
+    }
+    
+    template<Is<int16_t> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return *(reinterpret_cast<int16_t*>(in));
+    }
+    
+    template<Is<int32_t> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return *(reinterpret_cast<int32_t*>(in));
+    }
+    
+    template<Is<int64_t> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return *(reinterpret_cast<int64_t*>(in));
+    }
+    
+    template<Is<uint8_t> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return *(reinterpret_cast<uint8_t*>(in));
+    }
+    
+    template<Is<uint16_t> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return *(reinterpret_cast<uint16_t*>(in));
+    }
+    
+    template<Is<uint32_t> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return *(reinterpret_cast<uint32_t*>(in));
+    }
+    
+    template<Is<uint64_t> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return *(reinterpret_cast<uint64_t*>(in));
+    }
+    
+    template<Is<Float32> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return *(reinterpret_cast<Float32*>(in));
+    }
+    
+    template<Is<Float64> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return *(reinterpret_cast<Float64*>(in));
     }
 }
