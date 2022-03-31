@@ -80,6 +80,9 @@ namespace jluna
 
         /// @brief julia-side array
         using Array = jl_array_t;
+
+        /// @brief julia-side type
+        using DataType = jl_datatype_t;
     }
 
     /* [[deprecated]] */ using Any = unsafe::Value;

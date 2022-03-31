@@ -22,6 +22,14 @@ int main()
     State::initialize();
     Test::initialize();
 
+    auto* arg = unsafe::unsafe_box<Int64>(1234);
+    jl_println(arg);
+    auto arg_id = unsafe::gc_preserve(arg);
+    auto* expr = unsafe::Expr("return"_sym, "test"_sym);
+    jl_println((unsafe::Value*) expr);
+    unsafe::gc_release(arg_id);
+    return 0;
+
     Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");
@@ -50,12 +58,12 @@ int main()
         using namespace unsafe;
 
         jl_eval_string(R"(
-        module __M1
-            function f()
-                return 1234;
+            module __M1
+                function f()
+                    return 1234;
+                end
             end
-        end
-    )");
+        )");
 
         auto* f_true = jl_eval_string("return __M1.f");
         auto* f_a = unsafe::get_function("__M1"_sym, "f"_sym);
@@ -86,11 +94,12 @@ int main()
 
         using namespace unsafe;
         auto* res = jl_eval_string(R"(
-        module __M2
-            value = 1234
-        end
-        return __M2.value;
-    )");
+            module __M2
+                value = 1234
+            end
+            return __M2.value;
+        )");
+
         auto* m = (unsafe::Module*) unsafe::get_value(jl_main_module, "__M2"_sym);
         auto* get = unsafe::get_value(m, "value"_sym);
         Test::assert_that(get == res);
@@ -103,19 +112,19 @@ int main()
 
         using namespace unsafe;
         auto* instance = jl_eval_string(R"(
+            struct get_field_inner
+                _member::Int64
+                get_field_inner() = new(1234)
+            end
 
-        struct get_field_inner
-            _member::Int64
-            get_field_inner() = new(1234)
-        end
+            struct get_field_outer
+                _member::get_field_inner
+                get_field_outer() = new(get_field_inner())
+            end
 
-        struct get_field_outer
-            _member::get_field_inner
-            get_field_outer() = new(get_field_inner())
-        end
+            return get_field_outer()
+        )");
 
-        return get_field_outer()
-    )");
         auto instance_id = gc_preserve(instance);
 
         auto* member = unsafe::get_field(unsafe::get_field(instance, "_member"_sym), "_member"_sym);
@@ -129,19 +138,18 @@ int main()
 
         using namespace unsafe;
         auto* instance = jl_eval_string(R"(
+            mutable struct set_field_inner
+                _member::Int64
+                set_field_inner() = new(1234)
+            end
 
-        mutable struct set_field_inner
-            _member::Int64
-            set_field_inner() = new(1234)
-        end
+            struct set_field_outer
+                _member::get_field_inner
+                set_field_outer() = new(get_field_inner())
+            end
 
-        struct set_field_outer
-            _member::get_field_inner
-            set_field_outer() = new(get_field_inner())
-        end
-
-        return set_field_outer()
-    )");
+            return set_field_outer()
+        )");
 
         unsafe::set_field(jl_get_nth_field(instance, 0), "_member"_sym, jl_box_uint64(4567));
         Test::assert_that(jl_is_equal(jl_get_nth_field(jl_get_nth_field(instance, 0), 0), jl_box_uint64(1234)));
@@ -290,9 +298,6 @@ int main()
         Test::assert_that(unsafe::get_array_size(arr, 2) == 4);
     });
 
-    Test::conclude();
-    return 0;
-
     Test::test("catch c exception", [](){
 
         Test::assert_that_throws<JuliaException>([](){
@@ -363,7 +368,7 @@ int main()
 
         Test::test("box/unbox " + name, [&value](){
 
-            jl_value_t* boxed = box(value);
+            jl_value_t* boxed = box<T>(value);
             auto unboxed = unbox<T>(boxed);
 
             Test::assert_that(value == unboxed);

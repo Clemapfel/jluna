@@ -14,16 +14,22 @@ namespace jluna::unsafe
         return jl_call(function, wrapped.data(), wrapped.size());
     }
 
-    template<typename... Args_t>
+    template<IsJuliaValuePointer... Args_t>
+    unsafe::Value* call(DataType* type, Args_t... args)
+    {
+        return jl_new_struct(type, args...);
+    }
+
+    template<IsJuliaValuePointer... Args_t>
     unsafe::Expression* Expr(unsafe::Symbol* first, Args_t... other)
     {
-        static unsafe::Function* expr = get_function(jl_base_module, "Expr"_sym);
-        return (unsafe::Expression*) call(expr, first, ((unsafe::Value*) other)...);
+        static unsafe::Function* expr = unsafe::get_function(jl_base_module, "Expr"_sym);
+        return (unsafe::Expression*) call(expr, first, other...);
     }
 
     namespace detail
     {
-        nullptr_t gc_init()
+        inline nullptr_t gc_init()
         {
             static bool initialized = false;
 
@@ -136,12 +142,12 @@ namespace jluna::unsafe
         return jl_arrayref(array, index);
     }
 
-    unsafe::Value* get_index(unsafe::Array* array, size_t i)
+    inline unsafe::Value* get_index(unsafe::Array* array, size_t i)
     {
         return jl_arrayref(array, i);
     }
 
-    unsafe::Value* get_index(unsafe::Array* array, size_t i, size_t j)
+    inline unsafe::Value* get_index(unsafe::Array* array, size_t i, size_t j)
     {
         return jl_arrayref(array, i + jl_array_dim(array, 0) * j);
     }
@@ -163,7 +169,7 @@ namespace jluna::unsafe
         jl_arrayset(array, new_value, index);
     }
 
-    void set_index(unsafe::Array* array, unsafe::Value* value, size_t i)
+    inline void set_index(unsafe::Array* array, unsafe::Value* value, size_t i)
     {
         jl_arrayset(array, value, i);
     }
@@ -254,6 +260,12 @@ namespace jluna::unsafe
         return jl_box_float64(in);
     }
 
+    template<Is<std::string> T>
+    unsafe::Value* unsafe_box(const T& in)
+    {
+        return jl_array_to_string(jl_ptr_to_array_1d(jl_apply_array_type((jl_value_t*) jl_char_type, 1), in.data(), in.size(), 0));
+    }
+
     template<Is<bool> T>
     T unsafe_unbox(unsafe::Value* in)
     {
@@ -324,5 +336,11 @@ namespace jluna::unsafe
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<Float64*>(in));
+    }
+
+    template<Is<std::string> T>
+    T unsafe_unbox(unsafe::Value* in)
+    {
+        return std::string(jl_string_ptr(in));
     }
 }

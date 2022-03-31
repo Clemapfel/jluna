@@ -58,7 +58,7 @@ namespace jluna::unsafe
     /// @returns function pointer or nullptr if not found
     unsafe::Function* get_function(unsafe::Symbol* module_name, unsafe::Symbol* function_name);
 
-    /// @brief call function with args, with brief exception forwarding
+    /// @brief call function with args
     /// @tparam Args_t: argument types, must be castable to unsafe::Value*
     /// @param function
     /// @param args
@@ -66,11 +66,19 @@ namespace jluna::unsafe
     template<IsJuliaValuePointer... Args_t>
     unsafe::Value* call(unsafe::Function* function, Args_t... args);
 
+    /// @brief call type ctor with args
+    /// @tparam Args_t: argument types, must be castable to unsafe::Value*
+    /// @param type
+    /// @param args
+    /// @returns result
+    template<IsJuliaValuePointer... Args_t>
+    unsafe::Value* call(unsafe::DataType* type, Args_t... args);
+
     /// @brief ctor julia-side expression
     /// @param symbol
     /// @params arguments (optional)
     /// @returns pointer to julia-side expression
-    template<typename... Args_t>
+    template<IsJuliaValuePointer... Args_t>
     unsafe::Expression* Expr(unsafe::Symbol*, Args_t...);
 
     /// @brief eval expression in module scope
