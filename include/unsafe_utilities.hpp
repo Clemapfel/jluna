@@ -16,7 +16,7 @@ namespace jluna
 
 namespace jluna::unsafe
 {
-    /// @brief preserve a julia-heap allocated object until gc_free is called
+    /// @brief preserve a julia heap-allocated object until unsafe::gc_release is called
     /// @param object: pointer
     /// @returns id, keep track of this as it is needed to free the object
     template<IsJuliaValue T>
@@ -36,7 +36,7 @@ namespace jluna::unsafe
     /// @param vector of ids
     void gc_release(std::vector<size_t>& ids);
 
-    /// @brief set garbage collection to paused
+    /// @brief set garbage collection to inactive
     void gc_disable();
 
     /// @brief set garbage collection to active
@@ -48,7 +48,7 @@ namespace jluna::unsafe
 
     /// @brief access function in module
     /// @param module
-    /// @param name: function name
+    /// @param name: exact function name
     /// @returns function pointer or nullptr if not found
     unsafe::Function* get_function(unsafe::Module* module, unsafe::Symbol* name);
 

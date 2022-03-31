@@ -22,14 +22,6 @@ int main()
     State::initialize();
     Test::initialize();
 
-    auto* arg = unsafe::unsafe_box<Int64>(1234);
-    jl_println(arg);
-    auto arg_id = unsafe::gc_preserve(arg);
-    auto* expr = unsafe::Expr("return"_sym, "test"_sym);
-    jl_println((unsafe::Value*) expr);
-    unsafe::gc_release(arg_id);
-    return 0;
-
     Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");

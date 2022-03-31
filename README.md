@@ -1,4 +1,4 @@
-# jluna: A modern julia <-> C++ Wrapper (v0.8.1)
+# jluna: A modern julia <-> C++ Wrapper (v0.8.6)
 
 ![](./header.png)
 
@@ -263,7 +263,7 @@ C.
 ---
 
 ## Credits
-jluna was created by [Clem Cords](https://github.com/Clemapfel)
+`jluna` was designed and implemented by [Clem Cords](https://github.com/Clemapfel).
 
 #### March 2022:<br>
 + cmake improvements by [friendlyanon](https://github.com/friendlyanon)

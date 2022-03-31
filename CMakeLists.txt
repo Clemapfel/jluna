@@ -26,7 +26,7 @@ Options
 
 #]=======================================================================]
 
-project(jluna VERSION 0.8.4 LANGUAGES CXX)
+project(jluna VERSION 0.8.6 LANGUAGES CXX)
 
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)
