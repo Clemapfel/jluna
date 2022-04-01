@@ -37,6 +37,9 @@ namespace jluna
             /// @brief get length of iterable component
             size_t size() const;
 
+            /// @brief get julia-side Base.generator object
+            operator unsafe::Value*() const;
+
         protected:
             /// @brief ctor
             /// @param pointer to Base.Generator

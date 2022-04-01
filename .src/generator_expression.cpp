@@ -73,6 +73,11 @@ namespace jluna
         return _length;
     }
 
+    GeneratorExpression::operator _jl_value_t*() const
+    {
+        return get();
+    }
+
     GeneratorExpression::ForwardIterator::ForwardIterator(const GeneratorExpression* owner, Int64 state)
         : _owner(owner), _state(state), _is_end(_state)
     {}

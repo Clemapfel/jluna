@@ -83,8 +83,15 @@ extern "C"
     /// @param types_name
     inline void jl_assert_type(jl_value_t* value, jl_datatype_t* type)
     {
-        static jl_function_t* assert_isa = jl_find_function("jluna", "assert_isa");
-        jluna::safe_call(assert_isa, value, type);
+        if (not jl_isa(value, (jl_value_t*) type))
+        {
+            std::stringstream str;
+            str << "return \"";
+            str << "Assertion failed: Value " << jl_to_string(value) << " is not of type ";
+            str << jl_to_string((jl_value_t*) type) << "\"" << std::endl;
+            auto* exc = jl_new_struct(jl_errorexception_type, jl_eval_string(str.str().c_str()));
+            throw jluna::JuliaException(exc, "");
+        }
     }
 
     /// @brief get value of reference

@@ -10,21 +10,6 @@
 
 namespace jluna
 {
-    /// @brief constexpr transform C++ type into the julia type it will be after unboxing
-    /// @tparam C++ type
-    /// @returns type_name, accessible via member if type can be deduced, has no member otherwise
-    template<typename T>
-    struct to_julia_type
-    {
-        static inline const std::string type_name = detail::to_julia_type_aux<T>::type_name;
-    };
-
-    template<typename T>
-    concept ToJuliaTypeConvertable = requires
-    {
-        to_julia_type<T>::type_name;
-    };
-
     /// @brief 1-bit bool interpreted as 8-bit Bool julia-side
     using Bool = bool;
 
@@ -84,6 +69,26 @@ namespace jluna
         /// @brief julia-side type
         using DataType = jl_datatype_t;
     }
+
+    /// @brief constexpr transform C++ type into the julia type it will be after unboxing
+    /// @tparam C++ type
+    /// @returns type_name, accessible via member if type can be deduced, has no member otherwise
+    template<typename T>
+    struct to_julia_type
+    {
+        static inline const std::string type_name = detail::to_julia_type_aux<T>::type_name;
+        static unsafe::DataType* type()
+        {
+            static jl_datatype_t* out = (jl_datatype_t*) jl_eval_string(("return " + type_name).c_str());
+            return out;
+        }
+    };
+
+    template<typename T>
+    concept ToJuliaTypeConvertable = requires
+    {
+        to_julia_type<T>::type_name;
+    };
 
     /* [[deprecated]] */ using Any = unsafe::Value;
 }

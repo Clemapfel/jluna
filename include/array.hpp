@@ -143,6 +143,7 @@ namespace jluna
             using Proxy::_content;
 
         private:
+            operator unsafe::Array*() const;
             void throw_if_index_out_of_range(int index, size_t dimension) const;
             size_t get_dimension(int) const;
 
@@ -298,17 +299,6 @@ namespace jluna
     template<typename T,
         typename Value_t = typename T::value_type,
         std::enable_if_t<std::is_same_v<T, Vector<Value_t>>, bool> = true>
-    unsafe::Value* box(T value)
-    {
-        return value.operator unsafe::Value*();
-    }
-
-    /// @brief box matrix
-    /// @param matrix
-    /// @returns pointer to newly allocated julia-side value
-    template<typename T,
-        typename Value_t = typename T::value_type,
-        std::enable_if_t<std::is_same_v<T, Matrix<Value_t>>, bool> = true>
     unsafe::Value* box(T value)
     {
         return value.operator unsafe::Value*();

@@ -22,6 +22,20 @@ int main()
     State::initialize();
     Test::initialize();
 
+    auto vec = jluna::Vector<Int32>(std::vector<Int32>({1234, 1, 1, 2}));
+
+    jl_println((unsafe::Value*) vec);
+    /*
+    Test::assert_that(vec.at(0).operator int() == 1234);
+
+    vec = Vector<int>();
+
+    Test::assert_that(vec.size() == 0);
+     */
+
+    return 0;
+
+    /*
     Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");
@@ -304,12 +318,6 @@ int main()
         auto* got = jl_find_function("Base", "println");
 
         Test::assert_that(jl_is_identical(expected, got));
-    });
-
-    Test::test("call", [](){
-        Test::assert_that_throws<JuliaException>([]() {
-            jluna::unsafe::call(jl_find_function("Base", "throw"), jl_eval_string("return ErrorException(\"\")"));
-        });
     });
 
     Test::test("safe_call", [](){
@@ -769,6 +777,8 @@ int main()
         Test::assert_that(thrown);
 
     });
+
+     */
 
     Test::test("proxy cast", []() {
 
