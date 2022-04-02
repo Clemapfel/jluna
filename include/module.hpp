@@ -102,7 +102,7 @@ namespace jluna
     template<Is<Module> T>
     inline T unbox(unsafe::Value* value)
     {
-        jl_assert_type(value, jl_module_type);
+        jl_assert_type((unsafe::DataType*) jl_typeof(value), jl_module_type);
         return Module((jl_module_t*) value);
     }
 

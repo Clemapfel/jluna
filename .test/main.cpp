@@ -8,6 +8,9 @@
 #include <include/exceptions.hpp>
 #include <include/concepts.hpp>
 
+#include <julia_gcext.h>
+#include <julia_threads.h>
+
 using namespace jluna;
 using namespace jluna::detail;
 
@@ -22,20 +25,6 @@ int main()
     State::initialize();
     Test::initialize();
 
-    auto vec = jluna::Vector<Int32>(std::vector<Int32>({1234, 1, 1, 2}));
-
-    jl_println((unsafe::Value*) vec);
-    /*
-    Test::assert_that(vec.at(0).operator int() == 1234);
-
-    vec = Vector<int>();
-
-    Test::assert_that(vec.size() == 0);
-     */
-
-    return 0;
-
-    /*
     Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");
@@ -778,8 +767,6 @@ int main()
 
     });
 
-     */
-
     Test::test("proxy cast", []() {
 
         State::safe_eval(R"(
@@ -797,7 +784,7 @@ int main()
 
     Test::test("array: ctor", [](){
 
-        State::safe_eval("vector = [999, 2, 3, 4, 5]");
+        State::safe_eval("vector = Int32[999, 2, 3, 4, 5]");
         Vector<int> vec = Main["vector"];
 
         Test::assert_that(vec.at(0).operator int() == 999);
@@ -813,7 +800,7 @@ int main()
 
     Test::test("array: range index", [](){
 
-        auto vec = Array<Int64, 1>(State::safe_eval("return collect(1:100)"), nullptr);
+        auto vec = Array<Int64, 1>(State::safe_eval("return collect(Int64(1):100)"), nullptr);
 
         const auto subvec = vec[{12, 19, 99, 2}];
 
@@ -1001,19 +988,6 @@ int main()
             Test::assert_that(it.operator int() % 2 == 0);
     });
 
-    /*
-    Test::test("array: set C-data", [](){
-
-        Array<Float64, 1> arr =  jl_eval_string("jl_arr = Float64[1, 2, 3, 4, 5]");
-        std::vector<Float64> new_arr = {6, 7, 8, 9};
-
-        unsafe::set_array_data(arr, new_arr.data(), 4);
-
-        Test::assert_that(arr.size() == 4);
-        Test::assert_that(static_cast<Float64>(arr.at(3)) == 9);
-    });
-     */
-
     Test::test("vector: insert", [](){
 
         State::safe_eval("vector = [1, 2, 3, 4]");
@@ -1033,7 +1007,7 @@ int main()
     });
 
     Test::test("vector: append", [](){
-        State::safe_eval("vector = [1, 1, 1, 1]");
+        State::safe_eval("vector = UInt64[1, 1, 1, 1]");
         Vector<size_t> vec = Main["vector"];
 
         vec.push_front(999);

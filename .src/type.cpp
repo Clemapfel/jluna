@@ -17,8 +17,7 @@ namespace jluna
     Type::Type(Proxy* owner)
         : Proxy(*owner)
     {
-        static jl_datatype_t* type_t = (jl_datatype_t*) jl_eval_string("return Type");
-        jl_assert_type(owner->operator unsafe::Value*(), type_t);
+        jl_assert_type((unsafe::DataType*) jl_typeof(owner->operator unsafe::Value*()), jl_datatype_type);
     }
 
     Type Type::unroll() const

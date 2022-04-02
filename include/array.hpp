@@ -38,11 +38,12 @@ namespace jluna
             /// @param proxy
             Array(unsafe::Value* value, jl_sym_t* = nullptr);
 
-            /// @brief ctor from data, does not invoke copy
+            /// @brief ctor as thin wrapper data, does not invoke copy
+            /// @warning user is responsible for data being properly formatted
             /// @param data
             /// @param size_per_dimension
             template<typename... Dims>
-            Array(Value_t**, Dims... size_per_dimension);
+            Array(Value_t*, Dims... size_per_dimension);
 
             /// @brief linear indexing, no bounds checking
             /// @param index, 0-based
@@ -243,6 +244,12 @@ namespace jluna
             /// @brief ctor from generator expression. Only available for 1d arrays
             /// @param generator_expression
             Vector(const GeneratorExpression&);
+
+            /// @brief ctor as thin wrapper around data
+            /// @warning the user is responsible for data being correctly formatted
+            /// @param data
+            /// @param size
+            Vector(Value_t* data, size_t size);
 
             /// @brief ctor from proxy
             /// @param proxy

@@ -26,6 +26,14 @@ extern "C"
         return jl_string_data(jl_call1(tostring, value));
     }
 
+    /// @brief get verbose type name
+    /// @param value
+    /// @returns result of println(typeof(value))
+    inline const char* jl_verbose_typeof_str(jl_value_t* value)
+    {
+        return jl_to_string(jl_typeof(value));
+    }
+
     /// @brief get function
     /// @param module_name
     /// @param function_name
@@ -81,18 +89,19 @@ extern "C"
     /// @brief throw error if value is not of type named
     /// @param value
     /// @param types_name
-    inline void jl_assert_type(jl_value_t* value, jl_datatype_t* type)
+    inline void jl_assert_type(jl_datatype_t* type_a, jl_datatype_t* type_b)
     {
-        if (not jl_isa(value, (jl_value_t*) type))
+        if (not (jl_subtype((jl_value_t*) type_a, (jl_value_t*) type_b) or jl_types_equal((jl_value_t*) type_a, (jl_value_t*) type_b)))
         {
             std::stringstream str;
-            str << "return \"";
-            str << "Assertion failed: Value " << jl_to_string(value) << " is not of type ";
-            str << jl_to_string((jl_value_t*) type) << "\"" << std::endl;
-            auto* exc = jl_new_struct(jl_errorexception_type, jl_eval_string(str.str().c_str()));
-            throw jluna::JuliaException(exc, "");
+            str << "Assertion failed: Value is of wrong type. Expected: " << jl_to_string((jl_value_t*) type_b);
+            str << ", but got: " << jl_to_string((jl_value_t*) type_a) << std::endl;
+            auto* exc = jl_new_struct(jl_errorexception_type, jl_alloc_string(0));
+            throw jluna::JuliaException(exc, str.str());
         }
     }
+
+    //
 
     /// @brief get value of reference
     /// @param reference
@@ -185,8 +194,6 @@ extern "C"
         static jl_function_t* get_value_type_of_array = jl_find_function("jluna", "get_value_type_of_array");
         return jl_call1(get_value_type_of_array, (jl_value_t*) arr);
     }
-
-
 
     /// @brief pause gc and save current state
     #define jl_gc_pause bool _b_e_f_o_r_e_ = jl_gc_is_enabled(); if (_b_e_f_o_r_e_) jl_gc_enable(false);

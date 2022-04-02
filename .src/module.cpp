@@ -11,13 +11,13 @@ namespace jluna
     Module::Module(jl_module_t* value)
         : Proxy((jl_value_t*) value, value->name)
     {
-        jl_assert_type((unsafe::Value*) value, jl_module_type);
+        jl_assert_type((unsafe::DataType*) jl_typeof((unsafe::Value*) value), jl_module_type);
     }
 
     Module::Module(Proxy* owner)
         : Proxy(*owner)
     {
-        jl_assert_type(owner->operator unsafe::Value*(), jl_module_type);
+        jl_assert_type((unsafe::DataType*) jl_typeof(owner->operator unsafe::Value*()), jl_module_type);
     }
 
     jl_module_t * Module::get() const

@@ -10,7 +10,7 @@ namespace jluna
     inline T unbox(unsafe::Value* value)
     {
         static jl_datatype_t* type_t = (jl_datatype_t*) jl_eval_string("return Type");
-        jl_assert_type(value, type_t);
+        jl_assert_type((unsafe::DataType*) jl_typeof(value), type_t);
         return Type((jl_datatype_t*) value);
     }
 
