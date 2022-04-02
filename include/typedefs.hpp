@@ -79,8 +79,7 @@ namespace jluna
         static inline const std::string type_name = detail::to_julia_type_aux<T>::type_name;
         static unsafe::DataType* type()
         {
-            static jl_datatype_t* out = (jl_datatype_t*) jl_eval_string(("return " + type_name).c_str());
-            return out;
+            static jl_datatype_t* out = (jl_datatype_t*) jl_eval_string(("return " + type_name).c_str());return out;
         }
     };
 
