@@ -990,7 +990,7 @@ int main()
 
     Test::test("vector: insert", [](){
 
-        State::safe_eval("vector = [1, 2, 3, 4]");
+        State::safe_eval("vector = UInt64[1, 2, 3, 4]");
         Vector<size_t> vec = Main["vector"];
 
         vec.insert(0, 16);
@@ -999,7 +999,7 @@ int main()
 
     Test::test("vector: erase", [](){
 
-        State::safe_eval("vector = [1, 99, 3, 4]");
+        State::safe_eval("vector = UInt64[1, 99, 3, 4]");
         Vector<size_t> vec = Main["vector"];
 
         vec.erase(0);
