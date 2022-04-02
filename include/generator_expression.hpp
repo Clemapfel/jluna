@@ -38,7 +38,7 @@ namespace jluna
             size_t size() const;
 
             /// @brief get julia-side Base.generator object
-            operator unsafe::Value*() const;
+            explicit operator unsafe::Value*() const;
 
         protected:
             /// @brief ctor
