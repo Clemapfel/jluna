@@ -9,7 +9,7 @@
 namespace jluna
 {
     Module::Module(jl_module_t* value)
-        : Proxy((jl_value_t*) value, value->name)
+        : Proxy((unsafe::Value*) value, value->name)
     {
         jl_assert_type((unsafe::DataType*) jl_typeof((unsafe::Value*) value), jl_module_type);
     }
@@ -22,7 +22,7 @@ namespace jluna
 
     jl_module_t * Module::get() const
     {
-        return (jl_module_t*) Proxy::operator const jl_value_t*();
+        return (jl_module_t*) Proxy::operator const unsafe::Value*();
     }
 
     Module::operator jl_module_t*()

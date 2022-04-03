@@ -96,7 +96,7 @@ namespace jluna::State
     
     inline Proxy new_named_symbol(const std::string& name, const std::string& value)
     {
-        return detail::create_or_assign(name, (jl_value_t*) jl_symbol(value.c_str()));
+        return detail::create_or_assign(name, (unsafe::Value*) jl_symbol(value.c_str()));
     }
 
     template<IsPrimitive T>
@@ -236,7 +236,7 @@ namespace jluna::State
 
     inline Proxy new_unnamed_symbol(const std::string& value)
     {
-        return Proxy((jl_value_t*) jl_symbol(value.c_str()));
+        return Proxy((unsafe::Value*) jl_symbol(value.c_str()));
     }
 
     template<IsPrimitive T>

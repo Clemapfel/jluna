@@ -134,8 +134,8 @@ namespace jluna::unsafe
 
     unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d, size_t two_d)
     {
-        std::array<jl_value_t*, 2> dims = {jl_box_uint64(one_d), jl_box_uint64(two_d)};
-        return jl_ptr_to_array(jl_apply_array_type(value_type, 2), data, (jl_value_t*) dims.data(), 0);
+        std::array<unsafe::Value*, 2> dims = {jl_box_uint64(one_d), jl_box_uint64(two_d)};
+        return jl_ptr_to_array(jl_apply_array_type(value_type, 2), data, (unsafe::Value*) dims.data(), 0);
     }
 
     void override_array(unsafe::Array* overridden, const unsafe::Array* constant)
@@ -190,9 +190,9 @@ namespace jluna::unsafe
         {
            jl_gc_pause;
             static auto* tuple_type = [&](){
-                std::array<jl_value_t*, 1> types;
+                std::array<unsafe::Value*, 1> types;
                 for (size_t i = 0; i < types.size(); ++i)
-                    types.at(i) = (jl_value_t*) jl_uint64_type;
+                    types.at(i) = (unsafe::Value*) jl_uint64_type;
 
                 return jl_apply_tuple_type_v(types.data(), types.size());
             }();
@@ -215,9 +215,9 @@ namespace jluna::unsafe
         {
             jl_gc_pause;
             static auto* tuple_type = [&](){
-                std::array<jl_value_t*, 2> types;
+                std::array<unsafe::Value*, 2> types;
                 for (size_t i = 0; i < types.size(); ++i)
-                    types.at(i) = (jl_value_t*) jl_uint64_type;
+                    types.at(i) = (unsafe::Value*) jl_uint64_type;
 
                 return jl_apply_tuple_type_v(types.data(), types.size());
             }();

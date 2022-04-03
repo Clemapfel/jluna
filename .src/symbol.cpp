@@ -12,11 +12,11 @@ namespace jluna
     {}
 
     Symbol::Symbol(const std::string& str)
-        : Proxy(box<Symbol>(str), nullptr)
+        : Proxy((unsafe::Value*) jl_symbol(str.data()))
     {}
 
     Symbol::Symbol(jl_sym_t* value, jl_sym_t* symbol)
-        : Proxy((jl_value_t*) value, symbol)
+        : Proxy((unsafe::Value*) value, symbol)
     {
         jl_assert_type((unsafe::DataType*) jl_typeof((unsafe::Value*) value), jl_symbol_type);
     }
@@ -29,12 +29,12 @@ namespace jluna
 
     Symbol::operator jl_sym_t*() const
     {
-        return (jl_sym_t*) Proxy::operator const jl_value_t*();
+        return (jl_sym_t*) Proxy::operator const unsafe::Value*();
     }
 
     size_t Symbol::hash() const
     {
-        return ((jl_sym_t*) Proxy::operator const jl_value_t*())->hash;
+        return ((jl_sym_t*) Proxy::operator const unsafe::Value*())->hash;
     }
 
     bool Symbol::operator==(const Symbol& other) const

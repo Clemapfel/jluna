@@ -291,19 +291,19 @@ namespace jluna
     namespace detail    // helper functions for tuple unboxing
     {
         template<typename Tuple_t, typename Value_t, size_t i>
-        void unbox_tuple_aux_aux(Tuple_t& tuple, jl_value_t* value)
+        void unbox_tuple_aux_aux(Tuple_t& tuple, unsafe::Value* value)
         {
             std::get<i>(tuple) = unbox<std::tuple_element_t<i, Tuple_t>>(jl_get_nth_field(value, i));
         }
 
         template<typename Tuple_t, typename Value_t, std::size_t... is>
-        void unbox_tuple_aux(Tuple_t& tuple, jl_value_t* value, std::index_sequence<is...> _)
+        void unbox_tuple_aux(Tuple_t& tuple, unsafe::Value* value, std::index_sequence<is...> _)
         {
             (unbox_tuple_aux_aux<Tuple_t, Value_t, is>(tuple, value), ...);
         }
 
         template<typename... Ts>
-        std::tuple<Ts...> unbox_tuple(jl_value_t* value)
+        std::tuple<Ts...> unbox_tuple(unsafe::Value* value)
         {
             std::tuple<Ts...> out;
             (unbox_tuple_aux<std::tuple<Ts...>, Ts>(out, value, std::index_sequence_for<Ts...>{}), ...);
@@ -311,7 +311,7 @@ namespace jluna
         }
 
         template<typename... Ts>
-        std::tuple<Ts...> unbox_tuple_pre(jl_value_t* v, std::tuple<Ts...> _)
+        std::tuple<Ts...> unbox_tuple_pre(unsafe::Value* v, std::tuple<Ts...> _)
         {
             return unbox_tuple<Ts...>(v);
         }

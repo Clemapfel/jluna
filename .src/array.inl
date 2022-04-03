@@ -26,7 +26,7 @@ namespace jluna
     Array<V, R>::Array(Proxy* proxy)
         : Proxy(*proxy)
     {
-        auto* value = proxy->operator jl_value_t*();
+        auto* value = proxy->operator unsafe::Value*();
         jl_assert_type((unsafe::DataType*) jl_typeof(value), (unsafe::DataType*) jl_array_type);
         jl_assert_type((unsafe::DataType*) jl_array_value_t((unsafe::Array*) value), (unsafe::DataType*) to_julia_type<V>::type());
     }
@@ -271,12 +271,12 @@ namespace jluna
 
     template<Boxable V>
     Vector<V>::Vector()
-        : Array<V, 1>((unsafe::Value*) unsafe::new_array((jl_value_t*) to_julia_type<V>::type(), 0), nullptr)
+        : Array<V, 1>((unsafe::Value*) unsafe::new_array((unsafe::Value*) to_julia_type<V>::type(), 0), nullptr)
     {}
 
     template<Boxable V>
     Vector<V>::Vector(const std::vector<V>& vec)
-        : Array<V, 1>((unsafe::Value*) unsafe::new_array((jl_value_t*) to_julia_type<V>::type(), vec.size()), nullptr)
+        : Array<V, 1>((unsafe::Value*) unsafe::new_array((unsafe::Value*) to_julia_type<V>::type(), vec.size()), nullptr)
     {
         for (size_t i = 0; i < vec.size(); ++i)
             jl_arrayset(reinterpret_cast<jl_array_t*>(this->operator unsafe::Value*()), box(vec.at(i)), i);
@@ -293,7 +293,7 @@ namespace jluna
     {}
 
     template<Boxable V>
-    Vector<V>::Vector(jl_value_t* value, jl_sym_t* symbol)
+    Vector<V>::Vector(unsafe::Value* value, jl_sym_t* symbol)
         : Array<V, 1>(value, symbol)
     {}
 
@@ -308,7 +308,7 @@ namespace jluna
     template<Boxable V>
     void Vector<V>::insert(size_t pos, V value)
     {
-        static jl_value_t* insert = jl_get_function(jl_base_module, "insert!");
+        static unsafe::Value* insert = jl_get_function(jl_base_module, "insert!");
 
         jl_gc_pause;
         jl_call3(insert, _content->value(), jl_box_uint64(pos + 1), box(value));
@@ -319,7 +319,7 @@ namespace jluna
     template<Boxable V>
     void Vector<V>::erase(size_t pos)
     {
-        static jl_value_t* deleteat = jl_get_function(jl_base_module, "deleteat!");
+        static unsafe::Value* deleteat = jl_get_function(jl_base_module, "deleteat!");
 
         jl_gc_pause;
         jl_call2(deleteat, _content->value(), jl_box_uint64(pos + 1));

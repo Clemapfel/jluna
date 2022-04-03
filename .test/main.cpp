@@ -20,6 +20,22 @@ struct NonJuliaType
 };
 set_usertype_enabled(NonJuliaType);
 
+struct MyStruct
+{
+    int _val;
+
+    MyStruct operator*(MyStruct x)
+    {
+        return MyStruct{x._val * this->_val};
+    }
+};
+
+template<typename T>
+auto pow(T x, T y)
+{
+    return x * y;
+}
+
 int main()
 {
     State::initialize();

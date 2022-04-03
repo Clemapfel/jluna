@@ -154,7 +154,7 @@ namespace jluna
         static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
 
         jl_gc_pause;
-        std::vector<jl_value_t*> pairs;
+        std::vector<unsafe::Value*> pairs;
         pairs.reserve(value.size());
 
         for (auto& pair : value)
@@ -177,7 +177,7 @@ namespace jluna
 
         jl_gc_pause;
 
-        std::vector<jl_value_t*> pairs;
+        std::vector<unsafe::Value*> pairs;
         pairs.reserve(value.size());
 
         for (auto& pair : value)
@@ -226,7 +226,7 @@ namespace jluna
         static jl_function_t* tuple = jl_get_function(jl_core_module, "tuple");
 
         jl_gc_pause;
-        std::vector<jl_value_t*> args;
+        std::vector<unsafe::Value*> args;
         args.reserve(std::tuple_size_v<T>);
 
         std::apply([&](auto... elements) {

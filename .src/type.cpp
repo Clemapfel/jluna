@@ -11,7 +11,7 @@ namespace jluna
     Type::Type() = default;
 
     Type::Type(jl_datatype_t* value)
-        : Proxy((jl_value_t*) value, (value->name == NULL ? jl_symbol("Union{}") : value->name->name))
+        : Proxy((unsafe::Value*) value, (value->name == NULL ? jl_symbol("Union{}") : value->name->name))
     {}
 
     Type::Type(Proxy* owner)
@@ -33,7 +33,7 @@ namespace jluna
 
     jl_datatype_t* Type::get() const
     {
-        return (jl_datatype_t*) Proxy::operator const jl_value_t*();
+        return (jl_datatype_t*) Proxy::operator const unsafe::Value*();
     }
 
     Type Type::get_super_type() const
@@ -77,7 +77,7 @@ namespace jluna
 
     bool Type::is_subtype_of(const Type& other) const
     {
-        return jl_subtype((jl_value_t*) get(), (jl_value_t*) other.get());
+        return jl_subtype((unsafe::Value*) get(), (unsafe::Value*) other.get());
     }
 
     bool Type::operator<(const Type& other) const
@@ -97,7 +97,7 @@ namespace jluna
 
     bool Type::is_same_as(const Type& other) const
     {
-        return jl_is_identical((jl_value_t*) get(), (jl_value_t*) other.get());
+        return jl_is_identical((unsafe::Value*) get(), (unsafe::Value*) other.get());
     }
 
     bool Type::operator==(const Type& other) const
@@ -137,7 +137,7 @@ namespace jluna
 
     bool Type::is_abstract_ref_type() const
     {
-        return jl_is_abstract_ref_type((jl_value_t*) get());
+        return jl_is_abstract_ref_type((unsafe::Value*) get());
     }
 
     bool Type::is_declared_mutable() const

@@ -73,7 +73,7 @@ namespace jluna
         return _length;
     }
 
-    GeneratorExpression::operator _jl_value_t*() const
+    GeneratorExpression::operator unsafe::Value*() const
     {
         return get();
     }
