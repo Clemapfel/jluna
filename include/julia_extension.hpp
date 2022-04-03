@@ -135,8 +135,7 @@ extern "C"
     /// @returns value
     inline jl_value_t* jl_tupleref(jl_value_t* tuple, size_t n)
     {
-        static jl_function_t* get = jl_get_function(jl_base_module, "get");
-        return jl_call3(get, tuple, jl_box_uint64(n + 1), jl_undef_initializer());
+        return jl_get_nth_field(tuple, n);
     }
 
     /// @brief get length of tuple

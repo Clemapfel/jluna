@@ -57,7 +57,8 @@ namespace jluna
         std::is_same_v<T, jl_datatype_t*> or
         std::is_same_v<T, jl_function_t*> or
         std::is_same_v<T, jl_sym_t*> or
-        std::is_same_v<T, jl_expr_t*>;
+        std::is_same_v<T, jl_expr_t*> or
+        std::is_same_v<T, jl_unionall_t*>;
 
     template<typename T>
     concept IsJuliaValue =
@@ -67,7 +68,9 @@ namespace jluna
         std::is_same_v<T, jl_datatype_t> or
         std::is_same_v<T, jl_function_t> or
         std::is_same_v<T, jl_sym_t> or
-        std::is_same_v<T, jl_expr_t>;
+        std::is_same_v<T, jl_expr_t> or
+        std::is_same_v<T, jl_unionall_t>;
+
 
     /// @concept is primitive
     template<typename T>

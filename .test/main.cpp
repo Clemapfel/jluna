@@ -20,26 +20,74 @@ struct NonJuliaType
 };
 set_usertype_enabled(NonJuliaType);
 
-struct MyStruct
+template<IsJuliaValuePointer... Value_ts>
+unsafe::Value* _safe_call(unsafe::Function* function, Value_ts... in)
 {
-    int _val;
+    static auto* jl_safe_call = (unsafe::Function*) jl_eval_string(R"(
+        function safe_call(f::Function, args...)
 
-    MyStruct operator*(MyStruct x)
+            res::Any = undef
+
+            backtrace::String = ""
+            exception_occurred::Bool = false
+            exception::Union{Exception, UndefInitializer} = undef
+
+            try
+                res = f(args...)
+            catch e
+                exception = e
+                backtrace = sprint(Base.showerror, exception, catch_backtrace())
+                exception_occurred = true
+            end
+
+            return (res, exception_occurred, exception, backtrace)
+        end
+    )");
+
+    static std::array<unsafe::Value*, sizeof...(Value_ts) + 1> args;
+    static auto set = [&](size_t i, unsafe::Value* x) {args[i] = x;};
+
+    args[0] = (unsafe::Value*) function;
+
+    size_t i = 1;
+    (set(i++, (unsafe::Value*) in), ...);
+
+    auto* tuple_res = jl_call(jl_safe_call, args.data(), args.size());
+
+    if (jl_unbox_bool(jl_get_nth_field(tuple_res, 1)))
+        throw JuliaException(jl_get_nth_field(tuple_res, 2), jl_string_ptr(jl_get_nth_field(tuple_res, 3)));
+
+    return jl_get_nth_field(tuple_res, 0);
+}
+
+unsafe::Value* _safe_eval(const std::string& code, Module module = Main)
+{
+    static auto* eval = unsafe::get_function(jl_base_module, "eval"_sym);
+
+    auto* quote = jl_quote(code.c_str());
+    if (quote == nullptr)
     {
-        return MyStruct{x._val * this->_val};
+        auto* exc = jl_exception_occurred();
+        std::stringstream str;
+        str << "In jluna::safe_eval: " << jl_typeof_str(exc) << " in expression\n\t" << code << "\n"
+            << jl_string_ptr(jl_get_nth_field(exc, 0)) << std::endl;
+        throw JuliaException(exc, str.str());
     }
-};
 
-template<typename T>
-auto pow(T x, T y)
-{
-    return x * y;
+    jl_set_nth_field(quote, 0, (unsafe::Value*) "toplevel"_sym);
+    return _safe_call(eval, module.operator unsafe::Value*(), quote);
 }
 
 int main()
 {
     State::initialize();
     Test::initialize();
+    static jl_function_t* f = (jl_function_t*) jl_eval_string("f(x) = x + x");
+
+    auto* quote = _safe_eval("return abc");
+    jl_println(quote);
+
+    return 0;
 
     Test::test("unsafe: gc", []() {
 
