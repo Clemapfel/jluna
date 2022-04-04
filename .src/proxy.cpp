@@ -64,18 +64,18 @@ namespace jluna
 
     unsafe::Value* Proxy::ProxyValue::value() const
     {
-        if (_value_ref == nullptr)
+        JL_TRY
+            return jl_get_nth_field(_value_ref, 0);
+        JL_CATCH
             return jl_nothing;
-
-        return jl_get_nth_field(_value_ref, 0);
     }
 
     unsafe::Value* Proxy::ProxyValue::id() const
     {
-        if (value() == (unsafe::Value*) jl_main_module)
+        JL_TRY
+            return jl_get_nth_field(_id_ref, 0);
+        JL_CATCH
             return jl_nothing;
-
-        return jl_get_nth_field(_id_ref, 0);
     }
 
     unsafe::Value* Proxy::ProxyValue::get_field(jl_sym_t* symbol)

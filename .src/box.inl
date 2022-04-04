@@ -156,7 +156,7 @@ namespace jluna
 
         auto* out = unsafe::call(new_dict, to_julia_type<Key_t>::type(), to_julia_type<Value_t>::type(), box(value.size()));
         for (auto& pair : value)
-            unsafe::call(setindex, box<Value_t>(pair.second), box<Key_t>(pair.first));
+            safe_call(setindex, out, box<Value_t>(pair.second), box<Key_t>(pair.first));
 
         return out;
     }

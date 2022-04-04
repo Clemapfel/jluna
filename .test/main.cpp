@@ -354,7 +354,7 @@ int main()
     };
 
     test_box_unbox_iterable("Vector", std::vector<size_t>{1, 2, 3, 4});
-    test_box_unbox_iterable("IdDict", std::map<size_t, std::string>{{12, "abc"}});
+    test_box_unbox_iterable("Dict", std::map<size_t, std::string>{{12, "abc"}});
     test_box_unbox_iterable("Dict", std::unordered_map<size_t, std::string>{{12, "abc"}});
     test_box_unbox_iterable("Set", std::set<size_t>{1, 2, 3, 4});
 
