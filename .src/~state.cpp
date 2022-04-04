@@ -11,7 +11,6 @@
 
 #include <include/state.hpp>
 #include <include/exceptions.hpp>
-#include <include/julia_extension.hpp>
 #include <include/proxy.hpp>
 #include <include/module.hpp>
 #include <include/type.hpp>

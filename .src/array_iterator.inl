@@ -73,7 +73,7 @@ namespace jluna
     template<Boxable V, size_t R>
     Array<V, R>::ConstIterator::operator Proxy()
     {
-        jl_gc_pause;
+        auto gc = GCSentinel();
 
         auto res = Proxy(
             jl_arrayref((jl_array_t*) _owner->_content->value(), _index),
@@ -81,7 +81,6 @@ namespace jluna
             jl_box_uint64(_index+1)
         );
 
-        jl_gc_unpause;
         return res;
     }
 
@@ -107,9 +106,8 @@ namespace jluna
 
         static jl_function_t* setindex = jl_get_function(jl_base_module, "setindex!");
 
-        jl_gc_pause;
+        auto gc = GCSentinel();
         jl_call3(setindex, _owner->operator jl_value_t *(), box(value), box(_index + 1));
-        jl_gc_unpause;
 
         return *this;
     }

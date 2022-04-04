@@ -18,13 +18,13 @@ namespace jluna
     Symbol::Symbol(jl_sym_t* value, jl_sym_t* symbol)
         : Proxy((unsafe::Value*) value, symbol)
     {
-        jl_assert_type((unsafe::DataType*) jl_typeof((unsafe::Value*) value), jl_symbol_type);
+        detail::assert_type((unsafe::DataType*) jl_typeof((unsafe::Value*) value), jl_symbol_type);
     }
 
     Symbol::Symbol(Proxy* owner)
         : Proxy(*owner)
     {
-        jl_assert_type((unsafe::DataType*) jl_typeof((unsafe::Value*) owner->operator jl_value_t *()), jl_symbol_type);
+        detail::assert_type((unsafe::DataType*) jl_typeof((unsafe::Value*) owner->operator jl_value_t *()), jl_symbol_type);
     }
 
     Symbol::operator jl_sym_t*() const

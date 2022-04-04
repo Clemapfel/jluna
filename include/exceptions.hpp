@@ -53,6 +53,8 @@ namespace jluna
 
     /// @brief if exception occurred, forward as JuliaException
     void forward_last_exception();
+
+    /// @brief throw if initialize was not yet called
+    void throw_if_uninitialized();
 }
 
-#include <.src/exceptions.inl>

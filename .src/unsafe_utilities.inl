@@ -122,10 +122,10 @@ namespace jluna::unsafe
             return jl_apply_tuple_type_v(types.data(), types.size());
         }();
 
-        static jl_function_t* jl_array_value_t = get_function("jluna"_sym, "get_value_type_of_array"_sym);
+        static jl_function_t* get_value_type_of_array = get_function("jluna"_sym, "get_value_type_of_array"_sym);
 
         auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
-        auto* res = jl_reshape_array(jl_apply_array_type(unsafe::call(jl_array_value_t, array), sizeof...(Dims)), array, tuple);
+        auto* res = jl_reshape_array(jl_apply_array_type(unsafe::call(get_value_type_of_array, array), sizeof...(Dims)), array, tuple);
         override_array(array, res);
         jl_gc_enable(before);
     }

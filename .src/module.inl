@@ -29,7 +29,8 @@ namespace jluna
     
     inline Proxy Module::new_undef(const std::string& name)
     {
-        return create_or_assign(name, jl_undef_initializer());
+        static auto* undef_t = (unsafe::DataType*) jl_eval_string("return UndefInitializer");
+        return create_or_assign(name, jl_new_struct(undef_t));
     }
 
     inline Proxy Module::new_bool(const std::string& name, bool value)
@@ -102,7 +103,6 @@ namespace jluna
         return create_or_assign(name, (unsafe::Value*) jl_symbol(value.c_str()));
     }
 
-    /*
     template<IsPrimitive T>
     Proxy Module::new_complex(const std::string& name, T real, T imag)
     {
@@ -162,10 +162,9 @@ namespace jluna
             (add(dims, ++i), ...);
         }
 
-        State::safe_eval(str.str());
+        jluna::safe_eval(str.str());
         return Main[name];
     }
-     */
 
     template<Unboxable T>
     T Module::get(const std::string& variable_name)

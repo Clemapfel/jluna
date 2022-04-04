@@ -3,10 +3,7 @@
 #include <ptrhash.h>
 #include <jluna.hpp>
 #include <.test/test.hpp>
-#include <.src/c_adapter.hpp>
-#include <include/julia_extension.hpp>
-#include <include/exceptions.hpp>
-#include <include/concepts.hpp>
+#include <jluna.hpp>
 
 #include <julia_gcext.h>
 #include <julia_threads.h>
@@ -22,8 +19,10 @@ set_usertype_enabled(NonJuliaType);
 
 int main()
 {
-    State::initialize();
+    initialize();
     Test::initialize();
+
+    /*
 
     Test::test("unsafe: gc", []() {
 
@@ -878,19 +877,6 @@ int main()
         Test::assert_that(test(2, 2, 3));
     });
 
-    /*
-    Test::test("array: swap c-data", [](){
-
-        Array<Float64, 1> arr =  jl_eval_string("jl_arr = Float64[1, 2, 3, 4, 5]");
-        std::vector<Float64> new_arr = {6, 7, 8, 9};
-
-        unsafe::set_array_data(arr, new_arr.data(), 4);
-
-        Test::assert_that(arr.size() == 4);
-        Test::assert_that(static_cast<Float64>(arr.at(3)) == 9);
-    });
-     */
-
     Test::test("array_iterator: +/-", [](){
 
         State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
@@ -1179,7 +1165,7 @@ int main()
     auto test_type = []<typename T>(Type& a, T b) {
 
         std::string name = "Type Constant: ";
-        name += jl_to_string((unsafe::Value*) a);
+        name += detail::to_string((unsafe::Value*) a);
 
         Test::test(name, [&](){
             return a.operator jl_datatype_t*() == reinterpret_cast<jl_datatype_t*>(b);
@@ -1414,6 +1400,7 @@ int main()
 
 
     Test::conclude();
+    */
 }
 
 

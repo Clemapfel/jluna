@@ -97,6 +97,10 @@ add_library(jluna SHARED
     .src/unsafe_utilities.inl
     .src/unsafe_utilities.cpp
 
+    include/safe_utilities.hpp
+    .src/safe_utilities.inl
+    .src/safe_utilties.cpp
+
     include/concepts.hpp
 
     include/box.hpp

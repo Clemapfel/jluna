@@ -3,7 +3,6 @@
 // Created on 31.01.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/julia_extension.hpp>
 #include <include/cppcall.hpp>
 
 #include <iostream>
@@ -38,7 +37,7 @@ namespace jluna
     template<Is<char> T>
     unsafe::Value* box(T value)
     {
-        return jl_convert(jl_char_type, jl_box_int8((int8_t) value));
+        return detail::convert(jl_char_type, jl_box_int8((int8_t) value));
     }
 
     template<Is<uint8_t> T>
@@ -104,14 +103,13 @@ namespace jluna
     template<Is<std::string> T>
     unsafe::Value* box(T value)
     {
-        jl_gc_pause;
+        auto gc = GCSentinel();
         auto* res = jl_alloc_string(value.size());
         auto* data = jl_string_data(res);
 
         for (size_t i = 0; i < value.size(); ++i)
             data[i] = value.at(i);
 
-        jl_gc_unpause;
         return res;
     } //°
 
@@ -124,28 +122,15 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
     unsafe::Value* box(T value)
     {
-        static jl_function_t* complex = jl_find_function("jluna", "make_complex");
+        static jl_function_t* complex = unsafe::get_function("jluna"_sym, "make_complex"_sym);
         return safe_call(complex, box<Value_t>(value.real()), box<Value_t>(value.imag()));
     }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
     unsafe::Value* box(const T& value)
     {
-        static jl_function_t* new_vector = jl_find_function("jluna", "new_vector");
-
-        jl_gc_pause;
-        auto* res = (jl_array_t*) jl_call2(
-            new_vector,
-            jl_box_uint64(value.size()),
-            value.empty() ? jl_eval_string(to_julia_type<Value_t>::type_name.c_str()) : box<Value_t>(value.front())
-        );
-
-        for (size_t i = 0; i < value.size(); ++i)
-            jl_arrayset(res, box(value.at(i)), i);
-
-        jl_gc_unpause;
-        return (unsafe::Value*) res;
-    } //°
+        return unsafe::new_array_from_data(to_julia_type<Value_t>::type(), value.data(), value.size());
+    }
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::multimap<Key_t, Value_t>>, bool>>
     unsafe::Value* box(T value)
@@ -153,7 +138,7 @@ namespace jluna
         static jl_function_t* iddict = jl_get_function(jl_base_module, "IdDict");
         static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
 
-        jl_gc_pause;
+        auto gc = GCSentinel();
         std::vector<unsafe::Value*> pairs;
         pairs.reserve(value.size());
 
@@ -162,9 +147,8 @@ namespace jluna
 
         auto* res = jl_call(iddict, pairs.data(), pairs.size());
 
-        jl_gc_unpause;
         return res;
-    } //°
+    }
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<
             std::is_same_v<T, std::unordered_map<Key_t, Value_t>> or
@@ -175,7 +159,7 @@ namespace jluna
         static jl_function_t* dict = jl_get_function(jl_base_module, "Dict");
         static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
 
-        jl_gc_pause;
+        auto gc = GCSentinel();
 
         std::vector<unsafe::Value*> pairs;
         pairs.reserve(value.size());
@@ -184,17 +168,16 @@ namespace jluna
             pairs.push_back(jl_call2(make_pair, box<Key_t>(pair.first), box<Value_t>(pair.second)));
 
         auto* res = jl_call(dict, pairs.data(), pairs.size());
-        jl_gc_unpause;
         return res;
     } //°
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool>>
     unsafe::Value* box(const T& value)
     {
-        static jl_function_t* new_vector = jl_find_function("jluna", "new_vector");
+        static jl_function_t* new_vector = unsafe::get_function("jluna"_sym, "new_vector"_sym);
         static jl_function_t* set = jl_get_function(jl_base_module, "Set");
 
-        jl_gc_pause;
+        auto gc = GCSentinel();
         auto* res = (jl_array_t*) jl_call2(
             new_vector,
             jl_box_uint64(value.size()),
@@ -206,7 +189,6 @@ namespace jluna
             jl_arrayset(res, box(s), i++);
 
         auto* out = jl_call1(set, (unsafe::Value*) res);
-        jl_gc_unpause;
         return out;
     } //°
 
@@ -214,9 +196,8 @@ namespace jluna
     unsafe::Value* box(T value)
     {
         static jl_function_t* pair = jl_get_function(jl_base_module, "Pair");
-        jl_gc_pause;
+        auto gc = GCSentinel();
         auto* res = jl_call2(pair, box<T1>(value.first), box<T2>(value.second));
-        jl_gc_unpause;
         return res;
     } //°
 
@@ -225,7 +206,7 @@ namespace jluna
     {
         static jl_function_t* tuple = jl_get_function(jl_core_module, "tuple");
 
-        jl_gc_pause;
+        auto gc = GCSentinel();
         std::vector<unsafe::Value*> args;
         args.reserve(std::tuple_size_v<T>);
 
@@ -234,7 +215,6 @@ namespace jluna
         }, value);
 
         auto* res = jl_call(tuple, args.data(), args.size());
-        jl_gc_unpause;
 
         return res;
     }

@@ -38,15 +38,15 @@ namespace jluna
             else if (jl_isa(in, (unsafe::Value*) jl_float64_type))
                 return jl_unbox_float64(in);
             else if (jl_isa(in, (unsafe::Value*) jl_float16_type))
-                return jl_unbox_float32(jl_try_convert(jl_float32_type, in));
+                return jl_unbox_float32(detail::convert(jl_float32_type, in));
             else if (jl_isa(in, (unsafe::Value*) jl_char_type))
-                return jl_unbox_int32(jl_convert(jl_int32_type, in));
+                return jl_unbox_int32(detail::convert(jl_int32_type, in));
             else
             {
                 if (not first_attempt)
                     return 0;
 
-                in = jl_try_convert((jl_datatype_t*) jluna::safe_eval(to_julia_type<T>::type_name.c_str()), in);
+                in = detail::convert(to_julia_type<T>::type(), in);
                 first_attempt = false;
                 goto retry;
             }
@@ -65,139 +65,112 @@ namespace jluna
     template<Is<bool> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<char> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<uint8_t> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<uint16_t> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<uint32_t> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<uint64_t> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<int8_t> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<int16_t> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<int32_t> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<int64_t> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<float> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<double> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res = detail::smart_unbox_primitive<T>(value);
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return detail::smart_unbox_primitive<T>(value);
     }
 
     template<Is<std::string> T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto res =  std::string(jl_to_string(value));
-        jl_gc_unpause;
-        return res;
+        auto gc = GCSentinel();
+        return  std::string(detail::to_string(value));
     } //°
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
+        auto gc = GCSentinel();
         static jl_datatype_t* type = (jl_datatype_t*) jl_eval_string(("return " + to_julia_type<std::complex<Value_t>>::type_name).c_str());
-        auto* res = jl_try_convert(type, value);
+        auto* res = detail::convert(type, value);
 
         auto* re = jl_get_nth_field(value, 0);
         auto* im = jl_get_nth_field(value, 1);
 
         auto out = std::complex<Value_t>(unbox<Value_t>(re), unbox<Value_t>(im));
-        jl_gc_unpause;
         return out;
     }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
+        auto gc = GCSentinel();
         jl_array_t* in = (jl_array_t*) value;
 
         std::vector<Value_t> out;
@@ -206,7 +179,6 @@ namespace jluna
         for (size_t i = 0; i < in->length; ++i)
             out.emplace_back(unbox<Value_t>(jl_arrayref(in, i)));
 
-        jl_gc_unpause;
         return out;
     }
 
@@ -215,7 +187,7 @@ namespace jluna
     {
         static jl_function_t* iterate = jl_get_function(jl_base_module, "iterate");
 
-        jl_gc_pause;
+        auto gc = GCSentinel();
         auto out = std::map<Key_t, Value_t>();
         auto* it_res = jl_nothing;
 
@@ -230,7 +202,6 @@ namespace jluna
             next_i = jl_get_nth_field(it_res, 1);
         }
 
-        jl_gc_unpause;
         return out;
     } //°
 
@@ -239,7 +210,7 @@ namespace jluna
     {
         static jl_function_t* iterate = jl_get_function(jl_base_module, "iterate");
 
-        jl_gc_pause;
+        auto gc = GCSentinel();
         auto out = std::unordered_map<Key_t, Value_t>();
         auto* it_res = jl_nothing;
 
@@ -254,38 +225,34 @@ namespace jluna
             next_i = jl_get_nth_field(it_res, 1);
         }
 
-        jl_gc_unpause;
         return out;
     } //°
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool>>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
+        auto gc = GCSentinel();
 
-        static jl_function_t* serialize = jl_find_function("jluna", "serialize");
+        static jl_function_t* serialize = unsafe::get_function("jluna"_sym, "serialize"_sym);
         jl_array_t* as_array = (jl_array_t*) jl_call1(serialize, value);
 
         T out;
         for (size_t i = 0; i < jl_array_len(as_array); ++i)
             out.insert(unbox<Value_t>(jl_arrayref(as_array, i)));
 
-        jl_gc_unpause;
         return out;
     }
 
     template<IsPair T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
+        auto gc = GCSentinel();
 
         auto* first = jl_get_nth_field(value, 0);
         auto* second = jl_get_nth_field(value, 1);
 
-        auto res = T(unbox<typename T::first_type>(first), unbox<typename T::second_type>(second));
-        jl_gc_unpause;
+        return T(unbox<typename T::first_type>(first), unbox<typename T::second_type>(second));
 
-        return res;
     } //°
 
     namespace detail    // helper functions for tuple unboxing
@@ -332,9 +299,7 @@ namespace jluna
     template<IsTuple T>
     T unbox(unsafe::Value* value)
     {
-        jl_gc_pause;
-        auto out = detail::unbox_tuple_pre(value, T());
-        jl_gc_unpause;
-        return out;
+        auto gc = GCSentinel();
+        return detail::unbox_tuple_pre(value, T());
     }
 }

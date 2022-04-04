@@ -891,7 +891,7 @@ end
 
 Module our_module = Main["OurModule"];
 for (auto& pair : our_module.get_bindings())
-    std::cout << pair.first.operator std::string() << " => " << jl_to_string(pair.second).operator std::string() << std::endl;
+    std::cout << pair.first.operator std::string() << " => " << detail::to_string(pair.second).operator std::string() << std::endl;
 ```
 ```
 include => include
@@ -902,7 +902,7 @@ var1 => 0
 var2 => 0
 ```
 
-where `jl_to_string` is a C-function that takes an `unsafe::Value*` and calls `Base.string`, returning the resulting string.
+where `detail::to_string` is a C-function that takes an `unsafe::Value*` and calls `Base.string`, returning the resulting string.
 
 Because the proxies hold ownership of the bound values and are unnamed, the result of `get_bindings` is a stable snapshot of a module. Even if the module continues to be modified, the map returned by `get_bindings` stays the same. This means `get_bindings` gives us a way to save the current state of the module.
 
@@ -3369,7 +3369,7 @@ end
 
 Module our_module = Main["OurModule"];
 for (auto& pair : our_module.get_bindings())
-    std::cout << pair.first.operator std::string() << " => " << jl_to_string(pair.second).operator std::string() << std::endl;
+    std::cout << pair.first.operator std::string() << " => " << detail::to_string(pair.second).operator std::string() << std::endl;
 ```
 ```
 include => include
@@ -3380,7 +3380,7 @@ var1 => 0
 var2 => 0
 ```
 
-where `jl_to_string` is a C-function that takes an `unsafe::Value*` and calls `Base.string`, returning the resulting string.
+where `detail::to_string` is a C-function that takes an `unsafe::Value*` and calls `Base.string`, returning the resulting string.
 
 Because the proxies hold ownership of the bound values and are unnamed, the result of `get_bindings` is a stable snapshot of a module. Even if the module continues to be modified, the map returned by `get_bindings` stays the same. This means `get_bindings` gives us a way to save the current state of the module.
 

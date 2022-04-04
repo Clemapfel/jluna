@@ -7,6 +7,7 @@
 
 #include <include/julia_wrapper.hpp>
 #include <include/proxy.hpp>
+#include <include/array.hpp>
 #include <include/symbol.hpp>
 
 namespace jluna
@@ -239,6 +240,7 @@ namespace jluna
         private:
             jl_module_t* value() const;
     };
+
     /// @brief Proxy of singleton Main, initialized by State::initialize
     inline Module Main;
 
@@ -252,7 +254,7 @@ namespace jluna
     template<Is<Module> T>
     inline T unbox(unsafe::Value* value)
     {
-        jl_assert_type((unsafe::DataType*) jl_typeof(value), jl_module_type);
+        detail::assert_type((unsafe::DataType*) jl_typeof(value), jl_module_type);
         return Module((jl_module_t*) value);
     }
 

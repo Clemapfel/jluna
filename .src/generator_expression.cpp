@@ -4,14 +4,13 @@
 //
 
 #include <include/generator_expression.hpp>
-#include <include/state.hpp>
 
 namespace jluna
 {
     GeneratorExpression operator""_gen(const char* in, size_t n)
     {
         std::stringstream str;
-        jl_gc_pause;
+        auto gc = GCSentinel();
 
         if (in[0] != '(' or in[n-1] != ')')
             std::cerr << "[C++][WARNING] generator expressions constructed via the _gen operator should *begin and end with rounds brackets*. Example: \"(i for i in 1:10)\"_gen" << std::endl;
@@ -28,7 +27,6 @@ namespace jluna
         }
 
         auto out = GeneratorExpression(res);
-        jl_gc_unpause;
         return out;
     }
 
@@ -37,25 +35,24 @@ namespace jluna
         if (_iterate == nullptr)
             _iterate = jl_get_function(jl_base_module, "iterate");
 
-        _value_key = State::detail::create_reference(val);
-        _value_ref = State::detail::get_reference(_value_key);
+        _value_key = detail::create_reference(val);
+        _value_ref = detail::get_reference(_value_key);
 
-        static jl_function_t* length = jl_find_function("jluna", "get_length_of_generator");
+        static jl_function_t* length = unsafe::get_function("jluna"_sym, "get_length_of_generator"_sym);
 
-        jl_gc_pause;
+        auto gc = GCSentinel();
         _length = jl_unbox_int64(jl_call1(length, get()));
         forward_last_exception();
-        jl_gc_unpause;
     }
 
     GeneratorExpression::~GeneratorExpression()
     {
-        State::detail::free_reference(_value_key);
+        detail::free_reference(_value_key);
     }
 
     unsafe::Value* GeneratorExpression::get() const
     {
-        return jl_ref_value(_value_ref);
+        return jl_get_nth_field(_value_ref, 0);
     }
 
     typename GeneratorExpression::ForwardIterator GeneratorExpression::begin() const
@@ -84,24 +81,21 @@ namespace jluna
 
     unsafe::Value* GeneratorExpression::ForwardIterator::operator*()
     {
-        jl_gc_pause;
-        auto* out = jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 0);
-        jl_gc_unpause;
-        return out;
+        auto gc = GCSentinel();
+        return jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 0);
     }
 
     void GeneratorExpression::ForwardIterator::operator++()
     {
         auto previous = _state;
 
-        jl_gc_pause;
+        auto gc = GCSentinel();
         auto* next = jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state));
 
         if (jl_is_nothing(next))
             _state = previous;
         else
             _state = jl_unbox_int64(jl_get_nth_field(next, 1));
-        jl_gc_unpause;
     }
 
     void GeneratorExpression::ForwardIterator::operator++(int)

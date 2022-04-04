@@ -7,7 +7,7 @@
 #include <include/unsafe_utilities.hpp>
 #include <.src/include_julia.inl>
 #include <include/type.hpp>
-#include <include/modeul.hpp>
+#include <include/module.hpp>
 
 namespace jluna
 {
@@ -86,7 +86,10 @@ namespace jluna
     {
         static auto* eval = unsafe::get_function(jl_base_module, "eval"_sym);
 
-        auto* quote = jl_quote(code.c_str());
+        const std::string a = "quote ";
+        const std::string b = " end";
+
+        auto* quote = jl_eval_string((a + code + b).c_str());
         if (quote == nullptr)
         {
             auto* exc = jl_exception_occurred();
@@ -100,7 +103,7 @@ namespace jluna
         return safe_call(eval, module, quote);
     }
 
-    unsafe::Value* safe_eval_file(const std::string& path, unsafe::Module* module = jl_main_module)
+    unsafe::Value* safe_eval_file(const std::string& path, unsafe::Module* module)
     {
         static auto* include = unsafe::get_function(jl_base_module, "include"_sym);
         assert(false && "TODO");
@@ -131,24 +134,23 @@ namespace jluna::detail
     size_t create_reference(unsafe::Value* in)
     {
         throw_if_uninitialized();
-        static unsafe::Function* create_reference = jl_find_function("jluna.memory_handler", "create_reference");
+        static unsafe::Function* create_reference = unsafe::get_function("jluna.memory_handler"_sym, "create_reference"_sym);
 
         if (in == nullptr)
             return 0;
 
         size_t res = -1;
 
-        jl_gc_pause;
+        auto gc = GCSentinel();
         unsafe::Value* value;
         res = jl_unbox_uint64(jluna::safe_call(create_reference, in));
-        jl_gc_unpause;
 
         return res;
     }
 
     unsafe::Value* get_reference(size_t key)
     {
-        static unsafe::Function* get_reference = jl_find_function("jluna.memory_handler", "get_reference");
+        static unsafe::Function* get_reference = unsafe::get_function("jluna.memory_handler"_sym, "get_reference"_sym);
         return jluna::safe_call(get_reference, jl_box_uint64(static_cast<size_t>(key)));
     }
 
@@ -158,11 +160,8 @@ namespace jluna::detail
             return;
 
         throw_if_uninitialized();
-        static unsafe::Function* free_reference = jl_find_function("jluna.memory_handler", "free_reference");
-
-        jl_gc_pause;
+        static unsafe::Function* free_reference = unsafe::get_function("jluna.memory_handler"_sym, "free_reference"_sym);
         jluna::safe_call(free_reference, jl_box_uint64(static_cast<size_t>(key)));
-        jl_gc_unpause;
     }
 
     void initialize_types()
@@ -172,7 +171,7 @@ namespace jluna::detail
             return (jl_datatype_t*) jl_eval_string(("return jluna.unroll_type(" + name + ")").c_str());
         };
 
-        jl_gc_pause;
+        auto gc = GCSentinel();
         AbstractArray_t = Type(unroll("Core.AbstractArray"));
         AbstractChar_t = Type(unroll("Core.AbstractChar"));
         AbstractFloat_t = Type(unroll("Core.AbstractFloat"));
@@ -228,8 +227,6 @@ namespace jluna::detail
         Unsigned_t = Type(unroll("Core.Unsigned"));
         VecElement_t = Type(unroll("Core.VecElement"));
         WeakRef_t = Type(unroll("Core.WeakRef"));
-
-        jl_gc_unpause;
     }
 
     void initialize_modules()

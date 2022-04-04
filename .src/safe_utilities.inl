@@ -3,6 +3,8 @@
 // Created on 04.04.22 by clem (mail@clemens-cords.com)
 //
 
+#include <include/exceptions.hpp>
+
 namespace jluna::detail
 {
     void initialize_modules();

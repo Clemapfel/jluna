@@ -4,7 +4,6 @@
 //
 
 #include <include/exceptions.hpp>
-#include <include/julia_extension.hpp>
 #include <include/unsafe_utilities.hpp>
 
 #include <sstream>
@@ -56,13 +55,6 @@ namespace jluna
         auto* exc = jl_exception_occurred();
         if (exc != nullptr)
             throw JuliaException(exc, jl_string_ptr(jl_get_nth_field(exc, 0)));
-    }
-
-
-
-    unsafe::Value* operator""_eval(const char* str, size_t _)
-    {
-        return safe_eval(str);
     }
 }
 

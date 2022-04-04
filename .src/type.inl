@@ -10,7 +10,7 @@ namespace jluna
     inline T unbox(unsafe::Value* value)
     {
         static jl_datatype_t* type_t = (jl_datatype_t*) jl_eval_string("return Type");
-        jl_assert_type((unsafe::DataType*) jl_typeof(value), type_t);
+        detail::assert_type((unsafe::DataType*) jl_typeof(value), type_t);
         return Type((jl_datatype_t*) value);
     }
 
@@ -27,10 +27,4 @@ namespace jluna
     {
         static inline const std::string type_name = "Type";
     };
-
-    template<ToJuliaTypeConvertable T>
-    Type Type::construct_from()
-    {
-        return Type((jl_datatype_t*) jl_eval_string(("return " + to_julia_type<T>::type_name).c_str()));
-    }
 }
