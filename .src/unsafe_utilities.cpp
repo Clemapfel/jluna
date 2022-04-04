@@ -12,6 +12,11 @@ namespace jluna
     {
         return jl_symbol(str);
     }
+
+    unsafe::Value* operator""_eval(const char* str, size_t)
+    {
+        return jl_eval_string(str);
+    }
 }
 
 namespace jluna::unsafe

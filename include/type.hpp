@@ -19,11 +19,6 @@ namespace jluna
             /// @brief default ctor, construct as Nothing
             Type();
 
-            /// @brief construct from C++ type
-            /// @param to_julia_type meta template
-            template<ToJuliaTypeConvertable T>
-            static Type construct_from();
-
             /// @brief ctor
             /// @param value
             Type(jl_datatype_t* value);
@@ -130,12 +125,12 @@ namespace jluna
             /// @brief check if .name property of unrolled type is equal to typename
             /// @param symbol: name of type, evaluated to Main.eval(symbol)
             /// @returns bool
-            bool is_typename(const std::string& symbol);
+            bool typename_is(const std::string& symbol);
 
             /// @brief check if .name property of unrolled type is equal to typename
             /// @param type
             /// @returns bool
-            bool is_typename(const Type& other);
+            bool typename_is(const Type& other);
 
         private:
             jl_datatype_t* get() const;

@@ -1,9 +1,20 @@
 // 
 // Copyright 2022 Clemens Cords
-// Created on 05.02.22 by clem (mail@clemens-cords.com)
+// Created on 04.04.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/unsafe_utilities.hpp>
+namespace jluna::detail
+{
+    void initialize_modules();
+    void initialize_types();
+    static void on_exit();
+
+    constexpr char _id_marker = '#';
+
+    size_t create_reference(unsafe::Value* in);
+    unsafe::Value* get_reference(size_t key);
+    void free_reference(size_t key);
+}
 
 namespace jluna
 {

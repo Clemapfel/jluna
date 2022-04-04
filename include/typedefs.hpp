@@ -88,6 +88,4 @@ namespace jluna
     {
         to_julia_type<T>::type_name;
     };
-
-    /* [[deprecated]] */ using Any = unsafe::Value;
 }

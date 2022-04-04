@@ -13,7 +13,6 @@ namespace jluna
         static inline const std::string type_name = usertype_enabled<T>::name;
     };
 
-
     template<typename T>
     void Usertype<T>::initialize()
     {

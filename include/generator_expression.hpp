@@ -68,11 +68,10 @@ namespace jluna
             unsafe::Value* operator*();
 
             /// @brief cast to C++ type
+            /// @tparam resulting type
+            /// @returns T
             template<Unboxable T>
-            operator T()
-            {
-                return unbox<T>(this->operator*());
-            }
+            operator T();
 
             /// @brief prefix advance by 1 state
             void operator++();
@@ -96,3 +95,5 @@ namespace jluna
             bool _is_end = false;
     };
 }
+
+#include <.src/generator_expression.inl>

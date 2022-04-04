@@ -112,10 +112,10 @@ namespace jluna
             /// @returns proxy to singleton type
             Type get_type() const;
 
-            /// @brief call with any arguments
-            /// @tparams Args_t: types of arguments, need to be boxable
-            template<Boxable... Args_t>
-            Proxy call(Args_t&&...);
+            /// @brief check if this <: type
+            /// @param type
+            /// @returns true if `*this isa type`, false otherwise
+            bool isa(const Type& type);
 
             /// @brief call with any arguments
             /// @tparams Args_t: types of arguments, need to be boxable
@@ -148,11 +148,6 @@ namespace jluna
 
             /// @brief update value if proxy symbol was reassigned outside of operator=
             void update();
-
-            /// @brief check if this <: type
-            /// @param type
-            /// @returns true if `*this isa type`, false otherwise
-            bool isa(const Type& type);
 
         protected:
             std::shared_ptr<ProxyValue> _content;

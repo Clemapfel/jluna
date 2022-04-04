@@ -89,7 +89,6 @@ add_library(jluna SHARED
 
     include/exceptions.hpp
     .src/exceptions.cpp
-    .src/exceptions.inl
 
     include/typedefs.hpp
     .src/typedefs.inl
@@ -99,17 +98,12 @@ add_library(jluna SHARED
     .src/unsafe_utilities.cpp
 
     include/concepts.hpp
-    include/julia_extension.hpp
 
     include/box.hpp
     .src/box.inl
 
     include/unbox.hpp
     .src/unbox.inl
-
-    include/state.hpp
-    .src/state.cpp
-    .src/state.inl
 
     include/proxy.hpp
     .src/proxy.cpp
@@ -121,9 +115,6 @@ add_library(jluna SHARED
 
     include/cppcall.hpp
     .src/cppcall.inl
-
-    include/expression.hpp
-    .src/expression.cpp
 
     include/module.hpp
     .src/module.cpp

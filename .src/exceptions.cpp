@@ -58,23 +58,7 @@ namespace jluna
             throw JuliaException(exc, jl_string_ptr(jl_get_nth_field(exc, 0)));
     }
 
-    unsafe::Value* safe_eval(const std::string& code, unsafe::Module* module)
-    {
-        static auto* eval = unsafe::get_function(jl_base_module, "eval"_sym);
 
-        auto* quote = jl_quote(code.c_str());
-        if (quote == nullptr)
-        {
-            auto* exc = jl_exception_occurred();
-            std::stringstream str;
-            str << "In jluna::safe_eval: " << jl_typeof_str(exc) << " in expression\n\t" << code << "\n"
-                << jl_string_ptr(jl_get_nth_field(exc, 0)) << std::endl;
-            throw JuliaException(exc, str.str());
-        }
-
-        jl_set_nth_field(quote, 0, (unsafe::Value*) "toplevel"_sym);
-        return safe_call(eval, module, quote);
-    }
 
     unsafe::Value* operator""_eval(const char* str, size_t _)
     {
