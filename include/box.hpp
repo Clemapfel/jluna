@@ -28,6 +28,10 @@ namespace jluna
     template<IsJuliaValuePointer T>
     unsafe::Value* box(T value);
 
+    /// @brief box nullptr to nothing
+    template<Is<nullptr_t> T>
+    unsafe::Value* box(T value);
+
     /// @brief box identity
     template<Is<bool> T>
     unsafe::Value* box(T value);

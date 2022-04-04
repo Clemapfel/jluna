@@ -136,9 +136,6 @@ namespace jluna::detail
         throw_if_uninitialized();
         static unsafe::Function* create_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "create_reference"_sym);
 
-        if (in == nullptr)
-            return 0;
-
         size_t res = -1;
 
         auto gc = GCSentinel();
@@ -156,9 +153,6 @@ namespace jluna::detail
 
     void free_reference(size_t key)
     {
-        if (key == 0)
-            return;
-
         throw_if_uninitialized();
         static unsafe::Function* free_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "free_reference"_sym);
         jluna::safe_call(free_reference, jl_box_uint64(static_cast<size_t>(key)));

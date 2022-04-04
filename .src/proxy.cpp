@@ -17,8 +17,11 @@ namespace jluna
     Proxy::ProxyValue::ProxyValue(unsafe::Value* value, jl_sym_t* id)
         : _is_mutating(id != nullptr)
     {
-        if (value == nullptr)
+        if (not jl_is_initialized())
+        {
+            _value_ref = nullptr;
             return;
+        }
 
         static jl_function_t* make_unnamed_proxy_id = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "make_unnamed_proxy_id"_sym);
         static jl_function_t* make_named_proxy_id = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "make_named_proxy_id"_sym);
@@ -51,7 +54,6 @@ namespace jluna
 
         _id_key = detail::create_reference(jl_call2(make_named_proxy_id, id, owner->id()));
         _id_ref = detail::get_reference(_id_key);
-
     }
 
     Proxy::ProxyValue::~ProxyValue()
@@ -62,6 +64,9 @@ namespace jluna
 
     unsafe::Value* Proxy::ProxyValue::value() const
     {
+        if (_value_ref == nullptr)
+            return jl_nothing;
+
         return jl_get_nth_field(_value_ref, 0);
     }
 
