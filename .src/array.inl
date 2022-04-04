@@ -80,7 +80,7 @@ namespace jluna
             str << "0-based index " << index << " out of range for array of length " << dim << " along " << dim_id << std::endl;
             throw std::out_of_range(str.str().c_str());
         }
-    } //°
+    }
 
     template<Boxable V, size_t R>
     auto Array<V, R>::operator[](size_t i)
@@ -251,19 +251,19 @@ namespace jluna
     T Array<V, R>::back() const
     {
         return operator[]<T>(get_n_elements() - 1);
-    } //°
+    }
 
     template<Boxable V, size_t R>
     size_t Array<V, R>::get_n_elements() const
     {
         return reinterpret_cast<const jl_array_t*>(this->operator const unsafe::Value*())->length;
-    } //°
+    }
 
     template<Boxable V, size_t R>
     bool Array<V, R>::empty() const
     {
         return reinterpret_cast<const jl_array_t*>(this->operator const unsafe::Value*())->length == 0;
-    } //°
+    }
 
     // ###
 

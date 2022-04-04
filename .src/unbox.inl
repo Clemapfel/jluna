@@ -151,7 +151,7 @@ namespace jluna
     {
         auto gc = GCSentinel();
         return  std::string(detail::to_string(value));
-    } //°
+    }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
     T unbox(unsafe::Value* value)
@@ -203,7 +203,7 @@ namespace jluna
         }
 
         return out;
-    } //°
+    }
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<std::is_same_v<T, std::unordered_map<Key_t, Value_t>>, bool>>
     T unbox(unsafe::Value* value)
@@ -226,7 +226,7 @@ namespace jluna
         }
 
         return out;
-    } //°
+    }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::set<Value_t>>, bool>>
     T unbox(unsafe::Value* value)
@@ -253,7 +253,7 @@ namespace jluna
 
         return T(unbox<typename T::first_type>(first), unbox<typename T::second_type>(second));
 
-    } //°
+    }
 
     namespace detail    // helper functions for tuple unboxing
     {

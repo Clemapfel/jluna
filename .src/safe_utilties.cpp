@@ -134,7 +134,7 @@ namespace jluna::detail
     size_t create_reference(unsafe::Value* in)
     {
         throw_if_uninitialized();
-        static unsafe::Function* create_reference = unsafe::get_function("jluna.memory_handler"_sym, "create_reference"_sym);
+        static unsafe::Function* create_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "create_reference"_sym);
 
         if (in == nullptr)
             return 0;
@@ -150,7 +150,7 @@ namespace jluna::detail
 
     unsafe::Value* get_reference(size_t key)
     {
-        static unsafe::Function* get_reference = unsafe::get_function("jluna.memory_handler"_sym, "get_reference"_sym);
+        static unsafe::Function* get_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "get_reference"_sym);
         return jluna::safe_call(get_reference, jl_box_uint64(static_cast<size_t>(key)));
     }
 
@@ -160,7 +160,7 @@ namespace jluna::detail
             return;
 
         throw_if_uninitialized();
-        static unsafe::Function* free_reference = unsafe::get_function("jluna.memory_handler"_sym, "free_reference"_sym);
+        static unsafe::Function* free_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "free_reference"_sym);
         jluna::safe_call(free_reference, jl_box_uint64(static_cast<size_t>(key)));
     }
 

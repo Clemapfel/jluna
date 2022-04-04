@@ -20,6 +20,10 @@ set_usertype_enabled(NonJuliaType);
 int main()
 {
     initialize();
+
+    Main["println"]("hello julia.");
+
+    return 0;
     Test::initialize();
 
     /*

@@ -20,8 +20,8 @@ namespace jluna
         if (value == nullptr)
             return;
 
-        static jl_function_t* make_unnamed_proxy_id = unsafe::get_function("jluna.memory_handler"_sym, "make_unnamed_proxy_id"_sym);
-        static jl_function_t* make_named_proxy_id = unsafe::get_function("jluna.memory_handler"_sym, "make_named_proxy_id"_sym);
+        static jl_function_t* make_unnamed_proxy_id = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "make_unnamed_proxy_id"_sym);
+        static jl_function_t* make_named_proxy_id = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "make_named_proxy_id"_sym);
 
         auto gc = GCSentinel();
 
@@ -41,8 +41,8 @@ namespace jluna
     {
         auto gc = GCSentinel();
 
-        static jl_function_t* make_unnamed_proxy_id = unsafe::get_function("jluna.memory_handler"_sym, "make_unnamed_proxy_id"_sym);
-        static jl_function_t* make_named_proxy_id = unsafe::get_function("jluna.memory_handler"_sym, "make_named_proxy_id"_sym);
+        static jl_function_t* make_unnamed_proxy_id = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "make_unnamed_proxy_id"_sym);
+        static jl_function_t* make_named_proxy_id = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "make_named_proxy_id"_sym);
 
         _owner = owner;
 
@@ -145,7 +145,7 @@ namespace jluna
 
     std::string Proxy::get_name() const
     {
-        static jl_function_t* get_name = unsafe::get_function("jluna.memory_handler"_sym, "get_name"_sym);
+        static jl_function_t* get_name = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "get_name"_sym);
         return unbox<std::string>(jluna::safe_call(get_name, _content->id()));
     }
 
@@ -172,8 +172,8 @@ namespace jluna
 
     Proxy & Proxy::operator=(unsafe::Value* new_value)
     {
-        static jl_function_t* assign = unsafe::get_function("jluna.memory_handler"_sym, "assign"_sym);
-        static jl_function_t* set_reference = unsafe::get_function("jluna.memory_handler"_sym, "set_reference"_sym);
+        static jl_function_t* assign = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "assign"_sym);
+        static jl_function_t* set_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "set_reference"_sym);
 
         auto gc = GCSentinel();
 
@@ -193,8 +193,8 @@ namespace jluna
 
     void Proxy::update()
     {
-        static jl_function_t* evaluate = unsafe::get_function("jluna.memory_handler"_sym, "evaluate"_sym);
-        static jl_function_t* set_reference = unsafe::get_function("jluna.memory_handler"_sym, "set_reference"_sym);
+        static jl_function_t* evaluate = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "evaluate"_sym);
+        static jl_function_t* set_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "set_reference"_sym);
 
         auto gc = GCSentinel();
         auto* new_value = jluna::safe_call(evaluate, _content->id());
