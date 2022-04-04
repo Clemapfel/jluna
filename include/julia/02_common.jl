@@ -230,3 +230,28 @@ end
 function new_ref()
     return Ref{Any}()
 end
+
+"""
+`new_dict(key_t::Type, value_t::Type, ::Integer) -> Dict{key_t, value_t}`
+
+create new dict from type, also provides sizehint
+"""
+function new_dict(key_t::Type, value_t::Type, sizehint_maybe::Integer = 0)
+
+    out = Dict{key_t, value_t}();
+    sizehint!(out, sizehint_maybe);
+    return out;
+end
+
+
+"""
+`new_set(::Type, ::Integer) -> Set`
+
+create new set from type, also provides sizehint
+"""
+function new_set(value_t::Type, sizehint_maybe::Integer = 0)
+
+    out = Set{value_t}();
+    sizehint!(out, sizehint_maybe);
+    return out;
+end
