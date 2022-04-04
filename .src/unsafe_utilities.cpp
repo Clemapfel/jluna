@@ -4,7 +4,6 @@
 //
 
 #include <include/unsafe_utilities.hpp>
-#include <include/gc_sentinel.hpp>
 
 namespace jluna
 {
@@ -23,73 +22,94 @@ namespace jluna::unsafe
 {
     unsafe::Function* get_function(unsafe::Module* module, unsafe::Symbol* name)
     {
-        auto gc = GCSentinel();
+        gc_pause;
         static jl_function_t* eval = jl_get_function(jl_base_module, "eval");
-        return unsafe::call(eval, (unsafe::Value*) module, name);
+        auto* res = unsafe::call(eval, (unsafe::Value*) module, name);
+        gc_unpause;
+        return res;
     }
 
     unsafe::Function* get_function(unsafe::Symbol* module_name, unsafe::Symbol* function_name)
     {
-        auto gc = GCSentinel();
+        gc_pause;
         static jl_function_t* eval = jl_get_function(jl_base_module, "eval");
-        return unsafe::call(eval, unsafe::call(eval, jl_main_module, (unsafe::Value*) module_name), function_name);
+        auto* res = unsafe::call(eval, unsafe::call(eval, jl_main_module, (unsafe::Value*) module_name), function_name);
+        gc_unpause;
+        return res;
     }
 
     unsafe::Value* eval(unsafe::Expression* expr, unsafe::Module* module)
     {
-        auto gc = GCSentinel();
+        gc_pause;
         static unsafe::Function* base_eval = get_function(jl_base_module, "eval"_sym);
-        return call(base_eval, module, expr);
+        auto* res = call(base_eval, module, expr);
+        gc_unpause;
+        return res;
     }
 
     unsafe::Value* get_value(unsafe::Module* module, unsafe::Symbol* name)
     {
-        auto gc = GCSentinel();
+        gc_pause;
         static auto* eval = unsafe::get_function(jl_base_module, "eval"_sym);
-        return call(eval, (unsafe::Value*) module, name);
+        auto* res = call(eval, (unsafe::Value*) module, name);
+        gc_unpause;
+        return res;
     }
 
     unsafe::Value* get_value(unsafe::Symbol* module, unsafe::Symbol* name)
     {
-        auto gc = GCSentinel();
+        gc_pause;
         static unsafe::Function* eval = get_function(jl_base_module, "eval"_sym);
-        return call(eval, call(eval, jl_main_module, module), name);
+        auto* res = call(eval, call(eval, jl_main_module, module), name);
+        gc_unpause;
+        return res;
     }
 
     unsafe::Value* set_value(unsafe::Module* module, unsafe::Symbol* name, unsafe::Value* value)
     {
+        gc_pause;
         static unsafe::Function* eval = get_function(jl_base_module, "eval"_sym);
-        return call(eval, module, Expr("="_sym, name, value));
+        auto* res = call(eval, module, Expr("="_sym, name, value));
+        gc_unpause;
+        return res;
     }
 
     unsafe::Value* set_value(unsafe::Symbol* module, unsafe::Symbol* name, unsafe::Value* value)
     {
+        gc_pause;
         static unsafe::Function* eval = get_function(jl_base_module, "eval"_sym);
-        return call(eval, call(eval, jl_main_module, module), Expr("="_sym, name, value));
+        auto* res = call(eval, call(eval, jl_main_module, module), Expr("="_sym, name, value));
+        gc_unpause;
+        return res;
     }
 
     unsafe::Value* get_field(unsafe::Value* x, unsafe::Symbol* field)
     {
-        auto gc = GCSentinel();
+        gc_pause;
         static unsafe::Function* getfield = get_function(jl_base_module, "getfield"_sym);
-        return call(getfield, x, field);
+        auto* res = call(getfield, x, field);
+        gc_unpause;
+        return res;
     }
 
     void set_field(unsafe::Value* x, unsafe::Symbol* field, unsafe::Value* new_value)
     {
-        auto gc = GCSentinel();
+        gc_pause;
         static unsafe::Function* setfield = get_function(jl_base_module, "setfield!"_sym);
         call(setfield, x, field, new_value);
+        gc_unpause;
     }
 
     void gc_release(size_t id)
     {
+        gc_pause;
         static auto _ = detail::gc_init();
         static unsafe::Value* heap = get_value(jl_main_module, "__jluna_heap"_sym);
         static unsafe::Value* heap_index = get_value(jl_main_module, "__jluna_heap_index"_sym);
 
         static unsafe::Function* delete_key = get_function(jl_base_module, "delete!"_sym);
         call(delete_key, heap, jl_box_uint64(id));
+        gc_unpause;
     }
 
     void gc_enable()
@@ -159,7 +179,7 @@ namespace jluna::unsafe
 
     void swap_array_data(unsafe::Array* a, unsafe::Array* b)
     {
-        auto gc = GCSentinel();
+        gc_pause;
         auto temp_data = a->data;
         auto temp_length = a->length;
         auto temp_nrows = a->nrows;
@@ -186,6 +206,7 @@ namespace jluna::unsafe
         b->offset = temp_offset;
         b->elsize = temp_elsize;
         b->maxsize = temp_maxsize;
+        gc_unpause;
     }
 
     void resize_array(unsafe::Array* array, size_t one_d)
@@ -194,7 +215,7 @@ namespace jluna::unsafe
 
         if (jl_array_ndims(array) != 1)
         {
-            auto gc = GCSentinel();
+            gc_pause;
             static auto* tuple_type = [&](){
                 std::array<unsafe::Value*, 1> types;
                 for (size_t i = 0; i < types.size(); ++i)
@@ -205,6 +226,7 @@ namespace jluna::unsafe
             auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(one_d));
             auto* res = jl_reshape_array(jl_apply_array_type(unsafe::call(array_value_t, array), 1), array, tuple);
             override_array(array, res);
+            gc_unpause;
             return;
         }
 
@@ -220,7 +242,7 @@ namespace jluna::unsafe
 
         if (jl_array_ndims(array) != 2)
         {
-            auto GC = GCSentinel();
+            gc_pause;
             static auto* tuple_type = [&](){
                 std::array<unsafe::Value*, 2> types;
                 for (size_t i = 0; i < types.size(); ++i)
@@ -231,6 +253,7 @@ namespace jluna::unsafe
             auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(one_d));
             auto* res = jl_reshape_array(jl_apply_array_type(unsafe::call(array_value_t, array), 2), array, tuple);
             override_array(array, res);
+            gc_unpause;
             return;
         }
 

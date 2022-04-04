@@ -12,9 +12,11 @@ namespace jluna
     {
         static jl_function_t* assign_in_module = unsafe::get_function("jluna"_sym, "assign_in_module"_sym);
 
-        auto gc = GCSentinel();
+        gc_pause;
         jluna::safe_call(assign_in_module, value(), jl_symbol(variable_name.c_str()), box<T>(value));
-        return this->operator[](variable_name);
+        auto out = this->operator[](variable_name);
+        gc_unpause;
+        return out;
     }
 
     template<Boxable T>
@@ -22,9 +24,11 @@ namespace jluna
     {
         static jl_function_t* assign_in_module = unsafe::get_function("jluna"_sym, "create_or_assign_in_module"_sym);
 
-        auto gc = GCSentinel();
+        gc_pause;
         jluna::safe_call(assign_in_module, this->value(), jl_symbol(variable_name.c_str()), box<T>(value));
-        return this->operator[](variable_name);
+        auto out = this->operator[](variable_name);
+        gc_unpause;
+        return out;
     }
     
     inline Proxy Module::new_undef(const std::string& name)

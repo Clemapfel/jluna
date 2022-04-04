@@ -4,7 +4,6 @@
 //
 
 #include <include/exceptions.hpp>
-#include <include/gc_sentinel.hpp>
 #include <.src/c_adapter.hpp>
 #include <.src/common.hpp>
 
@@ -36,10 +35,11 @@ namespace jluna
 
         c_adapter::register_function(name, 0, [lambda](unsafe::Value* tuple) -> unsafe::Value* {
 
-            auto gc = GCSentinel();
+            gc_pause;
             auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t>>(
                     &lambda
             );
+            gc_unpause;
             return out;
         });
     }
@@ -51,11 +51,12 @@ namespace jluna
 
         c_adapter::register_function(name, 1, [lambda](unsafe::Value* tuple) -> unsafe::Value* {
 
-            auto gc = GCSentinel();
+            gc_pause;
             auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, unsafe::Value*>, unsafe::Value*>(
                     &lambda,
                     jl_get_nth_field(tuple, 0)
             );
+            gc_unpause;
             return out;
         });
     }
@@ -67,12 +68,13 @@ namespace jluna
 
         c_adapter::register_function(name, 2, [lambda](unsafe::Value* tuple) -> unsafe::Value* {
 
-            auto gc = GCSentinel();
+            gc_pause;
             auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*>, unsafe::Value*, unsafe::Value*>(
                     &lambda,
                     jl_get_nth_field(tuple, 0),
                     jl_get_nth_field(tuple, 1)
             );
+            gc_unpause;
             return out;
         });
     }
@@ -84,13 +86,14 @@ namespace jluna
 
         c_adapter::register_function(name, 3, [lambda](unsafe::Value* tuple) -> unsafe::Value* {
 
-            auto gc = GCSentinel();
+            gc_pause;
             auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*, unsafe::Value*>, unsafe::Value*, unsafe::Value*, unsafe::Value*>(
                     &lambda,
                     jl_get_nth_field(tuple, 0),
                     jl_get_nth_field(tuple, 1),
                     jl_get_nth_field(tuple, 2)
             );
+            gc_unpause;
             return out;
         });
     }
@@ -102,7 +105,7 @@ namespace jluna
 
         c_adapter::register_function(name, 4, [lambda](unsafe::Value* tuple) -> unsafe::Value* {
 
-            auto gc = GCSentinel();
+            gc_pause;
             auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*>, unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*>(
                     &lambda,
                     jl_get_nth_field(tuple, 0),
@@ -110,6 +113,7 @@ namespace jluna
                     jl_get_nth_field(tuple, 2),
                     jl_get_nth_field(tuple, 3)
             );
+            gc_unpause;
             return out;
         });
     }
@@ -126,13 +130,14 @@ namespace jluna
             for (size_t i = 0; i < detail::tuple_length(tuple); ++i)
                 wrapped.push_back(jl_get_nth_field(tuple, i));
 
-            auto gc = GCSentinel();
+            gc_pause;
             auto out = detail::invoke_lambda<
                 Lambda_t,
                 std::invoke_result_t<Lambda_t, std::vector<unsafe::Value*>>,
                 std::vector<unsafe::Value*>>(
                     &lambda, wrapped
             );
+            gc_unpause;
             return out;
         });
     }
@@ -145,7 +150,7 @@ namespace jluna
 
         static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
 
-        auto gc = GCSentinel();
+        gc_pause;
 
         unsafe::Value* res;
         if (std::is_same_v<std::invoke_result_t<Lambda_t>, void>)
@@ -153,6 +158,7 @@ namespace jluna
         else
             res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(0), (unsafe::Value*) jl_any_type);
 
+        gc_unpause;
         return res;
     }
 
@@ -164,7 +170,7 @@ namespace jluna
 
         static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
 
-        auto gc = GCSentinel();
+        gc_pause;
 
         unsafe::Value* res;
         if (std::is_same_v<std::invoke_result_t<Lambda_t, unsafe::Value*>, void>)
@@ -172,6 +178,7 @@ namespace jluna
         else
             res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(1), (unsafe::Value*) jl_any_type);
 
+        gc_unpause;
         return res;
     }
 
@@ -183,14 +190,14 @@ namespace jluna
 
         static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
 
-        auto gc = GCSentinel();
-
+        gc_pause;
         unsafe::Value* res;
         if (std::is_same_v<std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*>, void>)
             res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(2), (unsafe::Value*) jl_nothing_type);
         else
             res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(2), (unsafe::Value*) jl_any_type);
 
+        gc_unpause;
         return res;
     }
 
@@ -202,14 +209,14 @@ namespace jluna
 
         static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
 
-        auto gc = GCSentinel();
-
+        gc_pause;
         unsafe::Value* res;
         if (std::is_same_v<std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*, unsafe::Value*>, void>)
             res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(3), (unsafe::Value*) jl_nothing_type);
         else
             res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(3), (unsafe::Value*) jl_any_type);
 
+        gc_unpause;
         return res;
     }
 
@@ -220,14 +227,14 @@ namespace jluna
         register_function(id, lambda);
         static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
 
-        auto gc = GCSentinel();
-
+        gc_pause;
         unsafe::Value* res;
         if (std::is_same_v<std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*>, void>)
             res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(4), (unsafe::Value*) jl_nothing_type);
         else
             res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(4), (unsafe::Value*) jl_any_type);
 
+        gc_unpause;
         return res;
     }
 
@@ -239,8 +246,9 @@ namespace jluna
 
         static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
 
-        auto gc = GCSentinel();
+        gc_pause;
         auto* res = jl_call2(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(-1));
+        gc_unpause;
         return res;
     }
 }

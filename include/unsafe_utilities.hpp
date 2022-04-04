@@ -252,4 +252,7 @@ namespace jluna::unsafe
     T unsafe_unbox(unsafe::Value*);
 }
 
+#define gc_pause bool __before__ = unsafe::gc_is_enabled(); unsafe::gc_disable();
+#define gc_unpause (__before__ ? unsafe::gc_enable() : unsafe::gc_disable());
+
 #include <.src/unsafe_utilities.inl>

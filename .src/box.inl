@@ -109,18 +109,22 @@ namespace jluna
     template<Is<std::string> T>
     unsafe::Value* box(T value)
     {
-        auto gc = GCSentinel();
+        gc_pause;
         auto* array = unsafe::new_array_from_data((unsafe::Value*) to_julia_type<char>::type(), value.data(), value.size());
-        return jl_array_to_string(array);
+        auto* out = jl_array_to_string(array);
+        gc_unpause;
+        return out;
     }
 
     template<Is<const char*> T>
     unsafe::Value* box(T value)
     {
-        auto gc = GCSentinel();
+        gc_pause;
         std::string as_string = value;
         auto* array = unsafe::new_array_from_data((unsafe::Value*) to_julia_type<char>::type(), as_string.data(), as_string.size());
-        return jl_array_to_string(array);
+        auto* out = jl_array_to_string(array);
+        gc_unpause;
+        return out;
     }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
@@ -133,13 +137,14 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
     unsafe::Value* box(const T& value)
     {
-        auto gc = GCSentinel();
+        gc_pause;
         auto* vector_t = jl_apply_array_type((unsafe::Value*) to_julia_type<Value_t>::type(), 1);
         auto* out = jl_alloc_array_1d(vector_t, value.size());
 
         for (size_t i = 0; i < value.size(); ++i)
             jl_arrayset(out, box<Value_t>(value.at(i)), i);
 
+        gc_unpause;
         return (unsafe::Value*) out;
     }
 
@@ -152,12 +157,13 @@ namespace jluna
         static auto* new_dict = unsafe::get_function("jluna"_sym, "new_dict"_sym);
         static auto* setindex = unsafe::get_function(jl_base_module, "setindex!"_sym);
 
-        auto gc = GCSentinel();
+        gc_pause;
 
         auto* out = unsafe::call(new_dict, to_julia_type<Key_t>::type(), to_julia_type<Value_t>::type(), box(value.size()));
         for (auto& pair : value)
             safe_call(setindex, out, box<Value_t>(pair.second), box<Key_t>(pair.first));
 
+        gc_unpause;
         return out;
     }
 
@@ -167,13 +173,14 @@ namespace jluna
         static auto* new_set = unsafe::get_function("jluna"_sym, "new_set"_sym);
         static auto* push = unsafe::get_function(jl_base_module, "push!"_sym);
 
-        auto gc = GCSentinel();
+        gc_pause;
 
         auto* out = unsafe::call(new_set, to_julia_type<Value_t>::type(), box(value.size()));
 
         for (auto& e : value)
             unsafe::call(push, out, box<Value_t>(e));
 
+        gc_unpause;
         return out;
     }
 
@@ -187,7 +194,7 @@ namespace jluna
     template<IsTuple T>
     unsafe::Value* box(T value)
     {
-        auto gc = GCSentinel();
+        gc_pause;
 
         auto* args_v = unsafe::new_array((unsafe::Value*) jl_any_type, std::tuple_size_v<T>);
         auto* args_t = unsafe::new_array((unsafe::Value*) jl_type_type, std::tuple_size_v<T>);
@@ -203,7 +210,9 @@ namespace jluna
             jl_arrayset(args_t, jl_typeof(jl_arrayref(args_v, i)), i);
 
         auto tuple_t = jl_apply_tuple_type_v((jl_value_t**) args_t->data, args_t->length);
-        return jl_new_structv(tuple_t, (jl_value_t**) args_v->data, args_v->length);
+        auto* out = jl_new_structv(tuple_t, (jl_value_t**) args_v->data, args_v->length);
+        gc_unpause;
+        return out;
     }
 
     template<LambdaType<> T>

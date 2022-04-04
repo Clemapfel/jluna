@@ -64,7 +64,7 @@ namespace jluna
         if (_name.get() == nullptr)
             initialize();
 
-        auto gc = GCSentinel();
+        gc_pause;
         static jl_function_t* implement = unsafe::get_function("jluna"_sym, "implement"_sym);
         static jl_function_t* new_proxy = unsafe::get_function("jluna"_sym, "new_proxy"_sym);
         static jl_function_t* setfield = jl_get_function(jl_base_module, "setindex!");
@@ -77,6 +77,7 @@ namespace jluna
 
         _type = std::make_unique<Type>((jl_datatype_t*) jluna::safe_call(implement, template_proxy));
         _implemented = true;
+        gc_unpause;
     }
 
     template<typename T>
@@ -91,7 +92,7 @@ namespace jluna
         if (not _implemented)
             implement();
 
-        auto gc = GCSentinel();
+        gc_pause;
         static jl_function_t* setfield = jl_get_function(jl_base_module, "setfield!");
 
         unsafe::Value* out = jl_call0(_type->operator unsafe::Value*());
@@ -99,6 +100,7 @@ namespace jluna
         for (auto& pair : _mapping)
             jluna::safe_call(setfield, out, (unsafe::Value*) pair.first, std::get<0>(pair.second)(in));
 
+        gc_unpause;
         return out;
     }
 
@@ -108,7 +110,7 @@ namespace jluna
         if (not _implemented)
             implement();
 
-        auto gc = GCSentinel();
+        gc_pause;
         static jl_function_t* getfield = jl_get_function(jl_base_module, "getfield");
 
         auto out = T();
@@ -116,6 +118,7 @@ namespace jluna
         for (auto& pair : _mapping)
             std::get<1>(pair.second)(out, jluna::safe_call(getfield, in, (unsafe::Value*) pair.first));
 
+        gc_unpause;
         return out;
     }
 

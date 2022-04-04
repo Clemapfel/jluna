@@ -98,20 +98,21 @@ namespace jluna
     template<Boxable V, size_t R>
     Vector<V> Array<V, R>::operator[](const std::vector<size_t>& range) const
     {
-        auto gc = GCSentinel();
+        gc_pause;
         auto* out = unsafe::new_array((unsafe::Value*) to_julia_type<V>::type(), range.size());
         auto* me = operator jl_array_t*();
 
         for (size_t i = 0; i < range.size(); ++i)
             jl_arrayset(out, jl_arrayref(me, range.at(i)), i);
 
+        gc_unpause;
         return Vector<V>((unsafe::Value*) out);
     }
 
     template<Boxable V, size_t R>
     Vector<V> Array<V, R>::operator[](const GeneratorExpression& gen) const
     {
-        unsafe::gc_disable();
+        gc_pause;
         auto* out = unsafe::new_array((unsafe::Value*) to_julia_type<V>::type(), gen.size());
         auto* me = operator jl_array_t*();
 
@@ -122,7 +123,7 @@ namespace jluna
         }
 
         auto res = Vector<V>((unsafe::Value*) out);
-        unsafe::gc_enable();
+        gc_unpause;
         return res;
     }
 
@@ -310,9 +311,10 @@ namespace jluna
     {
         static unsafe::Value* insert = jl_get_function(jl_base_module, "insert!");
 
-        auto gc = GCSentinel();
+        gc_pause;
         jl_call3(insert, _content->value(), jl_box_uint64(pos + 1), box(value));
         forward_last_exception();
+        gc_unpause;
     }
 
     template<Boxable V>
@@ -320,27 +322,31 @@ namespace jluna
     {
         static unsafe::Value* deleteat = jl_get_function(jl_base_module, "deleteat!");
 
-        auto gc = GCSentinel();
+        gc_pause;
         jl_call2(deleteat, _content->value(), jl_box_uint64(pos + 1));
         forward_last_exception();
+        gc_unpause;
     }
-
 
     template<Boxable V>
     template<Boxable T>
     void Vector<V>::push_front(T value)
     {
+        gc_pause;
         auto* array = (jl_array_t*) _content->value();
         jl_array_grow_beg(array, 1);
         jl_arrayset((unsafe::Array*) _content->value(), box<V>(value), 0);
+        gc_unpause;
     }
 
     template<Boxable V>
     template<Boxable T>
     void Vector<V>::push_back(T value)
     {
+        gc_pause;
         auto* array = (jl_array_t*) _content->value();
         jl_array_grow_end(array, 1);
         jl_arrayset((unsafe::Array*) _content->value(), box<V>(value), jl_array_len(array)-1);
+        gc_unpause;
     }
 }

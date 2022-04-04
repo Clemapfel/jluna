@@ -10,7 +10,7 @@ namespace jluna
     GeneratorExpression operator""_gen(const char* in, size_t n)
     {
         std::stringstream str;
-        auto gc = GCSentinel();
+        gc_pause;
 
         if (in[0] != '(' or in[n-1] != ')')
             std::cerr << "[C++][WARNING] generator expressions constructed via the _gen operator should *begin and end with rounds brackets*. Example: \"(i for i in 1:10)\"_gen" << std::endl;
@@ -27,6 +27,7 @@ namespace jluna
         }
 
         auto out = GeneratorExpression(res);
+        gc_unpause;
         return out;
     }
 
@@ -40,9 +41,10 @@ namespace jluna
 
         static jl_function_t* length = unsafe::get_function("jluna"_sym, "get_length_of_generator"_sym);
 
-        auto gc = GCSentinel();
+        gc_pause;
         _length = jl_unbox_int64(jl_call1(length, get()));
         forward_last_exception();
+        gc_unpause;
     }
 
     GeneratorExpression::~GeneratorExpression()
@@ -81,21 +83,24 @@ namespace jluna
 
     unsafe::Value* GeneratorExpression::ForwardIterator::operator*()
     {
-        auto gc = GCSentinel();
-        return jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 0);
+        gc_pause;
+        auto* out = jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 0);
+        gc_unpause;
+        return out;
     }
 
     void GeneratorExpression::ForwardIterator::operator++()
     {
         auto previous = _state;
 
-        auto gc = GCSentinel();
+        gc_pause;
         auto* next = jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state));
 
         if (jl_is_nothing(next))
             _state = previous;
         else
             _state = jl_unbox_int64(jl_get_nth_field(next, 1));
+        gc_unpause;
     }
 
     void GeneratorExpression::ForwardIterator::operator++(int)

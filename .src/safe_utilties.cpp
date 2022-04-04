@@ -138,10 +138,10 @@ namespace jluna::detail
 
         size_t res = -1;
 
-        auto gc = GCSentinel();
+        gc_pause;
         unsafe::Value* value;
         res = jl_unbox_uint64(jluna::safe_call(create_reference, in));
-
+        gc_unpause;
         return res;
     }
 
@@ -165,7 +165,7 @@ namespace jluna::detail
             return (jl_datatype_t*) jl_eval_string(("return jluna.unroll_type(" + name + ")").c_str());
         };
 
-        auto gc = GCSentinel();
+        gc_pause;
         AbstractArray_t = Type(unroll("Core.AbstractArray"));
         AbstractChar_t = Type(unroll("Core.AbstractChar"));
         AbstractFloat_t = Type(unroll("Core.AbstractFloat"));
@@ -221,6 +221,7 @@ namespace jluna::detail
         Unsigned_t = Type(unroll("Core.Unsigned"));
         VecElement_t = Type(unroll("Core.VecElement"));
         WeakRef_t = Type(unroll("Core.WeakRef"));
+        gc_unpause;
     }
 
     void initialize_modules()

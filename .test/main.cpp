@@ -1390,18 +1390,20 @@ int main()
     });
 
     Test::test("Usertype: box/unbox", [](){
-       auto instance = NonJuliaType{{123, 34556, 12321}};
-       auto sentinel = GCSentinel();
 
-       auto* res01 = Usertype<NonJuliaType>::box(instance);
-       auto* res02 = box<NonJuliaType>(instance);
+        gc_pause;
+        auto instance = NonJuliaType{{123, 34556, 12321}};
 
-       Test::assert_that(detail::is_equal(res01, res02));
+        auto* res01 = Usertype<NonJuliaType>::box(instance);
+        auto* res02 = box<NonJuliaType>(instance);
 
-       auto backres01 = Usertype<NonJuliaType>::unbox(res01);
-       auto backres02 = unbox<NonJuliaType>(res02);
+        Test::assert_that(detail::is_equal(res01, res02));
 
-       Test::assert_that(backres01._field.size() == backres02._field.size());
+        auto backres01 = Usertype<NonJuliaType>::unbox(res01);
+        auto backres02 = unbox<NonJuliaType>(res02);
+
+        Test::assert_that(backres01._field.size() == backres02._field.size());
+        gc_unpause;
     });
 
 
