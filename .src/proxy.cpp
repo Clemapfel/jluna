@@ -212,7 +212,6 @@ namespace jluna
 
     bool Proxy::isa(const Type& type)
     {
-        static jl_function_t* isa = jl_get_function(jl_base_module, "isa");
-        return unbox<bool>(jluna::safe_call(isa, this->operator const _jl_value_t *(), type.operator const _jl_value_t *()));
+        return jl_isa(operator jl_value_t*(), type);
     }
 }

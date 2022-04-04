@@ -54,23 +54,18 @@ file(READ
 )
 
 file(READ
-    include/julia/03_exception_handler.jl
-    03_EXCEPTION_HANDLER
+    include/julia/03_memory_handler.jl
+    03_MEMORY_HANDLER
 )
 
 file(READ
-    include/julia/04_memory_handler.jl
-    04_MEMORY_HANDLER
+    include/julia/04_cppcall.jl
+    04_CPPCALL
 )
 
 file(READ
-    include/julia/05_cppcall.jl
-    05_CPPCALL
-)
-
-file(READ
-    include/julia/06_public.jl
-    06_PUBLIC
+    include/julia/05_public.jl
+    05_PUBLIC
 )
 
 configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)

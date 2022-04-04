@@ -3,8 +3,6 @@
 // Created on 21.03.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/julia_extension.hpp>
-
 namespace jluna::unsafe
 {
     template<IsJuliaValuePointer... Args_t>
@@ -55,13 +53,14 @@ namespace jluna::unsafe
     size_t gc_preserve(T* in)
     {
         auto* value = (unsafe::Value*) in;
-        jl_gc_pause;
-
+        bool before = jl_gc_is_enabled();
+        jl_gc_enable(false);
+        
         static auto _ = detail::gc_init();
         static unsafe::Function* jluna_add_to_heap = get_function(jl_main_module, "__jluna_add_to_heap"_sym);
 
         auto res = jl_unbox_uint64(call(jluna_add_to_heap, jl_box_uint64((UInt64) value)));
-        jl_gc_unpause;
+        jl_gc_enable(before);
         return res;
     }
 
@@ -77,7 +76,8 @@ namespace jluna::unsafe
     template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool>>
     unsafe::Array* new_array(unsafe::Value* value_type, Dims... size_per_dimension)
     {
-        jl_gc_pause;
+        bool before = jl_gc_is_enabled();
+        jl_gc_enable(false);
         static auto* tuple_type = [&](){
             std::array<jl_value_t*, sizeof...(Dims)> types;
             for (size_t i = 0; i < types.size(); ++i)
@@ -87,14 +87,15 @@ namespace jluna::unsafe
         }();
         auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
         auto* res = jl_new_array(jl_apply_array_type(value_type, sizeof...(Dims)), tuple);
-        jl_gc_unpause;
+        jl_gc_enable(before);
         return res;
     }
 
     template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool>>
     unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, Dims... size_per_dimension)
     {
-        jl_gc_pause;
+        bool before = jl_gc_is_enabled();
+        jl_gc_enable(false);
         static auto* tuple_type = [&](){
             std::array<jl_value_t*, sizeof...(Dims)> types;
             for (size_t i = 0; i < types.size(); ++i)
@@ -104,14 +105,15 @@ namespace jluna::unsafe
         }();
         auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
         auto* res = jl_ptr_to_array(jl_apply_array_type(value_type, sizeof...(Dims)), data, tuple, 0);
-        jl_gc_unpause;
+        jl_gc_enable(before);
         return res;
     }
 
     template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool>>
     void resize_array(unsafe::Array* array, Dims... size_per_dimension)
     {
-        jl_gc_pause;
+        bool before = jl_gc_is_enabled();
+        jl_gc_enable(false);
         static auto* tuple_type = [&](){
             std::array<jl_value_t*, sizeof...(Dims)> types;
             for (size_t i = 0; i < types.size(); ++i)
@@ -119,10 +121,13 @@ namespace jluna::unsafe
 
             return jl_apply_tuple_type_v(types.data(), types.size());
         }();
+
+        static jl_function_t* jl_array_value_t = get_function("jluna"_sym, "get_value_type_of_array"_sym);
+
         auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
-        auto* res = jl_reshape_array(jl_apply_array_type(jl_array_value_t(array), sizeof...(Dims)), array, tuple);
+        auto* res = jl_reshape_array(jl_apply_array_type(unsafe::call(jl_array_value_t, array), sizeof...(Dims)), array, tuple);
         override_array(array, res);
-        jl_gc_unpause;
+        jl_gc_enable(before);
     }
 
     template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool>>

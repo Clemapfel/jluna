@@ -264,3 +264,27 @@ function serialize(x::T) ::Vector{U} where {U, T <: AbstractSet{U}}
 
     return out;
 end
+
+"""
+`safe_call(::Function, args...) ::Tuple{Any, Bool, Exception, String)`
+
+safely call any function, while forwarding any exception that may have occurred
+"""
+function safe_call(f::Function, args...)
+
+    res::Any = undef
+
+    backtrace::String = ""
+    exception_occurred::Bool = false
+    exception::Union{Exception, UndefInitializer} = undef
+
+    try
+        res = f(args...)
+    catch e
+        exception = e
+        backtrace = sprint(Base.showerror, exception, catch_backtrace())
+        exception_occurred = true
+    end
+
+    return (res, exception_occurred, exception, backtrace)
+end

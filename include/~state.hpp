@@ -18,16 +18,6 @@
 
 namespace jluna
 {
-    // forward declarations
-    class Proxy;
-    class Type;
-    class Symbol;
-    template<Boxable, size_t>
-    class Array;
-}
-
-namespace jluna::State
-{
     /// @brief manually set the C-adapter path
     void set_c_adapter_path(const std::string& path);
 
@@ -38,17 +28,25 @@ namespace jluna::State
     /// @param absolute path to julia image
     void initialize(const std::string&);
 
-    /// @brief execute line of code, evaluated in Main
-    /// @param command
-    /// @returns proxy to result, if any
-    /// @exceptions if an error occurs julia-side, it will be ignored and the result of the call will be undefined
-    Proxy eval(const std::string&) noexcept;
+    /// @brief throw exception, used frequently for safeguarding code
+    void throw_if_uninitialized();
 
-    /// @brief execute line of code with exception handling
-    /// @param command
-    /// @returns proxy to result, if any
-    /// @exceptions if an error occurs julia-side, a JuliaException will be thrown
-    Proxy safe_eval(const std::string&);
+    /// @brief call function with args, with verbose exception forwarding
+    /// @tparam Args_t: argument types, must be castable to unsafe::Value*
+    /// @param function
+    /// @param args
+    /// @returns result
+    template<IsJuliaValuePointer... Args_t>
+    unsafe::Value* safe_call(unsafe::Function* function, Args_t... args);
+
+    /// @brief evaluate string with exception forwarding
+    /// @param string
+    /// @returns result
+    unsafe::Value* safe_eval(const std::string&, unsafe::Module* module = jl_main_module);
+
+    /// @brief literal operator for prettier syntax
+    /// @returns result of safe_eval
+    unsafe::Value* operator""_eval(const char*, size_t);
 
     /// @brief execute file
     /// @param path to file

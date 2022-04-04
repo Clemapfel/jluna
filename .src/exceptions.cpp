@@ -5,6 +5,7 @@
 
 #include <include/exceptions.hpp>
 #include <include/julia_extension.hpp>
+#include <include/unsafe_utilities.hpp>
 
 #include <sstream>
 #include <vector>
@@ -37,44 +38,42 @@ namespace jluna
 
     void throw_if_uninitialized()
     {
+        static bool initialized = false;
+
+        if (initialized)
+            return;
+
         if (not jl_is_initialized())
             throw JuliaUninitializedException();
+        else
+            initialized = true;
     }
 
     void forward_last_exception()
     {
         throw_if_uninitialized();
 
-        auto* jl_c_exception = jl_exception_occurred();
-        if (jl_c_exception != nullptr)
-            throw JuliaException(jl_c_exception, jl_to_string(jl_c_exception));
-
-        static jl_function_t* exception_occurred = jl_find_function("jluna.exception_handler", "has_exception_occurred");
-        if (jl_unbox_bool(jl_call0(exception_occurred)))
-        {
-            throw JuliaException(
-                    jl_eval_string("return jluna.exception_handler.get_last_exception()"),
-                    jl_to_string(jl_eval_string("return jluna.exception_handler.get_last_message()"))
-            );
-        }
+        auto* exc = jl_exception_occurred();
+        if (exc != nullptr)
+            throw JuliaException(exc, jl_string_ptr(jl_get_nth_field(exc, 0)));
     }
 
-    unsafe::Value* safe_eval(const char* str)
+    unsafe::Value* safe_eval(const std::string& code, unsafe::Module* module)
     {
-        jluna::throw_if_uninitialized();
+        static auto* eval = unsafe::get_function(jl_base_module, "eval"_sym);
 
-        static jl_function_t* safe_call = jl_find_function("jluna.exception_handler", "safe_call");
-        static jl_function_t* has_exception_occurred = jl_find_function("jluna.exception_handler", "has_exception_occurred");
-
-        jl_gc_pause;
-        auto* result = jl_call1(safe_call, jl_quote(str));
-        if (jl_exception_occurred() or jl_unbox_bool(jl_call0(has_exception_occurred)))
+        auto* quote = jl_quote(code.c_str());
+        if (quote == nullptr)
         {
-            std::cerr << "exception in jluna::State::safe_eval for expression:\n\"" << str << "\"\n" << std::endl;
-            forward_last_exception();
+            auto* exc = jl_exception_occurred();
+            std::stringstream str;
+            str << "In jluna::safe_eval: " << jl_typeof_str(exc) << " in expression\n\t" << code << "\n"
+                << jl_string_ptr(jl_get_nth_field(exc, 0)) << std::endl;
+            throw JuliaException(exc, str.str());
         }
-        jl_gc_unpause;
-        return result;
+
+        jl_set_nth_field(quote, 0, (unsafe::Value*) "toplevel"_sym);
+        return safe_call(eval, module, quote);
     }
 
     unsafe::Value* operator""_eval(const char* str, size_t _)

@@ -173,6 +173,13 @@ extern "C"
         return jl_eval_string((a + in + b).c_str());
     }
 
+    /// @brief get value type of array
+    inline jl_value_t* jl_array_value_t(jl_array_t* value)
+    {
+        static jl_function_t* get_array_value_type = jl_get_function((jl_module_t*) jl_eval_string("jluna"), "get_array_value_type");
+        return jl_call1(get_array_value_type, (jl_value_t*) value);
+    }
+
     /// @brief print
     inline void jl_println(jl_value_t* in)
     {
@@ -185,13 +192,6 @@ extern "C"
     {
         static jl_function_t* sizeof_ = jl_get_function(jl_base_module, "sizeof");
         return jl_unbox_int64(jl_call1(sizeof_, in)) * 8;
-    }
-
-    /// @brief get value type of array
-    inline jl_value_t* jl_array_value_t(jl_array_t* arr)
-    {
-        static jl_function_t* get_value_type_of_array = jl_find_function("jluna", "get_value_type_of_array");
-        return jl_call1(get_value_type_of_array, (jl_value_t*) arr);
     }
 
     /// @brief pause gc and save current state

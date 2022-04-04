@@ -25,20 +25,16 @@ namespace jluna::detail
         )";
 
         static inline const char* include_03 = R"(
-            @03_EXCEPTION_HANDLER@
+            @03_MEMORY_HANDLER@
         )";
 
         static inline const char* include_04 = R"(
-            @04_MEMORY_HANDLER@
-        )";
-
-        static inline const char* include_05 = R"(
-            @05_CPPCALL@
+            @04_CPPCALL@
         )";
 
     static inline const char* module_end = "end";
 
-    static inline const char* include_06 = R"(
-        @06_PUBLIC@
+    static inline const char* include_05 = R"(
+        @05_PUBLIC@
     )";
 }

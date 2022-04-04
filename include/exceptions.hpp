@@ -7,6 +7,7 @@
 
 #include <include/julia_wrapper.hpp>
 #include <include/typedefs.hpp>
+#include <include/concepts.hpp>
 
 #include <string>
 #include <exception>
@@ -50,28 +51,8 @@ namespace jluna
         virtual const char* what() const noexcept override final;
     };
 
-    /// @brief throw exception, used frequently for safeguarding code
-    void throw_if_uninitialized();
-
     /// @brief if exception occurred, forward as JuliaException
     void forward_last_exception();
-
-    /// @brief call function with args, with verbose exception forwarding
-    /// @tparam Args_t: argument types, must be castable to unsafe::Value*
-    /// @param function
-    /// @param args
-    /// @returns result
-    template<typename... Args_t>
-    unsafe::Value* safe_call(unsafe::Function* function, Args_t... args);
-
-    /// @brief evaluate string with exception forwarding
-    /// @param string
-    /// @returns result
-    unsafe::Value* safe_eval(const char*);
-
-    /// @brief literal operator for prettier syntax
-    /// @returns result of safe_eval
-    unsafe::Value* operator""_eval(const char*, size_t);
 }
 
 #include <.src/exceptions.inl>

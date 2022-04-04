@@ -74,7 +74,7 @@ namespace jluna
         auto* template_proxy = jluna::safe_call(new_proxy, _name->operator unsafe::Value*());
 
         for (auto& field_name : _fieldnames_in_order)
-            jluna::safe_call(setfield, template_proxy, std::get<0>(_mapping.at(field_name))(default_instance), field_name);
+            jluna::safe_call(setfield, template_proxy, (unsafe::Value*) std::get<0>(_mapping.at(field_name))(default_instance), (unsafe::Value*) field_name);
 
         _type = std::make_unique<Type>((jl_datatype_t*) jluna::safe_call(implement, template_proxy));
         _implemented = true;
@@ -99,7 +99,7 @@ namespace jluna
         unsafe::Value* out = jl_call0(_type->operator unsafe::Value*());
 
         for (auto& pair : _mapping)
-            jluna::safe_call(setfield, out, pair.first, std::get<0>(pair.second)(in));
+            jluna::safe_call(setfield, out, (unsafe::Value*) pair.first, std::get<0>(pair.second)(in));
 
         jl_gc_unpause;
         return out;
@@ -117,7 +117,7 @@ namespace jluna
         auto out = T();
 
         for (auto& pair : _mapping)
-            std::get<1>(pair.second)(out, jluna::safe_call(getfield, in, pair.first));
+            std::get<1>(pair.second)(out, jluna::safe_call(getfield, in, (unsafe::Value*) pair.first));
 
         jl_gc_unpause;
         return out;
