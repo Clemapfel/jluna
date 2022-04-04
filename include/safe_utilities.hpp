@@ -37,6 +37,12 @@ namespace jluna
     /// @returns proxy to result, if any
     unsafe::Value* safe_eval_file(const std::string& path, unsafe::Module* module = jl_main_module);
 
+
+    /// @brief call julia-side println on values
+    /// @param values
+    template<IsJuliaValuePointer... Ts>
+    void println(Ts...);
+
     /// @brief trigger the garbage collector
     void collect_garbage();
 }

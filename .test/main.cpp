@@ -20,20 +20,14 @@ set_usertype_enabled(NonJuliaType);
 int main()
 {
     initialize();
-
-    Main["println"]("hello julia.");
-
-    return 0;
     Test::initialize();
-
-    /*
 
     Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");
         auto id = unsafe::gc_preserve(value);
 
-        State::collect_garbage();
+        collect_garbage();
 
         auto after = unbox<std::vector<size_t>>(value);
         Test::assert_that(after.at(2) == 342);
@@ -81,7 +75,7 @@ int main()
         auto* expr = unsafe::Expr("call"_sym, "+"_sym, jl_box_int64(100), jl_box_int64(100));
         auto expr_id = unsafe::gc_preserve(expr);
 
-        Test::assert_that(jl_is_equal((unsafe::Value*) expr_true, (unsafe::Value*) expr));
+        Test::assert_that(jluna::detail::is_equal((unsafe::Value*) expr_true, (unsafe::Value*) expr));
         Test::assert_that(unsafe::eval(expr) == jl_box_int64(200));
 
         unsafe::gc_release(expr_true_id);
@@ -128,7 +122,7 @@ int main()
         auto* member = unsafe::get_field(unsafe::get_field(instance, "_member"_sym), "_member"_sym);
         auto* member_true = jl_get_nth_field(jl_get_nth_field(instance, 0), 0);
 
-        Test::assert_that(jl_is_equal(member, member_true));
+        Test::assert_that(jluna::detail::is_equal(member, member_true));
         gc_release(instance_id);
     });
 
@@ -150,7 +144,7 @@ int main()
         )");
 
         unsafe::set_field(jl_get_nth_field(instance, 0), "_member"_sym, jl_box_uint64(4567));
-        Test::assert_that(jl_is_equal(jl_get_nth_field(jl_get_nth_field(instance, 0), 0), jl_box_uint64(1234)));
+        Test::assert_that(jluna::detail::is_equal(jl_get_nth_field(jl_get_nth_field(instance, 0), 0), jl_box_uint64(1234)));
     });
 
     Test::test("unsafe: call", []() {
@@ -304,17 +298,9 @@ int main()
         });
     });
 
-    Test::test("jl_find_function", [](){
-
-        auto* expected = jl_get_function(jl_base_module, "println");
-        auto* got = jl_find_function("Base", "println");
-
-        Test::assert_that(jl_is_identical(expected, got));
-    });
-
     Test::test("safe_call", [](){
         Test::assert_that_throws<JuliaException>([]() {
-            safe_call(jl_find_function("Base", "throw"), jl_eval_string("return ErrorException(\"\")"));
+            safe_call(unsafe::get_function(jl_base_module, "throw"_sym), jl_eval_string("return ErrorException(\"\")"));
         });
     });
 
@@ -371,6 +357,11 @@ int main()
     test_box_unbox_iterable("IdDict", std::map<size_t, std::string>{{12, "abc"}});
     test_box_unbox_iterable("Dict", std::unordered_map<size_t, std::string>{{12, "abc"}});
     test_box_unbox_iterable("Set", std::set<size_t>{1, 2, 3, 4});
+
+    Test::conclude();
+    return 0;
+
+    /*
 
     Test::test("make_new_named_undef", [](){
 
@@ -1394,7 +1385,7 @@ int main()
        auto* res01 = Usertype<NonJuliaType>::box(instance);
        auto* res02 = box<NonJuliaType>(instance);
 
-       Test::assert_that(jl_is_equal(res01, res02));
+       Test::assert_that(detail::is_equal(res01, res02));
 
        auto backres01 = Usertype<NonJuliaType>::unbox(res01);
        auto backres02 = unbox<NonJuliaType>(res02);

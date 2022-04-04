@@ -42,4 +42,11 @@ namespace jluna
 
         return jl_get_nth_field(tuple_res, 0);
     }
+
+    template<IsJuliaValuePointer... Ts>
+    void println(Ts... in)
+    {
+        static auto* jl_println = unsafe::get_function(jl_base_module, "println"_sym);
+        safe_call(jl_println, in...);
+    }
 }

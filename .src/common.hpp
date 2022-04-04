@@ -47,4 +47,10 @@ namespace jluna::detail
         static auto* length = unsafe::get_function(jl_base_module, "length"_sym);
         return jl_unbox_int64(unsafe::call(length, tuple));
     }
+
+    inline bool is_equal(unsafe::Value* a, unsafe::Value* b)
+    {
+        static auto* equals = unsafe::get_function(jl_base_module, "=="_sym);
+        return jl_unbox_bool(unsafe::call(equals, a, b));
+    }
 }
