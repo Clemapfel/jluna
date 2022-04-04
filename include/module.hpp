@@ -216,6 +216,10 @@ namespace jluna
             template<Boxable... Ts>
             [[nodiscard]] Proxy new_tuple(const std::string& name, Ts...);
 
+            /// @brief get name
+            /// @returns name of module
+            Symbol get_symbol() const;
+
             /// @brief creates new variable in main, then returns named proxy to it
             /// @param T: value types
             /// @param variable_name: exact name of variable

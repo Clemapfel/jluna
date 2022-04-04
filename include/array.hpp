@@ -39,7 +39,7 @@ namespace jluna
             Array(unsafe::Value* value, jl_sym_t* = nullptr);
 
             /// @brief ctor as thin wrapper data, does not invoke copy
-            /// @warning user is responsible for data being properly formatted
+            /// @warning user is responsible for data being properly formatted and for it staying in scope
             /// @param data
             /// @param size_per_dimension
             template<typename... Dims>

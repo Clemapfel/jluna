@@ -68,6 +68,8 @@ namespace jluna
             return jl_get_nth_field(_value_ref, 0);
         JL_CATCH
             return jl_nothing;
+
+        return nullptr; // unreachable
     }
 
     unsafe::Value* Proxy::ProxyValue::id() const
@@ -76,6 +78,8 @@ namespace jluna
             return jl_get_nth_field(_id_ref, 0);
         JL_CATCH
             return jl_nothing;
+
+        return nullptr; // unreachable
     }
 
     unsafe::Value* Proxy::ProxyValue::get_field(jl_sym_t* symbol)

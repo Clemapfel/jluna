@@ -46,4 +46,9 @@ namespace jluna
     {
         return jluna::safe_eval_file(path, value());
     }
+
+    Symbol Module::get_symbol() const
+    {
+        return Symbol(value()->name);
+    }
 }

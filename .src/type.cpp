@@ -22,7 +22,7 @@ namespace jluna
 
     Type Type::unroll() const
     {
-        static jl_function_t* unroll = unsafe::get_function("juna"_sym, "unroll_type"_sym);
+        static jl_function_t* unroll = unsafe::get_function("jluna"_sym, "unroll_type"_sym);
         return Type((jl_datatype_t*) jluna::safe_call(unroll, get()));
     }
 
@@ -48,25 +48,25 @@ namespace jluna
 
     size_t Type::get_n_fields() const
     {
-        static jl_function_t* get_n_fields = unsafe::get_function("juna"_sym, "get_n_fields"_sym);
+        static jl_function_t* get_n_fields = unsafe::get_function("jluna"_sym, "get_n_fields"_sym);
         return unbox<size_t>(jluna::safe_call(get_n_fields, get()));
     }
 
     std::vector<std::pair<Symbol, Type>> Type::get_fields() const
     {
-        static jl_function_t* get_fields = unsafe::get_function("juna"_sym, "get_fields"_sym);
+        static jl_function_t* get_fields = unsafe::get_function("jluna"_sym, "get_fields"_sym);
         return unbox<std::vector<std::pair<Symbol, Type>>>(jluna::safe_call(get_fields, get()));
     }
 
     std::vector<std::pair<Symbol, Type>> Type::get_parameters() const
     {
-        static jl_function_t* get_parameters = unsafe::get_function("juna"_sym, "get_parameters"_sym);
+        static jl_function_t* get_parameters = unsafe::get_function("jluna"_sym, "get_parameters"_sym);
         return unbox<std::vector<std::pair<Symbol, Type>>>(jluna::safe_call(get_parameters, get()));
     }
 
     size_t Type::get_n_parameters() const
     {
-        static jl_function_t* get_n_fields = unsafe::get_function("juna"_sym, "get_n_parameters"_sym);
+        static jl_function_t* get_n_fields = unsafe::get_function("jluna"_sym, "get_n_parameters"_sym);
         return unbox<size_t>(jluna::safe_call(get_n_fields, get()));
     }
 
@@ -148,13 +148,13 @@ namespace jluna
 
     bool Type::typename_is(const Type& other)
     {
-        static jl_function_t* is_name_typename = unsafe::get_function("juna"_sym, "is_name_typename"_sym);
+        static jl_function_t* is_name_typename = unsafe::get_function("jluna"_sym, "is_name_typename"_sym);
         return unbox<bool>(jluna::safe_call(is_name_typename, get(), other.get()));
     }
 
     bool Type::typename_is(const std::string& symbol)
     {
-        static jl_function_t* is_name_typename = unsafe::get_function("juna"_sym, "is_name_typename"_sym);
+        static jl_function_t* is_name_typename = unsafe::get_function("jluna"_sym, "is_name_typename"_sym);
         return unbox<bool>(jluna::safe_call(is_name_typename, get(), jl_eval_string(("Main.eval(Symbol(\"" + symbol + "\"))").c_str())));
     }
 }

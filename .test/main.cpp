@@ -22,6 +22,20 @@ int main()
     initialize();
     Test::initialize();
 
+
+    for (size_t i = 0; i < 100; ++i)
+    {
+        auto arr = Array<Int64, 1>(jl_eval_string("return collect(0:10)"));
+        auto vec = arr["(i for i in 0:9 if i % 2 == 0)"_gen];
+
+        for (auto it : vec)
+            std::cout << unbox<int>(it) << std::endl;
+    }
+
+    return 0;
+
+    /*
+
     Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");
@@ -358,52 +372,47 @@ int main()
     test_box_unbox_iterable("Dict", std::unordered_map<size_t, std::string>{{12, "abc"}});
     test_box_unbox_iterable("Set", std::set<size_t>{1, 2, 3, 4});
 
-    Test::conclude();
-    return 0;
-
-    /*
-
     Test::test("make_new_named_undef", [](){
 
-        auto undef = State::new_named_undef("name");
-        Test::assert_that(undef == jl_undef_initializer());
+        auto undef = Main.new_undef("name");
+        Test::assert_that(undef == jl_eval_string("return undef"));
     });
 
     Test::test("make_new_named_int", []() {
 
         int8_t value = 1;
-        auto res = State::new_named_int8("test", value);
+        auto res = Main.new_int8("test", value);
         Test::assert_that(res.operator int8_t() == value);
 
-        res = State::new_named_int16("test", int16_t(value));
+        res = Main.new_int16("test", int16_t(value));
         Test::assert_that(res.operator int16_t() == value);
 
-        res = State::new_named_int32("test", int32_t(value));
+        res = Main.new_int32("test", int32_t(value));
         Test::assert_that(res.operator int32_t() == value);
 
-        res = State::new_named_int64("test", int64_t(value));
+        res = Main.new_int64("test", int64_t(value));
         Test::assert_that(res.operator int64_t() == value);
 
-        res = State::new_named_uint8("test", uint8_t(value));
+        res = Main.new_uint8("test", uint8_t(value));
         Test::assert_that(res.operator uint8_t() == value);
 
-        res = State::new_named_uint16("test", uint16_t(value));
+        res = Main.new_uint16("test", uint16_t(value));
         Test::assert_that(res.operator uint16_t() == value);
 
-        res = State::new_named_uint32("test", uint32_t(value));
+        res = Main.new_uint32("test", uint32_t(value));
         Test::assert_that(res.operator uint32_t() == value);
 
-        res = State::new_named_uint64("test", uint64_t(value));
+        res = Main.new_uint64("test", uint64_t(value));
         Test::assert_that(res.operator uint64_t() == value);
     });
 
     Test::test("make_new_named_float", []() {
 
         float value = 1;
-        auto res = State::new_named_float32("test", value);
+        auto res = Main.new_float32("test", value);
         Test::assert_that(res.operator float() == value);
 
-        res = State::new_named_float64("test", value);
+        res = Main.new_float64("test", value);
         Test::assert_that(res.operator double() == value);
 
         //jl_eval_string("test = undef");
@@ -412,7 +421,7 @@ int main()
     Test::test("make_new_named_vector", []() {
 
         std::vector<size_t> value = {1, 2, 3};
-        auto res = State::new_named_vector("test", value);
+        auto res = Main.new_vector("test", value);
         Test::assert_that(res.operator std::vector<size_t>() == value);
 
         //jl_eval_string("test = undef");
@@ -421,7 +430,7 @@ int main()
     Test::test("make_new_named_set", []() {
 
         std::set<size_t> value = {1, 2, 3};
-        auto res = State::new_named_set("test", value);
+        auto res = Main.new_set("test", value);
         Test::assert_that(res.operator std::set<size_t>() == value);
 
         //jl_eval_string("test = undef");
@@ -430,11 +439,11 @@ int main()
     Test::test("make_new_named_dict", []() {
 
         std::unordered_map<size_t, std::string> value = {{2, "abc"}};
-        auto res = State::new_named_dict("test", value);
+        auto res = Main.new_dict("test", value);
         Test::assert_that(res.operator  std::unordered_map<size_t, std::string>() == value);
 
         std::map<size_t, std::string> value2 = {{2, "abc"}};
-        auto res2 = State::new_named_dict("test", value);
+        auto res2 = Main.new_dict("test", value);
         Test::assert_that(res2.operator std::map<size_t, std::string>() == value2);
         //jl_eval_string("test = undef");
     });
@@ -442,7 +451,7 @@ int main()
     Test::test("make_new_pair", []() {
 
         std::pair<size_t, std::string> value = {2, "abc"};
-        auto res = State::new_named_pair("test", value.first, value.second);
+        auto res = Main.new_pair("test", value.first, value.second);
         Test::assert_that(res.operator std::pair<size_t, std::string>() == value);
 
         //jl_eval_string("test = undef");
@@ -451,7 +460,7 @@ int main()
     Test::test("make_new_tuple", []() {
 
         std::tuple<size_t, std::string, int> value = {2, "abc", -1};
-        auto res = State::new_named_tuple("test", std::get<0>(value), std::get<1>(value), std::get<2>(value));
+        auto res = Main.new_tuple("test", std::get<0>(value), std::get<1>(value), std::get<2>(value));
         Test::assert_that(res.operator std::tuple<size_t, std::string, int>() == value);
 
         //jl_eval_string("test = undef");
@@ -466,7 +475,7 @@ int main()
         )");
 
         auto hold = Proxy(jl_eval_string("return StructType([99, 2, 3, 4])"), nullptr);
-        State::collect_garbage();
+        collect_garbage();
         Test::assert_that(((int) hold["any"][0]) == 99);
     });
 
@@ -511,7 +520,7 @@ int main()
             auto outer = Main["instance"];
             inner = std::make_unique<Proxy>(outer["_inner"]["_field"]);
         }
-        State::collect_garbage();
+        collect_garbage();
 
         Test::assert_that((bool) inner.get());
     });
@@ -580,7 +589,7 @@ int main()
 
     Test::test("proxy reject as non-struct", [](){
 
-        State::safe_eval(R"(
+        Main.safe_eval(R"(
             struct NewStructType
                 _field
                 NewStructType() = new(true)
@@ -613,7 +622,7 @@ int main()
 
     Test::test("proxy fieldnames", [](){
 
-        State::safe_eval(R"(
+        Main.safe_eval(R"(
 
             struct FieldStruct
                 _a
@@ -622,7 +631,7 @@ int main()
             end
         )");
 
-        Proxy proxy = State::safe_eval("return FieldStruct");
+        Proxy proxy = Main.safe_eval("return FieldStruct");
         auto names = proxy.get_field_names();
 
         Test::assert_that(names.at(0) == "_a" and names.at(1) == "_b" and names.at(2) == "_☻");
@@ -641,7 +650,7 @@ int main()
         Test::assert_that(jl_unbox_int64(jl_eval_string("variable[1]")) == 9999);
 
 
-        auto non_mutating_proxy = State::eval("return variable");
+        auto non_mutating_proxy = Main.safe_eval("return variable");
         non_mutating_proxy = 8888;
 
         Test::assert_that(non_mutating_proxy.operator Int64() == 8888);
@@ -650,7 +659,7 @@ int main()
 
     Test::test("proxy mutate unnamed member", [](){
 
-        State::safe_eval(R"(
+        Main.safe_eval(R"(
 
             mutable struct UnnamedMemberStruct
                 _field::Vector{Any}
@@ -660,14 +669,14 @@ int main()
             instance = UnnamedMemberStruct([1, 2, 3, 4])
         )");
 
-        auto unnamed_vector = State::safe_eval("return vector");
+        auto unnamed_vector = Main.safe_eval("return vector");
         auto uv_a = unnamed_vector[0];
         auto uv_b = uv_a[0];
         uv_b = '?';
 
         Test::assert_that((char) unnamed_vector[0][0] == '?');
 
-        auto unnamed_instance = State::safe_eval("return instance");
+        auto unnamed_instance = Main.safe_eval("return instance");
         auto ui_a = unnamed_instance["_field"];
         auto ui_b = ui_a[0];
         ui_b = 999;
@@ -677,7 +686,7 @@ int main()
 
     Test::test("proxy detach update", []()
     {
-        State::safe_eval(R"(
+        Main.safe_eval(R"(
 
         mutable struct Detach
 
@@ -689,7 +698,7 @@ int main()
 
         auto proxy = Main["instance"];
 
-        State::safe_eval("instance = 9999");
+        Main.safe_eval("instance = 9999");
 
         Test::assert_that((size_t) proxy["_field"] == 123);
 
@@ -700,21 +709,21 @@ int main()
 
     Test::test("proxy make unnamed", [](){
 
-        State::eval("var = [1, 2, 3, 4]");
+        jluna::safe_eval("var = [1, 2, 3, 4]");
         auto named = Main["var"];
 
         named[0] = 9999;
-        Test::assert_that(State::eval("return var[1]").operator int() == 9999);
+        Test::assert_that(Main.safe_eval("return var[1]").operator int() == 9999);
 
         named = named.as_unnamed();
         named[0] = 0;
-        Test::assert_that(State::eval("return var[1]").operator int() == 9999);
+        Test::assert_that(Main.safe_eval("return var[1]").operator int() == 9999);
         Test::assert_that(named[0].operator int() == 0);
     });
 
     Test::test("proxy reject immutable", [](){
 
-        auto string_proxy = State::eval("return \"string\"");
+        auto string_proxy = Main.safe_eval("return \"string\"");
         auto first = string_proxy[0];
 
         Test::assert_that(first.operator char() == 's');
@@ -731,7 +740,7 @@ int main()
 
         Test::assert_that(thrown);
 
-        State::safe_eval(R"(
+        Main.safe_eval(R"(
 
             struct ImmutableStructType
                 _field;
@@ -763,7 +772,7 @@ int main()
 
     Test::test("proxy cast", []() {
 
-        State::safe_eval(R"(
+        Main.safe_eval(R"(
             symbol = Symbol("")
             array = [1, 2, 3, 4]
             type = Type
@@ -778,7 +787,7 @@ int main()
 
     Test::test("array: ctor", [](){
 
-        State::safe_eval("vector = Int32[999, 2, 3, 4, 5]");
+        Main.safe_eval("vector = Int32[999, 2, 3, 4, 5]");
         Vector<int> vec = Main["vector"];
 
         Test::assert_that(vec.at(0).operator int() == 999);
@@ -794,7 +803,7 @@ int main()
 
     Test::test("array: range index", [](){
 
-        auto vec = Array<Int64, 1>(State::safe_eval("return collect(Int64(1):100)"), nullptr);
+        auto vec = Array<Int64, 1>(Main.safe_eval("return collect(Int64(1):100)"), nullptr);
 
         const auto subvec = vec[{12, 19, 99, 2}];
 
@@ -806,7 +815,7 @@ int main()
         //Test::assert_that(false);
         try
         {
-            Array<size_t, 1> arr = State::eval(R"(return ["abc", "def"])");
+            Array<size_t, 1> arr = jluna::safe_eval(R"(return ["abc", "def"])");
             arr.at(0) = "string";
         }
         catch(...)
@@ -815,21 +824,21 @@ int main()
 
     Test::test("array: front/back", []()
     {
-        State::safe_eval("vector = [999, 2, 3, 4, 666]");
+        Main.safe_eval("vector = [999, 2, 3, 4, 666]");
         Array1d vec = Main["vector"];
         Test::assert_that(vec.front().operator int() == 999 and vec.back().operator int() == 666);
     });
 
     Test::test("array: empty", []()
     {
-        State::safe_eval("vector = []");
+        Main.safe_eval("vector = []");
         Array1d vec = Main["vector"];
         Test::assert_that(vec.empty());
     });
 
     Test::test("array: Nd at", [](){
 
-        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
+        Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d vec = Main["array"];
 
         static auto getindex = [&](size_t a, size_t b, size_t c) -> size_t
@@ -849,7 +858,7 @@ int main()
     });
 
     Test::test("array: out of range", [](){
-        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
+        Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d arr = Main["array"];
 
         static auto test = [&](size_t a, size_t b, size_t c) -> bool
@@ -874,7 +883,7 @@ int main()
 
     Test::test("array_iterator: +/-", [](){
 
-        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
+        Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d arr = Main["array"];
 
         auto it = arr.begin();
@@ -891,12 +900,12 @@ int main()
         // check behavior if owner proxy gets reassigned during iteration
         // unlike proxy, should segfault
 
-        State::safe_eval("vec = collect(1:20)");
+        Main.safe_eval("vec = collect(1:20)");
         Array1d arr = Main["vec"];
         auto it = arr.begin();
         while (it++ != arr.end());
 
-        State::safe_eval("vec = [1, 2, 3, 4, 5]");
+        Main.safe_eval("vec = [1, 2, 3, 4, 5]");
 
         bool thrown = false;
         try
@@ -913,7 +922,7 @@ int main()
 
     Test::test("array_iterator: comparison", []()
     {
-        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
+        Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d arr = Main["array"];
 
         auto a = arr.begin();
@@ -927,7 +936,7 @@ int main()
 
     Test::test("array_iterator: cast to value", [](){
 
-        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
+        Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d arr = Main["array"];
 
         bool thrown = false;
@@ -946,16 +955,18 @@ int main()
 
     Test::test("array_iterator: cast to proxy", [](){
 
-        State::safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
+        Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         Array3d arr = Main["array"];
 
         auto it = arr.at(0, 0, 0);
         Proxy as_proxy = it;
         as_proxy = 999;
-        Test::assert_that(State::eval("return array")[0].operator int() == 999);
+        Test::assert_that(Main.safe_eval("return array")[0].operator int() == 999);
     });
 
-    Test::test("array: comprehension", [](){
+     */
+
+    Test::test("array: comprehension", []() {
 
         auto arr = Array<Int64, 1>(jl_eval_string("return collect(0:10)"));
         auto vec = arr["(i for i in 0:9 if i % 2 == 0)"_gen];
@@ -971,7 +982,7 @@ int main()
 
     Test::test("vector: insert", [](){
 
-        State::safe_eval("vector = UInt64[1, 2, 3, 4]");
+        Main.safe_eval("vector = UInt64[1, 2, 3, 4]");
         Vector<size_t> vec = Main["vector"];
 
         vec.insert(0, 16);
@@ -980,7 +991,7 @@ int main()
 
     Test::test("vector: erase", [](){
 
-        State::safe_eval("vector = UInt64[1, 99, 3, 4]");
+        Main.safe_eval("vector = UInt64[1, 99, 3, 4]");
         Vector<size_t> vec = Main["vector"];
 
         vec.erase(0);
@@ -988,7 +999,7 @@ int main()
     });
 
     Test::test("vector: append", [](){
-        State::safe_eval("vector = UInt64[1, 1, 1, 1]");
+        Main.safe_eval("vector = UInt64[1, 1, 1, 1]");
         Vector<size_t> vec = Main["vector"];
 
         vec.push_front(999);
@@ -1046,7 +1057,7 @@ int main()
             return jl_box_int64(as_int);
         });
 
-        State::safe_eval("@assert cppcall(:test, 100) == 111");
+        Main.safe_eval("@assert cppcall(:test, 100) == 111");
     });
 
     Test::test("C: not registered", [](){
@@ -1054,7 +1065,7 @@ int main()
         bool thrown = false;
         try
         {
-            State::safe_eval("cppcall(:unnamed)");
+            Main.safe_eval("cppcall(:unnamed)");
         }
         catch (...)
         {
@@ -1075,7 +1086,7 @@ int main()
 
         try
         {
-            State::safe_eval("cppcall(:test)");
+            Main.safe_eval("cppcall(:test)");
         }
         catch (...)
         {
@@ -1098,9 +1109,9 @@ int main()
             try
             {
                 if (e == "zero")
-                    State::safe_eval("cppcall(:" + e + ", 123)");
+                    Main.safe_eval("cppcall(:" + e + ", 123)");
                 else
-                    State::safe_eval("cppcall(:" + e + ")");
+                    Main.safe_eval("cppcall(:" + e + ")");
             }
             catch (JuliaException& e)
             {
@@ -1154,7 +1165,7 @@ int main()
         auto type = Type(jl_nothing_type);
         Test::assert_that(type.operator _jl_datatype_t *() == jl_nothing_type);
 
-        type = Type::construct_from<std::vector<int>>();
+        type = to_julia_type<std::vector<size_t>>::type();
     });
 
     auto test_type = []<typename T>(Type& a, T b) {
@@ -1236,7 +1247,7 @@ int main()
 
     Test::test("Type: get_parameters", [](){
 
-        State::safe_eval(R"(
+        Main.safe_eval(R"(
             struct aiszdbla{T <: Integer, U}
             end
         )");
@@ -1254,7 +1265,7 @@ int main()
 
     Test::test("Type: get_fields", [](){
 
-        State::safe_eval(R"(
+        Main.safe_eval(R"(
             struct aslaiu
                 _a::Integer
                 _b
@@ -1274,21 +1285,21 @@ int main()
 
     Test::test("Type: is_primitive", [](){
 
-        State::safe_eval("primitive type PrimitiveType 16 end");
+        Main.safe_eval("primitive type PrimitiveType 16 end");
         Type t = Main["PrimitiveType"];
         Test::assert_that(t.is_primitive());
         Test::assert_that(not Array_t.is_primitive());
     });
 
     Test::test("Type: is_struct_type", [](){
-        State::safe_eval("struct asidblasiu end");
+        Main.safe_eval("struct asidblasiu end");
         Type t = Main["asidblasiu"];
         Test::assert_that(t.is_struct_type());
         Test::assert_that(not Bool_t.is_struct_type());
     });
 
     Test::test("Type: is_declared_mutable", [](){
-        State::safe_eval("mutable struct asdbas end");
+        Main.safe_eval("mutable struct asdbas end");
         Type t = Main["asdbas"];
         Test::assert_that(t.is_declared_mutable());
         Test::assert_that(not Bool_t.is_declared_mutable());
@@ -1300,7 +1311,7 @@ int main()
     });
 
     Test::test("Type: is_singleton", [](){
-        State::safe_eval("struct asdiubasldiba end");
+        Main.safe_eval("struct asdiubasldiba end");
         Type t = Main["asdiubasldiba"];
         Test::assert_that(t.is_singleton());
         Test::assert_that(not Module_t.is_singleton());
@@ -1313,15 +1324,15 @@ int main()
 
     Test::test("Type: is_abstract_ref_type", [](){
 
-        auto t = Type(State::safe_eval("return Ref{AbstractFloat}")).is_abstract_ref_type();
+        auto t = Type(Main.safe_eval("return Ref{AbstractFloat}")).is_abstract_ref_type();
         Test::assert_that(AbstractChar_t.is_abstract_type());
         Test::assert_that(not Bool_t.is_abstract_type());
     });
 
     Test::test("Type: is_typename", [](){
 
-        Test::assert_that(Array_t.is_typename("Array"));
-        Test::assert_that(Array_t.is_typename(Array_t));
+        Test::assert_that(Array_t.typename_is("Array"));
+        Test::assert_that(Array_t.typename_is(Array_t));
     });
 
 
@@ -1395,7 +1406,6 @@ int main()
 
 
     Test::conclude();
-    */
 }
 
 

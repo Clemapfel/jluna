@@ -1,4 +1,28 @@
 """
+`safe_call(::Function, args...) ::Tuple{Any, Bool, Exception, String)`
+
+safely call any function, while forwarding any exception that may have occurred
+"""
+function safe_call(f::Function, args...)
+
+    res::Any = undef
+
+    backtrace::String = ""
+    exception_occurred::Bool = false
+    exception::Union{Exception, UndefInitializer} = undef
+
+    try
+        res = f(args...)
+    catch e
+        exception = e
+        backtrace = sprint(Base.showerror, exception, catch_backtrace())
+        exception_occurred = true
+    end
+
+    return (res, exception_occurred, exception, backtrace)
+end
+
+"""
 `dot(::Array, field::Symbol) -> Any`
 
 wrapped dot operator
@@ -225,10 +249,79 @@ function get_value_type_of_array(_::Array{T}) ::Type where T
 end
 
 """
-`new_empty_ref() -> Ref{Any}(undef)`
+`new_vector(::Integer, ::T) -> Vector{T}`
+
+create vector by deducing argument type
 """
-function new_ref()
-    return Ref{Any}()
+function new_vector(size::Integer, _::T) where T
+    return Vector{T}(undef, size)
+end
+
+"""
+`new_vector(::Integer, ::T) -> Vector{T}`
+
+create vector by deducing argument type
+"""
+function new_vector(size::Integer, type::Type)
+    return Vector{type}(undef, size)
+end
+
+"""
+`new_complex(:T, :T) -> Complex{T}`
+
+wrap complex ctor
+"""
+function new_complex(real::T, imag::T) ::Complex{T} where T
+    return Complex{T}(real, imag)
+end
+
+"""
+`invoke(function::Any, arguments::Any...) -> Any`
+
+wrap function call for non-function objects
+"""
+function invoke(x::Any, args...) ::Any
+    return x(args...)
+end
+
+"""
+`create_or_assign(::Symbol, ::T) -> T`
+
+assign variable in main, or if none exist, create it and assign
+"""
+function create_or_assign(symbol::Symbol, value::T) ::T where T
+
+    return Main.eval(Expr(:(=), symbol, value))
+end
+
+"""
+`serialize(<:AbstractDict{T, U}) -> Vector{Pair{T, U}}`
+
+transform dict into array
+"""
+function serialize(x::T) ::Vector{Pair{Key_t, Value_t}} where {Key_t, Value_t, T <: AbstractDict{Key_t, Value_t}}
+
+    out = Vector{Pair{Key_t, Value_t}}()
+    for e in x
+        push!(out, e)
+    end
+    return out;
+end
+
+"""
+`serialize(::Set{T}) -> Vector{T}`
+
+transform dict into array
+"""
+function serialize(x::T) ::Vector{U} where {U, T <: AbstractSet{U}}
+
+    out = Vector{U}()
+
+    for e in x
+        push!(out, e)
+    end
+
+    return out;
 end
 
 """

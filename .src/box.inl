@@ -126,7 +126,7 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
     unsafe::Value* box(T value)
     {
-        static jl_function_t* complex = unsafe::get_function("jluna"_sym, "make_complex"_sym);
+        static jl_function_t* complex = unsafe::get_function("jluna"_sym, "new_complex"_sym);
         return safe_call(complex, box<Value_t>(value.real()), box<Value_t>(value.imag()));
     }
 

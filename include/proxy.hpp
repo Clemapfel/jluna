@@ -104,7 +104,7 @@ namespace jluna
             /// @returns name as string
             std::string get_name() const;
 
-            /// @brief if proxy is a value, get fieldnames of typeof(value), if proxy is a type, get fieldnames of itself
+            /// @brief if proxy is not a type value, get the fields of the proxies types. If proxy is already a type, get fieldnames of itself
             /// @returns vector of strings
             std::vector<std::string> get_field_names() const;
 

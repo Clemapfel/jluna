@@ -7,7 +7,7 @@ module _cppcall
         State() = new((), nothing)
     end
 
-    _library_name = "<call State::initialize before using cppcall>"
+    _library_name = "<call jluna::initialize before using cppcall>"
     _state = Base.Ref{_cppcall.State}(State())
 
     """
