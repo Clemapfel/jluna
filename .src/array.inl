@@ -113,16 +113,12 @@ namespace jluna
     Vector<V> Array<V, R>::operator[](const GeneratorExpression& gen) const
     {
         gc_pause;
-        auto* out = unsafe::new_array((unsafe::Value*) to_julia_type<V>::type(), gen.size());
-        auto* me = operator jl_array_t*();
+        auto res = Vector<V>();
+        res.reserve(gen.size());
 
-        {
-            size_t i = 0;
-            for (auto index : gen)
-                jl_arrayset(out, jl_arrayref(me, unbox<size_t>(index)), i++);
-        }
+        for (auto it : gen)
+            res.push_back(this->operator[](unbox<size_t>(it)));
 
-        auto res = Vector<V>((unsafe::Value*) out);
         gc_unpause;
         return res;
     }
@@ -266,6 +262,12 @@ namespace jluna
     bool Array<V, R>::empty() const
     {
         return reinterpret_cast<const jl_array_t*>(this->operator const unsafe::Value*())->length == 0;
+    }
+
+    template<Boxable V, size_t R>
+    void Array<V, R>::reserve(size_t n)
+    {
+        jl_array_sizehint(reinterpret_cast<jl_array_t*>(this->operator unsafe::Value*()), n);
     }
 
     // ###

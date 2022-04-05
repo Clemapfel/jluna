@@ -137,6 +137,10 @@ namespace jluna
             /// @returns true if 0 element, false otherwise
             bool empty() const;
 
+            /// @brief call Base.sizehint!, allocates array to be of size
+            /// @param target_size
+            void reserve(size_t);
+
             /// @brief cast to unsafe::Value*
             using Proxy::operator unsafe::Value*;
 

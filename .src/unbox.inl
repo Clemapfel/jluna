@@ -328,7 +328,7 @@ namespace jluna
     T unbox(unsafe::Value* value)
     {
         gc_pause;
-        auto* out = detail::unbox_tuple_pre(value, T());
+        auto out = detail::unbox_tuple_pre(value, T());
         gc_unpause;
         return out;
     }

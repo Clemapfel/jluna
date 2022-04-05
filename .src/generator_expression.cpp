@@ -33,6 +33,7 @@ namespace jluna
 
     GeneratorExpression::GeneratorExpression(unsafe::Value* val)
     {
+        gc_pause;
         if (_iterate == nullptr)
             _iterate = jl_get_function(jl_base_module, "iterate");
 
@@ -41,7 +42,6 @@ namespace jluna
 
         static jl_function_t* length = unsafe::get_function("jluna"_sym, "get_length_of_generator"_sym);
 
-        gc_pause;
         _length = jl_unbox_int64(jl_call1(length, get()));
         forward_last_exception();
         gc_unpause;

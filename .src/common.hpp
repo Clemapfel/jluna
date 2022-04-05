@@ -50,7 +50,10 @@ namespace jluna::detail
 
     inline bool is_equal(unsafe::Value* a, unsafe::Value* b)
     {
+        gc_pause;
         static auto* equals = unsafe::get_function(jl_base_module, "=="_sym);
-        return jl_unbox_bool(unsafe::call(equals, a, b));
+        auto out = a == b or jl_unbox_bool(safe_call(equals, a, b));
+        gc_unpause;
+        return out;
     }
 }
