@@ -105,8 +105,21 @@ namespace jluna
 
     unsafe::Value* safe_eval_file(const std::string& path, unsafe::Module* module)
     {
-        static auto* include = unsafe::get_function(jl_base_module, "include"_sym);
-        assert(false && "TODO");
+        unsafe::Value* out = nullptr;
+        auto* jl_string = box<std::string>(path);
+        auto jl_string_id = unsafe::gc_preserve(jl_string);
+
+        static auto* main_include = unsafe::get_function(jl_main_module, "include"_sym);
+        if (module == jl_main_module)
+            out = safe_call(main_include, jl_string);
+        else
+        {
+            auto* include = unsafe::get_function(module, "include"_sym);
+            out = safe_call(include, jl_string);
+        }
+
+        unsafe::gc_release(jl_string_id);
+        return out;
     }
 
     void collect_garbage()
