@@ -46,3 +46,317 @@ int main()
 Where `#include <jluna.hpp>` makes all of jlunas functionality available to the user.
 
 ---
+
+### Executing Julia Code
+
+Similarly to using the REPL, we can execute an arbitrary piece of code by supplying a string to `safe_eval`
+
+```cpp
+Main.safe_eval("println(\"hello jluna\")");
+```
+```
+hello jluna
+```
+
+Where `Main` is a pre-defined jluna object representing the `Main` module. 
+
+The function is called *safe*_eval, because it forwards any exceptions that may have occurred during execution of the string. If an exception indeed occurred, it is forwarded to C++ by `safe_eval` throwing a `jluna::JuliaException`:
+
+```
+Main.safe_eval("sqrt(-1)");
+```
+```
+terminate called after throwing an instance of 'jluna::JuliaException'
+  what():  [JULIA][EXCEPTION] DomainError with -1.0:
+sqrt will only return a complex result if called with a complex argument. Try sqrt(Complex(x)).
+Stacktrace:
+ [1] throw_complex_domainerror(f::Symbol, x::Float64)
+   @ Base.Math ./math.jl:33
+ [2] sqrt
+   @ ./math.jl:567 [inlined]
+ [3] sqrt(x::Int64)
+   @ Base.Math ./math.jl:1221
+ [4] top-level scope
+   @ none:1
+ [5] eval
+   @ ./boot.jl:373 [inlined]
+ [6] eval(m::Module, x::Expr)
+   @ Base ./Base.jl:68
+ [7] safe_call(::Function, ::Module, ::Vararg{Any})
+   @ Main.jluna ./none:18
+
+signal (6): Aborted
+in expression starting at none:0
+gsignal at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+abort at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+unknown function (ip: 0x7f39c3dbaa30)
+unknown function (ip: 0x7f39c3dc65db)
+_ZSt9terminatev at /lib/x86_64-linux-gnu/libstdc++.so.6 (unknown line)
+__cxa_throw at /lib/x86_64-linux-gnu/libstdc++.so.6 (unknown line)
+safe_call<_jl_module_t*, _jl_value_t*> at /home/clem/Workspace/jluna/.src/safe_utilities.inl:41
+safe_eval at /home/clem/Workspace/jluna/.src/safe_utilties.cpp:103
+main at /home/clem/Workspace/jluna/.benchmark/main.cpp:21
+__libc_start_main at /lib/x86_64-linux-gnu/libc.so.6 (unknown line)
+_start at /home/clem/Workspace/jluna/cmake-build-debug/jluna_benchmark (unknown line)
+Allocations: 1612085 (Pool: 1611171; Big: 914); GC: 2
+
+Process finished with exit code 134 (interrupted by signal 6: SIGABRT)
+```
+
+Along with the exception, we also get the full stacktrace and where line of C++ code where the execution occurred. 
+
+We can execute an entire filed, using `safe_eval_file`. This function calls the Julia-side function `Main.include` using the path we provided it:
+
+```cpp
+Main.safe_eval_file("path/to/julia_file.jl");
+```
+
+If we want to execute more than just a single line of code, it's very helpful to use C++s raw string literal:
+
+```cpp
+Main.safe_eval_file(R"(
+    println("first line");
+    println("second line");
+)");
+```
+```
+first line
+second line
+```
+> **C++ Hint**: Any characters in the text in-between the `()` of the raw string literal are automatically escaped if necessary. If we wanted to do the above without `R"()"`, we would have to escape the `"` and newline like so:
+> ```jluna::safe_eval_file("println(\"first line\");\nprintln(\"second line\")")
+
+
+### Getting the Result of Julia Code
+
+Often, we want to access whatever result a piece of code returns. To do this, we simply capture the result of `safe_eval` using a C++-side variable:
+
+```cpp
+Int64 result = Main.safe_eval("return 1234");
+std::cout << result << std::endl;
+```
+```
+1234
+```
+> **C++ Hint**: `std::cout << x << std::endl` is C++s version to Julias `println(x)`
+
+Where `Int64` is a type alias of `long int`. Most of the C++ primitive types have been alias in jluna, such that their name corresponds to the Julia-side name. `Float32` instead of `float`, `UInt32` instead of `unsigned int`, etc..
+
+We will learn more about this soon, for now, be aware that we have to manually type the C++-side variable that captures the result, rather than using `auto`. This is because jluna tries its hardest to convert any Julia type to the C++ type, even if they don't necessarily match:
+
+```
+UInt64 result = Main.safe_eval("return Char(14)");
+std::cout << result << std::endl;
+```
+```
+14
+```
+
+If the Julia-side type can be `Base.convert`ed to the declared C++-side type, jluna will do so implicitly, which is highly convenient.
+
+### Executing Julia Code in Module Scope
+
+So far, we have used `Main.safe_eval`, which evaluates its argument in `Main` scope. Sometimes this may not be desired, consider the following example:
+
+```cpp
+    Main.safe_eval(R"(
+    module MyModule
+        var = 1234
+    end
+)");
+Main.safe_eval("var = 9999;");
+Main.safe_eval("println(MyModule.var)");
+```
+```
+1234
+```
+
+What happened here? Instead of assigning the variable `MyModule.var`, we actually created a new variable `Main.var` in Main scope. This is because the line `var = 9999` was executed in Main scope. To solve this, we could just prefix `var` with the proper `MyModule.var`, however this may not always be the most convenient. If we want to modify multiple things in `MyModule` scope, we can instead do:
+
+```cpp
+Module my_module = Main.safe_eval("return MyModule");
+my_module.safe_eval("var = 777");
+
+Main.safe_eval("println(MyModule.var)");
+```
+```
+777
+```
+
+Where we have to explicitely declared the C++-side variable `my_module` to be of type `jluna::Module`. By using a different module other than `Main`, we can run code in that particular modules scope. This is especially useful for accessing variables:
+
+```cpp
+auto println = Base.safe_eval("return println");
+println("hello Base");
+```
+```
+hello Base
+```
+
+Where it is important that we instead declared the C++-side `println` to be of type `auto`. In C++, declaring a variable to be of type `auto` makes it, so its type is deduced based on the right hand side of the assignment. By using `auto`, the type of `println` was deduced to a jluna type, that supports the call operator `()`, which means we can now use it like a function, which we will now learn more about.
+
+### Calling Julia Functions
+
+While executing code using `safe_eval` is convenient, it has a significant performance impact. This is, because Julia needs to first `Meta.parse` the string, then evaluate the resulting expression.
+
+> **Julia hint**: Meta.parse takes a string and treats it as a line of code. It returns an object of type `Expr`, which is a closer representation of code, than strings. To learn more about expressions, consider consulting the [official manual page about metaprogramming](https://docs.julialang.org/en/v1/manual/metaprogramming/)
+
+Instead, users are encouraged to execute any given piece of Julia code by using a *function*. We can get a function (once) by using `save_eval("return function_name")`, then use that function over and over, at no performance cost compared to using only Julia:
+
+```cpp
+Main.safe_eval("f(x) = x^x");
+auto f = Main.safe_eval("return f");
+Int64 result = f(12);
+std::cout << result << std::endl;
+```
+```
+8916100448256
+```
+
+Calling functions using `()` is `safe`, meaning any exception that may occurr is forwarded to C++, just like with safe_eval:
+
+```cpp
+f(-2);
+```
+```
+terminate called after throwing an instance of 'jluna::JuliaException'
+  what():  [JULIA][EXCEPTION] DomainError with -2:
+Cannot raise an integer x to a negative power -2.
+Make x or -2 a float by adding a zero decimal (e.g., 2.0^-2 or 2^-2.0 instead of 2^-2), or write 1/x^2, float(x)^-2, x^float(-2) or (x//1)^-2
+Stacktrace:
+    (...)
+```
+
+In jluna, Julia-side functions can be used with both Julia-side and C++-side arguments. They can even be freely mixed:
+
+```cpp
+auto println = Main.safe_eval("return println");
+println("cpp side string", "\n", Main.safe_eval("return Main"), "\n", Main.safe_eval("return [1, 2, 3]"));
+```
+```
+cpp side string
+Main
+[1, 2, 3]
+```
+
+Where `"cpp side string"` is a string on the C++-side, while `Main` and `[1, 2, 3]` are wholly Julia-side. 
+
+The above example illustrates how using `safe_eval("return x")` can be quite clumsy syntactically. To address this, jluna offers the much more elegant `operator[](std::string)`. 
+
+> **C++ Hint**: `operator[](std::string)` is a function that is called by using `x[<string here>]`, where x is a value that supports the operator.
+
+Rewriting the above using it, we get:
+
+```cpp
+auto println = Main["println"];
+println("cpp side string", "\n", Main["Main"], "\n", Main.safe_eval("return [1, 2, 3]"));
+```
+
+Note how we could not replace `Main.safe_eval("return [1, 2, 3]")` with `Main["[1, 2, 3]"]`, the latter of which is **invalid**. This is, because `operator[](std::string)` can only access already defined variables. Because both `println` and `Main` already have a name Julia-side, we can access them using `operator[]`. `[1, 2, 3]` is not yet bound to a variable, making it a *temporary*. This means, we can only create it using the familiar `safe_eval("return x")` syntax.
+
+### Accessing Julia Struct Fields
+
+We learned how to access a named variable in a module, by using `jluna::Module::operator[](std::string)`. This is convenient, however modules are not the only jluna type that supports `operator[]`. 
+
+Let's say we have the following structtype:
+
+> **Julia hint**: A structtype is any type declared using `struct` or `mutable struct`
+
+```cpp
+Main.safe_eval(R"(
+    mutable struct MyStruct
+       _field::Int64
+    end
+    
+    jl_instance = MyStruct(9876);
+)");
+auto cpp_instance = Main["jl_instance"];
+```
+
+Here, we defined a new structtype `MyStruct` which has a single field `_field`. We then created a new Julia-side variable, `jl_instance`, which we bound a new `MyStruct` to. We then accessed the Julia-side `jl_instance`, using `Main["jl_instance"]`. We were able to use `operator[]` here, because there was a proper Julia-side variable.
+
+We can access the field of `cpp_instance` like so:
+
+```cpp
+Int64 field_value = cpp_instance["_field"];
+std::cout << field_value << std::endl;
+```
+```
+9876
+```
+
+### Mutating Julia-side Values
+
+So far, we used `operator[]` to access Julia-side values, be it variables in a module or fields of a structtype. However, we can actually *mutate* them like so:
+
+> **Hint**: To mutate a variable means to change its value *without* changing its name
+
+```cpp
+Main.safe_eval(R"(
+    mutable struct MyStruct
+       _field::Int64
+    end
+    
+    jl_instance = MyStruct(9876);
+)");
+
+Main["jl_instance"]["_field"] = 666;
+
+Main.safe_eval("println(jl_instance._field)");
+```
+```
+666
+```
+
+Let's go through this step-by-step. We have the Julia-side variable `jl_instance`. We can access it by using `Module::operator[]`:
+
+```cpp
+auto instance = Main["jl_instance"];
+```
+
+We then access the instances field:
+
+```cpp
+auto instance_field = instance["_field"];
+```
+
+The C++-side variable `instance_field`, here, directly refers to the Julia-side variable `Main.jl_instance._field`. That is, it manages the *variable*, not the *value*. Because of this, assigning `instance_field`, actually also assigns `Main.jl_instance._field`:
+
+```cpp
+auto instance = Main["jl_instance"];
+auto instance_field = instance["_field"];
+instance_field = 1234;
+
+Main.safe_eval("println(jl_instance._field)");
+```
+```
+1234
+```
+
+Or, in just one line:
+
+```cpp
+Main["jl_instance"]["_field"] = 1234;
+```
+
+Accessing and assigning the result of `operator[]` like this works for variables in Modules, fields of structs, and even elements of collections:
+
+```cpp
+Main.safe_eval("vec_var = [1, 2, 3, 4]");
+Main["vec_var"][0] = 9999;
+Main.safe_eval("println(vec_var)");
+```
+```
+[9999, 2, 3, 4]
+```
+
+> **Hint**: In C++, indices are 0-based. In Julia, they are 1-based. This can be quite confusing considering we are operating in both languages at the same time, however, we will learn more about this in the [section on arrays](TODO)
+
+## Proxies
+
+So far, we have learned how to do basic things like calling functions/code using jluna. In previous examples, you may have noticed that it was never explicitely said what the `auto` in a statement like `auto cpp_var = Main["julia var"]` deduces to. To fully understand how mutating and accessing variables, we need to talk about the most central feature of jluna: `jluna::Proxy`
+
+
+
+
+---

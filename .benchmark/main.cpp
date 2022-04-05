@@ -18,6 +18,21 @@ int main()
     initialize();
     Benchmark::initialize();
 
+Main.safe_eval(R"(
+    mutable struct MyStruct
+       _field::Int64
+    end
+
+    jl_instance = MyStruct(9876);
+)");
+
+auto it = Main["jl_instance"];
+auto f = it["_field"];
+f = 666;
+
+Main.safe_eval("println(jl_instance._field)");
+return 0;
+
     Benchmark::run_as_base("unsafe: Allocate Array C-API", n_reps, [](){
 
         volatile auto* array = jl_alloc_array_1d(jl_apply_array_type((jl_value_t*) jl_float64_type, 1), 50000);

@@ -27,6 +27,9 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 ---
 
 ### Showcase
+
+(If you are looking for examples showing basic usage, please instead consult the [manual](./docs/manual.md).)
+
 #### Access Julia-Side Values/Functions
 ```cpp
 // execute arbitrary strings with exception forwarding
@@ -146,17 +149,15 @@ NonJuliaType(["new"])
 Some of the many advantages `jluna` has over the C-API include:
 
 + expressive, generic syntax
-+ automatically detects and links julia
-+ call C++ functions from julia using any julia-type
++ automatically detects and links Julia during cmake
 + assigning C++-side proxies also mutates the corresponding variable julia-side
-+ any C++ type can be moved between Julia and C++. Any julia-type can be wrapped
++ any Julia or C++ type can be freely moved between the two
 + multi-dimensional, iterable array interface with julia-style indexing
-+ C++-side introspection, deeper than what is possible through only Julia
-+ fast! All code is considered performance-critical and was optimized for minimal overhead compared to the C-API
++ fast! All code is considered performance-critical and was optimized to achieve an overhead no larger than ~5%
 + julia-side values, including temporaries, are kept safe from the garbage collector
 + verbose exception forwarding, compile-time assertions
 + inline documentation for IDEs, for both C++ and Julia code 
-+ verbose manual, written by a human
++ verbose manual & documentation, written by a human
 + freely mix `jluna` and the C-API
 + And more!
 
@@ -165,9 +166,8 @@ Some of the many advantages `jluna` has over the C-API include:
 (in order of priority, highest first)
 
 + thread-safety, parallelization
-+ linear algebra wrapper, matrices
-+ expression proxies
-+ multiple julia states, save-states: restoring a previous julia state
+
+That's it, we're very close to version 1.0 already.
 ---
 
 ## Documentation
@@ -187,16 +187,14 @@ For `jluna` you'll need:
 + [**cmake 3.12**](https://cmake.org/download/) (or higher)
 + C++ Compiler (see below)
 
-Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang++-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are fully supported. g++-11 is the primary compiler used for development of `jluna` and is thus recommended. MSVC is untested but may work.
-
-> *Building on Windows is currently untested, however no part of `jluna`, julia, or cmake is explicitly unix-dependent. This suggests, compilation may work without problem using either clang (recommended) or MSVC.
+Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang++-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are fully supported. g++-11 is the primary compiler used for development of `jluna` and is thus recommended. MSVC 19.32 seems to work, however stability remains untested.
 
 ---
 
 ## [Installation & Troubleshooting](./docs/installation.md)
 
 
-> A step-by-step guide intended for users unfamiliar with cmake is available [here](./docs/installation.md)
+> A step-by-step guide intended for users unfamiliar with cmake is available [here](./docs/installation.md).
 
 Execute, in any public directory
 
