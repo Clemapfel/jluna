@@ -162,6 +162,7 @@ namespace jluna
     inline Type Integer_t;
     inline Type LineNumberNode_t;
     inline Type Method_t;
+    inline Type Missing_t;
     inline Type Module_t;
     inline Type NTuple_t;
     inline Type NamedTuple_t;

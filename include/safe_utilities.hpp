@@ -9,6 +9,8 @@
 
 namespace jluna
 {
+    class Proxy;
+
     /// @brief manually set the C-adapter path
     void set_c_adapter_path(const std::string& path);
 
@@ -37,11 +39,22 @@ namespace jluna
     /// @returns proxy to result, if any
     unsafe::Value* safe_eval_file(const std::string& path, unsafe::Module* module = jl_main_module);
 
-
     /// @brief call julia-side println on values
     /// @param values
     template<IsJuliaValuePointer... Ts>
     void println(Ts...);
+
+    /// @brief get julia-side undef
+    /// @eturns value of type UndefInitializer, does not need to be preserved
+    unsafe::Value* undef();
+
+    /// @brief get julia-side nothing
+    /// @returns value of type Nothing, does not need to be preserved
+    unsafe::Value* nothing();
+
+    /// @brief get julia-side
+    /// @returns value of type Missing, does not need to be preserved
+    unsafe::Value* missing();
 
     /// @brief trigger the garbage collector
     void collect_garbage();

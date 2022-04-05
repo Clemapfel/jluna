@@ -114,12 +114,12 @@ namespace jluna::unsafe
 
     void gc_enable()
     {
-        jl_gc_enable(false);
+        jl_gc_enable(true);
     }
 
     void gc_disable()
     {
-        jl_gc_enable(true);
+        jl_gc_enable(false);
     }
 
     bool gc_is_enabled()

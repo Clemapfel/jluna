@@ -22,8 +22,6 @@ int main()
     initialize();
     Test::initialize();
 
-for (size_t i = 0; i < 100; ++i)
-{
     Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");
@@ -1390,8 +1388,6 @@ for (size_t i = 0; i < 100; ++i)
         Test::assert_that(backres01._field.size() == backres02._field.size());
         gc_unpause;
     });
-
-}
 
     Test::conclude();
 }

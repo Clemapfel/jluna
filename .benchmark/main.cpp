@@ -242,7 +242,7 @@ int main()
     _proxies.clear();
 
     /// ### (un)box: vector
-    
+
     Benchmark::run_as_base("C-API: box vector", n_reps, []()
     {
         auto vec = std::vector<size_t>();
@@ -261,17 +261,18 @@ int main()
 
         gc_unpause;
     });
-    
 
     Benchmark::run("jluna: box vector", n_reps, []()
     {
+        gc_pause;
         auto vec = std::vector<size_t>();
         vec.reserve(10000);
 
         for (size_t i = 0; i < 10000; ++i)
-            vec.push_back(generate_number<size_t>());
+            vec.push_back(generate_number<size_t>(0, 10000));
 
-        volatile auto* res = box<std::vector<size_t>>(vec);
+        auto* res = box<std::vector<size_t>>(vec);
+        gc_unpause;
     });
 
     Benchmark::run_as_base("C-API: unbox vector", n_reps, [](){
@@ -340,7 +341,6 @@ int main()
 
         gc_unpause;
     });
-    
 
     Benchmark::run("jluna: box string", n_reps, [](){
 

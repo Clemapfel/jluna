@@ -138,11 +138,12 @@ namespace jluna
     unsafe::Value* box(const T& value)
     {
         gc_pause;
-        auto* vector_t = jl_apply_array_type((unsafe::Value*) to_julia_type<Value_t>::type(), 1);
-        auto* out = jl_alloc_array_1d(vector_t, value.size());
-
+        auto* out = unsafe::new_array((unsafe::Value*) to_julia_type<Value_t>::type(), value.size());
         for (size_t i = 0; i < value.size(); ++i)
-            jl_arrayset(out, box<Value_t>(value.at(i)), i);
+        {
+            auto* topush = box<Value_t>(value.at(i));
+            jl_arrayset(out, topush, i);
+        }
 
         gc_unpause;
         return (unsafe::Value*) out;

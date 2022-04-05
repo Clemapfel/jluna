@@ -133,6 +133,23 @@ namespace jluna
         jl_call0(gc);
         jl_gc_enable(before);
     }
+
+    unsafe::Value* undef()
+    {
+        static auto* type = jl_eval_string("return UndefInitializer");
+        return jl_new_bits(type, nullptr);
+    }
+
+    unsafe::Value* nothing()
+    {
+        return jl_new_bits((unsafe::Value*) jl_nothing_type, nullptr);
+    }
+
+    unsafe::Value* missing()
+    {
+        static auto* type = jl_eval_string("return Missing");
+        return jl_new_bits(type, nullptr);
+    }
 }
 
 namespace jluna::detail
@@ -206,6 +223,7 @@ namespace jluna::detail
         LineNumberNode_t = Type(unroll("Core.LineNumberNode"));
         Method_t = Type(unroll("Core.Method"));
         Module_t = Type(unroll("Core.Module"));
+        Missing_t = Type(unroll("Base.Missing"));
         NTuple_t = Type(unroll("Core.NTuple"));
         NamedTuple_t = Type(unroll("Core.NamedTuple"));
         Nothing_t = Type(unroll("Core.Nothing"));
