@@ -15,7 +15,7 @@ std::vector<Proxy> _proxies;
 
 int main()
 {
-    State::initialize();
+    initialize();
     Benchmark::initialize();
 
     Benchmark::run_as_base("unsafe: Allocate Array C-API", n_reps, [](){
@@ -30,7 +30,7 @@ int main()
 
     Benchmark::run("unsafe: Allocate jluna::Array", n_reps, [](){
 
-        volatile auto array = jluna::Array<Float64, 1>(jl_eval_string("return [i for i in 1:50000]"));
+        volatile auto array = jluna::Array<Float64, 1>(jl_eval_string("return Float64[i for i in 1:50000]"));
     });
 
     Benchmark::run_as_base("unsafe: get_index C-API", n_reps, [](){
@@ -67,9 +67,9 @@ int main()
 
     Benchmark::run_as_base("unsafe: preserve through disable", n_reps, [](){
 
-        jl_gc_pause;
+        gc_pause;
         volatile auto* arr = jl_eval_string("return collect(1:1000)");
-        jl_gc_unpause;
+        gc_unpause;
     });
 
     Benchmark::run("unsafe: gc_preserve", n_reps, [](){
@@ -121,13 +121,10 @@ int main()
         volatile auto res = Main["temp"];
     });
 
-    Benchmark::conclude();
-    return 0;
-
     // pre-load proxy dict
     _proxies.reserve(3000);
     for (size_t i = 0; i < 3000; ++i)
-        _proxies.push_back(State::new_named_uint64(generate_string(16), generate_number<size_t>()));
+        _proxies.push_back(Main.new_uint64(generate_string(16), generate_number<size_t>()));
 
     // ### eval code as strings
 
@@ -148,22 +145,22 @@ int main()
     Benchmark::run("State::eval", n_reps, [](){
 
         auto name = generate_string(8);
-        State::eval(name + std::string(" = [i for i in 1:1000]"));
-        State::eval(name + std::string(" = undef"));
+        jluna::safe_eval(name + std::string(" = [i for i in 1:1000]"));
+        jluna::safe_eval(name + std::string(" = undef"));
     });
 
     Benchmark::run("State::safe_eval", n_reps, [](){
 
         auto name = generate_string(8);
-        State::safe_eval(name + std::string(" = [i for i in 1:1000]"));
-        State::safe_eval(name + std::string(" = undef"));
+        jluna::safe_eval(name + std::string(" = [i for i in 1:1000]"));
+        jluna::safe_eval(name + std::string(" = undef"));
     });
 
     Benchmark::run("Module::eval", n_reps, [](){
 
         auto name = generate_string(8);
-        Main.eval(name + std::string(" = [i for i in 1:1000]"));
-        Main.eval(name + std::string(" = undef"));
+        Main.safe_eval(name + std::string(" = [i for i in 1:1000]"));
+        Main.safe_eval(name + std::string(" = undef"));
     });
 
     Benchmark::run("Module::safe_eval", n_reps, [](){
@@ -175,7 +172,7 @@ int main()
 
     // ### calling functions
 
-    State::safe_eval(R"(
+    Main.safe_eval(R"(
         function f()
             out::Vector{Int64} = [0]
             for i in 2:1000
@@ -204,14 +201,6 @@ int main()
         volatile auto* out = jluna::safe_call(f);
     });
 
-    Benchmark::run("Proxy::call", n_reps, [](){
-
-        static jl_function_t* f = jl_get_function(jl_main_module, "f");
-        static auto proxy = Proxy(f);
-
-        volatile auto res = proxy.call();
-    });
-
     Benchmark::run("Proxy::safe_call", n_reps, [](){
 
         static jl_function_t* f = jl_get_function(jl_main_module, "f");
@@ -224,9 +213,9 @@ int main()
 
     Benchmark::run_as_base("C-API: allocate proxy", n_reps, []()
     {
-        jl_gc_pause;
+        gc_pause;
         volatile auto* res = box<std::string>(generate_string(16));
-        jl_gc_unpause;
+        gc_unpause;
     });
     
 
@@ -242,12 +231,12 @@ int main()
 
     Benchmark::run("State::new_unnamed", n_reps, []()
     {
-        volatile auto unnamed = State::new_unnamed_string(generate_string(16));
+        volatile auto unnamed = Main.new_string(generate_string(16));
     });
 
     Benchmark::run("State::new_named", n_reps, []()
     {
-        volatile auto named = State::new_named_string("name", generate_string(16));
+        volatile auto named = Main.new_string("name", generate_string(16));
     });
 
     _proxies.clear();
@@ -262,15 +251,15 @@ int main()
         for (size_t i = 0; i < 10000; ++i)
             vec.push_back(generate_number<size_t>());
 
-        jl_gc_pause;
+        gc_pause;
         static jl_function_t* make_vector = jl_get_function(jl_base_module, "Vector");
 
-        jl_array_t* out = (jl_array_t*) jl_call2(make_vector, jl_undef_initializer(), jl_box_uint64(vec.size()));
+        jl_array_t* out = (jl_array_t*) jl_call2(make_vector, Main.new_undef(""), jl_box_uint64(vec.size()));
 
         for (size_t i = 0; i < vec.size(); ++i)
             jl_arrayset(out, jl_box_uint64(vec.at(i)), i);
 
-        jl_gc_unpause;
+        gc_unpause;
     });
     
 
@@ -287,7 +276,7 @@ int main()
 
     Benchmark::run_as_base("C-API: unbox vector", n_reps, [](){
 
-        jl_gc_pause;
+        gc_pause;
         jl_array_t* vec = (jl_array_t*) jl_eval_string("Vector{UInt64}([i for i in 1:10000])");
 
         std::vector<size_t> out;
@@ -298,7 +287,7 @@ int main()
 
         volatile auto copy = out;
 
-        jl_gc_unpause;
+        gc_unpause;
     });
 
     Benchmark::run("jluna: unbox vector", n_reps, [](){
@@ -323,10 +312,10 @@ int main()
     Benchmark::run_as_base("C-API: unbox primitive", n_reps, [](){
 
         {
-            jl_gc_pause;
+            gc_pause;
             auto* val = jl_box_uint64(generate_number<size_t>());
             volatile size_t res = jl_unbox_uint64(val);
-            jl_gc_unpause;
+            gc_unpause;
         }
     });
 
@@ -342,14 +331,14 @@ int main()
 
     Benchmark::run_as_base("C-API: box string", n_reps, [](){
 
-        jl_gc_pause;
+        gc_pause;
         auto value = generate_string(32);
         volatile auto* res = jl_alloc_string(value.size());
 
         for (size_t i = 0; i < value.size(); ++i)
             jl_string_data(res)[i] = value.at(i);
 
-        jl_gc_unpause;
+        gc_unpause;
     });
     
 
@@ -363,7 +352,7 @@ int main()
         std::stringstream str;
         str << "return \"" << generate_string(32) << "\"" << std::endl;
         auto* jl_str = jl_eval_string(str.str().c_str());
-        size_t length = jl_length(jl_str);
+        size_t length = jl_string_len(jl_str);
 
         std::string res;
         res.reserve(length);
@@ -386,7 +375,7 @@ int main()
         for (size_t i = 0; i < 1000; ++i)
             map.insert({generate_number<size_t>(), generate_number<size_t>()});
 
-        jl_gc_pause;
+        gc_pause;
         static jl_function_t* make_pair = jl_get_function(jl_base_module, "Pair");
         static jl_function_t* make_map = jl_get_function(jl_base_module, "Dict");
 
@@ -399,7 +388,7 @@ int main()
         }
 
         volatile auto* out = jl_call1(make_map, (unsafe::Value*) vec);
-        jl_gc_unpause;
+        gc_unpause;
     });
 
     Benchmark::run("jluna: box map", n_reps, [](){
@@ -413,7 +402,7 @@ int main()
 
     Benchmark::run_as_base("C-API: unbox map", n_reps, [](){
 
-        jl_gc_pause;
+        gc_pause;
 
         auto* map = jl_eval_string("return Dict([Pair(i, i) for i in 1:1000])");
 
@@ -426,7 +415,7 @@ int main()
             if (jl_unbox_bool(jl_arrayref(slots, i)))
                 out.insert({jl_unbox_uint64(jl_arrayref(keys, i)), jl_unbox_uint64(jl_arrayref(vals, i))});
 
-        jl_gc_unpause;
+        gc_unpause;
     });
 
     Benchmark::run("jluna: unbox map", n_reps, [](){
@@ -441,10 +430,10 @@ int main()
 
         auto value = std::complex<float>(generate_number<float>(), generate_number<float>());
 
-        jl_gc_pause;
+        gc_pause;
         static jl_function_t* complex = jl_get_function(jl_base_module, "Complex");
         volatile auto* out = jl_call2(complex, jl_box_float32(value.real()), jl_box_float32(value.imag()));
-        jl_gc_unpause;
+        gc_unpause;
     });
 
     Benchmark::run("jluna: box complex", n_reps, [](){
@@ -475,7 +464,7 @@ int main()
         for (size_t i = 0; i < 10000; ++i)
             set.insert(generate_number<size_t>());
 
-        jl_gc_pause;
+        gc_pause;
         static jl_function_t* make_set = jl_get_function(jl_base_module, "Set");
         static jl_function_t* push = jl_get_function(jl_base_module, "push!");
 
@@ -484,7 +473,7 @@ int main()
         for (size_t e : set)
             jl_call2(push, out, jl_box_uint64(e));
 
-        jl_gc_unpause;
+        gc_unpause;
     });
 
     Benchmark::run("jluna: box set", n_reps, []()
@@ -499,7 +488,7 @@ int main()
 
     Benchmark::run_as_base("C-API: unbox set", n_reps, [](){
 
-        jl_gc_pause;
+        gc_pause;
         auto* value = jl_eval_string("Set{UInt64}([rand(UInt64) for _ in 1:100])");
         auto* dict = jl_get_nth_field(value, 0);
         auto* slots = (jl_array_t*) jl_get_nth_field(dict, 0);
@@ -511,7 +500,7 @@ int main()
             if (jl_unbox_bool(jl_arrayref(slots, i)))
                 out.insert(jl_unbox_uint64(jl_arrayref(keys, i)));
 
-        jl_gc_unpause;
+        gc_unpause;
     });
 
     Benchmark::run("jluna: unbox set", n_reps, [](){
@@ -524,13 +513,13 @@ int main()
 
     Benchmark::run_as_base("C-API: unbox pair", n_reps, [](){
 
-        jl_gc_pause;
+        gc_pause;
         auto* value = jl_eval_string("return Pair(rand(), rand())");
 
         volatile auto out = std::pair<float, float>();
         out.first = jl_unbox_float32(jl_get_nth_field(value, 0));
         out.second = jl_unbox_float32(jl_get_nth_field(value, 1));
-        jl_gc_unpause;
+        gc_unpause;
     });
 
     Benchmark::run("jluna: unbox pair", n_reps, [](){
@@ -541,12 +530,12 @@ int main()
 
     Benchmark::run_as_base("C-API: box pair", n_reps, [](){
 
-        jl_gc_pause;
+        gc_pause;
         auto value = std::make_pair(generate_number<float>(), generate_number<float>());
         static jl_function_t* pair = jl_get_function(jl_base_module, "Pair");
 
         volatile auto* out = jl_call2(pair, jl_box_float32(value.first), jl_box_float32(value.second));
-        jl_gc_unpause;
+        gc_unpause;
     });
 
     Benchmark::run("jluna: box pair", n_reps, [](){
@@ -559,7 +548,7 @@ int main()
 
     Benchmark::run_as_base("C-API: unbox tuple", n_reps, [](){
 
-        jl_gc_pause;
+        gc_pause;
         auto* value = jl_eval_string("return (rand(), rand(), rand(), rand())");
 
         auto out = std::tuple<float, float, float, float>();
@@ -568,7 +557,7 @@ int main()
         std::get<2>(out) = jl_unbox_float32(jl_get_nth_field(value, 2));
         std::get<3>(out) = jl_unbox_float32(jl_get_nth_field(value, 3));
 
-        jl_gc_unpause;
+        gc_unpause;
     });
 
     Benchmark::run("jluna: unbox tuple", n_reps, [](){
@@ -579,7 +568,7 @@ int main()
 
     Benchmark::run_as_base("C-API: box tuple", n_reps, [](){
 
-        jl_gc_pause;
+        gc_pause;
         auto value = std::make_tuple
         (
             generate_number<float>(),
@@ -594,7 +583,7 @@ int main()
             jl_box_float32(std::get<0>(value)),
             jl_box_float32(std::get<0>(value))
         );
-        jl_gc_unpause;
+        gc_unpause;
     });
 
     Benchmark::run("jluna: box tuple", n_reps, [](){
@@ -613,20 +602,20 @@ int main()
 
     Benchmark::run_as_base("C-API: hash", n_reps, [](){
 
-        auto gc = GCSentinel();
-
+        gc_pause;
         auto name = generate_string(16);
         auto* sym = jl_symbol(name.c_str());
 
         volatile size_t res = sym->hash;
+        gc_unpause;
     });
 
     Benchmark::run("jluna: hash", n_reps, [](){
 
-        auto gc = GCSentinel();
-
+        gc_pause;
         auto name = generate_string(16);
         volatile size_t res = c_adapter::hash(name);
+        gc_unpause;
     });
 
     /// ### lambda call overhead
@@ -645,7 +634,7 @@ int main()
             return out;
         };
 
-        auto res = State::new_named_undef(generate_string(1));
+        auto res = Main.new_undef(generate_string(1));
         lambda();
     });
 
@@ -663,7 +652,7 @@ int main()
             return out;
         };
 
-        auto res = State::new_named_undef(generate_string(1));
+        auto res = Main.new_undef(generate_string(1));
         res = lambda;
         res();
     });

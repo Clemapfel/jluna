@@ -79,7 +79,7 @@ namespace jluna
             if (count % 2 == 0)
                 count += 1;
 
-            State::collect_garbage();
+            collect_garbage();
 
             std::cout << "[C++][LOG] Running \"" << name << "\"" << std::endl;
             std::vector<Duration> runs;
