@@ -19,8 +19,7 @@ set_usertype_enabled(NonJuliaType);
 
 int main()
 {
-    initialize();
-    Test::initialize();
+    initialize(4);
 
     jl_eval_string("println(Threads.nthreads())");
     return 0;

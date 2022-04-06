@@ -14,12 +14,16 @@ namespace jluna
     /// @brief manually set the C-adapter path
     void set_c_adapter_path(const std::string& path);
 
+    constexpr size_t JULIA_NUM_THREADS_AUTO = 0;
+
     /// @brief initialize environment
-    void initialize();
+    /// @param number_of_threads: JULIA_NUM_THREADS set before initialization. If 0, set to "auto"
+    void initialize(size_t n_threads = 1);
 
     /// @brief initialize environment from image
     /// @param absolute path to julia image
-    void initialize(const std::string&);
+    /// @param number_of_threads: JULIA_NUM_THREADS set before initialization. If 0, set to "auto"
+    void initialize(const std::string&, size_t n_threads = 1);
 
     /// @brief call function with args, with verbose exception forwarding
     /// @tparam Args_t: argument types, must be castable to unsafe::Value*

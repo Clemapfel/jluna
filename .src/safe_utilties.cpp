@@ -16,14 +16,15 @@ namespace jluna
         jluna::detail::c_adapter_path_override = path;
     }
 
-    void initialize()
+    void initialize(size_t n_threads)
     {
-        initialize("");
+        initialize("", n_threads);
     }
 
-    void initialize(const std::string& path)
+    void initialize(const std::string& path, size_t n_threads)
     {
-        setenv("JULIA_NUM_THREADS", detail::julia_num_threads, 0);
+
+        setenv("JULIA_NUM_THREADS", n_threads == 0 ? "auto" : std::to_string(n_threads).c_str(), 1);
 
         if (path.empty())
             jl_init();
@@ -71,7 +72,7 @@ namespace jluna
         jl_eval_string(R"(
             if isdefined(Main, :jluna) & jluna._cppcall.verify_library()
                 print("[JULIA][LOG] ")
-                Base.printstyled("initialization successfull.\n"; color = :green)
+                Base.printstyled("initialization successful (" * string(Threads.nthreads()) * " threads).\n"; color = :green)
             else
                 print("[JULIA]")
                 Base.printstyled("[ERROR] initialization failed.\n"; color = :red)
