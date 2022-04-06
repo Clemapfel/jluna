@@ -86,7 +86,7 @@ namespace jluna::State
         jl_eval_string(R"(
             if isdefined(Main, :jluna) & jluna._cppcall.verify_library()
                 print("[JULIA][LOG] ")
-                Base.printstyled("initialization successfull.\n"; color = :green)
+                Base.printstyled("initialization successful.\n"; color = :green)
             else
                 print("[JULIA]")
                 Base.printstyled("[ERROR] initialization failed.\n"; color = :red)
