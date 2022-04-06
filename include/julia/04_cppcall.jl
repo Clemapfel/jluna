@@ -7,8 +7,8 @@ module _cppcall
         State() = new((), nothing)
     end
 
-    _library_name = "<call jluna::initialize before using cppcall>"
-    _state = Base.Ref{_cppcall.State}(State())
+    #_library_name = "<variable created during jluna::initialize>"
+    _state = Base.Threads.resize_nthreads!([State()])
 
     """
     Wrapper object for unnamed functions, frees function once object is destroyed
@@ -96,7 +96,7 @@ module _cppcall
     """
     function set_result(x::Any) ::Nothing
 
-        global _cppcall._state[]._result = x
+        global _cppcall._state[Threads.threadid()]._result = x
         return nothing
     end
 
@@ -107,7 +107,7 @@ module _cppcall
     """
     function get_result() ::Any
 
-        return _cppcall._state[]._result
+        return _cppcall._state[Threads.threadid()]._result
     end
 
     """
@@ -117,7 +117,7 @@ module _cppcall
     """
     function set_arguments(xs...) ::Nothing
 
-        global _cppcall._state[]._arguments = xs
+        global _cppcall._state[Threads.threadid()]._arguments = xs
         return nothing
     end
 
@@ -128,7 +128,7 @@ module _cppcall
     """
     function get_arguments() ::Tuple
 
-        return _cppcall._state[]._arguments
+        return _cppcall._state[Threads.threadid()]._arguments
     end
 
     """

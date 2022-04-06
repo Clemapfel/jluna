@@ -23,7 +23,6 @@ namespace jluna
 
     void initialize(const std::string& path, size_t n_threads)
     {
-
         setenv("JULIA_NUM_THREADS", n_threads == 0 ? "auto" : std::to_string(n_threads).c_str(), 1);
 
         if (path.empty())
@@ -62,7 +61,7 @@ namespace jluna
         forward_last_exception();
 
         std::stringstream str;
-        str << "jluna._cppcall.eval(:(_library_name = \"";
+        str << "jluna._cppcall.eval(:(const _library_name = \"";
         str << (jluna::detail::c_adapter_path_override.empty() ?  jluna::detail::c_adapter_path : jluna::detail::c_adapter_path_override);
         str << "\"))";
 

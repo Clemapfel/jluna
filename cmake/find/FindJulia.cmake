@@ -1,3 +1,21 @@
+#
+# This FindJulia.cmake is intended to detect julia as a package.
+#
+# Use
+# `list(APPEND CMAKE_MODULE_PATH "path/to/this/file")`
+# `find_package(Julia 1.7.0 REQUIRED)`
+#
+# to make the julia target available through:
+# `"$<BUILD_INTERFACE:Julia::Julia>"`
+#
+# Furthermore the following variables will be set on
+# successful detection:
+#
+# JULIA_LIBRARY         : julia shared library
+# JULIA_EXECUTABLE      : julia REPL executable
+# JULIA_BINDIR          : directory to julia binary
+# JULIA_INCLUDE_DIR     : directory that contains julia.h
+#
 #[=======================================================================[.rst:
 
 FindJulia
@@ -22,8 +40,6 @@ Result Variables
     directory to julia binary
 ``JULIA_INCLUDE_DIR``
     directory that contains julia.h
-``JULIA_NUM_THREADS``
-    number of threads, if unspecified, deduced to `auto`
 
 Usage
 ^^^^^
@@ -102,19 +118,10 @@ if(NOT DEFINED JULIA_VERSION)
     set(JULIA_VERSION "${JULIA_VERSION_LOCAL}")
 endif()
 
-# detect thread count
-if (NOT DEFINED JULIA_NUM_THREADS)
-    if (DEFINED ENV{JULIA_NUM_THREADS})
-        set(JULIA_NUM_THREADS "$ENV{JULIA_NUM_THREADS}")
-    else()
-        set(JULIA_NUM_THREADS auto)
-    endif()
-endif()
-
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
     Julia
-    REQUIRED_VARS JULIA_LIBRARY JULIA_EXECUTABLE JULIA_BINDIR JULIA_INCLUDE_DIR JULIA_NUM_THREADS
+    REQUIRED_VARS JULIA_LIBRARY JULIA_EXECUTABLE JULIA_BINDIR JULIA_INCLUDE_DIR
     VERSION_VAR JULIA_VERSION
 )
 
@@ -156,4 +163,4 @@ if(NOT TARGET Julia::Julia)
 endif()
 
 # finish
-mark_as_advanced(JULIA_EXECUTABLE JULIA_BINDIR JULIA_LIBRARY JULIA_INCLUDE_DIR JULIA_VERSION JULIA_LIBRARY_DLL JULIA_NUM_THREADS)
+mark_as_advanced(JULIA_EXECUTABLE JULIA_BINDIR JULIA_LIBRARY JULIA_INCLUDE_DIR JULIA_VERSION JULIA_LIBRARY_DLL)
