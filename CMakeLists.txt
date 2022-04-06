@@ -34,12 +34,10 @@ if(PROJECT_IS_TOP_LEVEL)
 endif()
 
 ### Find Julia ###
-
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find")
 find_package(Julia 1.7.0 REQUIRED)
 
 ### Configure Files ###
-
 set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}") # TODO: don't hardcode these
 set(C_ADAPTER_NAME "${C_ADAPTER_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna_c_adapter${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
@@ -137,8 +135,6 @@ add_library(jluna SHARED
 
     include/usertype.hpp
     .src/usertype.inl
-
-    include/gc_sentinel.hpp
 )
 
 target_link_libraries(jluna PUBLIC jluna_c_adapter)

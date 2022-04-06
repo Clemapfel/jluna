@@ -22,6 +22,9 @@ int main()
     initialize();
     Test::initialize();
 
+    jl_eval_string("println(Threads.nthreads())");
+    return 0;
+
     Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");

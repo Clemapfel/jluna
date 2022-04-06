@@ -352,6 +352,8 @@ Main.safe_eval("println(vec_var)");
 
 > **Hint**: In C++, indices are 0-based. In Julia, they are 1-based. This can be quite confusing considering we are operating in both languages at the same time, however, we will learn more about this in the [section on arrays](TODO)
 
+## new named
+
 ## Proxies
 
 So far, we have learned how to do basic things like calling functions/code using jluna. In previous examples, you may have noticed that it was never explicitely said what the `auto` in a statement like `auto cpp_var = Main["julia var"]` deduces to. To fully understand how mutating and accessing variables, we need to talk about the most central feature of jluna: `jluna::Proxy`

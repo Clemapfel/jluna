@@ -23,10 +23,14 @@ namespace jluna
 
     void initialize(const std::string& path)
     {
+        setenv("JULIA_NUM_THREADS", detail::julia_num_threads, 0);
+
         if (path.empty())
             jl_init();
         else
             jl_init_with_image(path.c_str(), nullptr);
+
+        setenv("JULIA_NUM_THREADS", "", 1);
 
         { // execute jluna julia code in pieces
             using namespace jluna::detail;
