@@ -181,6 +181,8 @@ namespace jluna
             /// @param id: jluna.memory_handler.ProxyID object
             ProxyValue(unsafe::Value* value, std::shared_ptr<ProxyValue>& owner, unsafe::Value* symbol_or_index);
 
+            /// @brief copy ctor
+            /// @param other
             ProxyValue(const ProxyValue&);
 
             /// @brief access field

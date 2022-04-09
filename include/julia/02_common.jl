@@ -104,7 +104,9 @@ get parameter symbols and upper type limits, used by jluna::Type::get_parameters
 """
 function get_parameters(type::Type) ::Vector{Pair{Symbol, Type}}
 
-    type = unroll_type(type)
+    while !hasproperty(type, :parameters)
+        type = type.body
+    end
 
     out = Vector{Pair{Symbol, Type}}();
     parameters = getproperty(type, :parameters)
