@@ -3,9 +3,12 @@ offers julia-side memory management for C++ jluna
 """
 module memory_handler
 
-    const _current_id = Ref(UInt64(0));
+    const _current_id = Threads.Atomic{UInt64}(0)
     const _refs = Ref(Dict{UInt64, Base.RefValue{Any}}())
     const _ref_counter = Ref(Dict{UInt64, UInt64}())
+
+    const _refs_lock = Base.ReentrantLock()
+    const _refs_counter_lock = Base.ReentrantLock()
 
     const _ref_id_marker = '#'
     const _refs_expression = Meta.parse("jluna.memory_handler._refs[]")
@@ -94,8 +97,11 @@ module memory_handler
     """
     function create_reference(to_wrap::Any) ::UInt64
 
-        global _current_id[] += 1;
-        key::UInt64 = _current_id[];
+        lock(_refs_lock)
+        lock(_refs_counter_lock)
+
+        global _current_id += 1;
+        key::UInt64 = _current_id;
 
         if (haskey(_refs[], key))
             _ref_counter[][key] += 1
@@ -103,6 +109,9 @@ module memory_handler
             _refs[][key] = Base.RefValue{Any}(to_wrap)
             _ref_counter[][key] = 1
         end
+
+        unlock(_refs_lock)
+        unlock(_refs_counter_lock)
 
         return key;
     end
@@ -116,8 +125,10 @@ module memory_handler
     """
     function set_reference(key::UInt64, new_value::T) ::Base.RefValue{Any} where T
 
-        _refs[][key] = Base.RefValue{Any}(new_value)
-        return _refs[][key]
+        lock(_refs_lock)
+        result = begin _refs[][key] = Base.RefValue{Any}(new_value) end
+        unlock(_refs_lock)
+        return result
     end
 
     """
@@ -131,7 +142,10 @@ module memory_handler
             return nothing
         end
 
-       return _refs[][key]
+        lock(_refs_lock)
+        result = _refs[][key]
+        unlock(_refs_lock)
+        return result
     end
 
     """
@@ -145,10 +159,14 @@ module memory_handler
             return nothing;
         end
 
+        lock(_refs_lock)
+
         if _refs[][key][] isa Module
+            unlock(_refs_lock)
             return
         end
 
+        lock(_refs_counter_lock)
         global _ref_counter[][key] -= 1
         count::UInt64 = _ref_counter[][key]
 
@@ -157,6 +175,8 @@ module memory_handler
             delete!(_refs[], key)
         end
 
+        unlock(_refs_lock)
+        unlock(_refs_counter_lock)
         return nothing;
     end
 
@@ -167,11 +187,16 @@ module memory_handler
     """
     function force_free() ::Nothing
 
+        lock(_refs_lock)
+        lock(_refs_counter_lock)
+
         for k in keys(_refs)
             delete!(_refs[], k)
             delete!(_ref_counter[], k)
         end
 
+        unlock(_refs_lock)
+        unlock(_refs_counter_lock)
         return nothing;
     end
 end

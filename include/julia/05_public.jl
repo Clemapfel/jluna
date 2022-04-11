@@ -37,6 +37,8 @@ This function is not thread-safe and should not be used in a parallel context
 """
 function cppcall(function_name::Symbol, xs...) ::Any
 
+    global cppcall_lock = Base.ReentrantLock()
+
     id = hash(function_name)
 
     if !ccall((:is_registered, jluna._cppcall._library_name), Bool, (Csize_t,), id)
@@ -53,6 +55,7 @@ function cppcall(function_name::Symbol, xs...) ::Any
 
     ccall((:call_function, jluna._cppcall._library_name), Cvoid, (Csize_t,), id)
 
-    return jluna._cppcall.get_result()
+    result = jluna._cppcall.get_result()
+    return result
 end
 export cppcall

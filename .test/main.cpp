@@ -18,40 +18,6 @@ int main()
 {
     initialize(4);
 
-    auto mutex = jluna::Mutex();
-    mutex.lock();st
-    Main.safe_eval(R"(
-
-        mutex = Mutex()
-        lock(mutex)
-    )");
-
-    return 0;
-    Main.safe_eval(R"(
-        begin
-            local data = []
-            local tasks = Task[]
-            local data_lock = Mutex()
-
-            function tasks_f()
-                Base.lock(data_lock)
-                for i in 1:10
-                    push!(data, Threads.threadid())
-                    timedwait(() -> false, 0.005)
-                end
-                Base.unlock(data_lock)
-            end
-
-            for i in 1:Threads.nthreads() push!(tasks, Task(tasks_f)) end
-
-            Threads.@threads for t in tasks schedule(t) end
-
-            for t in tasks wait(t) end
-            wait(schedule(Task(() -> begin for i in data print(i, " ") end end)))
-        end
-    )");
-    return 0;
-
     Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");

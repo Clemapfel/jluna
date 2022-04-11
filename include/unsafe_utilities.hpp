@@ -151,7 +151,7 @@ namespace jluna::unsafe
     /// @param data: pointer to the data, no verification is performed that the data is properly aligned or of the given value type
     /// @param size_per_dimension
     /// @returns pointer to the array
-    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool> = true>
+    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 1), bool> = true>
     unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, Dims... size_per_dimension);
 
     /// @brief allocate 1d array
@@ -160,14 +160,6 @@ namespace jluna::unsafe
     /// @params size
     /// @returns array
     unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d);
-
-    /// @brief allocate 2d array
-    /// @param value_type
-    /// @param data
-    /// @params x_dimension
-    /// @params y_dimension
-    /// @returns array
-    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d, size_t two_d);
 
     /// @brief reshape array along all dimensions
     /// @param array

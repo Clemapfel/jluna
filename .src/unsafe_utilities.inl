@@ -37,10 +37,13 @@ namespace jluna::unsafe
             jl_eval_string(R"(
                 __jluna_heap = Dict{UInt64, Base.RefValue{Any}}();
                 __jluna_heap_index = Base.RefValue(UInt64(0));
+                __jluna_heap_lock = Base.ReentrantLock()
 
                 function __jluna_add_to_heap(ptr::UInt64)
+                    lock(__jluna_heap_lock)
                     global __jluna_heap_index[] += 1
                     __jluna_heap[__jluna_heap_index[]] = Ref{Any}(unsafe_pointer_to_objref(Ptr{Any}(ptr)))
+                    unlock(__jluna_heap_lock);
                     return __jluna_heap_index[];
                 end
             )");
@@ -91,7 +94,7 @@ namespace jluna::unsafe
         return res;
     }
 
-    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 2), bool>>
+    template<typename... Dims, std::enable_if_t<(sizeof...(Dims) > 1), bool>>
     unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, Dims... size_per_dimension)
     {
         bool before = jl_gc_is_enabled();

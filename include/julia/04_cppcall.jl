@@ -8,7 +8,17 @@ module _cppcall
     end
 
     #_library_name = "<variable created during jluna::initialize>"
-    _state = Base.Threads.resize_nthreads!([State()])
+    const _state = Base.Threads.resize_nthreads!([Base.RefValue{State()}])
+
+    const get_state_lock = Base.ReentrantLock()
+    function get_state()
+        lock(get_state_lock)
+        result = _state[Threads.threadid()]
+        unlock(get_state_lock)
+        return result
+    end
+
+    const cppcall_lock = Base.ReentrantLock()
 
     """
     Wrapper object for unnamed functions, frees function once object is destroyed
@@ -96,7 +106,7 @@ module _cppcall
     """
     function set_result(x::Any) ::Nothing
 
-        global _cppcall._state[Threads.threadid()]._result = x
+        global _cppcall.get_state().x._result = x
         return nothing
     end
 
@@ -107,7 +117,7 @@ module _cppcall
     """
     function get_result() ::Any
 
-        return _cppcall._state[Threads.threadid()]._result
+        return _cppcall.get_state().x._result
     end
 
     """
@@ -117,7 +127,7 @@ module _cppcall
     """
     function set_arguments(xs...) ::Nothing
 
-        global _cppcall._state[Threads.threadid()]._arguments = xs
+        global _cppcall.get_state().x._arguments = xs
         return nothing
     end
 
@@ -128,7 +138,7 @@ module _cppcall
     """
     function get_arguments() ::Tuple
 
-        return _cppcall._state[Threads.threadid()]._arguments
+        return _cppcall.get_state().x._arguments
     end
 
     """
@@ -169,7 +179,10 @@ end
 export proxy
 new_proxy(name::Symbol) = return Proxy(name)
 
+const implement_lock = Base.ReentrantLock()
 function implement(template::Proxy, m::Module = Main) ::Type
+
+    lock(implement_lock)
 
     out::Expr = :(mutable struct $(template._typename) end)
     deleteat!(out.args[3].args, 1)
@@ -186,6 +199,10 @@ function implement(template::Proxy, m::Module = Main) ::Type
 
     push!(out.args[3].args, new_call)
     Base.eval(m, out)
-    return m.eval(template._typename)
+
+    result = m.eval(template._typename)
+    unlock(implement_lock)
+
+    return result
 end
 export implement
