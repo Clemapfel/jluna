@@ -29,7 +29,7 @@ namespace jluna
     unsafe::Value* box(T value);
 
     /// @brief box nullptr to nothing
-    template<Is<nullptr_t> T>
+    template<Is<std::nullptr_t> T>
     unsafe::Value* box(T value);
 
     /// @brief box identity

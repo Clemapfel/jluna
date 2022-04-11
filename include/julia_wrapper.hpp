@@ -11,3 +11,6 @@
 #endif
 
 #include <julia.h>
+#include <julia_gcext.h>
+#include <julia_threads.h>
+

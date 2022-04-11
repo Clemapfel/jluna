@@ -27,7 +27,7 @@ namespace jluna::unsafe
 
     namespace detail
     {
-        inline nullptr_t gc_init()
+        inline std::nullptr_t gc_init()
         {
             static bool initialized = false;
 

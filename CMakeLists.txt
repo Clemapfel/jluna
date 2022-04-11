@@ -66,6 +66,11 @@ file(READ
     05_PUBLIC
 )
 
+file(READ
+    include/julia/06_multithreading.jl
+    06_MULTITHREADING
+)
+
 configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
 
 ### Declare C adapter ###
@@ -97,7 +102,7 @@ add_library(jluna SHARED
 
     include/safe_utilities.hpp
     .src/safe_utilities.inl
-    .src/safe_utilties.cpp
+    .src/safe_utilities.cpp
 
     include/concepts.hpp
 
@@ -137,6 +142,7 @@ add_library(jluna SHARED
     .src/usertype.inl
 )
 
+target_compile_features(jluna PUBLIC cxx_std_20)
 target_link_libraries(jluna PUBLIC jluna_c_adapter)
 target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 

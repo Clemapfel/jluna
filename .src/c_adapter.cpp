@@ -3,6 +3,7 @@
 #include <include/julia_wrapper.hpp>
 
 #include <iostream>
+#include <thread>
 
 #include <.src/c_adapter.hpp>
 
@@ -61,6 +62,33 @@ extern "C"
         void free_function(size_t id)
         {
             _functions.erase(id);
+        }
+
+
+        MutexPtr new_mutex()
+        {
+            auto* mutex = new std::mutex();
+            return reinterpret_cast<size_t>(mutex);
+        }
+
+        void delete_mutex(MutexPtr ptr)
+        {
+            delete reinterpret_cast<std::mutex*>(ptr);
+        }
+
+        void lock_mutex(MutexPtr ptr)
+        {
+            reinterpret_cast<std::mutex*>(ptr)->lock();
+        }
+
+        void try_lock_mutex(MutexPtr ptr)
+        {
+            reinterpret_cast<std::mutex*>(ptr)->try_lock();
+        }
+
+        void unlock_mutex(MutexPtr ptr)
+        {
+            reinterpret_cast<std::mutex*>(ptr)->unlock();
         }
     }
 }

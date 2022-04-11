@@ -38,4 +38,8 @@ namespace jluna::detail
     static inline const char* include_05 = R"(
         @05_PUBLIC@
     )";
+
+    static inline const char* include_06 = R"(
+        @06_MULTITHREADING@
+    )";
 }

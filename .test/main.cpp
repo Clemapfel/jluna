@@ -5,9 +5,6 @@
 #include <.test/test.hpp>
 #include <jluna.hpp>
 
-#include <julia_gcext.h>
-#include <julia_threads.h>
-
 using namespace jluna;
 using namespace jluna::detail;
 
@@ -20,6 +17,43 @@ set_usertype_enabled(NonJuliaType);
 int main()
 {
     initialize(4);
+
+    static auto* lock = jl_get_function(jl_base_module, "lock");
+    static auto* unlock = jl_get_function(jl_base_module, "unlock");
+
+    auto* mutex = new jl_mutex_t();
+    jl_mutex_init(mutex);//auto* mutex = jl_eval_string("return Base.ReentrantLock()");
+
+    jl_mutex_lock_nogc((jl_mutex_t*) mutex);
+    jl_mutex_wait((jl_mutex_t*) mutex, 0);
+    return 0;
+
+
+
+    Main.safe_eval(R"(
+        begin
+            local data = []
+            local tasks = Task[]
+            local data_lock = Mutex()
+
+            function tasks_f()
+                Base.lock(data_lock)
+                for i in 1:10
+                    push!(data, Threads.threadid())
+                    timedwait(() -> false, 0.005)
+                end
+                Base.unlock(data_lock)
+            end
+
+            for i in 1:Threads.nthreads() push!(tasks, Task(tasks_f)) end
+
+            Threads.@threads for t in tasks schedule(t) end
+
+            for t in tasks wait(t) end
+            wait(schedule(Task(() -> begin for i in data print(i, " ") end end)))
+        end
+    )");
+    return 0;
 
     Test::test("unsafe: gc", []() {
 

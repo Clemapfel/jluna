@@ -16,7 +16,7 @@ namespace jluna
         return (unsafe::Value*) value;
     }
 
-    template<Is<nullptr_t> T>
+    template<Is<std::nullptr_t> T>
     unsafe::Value* box(T)
     {
         return jl_nothing;

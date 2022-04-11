@@ -43,6 +43,7 @@ namespace jluna
             str << module_end;
 
             str << include_05;
+            str << include_06;
 
             jl_eval_string(str.str().c_str());
         }

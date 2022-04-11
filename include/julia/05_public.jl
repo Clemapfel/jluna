@@ -56,23 +56,3 @@ function cppcall(function_name::Symbol, xs...) ::Any
     return jluna._cppcall.get_result()
 end
 export cppcall
-
-
-"""
-Lock that will stall both Julia and C++ threads
-"""
-struct Mutex
-
-
-    function Mutex()
-    end
-
-    function lock()
-    end
-
-    function unlock()
-    end
-
-    function try_lock()
-    end
-end
