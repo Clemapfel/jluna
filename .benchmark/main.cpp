@@ -19,42 +19,107 @@ int main()
     initialize(8);
     Benchmark::initialize();
 
-    const auto lambda = []() -> void{
+    std::vector<std::thread> threads;
+    std::mutex mutex;
+    gc_pause;
+    for (size_t i = 0; i < 8; ++i)
+    {
+        threads.push_back(std::thread([&]() -> void{
+            mutex.lock();
+            jl_eval_string("println(1234)");
+            mutex.unlock();
+        }));
+    }
+
+    for (auto& t : threads)
+        t.join();
+    gc_unpause;
+
+    return 0;
+
+    const auto cpp_lambda = []() -> void{
         volatile size_t sum = 0;
         for (size_t i = 0; i < 20000; ++i)
             sum = (sum + i) * i;
     };
-    auto lambda_ = Main.new_undef("lambda");
 
-    Benchmark::run_as_base("lambda_base", n_reps, [&](){
+    auto* julia_lambda = jluna::safe_eval(R"(
+        function jl_lambda()
+            sum = 0
+            for i in 1:20000
+                sum = (sum + i) * i
+            end
+        end
+    )");
+    jl_call0(julia_lambda);
+
+    Benchmark::run_as_base("cpp lambda cpp side", n_reps, [&](){
 
         std::vector<std::thread> threads;
         for (size_t i = 0; i < 8; ++i)
         {
             gc_pause; gc_unpause; // for equal comparison
-            threads.push_back(std::thread(lambda));
+            threads.push_back(std::thread(cpp_lambda));
         }
 
         for (auto& t : threads)
             t.join();
     });
 
-    Benchmark::run("lambda_julia", n_reps, [&](){
+    Benchmark::run("cpp lambda julia side", n_reps, [&](){
+
+        static auto* new_thread = jl_eval_string("(f, xs...) -> schedule(Task(f, xs...))");
+        static auto* wait = unsafe::get_function(jl_base_module, "wait"_sym);
+
+        gc_pause;
+        std::vector<unsafe::Value*> threads;
+        for (size_t i = 0; i < 8; ++i)
+        {
+            threads.push_back(unsafe::call(new_thread, box(cpp_lambda)));
+        }
+
+        for (auto* t : threads)
+            unsafe::call(wait, t);
+
+        gc_unpause;
+    });
+
+    /*
+    Benchmark::run_as_base("julia lambda cpp side", n_reps, [&](){
+
+        std::vector<std::thread> threads;
+        std::mutex mutex;
+        gc_pause;
+        for (size_t i = 0; i < 8; ++i)
+        {
+            threads.push_back(std::thread([&]() -> void{
+                mutex.lock();
+                jl_eval_string("return 1234");
+                mutex.unlock();
+            }));
+        }
+
+        for (auto& t : threads)
+            t.join();
+        gc_unpause;
+    });
+     */
+
+    Benchmark::run("julia lambda julia side", n_reps, [&](){
 
         static auto* new_thread = jl_eval_string("(f, xs...) -> schedule(Task(f, xs...))");
         static auto* wait = unsafe::get_function(jl_base_module, "wait"_sym);
 
         std::vector<unsafe::Value*> threads;
+        gc_pause;
         for (size_t i = 0; i < 8; ++i)
         {
-            gc_pause;
-            auto* boxed = box(lambda);
-            threads.push_back(unsafe::call(new_thread, boxed));
-            gc_unpause;
+            threads.push_back(unsafe::call(new_thread, julia_lambda));
         }
 
         for (auto* t : threads)
             unsafe::call(wait, t);
+        gc_unpause;
     });
 
     Benchmark::conclude();
