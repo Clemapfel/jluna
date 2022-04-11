@@ -1,6 +1,7 @@
 #ifdef __cplusplus
 
 #include <include/julia_wrapper.hpp>
+#include <include/mutex.hpp>
 
 #include <iostream>
 #include <thread>
@@ -64,11 +65,10 @@ extern "C"
             _functions.erase(id);
         }
 
-
         MutexPtr new_mutex()
         {
-            auto* mutex = new std::mutex();
-            return reinterpret_cast<size_t>(mutex);
+            auto* mutex = new jluna::Mutex();
+            return reinterpret_cast<size_t>(mutex->operator _jl_value_t *());
         }
 
         void delete_mutex(MutexPtr ptr)

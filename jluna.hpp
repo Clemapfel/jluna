@@ -8,6 +8,7 @@
 // collects all end-user relevant headers from jluna/include
 
 #include <include/exceptions.hpp>
+#include <include/mutex.hpp>
 #include <include/concepts.hpp>
 #include <include/unsafe_utilities.hpp>
 #include <include/safe_utilities.hpp>

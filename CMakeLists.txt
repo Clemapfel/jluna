@@ -79,6 +79,8 @@ add_library(
     jluna_c_adapter SHARED
     .src/c_adapter.hpp
     .src/c_adapter.cpp
+    include/mutex.hpp
+    .src/mutex.cpp
 )
 
 target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)

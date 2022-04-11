@@ -18,18 +18,6 @@ int main()
 {
     initialize(4);
 
-    static auto* lock = jl_get_function(jl_base_module, "lock");
-    static auto* unlock = jl_get_function(jl_base_module, "unlock");
-
-    auto* mutex = new jl_mutex_t();
-    jl_mutex_init(mutex);//auto* mutex = jl_eval_string("return Base.ReentrantLock()");
-
-    jl_mutex_lock_nogc((jl_mutex_t*) mutex);
-    jl_mutex_wait((jl_mutex_t*) mutex, 0);
-    return 0;
-
-
-
     Main.safe_eval(R"(
         begin
             local data = []
