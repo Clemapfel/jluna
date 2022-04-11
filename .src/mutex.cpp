@@ -27,22 +27,17 @@ namespace jluna
 
     void Mutex::lock()
     {
-        static auto* lock = unsafe::get_function(jl_base_module, "lock"_sym);
-
-        //lock_lock.lock();
-        jl_call1(lock, jl_mutex);
         cpp_mutex.lock();
-        //lock_lock.unlock();
     }
 
     void Mutex::unlock()
     {
-        static auto* unlock = unsafe::get_function(jl_base_module, "unlock"_sym);
-
-        //lock_lock.lock();
-        jl_call1(unlock, jl_mutex);
         cpp_mutex.unlock();
-        //lock_lock.unlock();
+    }
+
+    void Mutex::try_lock()
+    {
+        cpp_mutex.unlock();
     }
 }
 

@@ -17,24 +17,22 @@ mutable struct Mutex
 end
 
 new_lock() = Base.ReentrantLock();
-
-const _mutex_lock_lock = Base.ReentrantLock();
-const _mutex_unlock_lock = Base.ReentrantLock();
+task_lock = Base.ReentrantLock();
 
 function Base.lock(mutex::Mutex)
-
-    println(Threads.threadid(), " attempt lock");
-    lock(unsafe_pointer_to_objref(Ptr{Base.ReentrantLock}(mutex._native_handle)));
-    println(Threads.threadid(), " lock done");
+    ccall((:lock_mutex, jluna._cppcall._library_name), Cvoid, (Csize_t,), mutex._native_handle)
+    jl_lock = unsafe_pointer_to_objref(Ptr{Base.ReentrantLock}(ccall((:get_lock, jluna._cppcall._library_name), Csize_t, (Csize_t,), mutex._native_handle)))
+    Base.lock(jl_lock)
 end
 
 function Base.unlock(mutex::Mutex)
-
-    println(Threads.threadid(), " attempt unlock");
-    unlock(unsafe_pointer_to_objref(Ptr{Base.ReentrantLock}(mutex._native_handle)));
-    println(Threads.threadid(), " unlock done");
+    ccall((:unlock_mutex, jluna._cppcall._library_name), Cvoid, (Csize_t,), mutex._native_handle)
+    jl_lock = unsafe_pointer_to_objref(Ptr{Base.ReentrantLock}(ccall((:get_lock, jluna._cppcall._library_name), Csize_t, (Csize_t,), mutex._native_handle)))
+    Base.unlock(jl_lock)
 end
 
 function Base.trylock(mutex::Mutex)
-    #@lock _mutex_llock ccall((:try_lock_mutex, jluna._cppcall._library_name), Cvoid, (Csize_t,), mutex._native_handle)
+    ccall((:try_lock_mutex, jluna._cppcall._library_name), Cvoid, (Csize_t,), mutex._native_handle)
+    jl_lock = unsafe_pointer_to_objref(Ptr{Base.ReentrantLock}(ccall((:get_lock, jluna._cppcall._library_name), Csize_t, (Csize_t,), mutex._native_handle)))
+    Base.trylock(jl_lock)
 end

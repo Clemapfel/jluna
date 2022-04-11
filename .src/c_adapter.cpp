@@ -65,30 +65,35 @@ extern "C"
             _functions.erase(id);
         }
 
-        MutexPtr new_mutex()
+        size_t new_mutex()
         {
             auto* mutex = new jluna::Mutex();
-            return reinterpret_cast<size_t>(mutex->operator _jl_value_t *());
+            return reinterpret_cast<size_t>(mutex);
         }
 
-        void delete_mutex(MutexPtr ptr)
+        void delete_mutex(size_t ptr)
         {
-            delete reinterpret_cast<std::mutex*>(ptr);
+            delete reinterpret_cast<jluna::Mutex*>(ptr);
         }
 
-        void lock_mutex(MutexPtr ptr)
+        void lock_mutex(size_t ptr)
         {
-            reinterpret_cast<std::mutex*>(ptr)->lock();
+            reinterpret_cast<jluna::Mutex*>(ptr)->lock();
         }
 
-        void try_lock_mutex(MutexPtr ptr)
+        void unlock_mutex(size_t ptr)
         {
-            reinterpret_cast<std::mutex*>(ptr)->try_lock();
+            reinterpret_cast<jluna::Mutex*>(ptr)->unlock();
         }
 
-        void unlock_mutex(MutexPtr ptr)
+        void try_lock_mutex(size_t ptr)
         {
-            reinterpret_cast<std::mutex*>(ptr)->unlock();
+            reinterpret_cast<jluna::Mutex*>(ptr)->try_lock();
+        }
+
+        size_t get_lock(size_t ptr)
+        {
+            return reinterpret_cast<size_t>(reinterpret_cast<jluna::Mutex*>(ptr)->operator jl_value_t *());
         }
     }
 }

@@ -18,6 +18,15 @@ int main()
 {
     initialize(4);
 
+    auto mutex = jluna::Mutex();
+    mutex.lock();st
+    Main.safe_eval(R"(
+
+        mutex = Mutex()
+        lock(mutex)
+    )");
+
+    return 0;
     Main.safe_eval(R"(
         begin
             local data = []
