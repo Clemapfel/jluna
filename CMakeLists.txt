@@ -34,8 +34,12 @@ if(PROJECT_IS_TOP_LEVEL)
 endif()
 
 ### Find Julia ###
+
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find")
 find_package(Julia 1.7.0 REQUIRED)
+
+### Find Threads ###
+find_package(Threads)
 
 ### Configure Files ###
 set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}") # TODO: don't hardcode these
@@ -85,7 +89,10 @@ add_library(
 
 target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
 target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
-target_link_libraries(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:Julia::Julia>")
+target_link_libraries(jluna_c_adapter PUBLIC
+    "$<BUILD_INTERFACE:Julia::Julia>"
+    "$<BUILD_INTERFACE:Threads::Threads>"
+)
 
 ### Declare Library ###
 

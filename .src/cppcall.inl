@@ -148,7 +148,7 @@ namespace jluna
         std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
 
-        static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
+        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
 
         gc_pause;
 
@@ -168,7 +168,7 @@ namespace jluna
         std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
 
-        static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
+        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
 
         gc_pause;
 
@@ -188,7 +188,7 @@ namespace jluna
         std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
 
-        static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
+        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
 
         gc_pause;
         unsafe::Value* res;
@@ -207,7 +207,7 @@ namespace jluna
         std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
 
-        static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
+        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
 
         gc_pause;
         unsafe::Value* res;
@@ -225,7 +225,7 @@ namespace jluna
     {
         std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
-        static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
+        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
 
         gc_pause;
         unsafe::Value* res;
@@ -244,7 +244,7 @@ namespace jluna
         std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
         register_function(id, lambda);
 
-        static jl_function_t* new_unnamed_function = unsafe::get_function("jluna._cppcall"_sym, "new_unnamed_function"_sym);
+        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
 
         gc_pause;
         auto* res = jl_call2(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(-1));

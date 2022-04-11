@@ -3,7 +3,7 @@ offers julia-side memory management for C++ jluna
 """
 module memory_handler
 
-    const _current_id = Threads.Atomic{UInt64}(0)
+    const _current_id = Ref(UInt64(0)) # modified atomically through locks
     const _refs = Ref(Dict{UInt64, Base.RefValue{Any}}())
     const _ref_counter = Ref(Dict{UInt64, UInt64}())
 
@@ -100,8 +100,8 @@ module memory_handler
         lock(_refs_lock)
         lock(_refs_counter_lock)
 
-        global _current_id += 1;
-        key::UInt64 = _current_id;
+        global _current_id[] += 1
+        key::UInt64 = _current_id[];
 
         if (haskey(_refs[], key))
             _ref_counter[][key] += 1

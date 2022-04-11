@@ -8,7 +8,7 @@ module _cppcall
     end
 
     #_library_name = "<variable created during jluna::initialize>"
-    const _state = Base.Threads.resize_nthreads!([Base.RefValue{State()}])
+    const _state = Base.Threads.resize_nthreads!([Ref(State())])
 
     const get_state_lock = Base.ReentrantLock()
     function get_state()
@@ -31,12 +31,14 @@ module _cppcall
 
         function UnnamedFunctionProxy{N, Return_t}(id::Symbol) where {N, Return_t}
 
+            global unnamed_function_proxy_ctor_lock = Base.ReentrantLock()
+
             @assert(-1 <= N <= 4)
 
             _id = id
             x = new{N, Return_t}(id, function (xs...) Main.cppcall(_id, xs...) end, N)
 
-            finalizer(function (t::UnnamedFunctionProxy{N, Return_t})
+            @lock unnamed_function_proxy_ctor_lock finalizer(function (t::UnnamedFunctionProxy{N, Return_t})
                 ccall((:free_function, _cppcall._library_name), Cvoid, (Csize_t,), hash(t._id))
             end, x)
 

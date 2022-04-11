@@ -7,31 +7,58 @@
 #include <.benchmark/benchmark.hpp>
 #include <.benchmark/benchmark_aux.hpp>
 #include <complex.h>
+#include <thread>
 
 using namespace jluna;
 
-constexpr size_t n_reps = 10000;
+constexpr size_t n_reps = 20000;
 std::vector<Proxy> _proxies;
 
 int main()
 {
-    initialize();
+    initialize(8);
     Benchmark::initialize();
 
-Main.safe_eval(R"(
-    mutable struct MyStruct
-       _field::Int64
-    end
+    const auto lambda = []() -> void{
+        volatile size_t sum = 0;
+        for (size_t i = 0; i < 20000; ++i)
+            sum = (sum + i) * i;
+    };
+    auto lambda_ = Main.new_undef("lambda");
 
-    jl_instance = MyStruct(9876);
-)");
+    Benchmark::run_as_base("lambda_base", n_reps, [&](){
 
-auto it = Main["jl_instance"];
-auto f = it["_field"];
-f = 666;
+        std::vector<std::thread> threads;
+        for (size_t i = 0; i < 8; ++i)
+        {
+            gc_pause; gc_unpause; // for equal comparison
+            threads.push_back(std::thread(lambda));
+        }
 
-Main.safe_eval("println(jl_instance._field)");
-return 0;
+        for (auto& t : threads)
+            t.join();
+    });
+
+    Benchmark::run("lambda_julia", n_reps, [&](){
+
+        static auto* new_thread = jl_eval_string("(f, xs...) -> schedule(Task(f, xs...))");
+        static auto* wait = unsafe::get_function(jl_base_module, "wait"_sym);
+
+        std::vector<unsafe::Value*> threads;
+        for (size_t i = 0; i < 8; ++i)
+        {
+            gc_pause;
+            auto* boxed = box(lambda);
+            threads.push_back(unsafe::call(new_thread, boxed));
+            gc_unpause;
+        }
+
+        for (auto* t : threads)
+            unsafe::call(wait, t);
+    });
+
+    Benchmark::conclude();
+    return 0;
 
     Benchmark::run_as_base("unsafe: Allocate Array C-API", n_reps, [](){
 
