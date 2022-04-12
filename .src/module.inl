@@ -8,24 +8,24 @@
 namespace jluna
 {
     template<Boxable T>
-    Proxy Module::assign(const std::string& variable_name, T value)
+    Proxy Module::assign(const std::string& variable_name, T new_value)
     {
         static jl_function_t* assign_in_module = unsafe::get_function("jluna"_sym, "assign_in_module"_sym);
 
         gc_pause;
-        jluna::safe_call(assign_in_module, value(), jl_symbol(variable_name.c_str()), box<T>(value));
+        jluna::safe_call(assign_in_module, value(), jl_symbol(variable_name.c_str()), box(new_value));
         auto out = this->operator[](variable_name);
         gc_unpause;
         return out;
     }
 
     template<Boxable T>
-    Proxy Module::create_or_assign(const std::string& variable_name, T value)
+    Proxy Module::create_or_assign(const std::string& variable_name, T new_value)
     {
         static jl_function_t* assign_in_module = unsafe::get_function("jluna"_sym, "create_or_assign_in_module"_sym);
 
         gc_pause;
-        jluna::safe_call(assign_in_module, this->value(), jl_symbol(variable_name.c_str()), box<T>(value));
+        jluna::safe_call(assign_in_module, this->value(), jl_symbol(variable_name.c_str()), box<T>(new_value));
         auto out = this->operator[](variable_name);
         gc_unpause;
         return out;

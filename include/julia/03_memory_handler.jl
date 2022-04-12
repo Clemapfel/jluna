@@ -30,6 +30,7 @@ module memory_handler
 
     # assign to proxy id
     function assign(new_value::T, name::ProxyID) where T
+
         if new_value isa Symbol || new_value isa Expr
             return Main.eval(Expr(:(=), name, QuoteNode(new_value)))
         else

@@ -4,6 +4,7 @@
 #include <jluna.hpp>
 #include <.test/test.hpp>
 #include <jluna.hpp>
+#include <thread>
 
 using namespace jluna;
 using namespace jluna::detail;
@@ -17,6 +18,24 @@ set_usertype_enabled(NonJuliaType);
 int main()
 {
     initialize(4);
+
+    static auto lambda = [](){
+        static auto* f = unsafe::get_function(jl_base_module, "println"_sym);
+        unsafe::call(f, jl_main_module);
+    };
+
+    Main.create_or_assign("f", lambda);
+
+    return 0;
+    jl_eval_string(R"(
+        for i in 1:4 @spawn f() end
+    )");
+
+    auto thread = std::thread(lambda);
+    thread.join();
+
+
+    return 0;
 
     Test::test("unsafe: gc", []() {
 
