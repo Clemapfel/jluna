@@ -20,11 +20,11 @@ set_usertype_enabled(NonJuliaType);
 size_t no_void_true(size_t) {return 1234;}
 void yes_void_true(size_t) {return;}
 
-std::function<size_t(size_t)> no_void_lambda = [](size_t) -> size_t{
+auto no_void_lambda = [](size_t) -> size_t{
     return 1234;
 };
 
-std::function<void(size_t)> yes_void_lambda = [](size_t) -> void {
+auto yes_void_lambda = [](size_t) -> void {
     return;
 };
 

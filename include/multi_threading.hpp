@@ -80,13 +80,13 @@ namespace jluna
         /// @return task
         template<typename Lambda_t,
             std::enable_if_t<
-                std::is_same_v<std::invoke_result_t<Lambda_t()>, void>,
+                std::is_void_v<typename function_traits<forward_as_function_v<Lambda_t>>::return_t>,
             bool> = true>
         static Task create(Lambda_t);
 
         template<typename Lambda_t,
             std::enable_if_t<
-                not std::is_same_v<std::invoke_result_t<Lambda_t()>, void>,
+                not std::is_void_v<typename function_traits<forward_as_function_v<Lambda_t>>::return_t>,
             bool> = true>
         static Task create(Lambda_t);
 

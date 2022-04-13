@@ -18,10 +18,7 @@ namespace jluna
         return unbox<T>(unsafe::call(getproperty, _value, sym));
     }
 
-    template<typename Lambda_t,
-            std::enable_if_t<
-                std::is_same_v<std::invoke_result_t<Lambda_t()>, void>,
-            bool>>
+    template<typename Lambda_t, std::enable_if_t<std::is_void_v<typename function_traits<forward_as_function_v<Lambda_t>>::return_t>, bool>>
     Task ThreadPool::create(Lambda_t lambda)
     {
         _storage_lock.lock();
@@ -35,10 +32,7 @@ namespace jluna
         return out;
     }
 
-    template<typename Lambda_t,
-            std::enable_if_t<
-                not std::is_same_v<std::invoke_result_t<Lambda_t()>, void>,
-            bool>>
+    template<typename Lambda_t, std::enable_if_t<not std::is_void_v<typename function_traits<forward_as_function_v<Lambda_t>>::return_t>, bool>>
     Task ThreadPool::create(Lambda_t lambda)
     {
         _storage_lock.lock();
