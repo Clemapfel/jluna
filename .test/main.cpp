@@ -16,28 +16,73 @@ struct NonJuliaType
 };
 set_usertype_enabled(NonJuliaType);
 
+template<typename T>
+struct function_traits;
+
+template<typename Return_t, typename... Args_t>
+struct function_traits<Return_t(Args_t...)>
+{
+    using as_c_function = Return_t(Args_t...);
+    using as_std_function = std::function<Return_t(Args_t...)>;
+
+    using return_t = typename as_std_function::result_type;
+
+    static constexpr size_t n_args = sizeof...(Args_t);
+
+    using argument_ts = std::tuple<Args_t...>;
+
+    template<size_t i>
+    using argument_type = std::tuple_element_t<i, argument_ts>;
+};
+
+template<typename T, typename... Args_t>
+using forward_as_function = std::invoke_result_t<T, Args_t...>(Args_t...);
+
+/*
+
+template<typename T>
+struct forward_as_function;
+
+template<typename Return_t, typename... Args_t>
+struct forward_as_function<Return_t(Args_t...)>
+{
+    using value = Return_t(Args_t...);
+};
+
+template<typename Return_t, typename... Args_t>
+struct forward_as_function<std::function<Return_t(Args_t...)>>
+{
+    using value = Return_t(Args_t...);
+};
+ */
 
 
 
-size_t no_void_true() {return 1234;}
-void yes_void_true() {return;}
 
-auto no_void_lambda = []() -> size_t{
+template<typename T, typename... Args_t>
+concept ReturnsVoid = std::is_void_v<typename function_traits<forward_as_function<T, Args_t...>>::return_t>;
+
+size_t no_void_true(size_t) {return 1234;}
+void yes_void_true(size_t) {return;}
+
+std::function<size_t(size_t)> no_void_lambda = [](size_t) -> size_t{
     return 1234;
 };
 
-auto yes_void_lambda = []() -> void {
+std::function<void(size_t)> yes_void_lambda = [](size_t) -> void {
     return;
 };
+
+using test_t = std::function<void(size_t)>;
 
 int main()
 {
     initialize(4);
 
-    std::cout << "yes true: \t" << ReturnsVoid<decltype(yes_void_true)> << std::endl;
-    std::cout << "no true: \t" << ReturnsVoid<decltype(no_void_true)> << std::endl;
-    std::cout << "yes lambda: " << ReturnsVoid<decltype(yes_void_lambda)> << std::endl;
-    std::cout << "no lambda: \t" << ReturnsVoid<decltype(no_void_lambda)> << std::endl;
+    std::cout << "yes true: \t" << ReturnsVoid<decltype(yes_void_true), size_t> << std::endl;
+    std::cout << "no true: \t" << ReturnsVoid<decltype(no_void_true), size_t> << std::endl;
+    std::cout << "yes lambda: " << ReturnsVoid<decltype(yes_void_lambda), size_t> << std::endl;
+    std::cout << "no lambda: \t" << ReturnsVoid<decltype(no_void_lambda), size_t> << std::endl;
 
     /*
     t.schedule();

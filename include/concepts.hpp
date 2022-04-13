@@ -48,27 +48,46 @@ namespace jluna
     template<typename T, typename... Args_t>
     concept LambdaType = std::is_invocable<T, Args_t...>::value and not std::is_base_of<Proxy, T>::value;
 
+    /*
     /// @concept function returns void
-    namespace detail
+    //namespace detail
     {
         template<typename T>
-        using forward_as_function = std::function<std::invoke_result_t<T>()>;
+        struct function_traits;
 
-        template<typename Lambda_t>
+        template<typename Return_t, typename... Args_t>
+        struct function_traits_aux<std::function<Return_t(Args_t...)>>
+        {
+            using return_t = Return_t;
+
+            static constexpr size_t n_args = sizeof...(Args_t);
+            using argument_ts = std::tuple<Args_t...>;
+        };
+
+        template<typename T>
+        using forward_as_function = std::function<std::invoke_result_t<T, typename function_traits<T>::argument_ts>(typename function_traits<T>::argument_ts...)>;
+
+        template<typename Lambda_t, typename... Args_t>
         struct returns_void_aux
         {
             static constexpr bool value = false;
         };
 
-        template<>
-        struct returns_void_aux<std::function<void()>>
+        template<typename... Args_t>
+        struct returns_void_aux<std::function<void(Args_t...)>, Args_t...>
         {
             static constexpr bool value = true;
         };
     }
 
     template<typename T>
-    concept ReturnsVoid = detail::returns_void_aux<detail::forward_as_function<T>>::value;
+    concept ReturnsVoid = detail::returns_void_aux<
+        detail::forward_as_function<T>,
+        typename detail::function_traits<
+            detail::forward_as_function<T>
+        >::argument_ts>::value;
+
+        */
 
     /// @concept: can be reinterpret-cast to jl_value_t*
     template<typename T>
