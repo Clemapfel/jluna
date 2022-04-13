@@ -19,27 +19,26 @@ set_usertype_enabled(NonJuliaType);
 
 
 
-void f() {return;}
+size_t no_void_true() {return 1234;}
+void yes_void_true() {return;}
+
+auto no_void_lambda = []() -> size_t{
+    return 1234;
+};
+
+auto yes_void_lambda = []() -> void {
+    return;
+};
 
 int main()
 {
     initialize(4);
 
-    auto no_void = []() -> size_t
-    {
-        jl_eval_string("println(\"success\")");
-        return 1234;
-    };
+    std::cout << "yes true: \t" << ReturnsVoid<decltype(yes_void_true)> << std::endl;
+    std::cout << "no true: \t" << ReturnsVoid<decltype(no_void_true)> << std::endl;
+    std::cout << "yes lambda: " << ReturnsVoid<decltype(yes_void_lambda)> << std::endl;
+    std::cout << "no lambda: \t" << ReturnsVoid<decltype(no_void_lambda)> << std::endl;
 
-    auto yes_void = []() -> void
-    {
-        jl_eval_string("println(\"success\")");
-        return;
-    };
-
-    println(box(yes_void()));
-
-    std::cout << ReturnsVoid<decltype(yes_void)> << ReturnsVoid<decltype(no_void)> << std::endl;
     /*
     t.schedule();
     t.join();
