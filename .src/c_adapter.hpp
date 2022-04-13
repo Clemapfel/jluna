@@ -56,13 +56,8 @@ extern "C"
         /// @param id
         void free_function(size_t);
 
-        //
-        using MutexPtr = size_t;
-        MutexPtr new_mutex();
-        void delete_mutex(MutexPtr);
-        void lock_mutex(MutexPtr);
-        void try_lock_mutex(MutexPtr);
-        void unlock_mutex(MutexPtr);
+        /// TODO
+        size_t invoke(size_t function_ptr);
     }
 }
 
@@ -73,10 +68,6 @@ void call_function(size_t);
 bool is_registered(size_t);
 void throw_undefined_symbol(const char*);
 size_t get_n_args(size_t);
-size_t new_mutex();
-void delete_mutex(size_t);
-void lock_mutex(size_t);
-void try_lock_mutex(size_t);
-void unlock_mutex(size_t);
+size_t invoke(size_t);
 
 #endif

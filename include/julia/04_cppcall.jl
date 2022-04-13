@@ -162,6 +162,13 @@ module _cppcall
     end
 end
 
+function make_task(ptr::UInt64)
+    return Task() do;
+        res_ptr = ccall((:invoke, _cppcall._library_name), Csize_t, (Csize_t,), ptr);
+        return unsafe_pointer_to_objref(Ptr{Any}(res_ptr))
+    end
+end
+
 # obfuscate internal state to encourage using operator[] sytanx
 struct ProxyInternal
 

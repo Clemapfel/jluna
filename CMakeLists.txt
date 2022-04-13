@@ -149,6 +149,9 @@ add_library(jluna SHARED
 
     include/usertype.hpp
     .src/usertype.inl
+
+    include/multi_threading.hpp
+    .src/multi_threading.cpp
 )
 
 target_compile_features(jluna PUBLIC cxx_std_20)

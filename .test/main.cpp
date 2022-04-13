@@ -5,6 +5,7 @@
 #include <.test/test.hpp>
 #include <jluna.hpp>
 #include <thread>
+#include <include/multi_threading.hpp>
 
 using namespace jluna;
 using namespace jluna::detail;
@@ -19,21 +20,21 @@ int main()
 {
     initialize(4);
 
-    static auto lambda = [](){
-        static auto* f = unsafe::get_function(jl_base_module, "println"_sym);
-        unsafe::call(f, jl_main_module);
-    };
+    size_t test = -1;
+static std::function<unsafe::Value*()> lambda = [t_ptr = &test](){
+    static auto* f = unsafe::get_function(jl_base_module, "println"_sym);
+    jl_call1(f, box("success"));
+    return jl_nothing;
+};
 
-    Main.create_or_assign("f", lambda);
-
+auto task = Task(&lambda);
+task.schedule();
+task.join();
+    std::cout << task.result<Int64>() << std::endl;
     return 0;
-    jl_eval_string(R"(
-        for i in 1:4 @spawn f() end
-    )");
 
     auto thread = std::thread(lambda);
     thread.join();
-
 
     return 0;
 
