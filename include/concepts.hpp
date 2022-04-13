@@ -16,9 +16,35 @@
 
 namespace jluna
 {
+
+    template<class T, class U>
+    struct is_same_or_const
+    {
+        static constexpr bool value = false;
+    };
+
+    template<class T>
+    struct is_same_or_const<T, T>
+    {
+        static constexpr bool value = true;
+    };
+
+    template<class T>
+    struct is_same_or_const<T, const T>
+    {
+        static constexpr bool value = true;
+    };
+
     /// @concept: wrapper for std::is_same_v
     template<typename T, typename U>
-    concept is = std::is_same<T, U>::value or std::is_same_v<T, const U>;
+    concept is = std::conditional_t<
+        std::is_void_v<T>,
+        std::is_void<U>,
+        is_same_or_const<T, U>
+    >::value;
+
+    template<typename T, typename U>
+    concept is_not = not is<T, U>;
 
     /// @concept: has default ctor
     template<typename T>

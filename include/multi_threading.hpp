@@ -78,17 +78,39 @@ namespace jluna
         /// @tparam Return_t: return type of lambda, has to be either (un)boxable or void
         /// @param lambda
         /// @return task
-        template<typename Lambda_t,
-            std::enable_if_t<
-                std::is_void_v<typename function_traits<forward_as_function_v<Lambda_t>>::return_t>,
-            bool> = true>
-        static Task create(Lambda_t);
+        /*
+        template<is<void> Return_t>
+        static Task create(std::function<Return_t()>);
 
-        template<typename Lambda_t,
-            std::enable_if_t<
-                not std::is_void_v<typename function_traits<forward_as_function_v<Lambda_t>>::return_t>,
-            bool> = true>
-        static Task create(Lambda_t);
+        template<is_not<void> Return_t>
+        static Task create(std::function<Return_t()>);
+         */
+
+        static Task create(std::function<void()> lambda)
+        {
+            _storage_lock.lock();
+            _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda]() -> unsafe::Value* {
+                lambda();
+                return jl_nothing;
+            }));
+            auto out = Task(_storage.at(_current_id).get(), _current_id);
+            _current_id += 1;
+            _storage_lock.unlock();
+            return out;
+        }
+
+        template<is_not<void> Return_t>
+        static Task create(std::function<Return_t()> lambda)
+        {
+            _storage_lock.lock();
+            _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda]() -> unsafe::Value* {
+                return box(lambda());
+            }));
+            auto out = Task(_storage.at(_current_id).get(), _current_id);
+            _current_id += 1;
+            _storage_lock.unlock();
+            return out;
+        }
 
         /// @brief create a task around given lambda
         /// @tparam Return_t: return type of lambda, has to be either (un)boxable or void

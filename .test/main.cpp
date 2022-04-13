@@ -20,11 +20,11 @@ set_usertype_enabled(NonJuliaType);
 size_t no_void_true(size_t) {return 1234;}
 void yes_void_true(size_t) {return;}
 
-auto no_void_lambda = [](size_t) -> size_t{
+auto no_void_lambda = []() -> size_t{
     return 1234;
 };
 
-auto yes_void_lambda = [](size_t) -> void {
+auto yes_void_lambda = []() -> void {
     return;
 };
 
@@ -34,16 +34,11 @@ int main()
 {
     initialize(4);
 
-    std::cout << "yes true: \t" << is_function_with_signature<decltype(yes_void_true), void, size_t> << std::endl;
-    std::cout << "no true: \t" << is_function_with_signature<decltype(no_void_true), void, size_t> << std::endl;
-    std::cout << "yes lambda: " << is_function_with_signature<decltype(yes_void_lambda), void, size_t> << std::endl;
-    std::cout << "no lambda: \t" << is_function_with_signature<decltype(no_void_lambda), void, size_t> << std::endl;
-
-    /*
+    auto t = ThreadPool::create(yes_void_lambda);
     t.schedule();
     t.join();
     std::cout << t.result<size_t>() << std::endl;
-     */
+
     return 0;
 
     return 0;
