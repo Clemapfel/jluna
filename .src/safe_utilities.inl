@@ -20,7 +20,7 @@ namespace jluna::detail
 
 namespace jluna
 {
-    template<IsJuliaValuePointer... Args_t>
+    template<is_julia_value_pointer... Args_t>
     unsafe::Value* safe_call(unsafe::Function* function, Args_t... in)
     {
         throw_if_uninitialized();
@@ -43,7 +43,7 @@ namespace jluna
         return jl_get_nth_field(tuple_res, 0);
     }
 
-    template<IsJuliaValuePointer... Ts>
+    template<is_julia_value_pointer... Ts>
     void println(Ts... in)
     {
         static auto* jl_println = unsafe::get_function(jl_base_module, "println"_sym);

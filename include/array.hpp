@@ -11,11 +11,11 @@
 
 namespace jluna
 {
-    template<Boxable T>
+    template<is_boxable T>
     class Vector;
 
     /// @brief wrapper for julia-side Array{Value_t, Rank}
-    template<Boxable Value_t, size_t Rank>
+    template<is_boxable Value_t, size_t Rank>
     class Array : public Proxy
     {
         public:
@@ -64,14 +64,14 @@ namespace jluna
             /// @brief julia-style list indexing
             /// @param initializer list with indices
             /// @returns new array result of Julia-side getindex(this, range)
-            template<Boxable T>
+            template<is_boxable T>
             jluna::Vector<Value_t> operator[](std::initializer_list<T>&&) const;
 
             /// @brief linear indexing, no bounds checking
             /// @tparam return type
             /// @param index, 0-based
             /// @returns unboxed value
-            template<Unboxable T = Value_t>
+            template<is_unboxable T = Value_t>
             T operator[](size_t) const;
 
             /// @brief multi-dimensional indexing
@@ -85,13 +85,13 @@ namespace jluna
             /// @tparam integral type
             /// @param n integrals, where n is the rank of the array
             /// @returns unboxed value
-            template<Unboxable T = Value_t, typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
+            template<is_unboxable T = Value_t, typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
             T at(Args... in) const;
 
             /// @brief manually assign a value using a linear index
             /// @param index: 0-based
             /// @param value
-            template<Boxable T = Value_t>
+            template<is_boxable T = Value_t>
             void set(size_t i, T);
 
             /// @brief get number of elements, equal to Base.length
@@ -121,7 +121,7 @@ namespace jluna
 
             /// @brief get first element, equivalent to operator[](0)
             /// @returns unboxed value
-            template<Unboxable T = Value_t>
+            template<is_unboxable T = Value_t>
             T front() const;
 
             /// @brief get last valid element
@@ -130,7 +130,7 @@ namespace jluna
 
             /// @brief get last valid element
             /// @returns unboxed value
-            template<Unboxable T = Value_t>
+            template<is_unboxable T = Value_t>
             T back() const;
 
             /// @brief is empty
@@ -191,7 +191,7 @@ namespace jluna
 
                     /// @brief decay into unboxed value
                     /// @tparam value-type, not necessarily the same as declared in the array type
-                    template<Unboxable T = Value_t, std::enable_if_t<not Is<Proxy, T>, bool> = true>
+                    template<is_unboxable T = Value_t, std::enable_if_t<not is<Proxy, T>, bool> = true>
                     operator T() const;
 
                     /// @brief decay into proxy
@@ -214,12 +214,12 @@ namespace jluna
                 /// @brief assign value, also assign value of proxy, regardless of whether it is mutating
                 /// @param value
                 /// @returns reference to self
-                template<Boxable T = Value_t>
+                template<is_boxable T = Value_t>
                 auto& operator=(T value);
 
                 /// @brief decay into unboxed value
                 /// @tparam value-type, not necessarily the same as declared in the array type
-                template<Unboxable T = Value_t, std::enable_if_t<not std::is_same_v<T, Proxy>, bool> = true>
+                template<is_unboxable T = Value_t, std::enable_if_t<not std::is_same_v<T, Proxy>, bool> = true>
                 operator T() const;
 
                 protected:
@@ -234,7 +234,7 @@ namespace jluna
     using Array3d = Array<unsafe::Value*, 3>;
 
     /// @brief vector typedef
-    template<Boxable Value_t>
+    template<is_boxable Value_t>
     class Vector : public Array<Value_t, 1>
     {
         public:
@@ -276,13 +276,13 @@ namespace jluna
             /// @brief add to front
             /// @tparam type of value, not necessarily the same as the declared array type
             /// @param value
-            template<Boxable T = Value_t>
+            template<is_boxable T = Value_t>
             void push_front(T value);
 
             /// @brief add to back
             /// @tparam type of value, not necessarily the same as the declared array type
             /// @param value
-            template<Boxable T = Value_t>
+            template<is_boxable T = Value_t>
             void push_back(T value);
 
             /// @brief: cast to unsafe::Value*

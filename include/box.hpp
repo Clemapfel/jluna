@@ -26,75 +26,75 @@ namespace jluna
 
 
     /// @brief box identity
-    template<IsJuliaValuePointer T>
+    template<is_julia_value_pointer T>
     unsafe::Value* box(T value);
 
     /// @brief box nullptr to nothing
-    template<Is<std::nullptr_t> T>
+    template<is<std::nullptr_t> T>
     unsafe::Value* box(T value);
 
     /// @brief box identity
-    template<Is<bool> T>
+    template<is<bool> T>
     unsafe::Value* box(T value);
 
     /// @brief box true to Bool
-    template<Is<std::bool_constant<true>> T>
+    template<is<std::bool_constant<true>> T>
     unsafe::Value* box(T value);
 
     /// @brief box false to Bool
-    template<Is<std::bool_constant<false>> T>
+    template<is<std::bool_constant<false>> T>
     unsafe::Value* box(T value);
 
     /// @brief box char to Char
-    template<Is<char> T>
+    template<is<char> T>
     unsafe::Value* box(T value);
 
     /// @brief box uint8 to UInt8
-    template<Is<uint8_t> T>
+    template<is<uint8_t> T>
     unsafe::Value* box(T value);
 
     /// @brief box uint16 to UInt16
-    template<Is<uint16_t> T>
+    template<is<uint16_t> T>
     unsafe::Value* box(T value);
 
     /// @brief box uint32 to UInt32
-    template<Is<uint32_t> T>
+    template<is<uint32_t> T>
     unsafe::Value* box(T value);
 
     /// @brief box uint64 to UInt64
-    template<Is<uint64_t> T>
+    template<is<uint64_t> T>
     unsafe::Value* box(T value);
 
     /// @brief box int8 to Int8
-    template<Is<int8_t> T>
+    template<is<int8_t> T>
     unsafe::Value* box(T value);
 
     /// @brief box int16 to Int16
-    template<Is<int16_t> T>
+    template<is<int16_t> T>
     unsafe::Value* box(T value);
 
     /// @brief box int32 to Int32
-    template<Is<int32_t> T>
+    template<is<int32_t> T>
     unsafe::Value* box(T value);
 
     /// @brief box int64 to Int64
-    template<Is<int64_t> T>
+    template<is<int64_t> T>
     unsafe::Value* box(T value);
 
     /// @brief box float to Float32
-    template<Is<float> T>
+    template<is<float> T>
     unsafe::Value* box(T value);
 
     /// @brief box double to Float64
-    template<Is<double> T>
+    template<is<double> T>
     unsafe::Value* box(T value);
 
     /// @brief box string to String
-    template<Is<std::string> T>
+    template<is<std::string> T>
     unsafe::Value* box(T value);
 
     /// @brief box c-string to String
-    template<Is<const char*> T>
+    template<is<const char*> T>
     unsafe::Value* box(T value);
 
     /// @brief box std::complex<T> to Complex{T}
@@ -139,7 +139,7 @@ namespace jluna
     unsafe::Value* box(T value);
 
     /// @brief box std::tuple<Ts...> to Tuple{Ts...}
-    template<IsTuple T>
+    template<is_tuple T>
     unsafe::Value* box(T value);
     
     /// @brief box lambda with signature () -> Any
@@ -168,35 +168,35 @@ namespace jluna
 
     /// @brief box jluna::Symbol to Symbol
     class Proxy;
-    template<Is<Proxy> T>
+    template<is<Proxy> T>
     unsafe::Value* box(T);
 
     /// @brief box jluna::Symbol to Symbol
     class Symbol;
-    template<Is<Symbol> T>
+    template<is<Symbol> T>
     unsafe::Value* box(T);
 
     /// @brief box string to symbol
-    template<Is<Symbol> T>
+    template<is<Symbol> T>
     unsafe::Value* box(T);
 
     /// @brief box jluna::Module to Module
     class Module;
-    template<Is<Module> T>
+    template<is<Module> T>
     unsafe::Value* box(T);
 
     /// @brief unbox jluna::Type to Type
     class Type;
-    template<Is<Type> T>
+    template<is<Type> T>
     unsafe::Value* box(T);
 
     /// @brief box usertype wrapper to usertype
-    template<IsUsertype T>
+    template<is_usertype T>
     unsafe::Value* box(T);
 
     /// @concept requires a value to be boxable into a julia-side value
     template<typename T>
-    concept Boxable = requires(T t)
+    concept is_boxable = requires(T t)
     {
         {box(t)};
     };

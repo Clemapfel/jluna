@@ -6,7 +6,7 @@
 namespace jluna
 {
     /// @brief unbox symbol to symbol
-    template<Is<Symbol> T>
+    template<is<Symbol> T>
     inline T unbox(unsafe::Value* value)
     {
         detail::assert_type((unsafe::DataType*) jl_typeof(value), jl_symbol_type);
@@ -14,13 +14,13 @@ namespace jluna
     }
 
     /// @brief box jluna::Module to Base.Module
-    template<Is<Symbol> T>
+    template<is<Symbol> T>
     inline unsafe::Value* box(T value)
     {
         return value.operator unsafe::Value*();
     }
 
-    template<Is<Symbol> T>
+    template<is<Symbol> T>
     inline unsafe::Value* box(const std::string& value)
     {
         return (unsafe::Value*) jl_symbol(value.c_str());

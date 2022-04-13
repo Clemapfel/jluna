@@ -6,7 +6,7 @@
 namespace jluna
 {
     /// @brief unbox to type
-    template<Is<Type> T>
+    template<is<Type> T>
     inline T unbox(unsafe::Value* value)
     {
         static jl_datatype_t* type_t = (jl_datatype_t*) jl_eval_string("return Type");
@@ -15,7 +15,7 @@ namespace jluna
     }
 
     /// @brief box jluna::Type to Base.Type
-    template<Is<Type> T>
+    template<is<Type> T>
     inline unsafe::Value* box(T value)
     {
         return value.operator unsafe::Value*();

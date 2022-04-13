@@ -20,59 +20,59 @@ namespace jluna
     // ###########################################################
 
     /// @brief unbox to unsafe::Value*
-    template<Is<unsafe::Value*> T>
+    template<is<unsafe::Value*> T>
     T unbox(unsafe::Value* value);
     
     /// @brief unbox to bool
-    template<Is<bool> T>
+    template<is<bool> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to char
-    template<Is<char> T>
+    template<is<char> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to uint8
-    template<Is<uint8_t> T>
+    template<is<uint8_t> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to uint16
-    template<Is<uint16_t> T>
+    template<is<uint16_t> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to uint32
-    template<Is<uint32_t> T>
+    template<is<uint32_t> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to uint64
-    template<Is<uint64_t> T>
+    template<is<uint64_t> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to int8
-    template<Is<int8_t> T>
+    template<is<int8_t> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to int16
-    template<Is<int16_t> T>
+    template<is<int16_t> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to int32
-    template<Is<int32_t> T>
+    template<is<int32_t> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to int64
-    template<Is<int64_t> T>
+    template<is<int64_t> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to float
-    template<Is<float> T>
+    template<is<float> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to double
-    template<Is<double> T>
+    template<is<double> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to string
-    template<Is<std::string> T>
+    template<is<std::string> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to complex
@@ -115,40 +115,40 @@ namespace jluna
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to pair
-    template<IsPair T>
+    template<is_pair T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to tuple
-    template<IsTuple T>
+    template<is_tuple T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to jluna::Proxy
     class Symbol;
-    template<Is<Proxy> T>
+    template<is<Proxy> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to jluna::Symbol
     class Symbol;
-    template<Is<Symbol> T>
+    template<is<Symbol> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to jluna::Module
     class Module;
-    template<Is<Module> T>
+    template<is<Module> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox to jluna::Type
     class Type;
-    template<Is<Type> T>
+    template<is<Type> T>
     T unbox(unsafe::Value* value);
 
     /// @brief unbox usertype wrapper to usertype
-    template<IsUsertype T>
+    template<is_usertype T>
     T unbox(unsafe::Value* value);
 
     /// @concept requires a value to be unboxed from a julia-side value
     template<typename T>
-    concept Unboxable = requires(T t, jl_value_t* v)
+    concept is_unboxable = requires(T t, jl_value_t* v)
     {
         {unbox<T>(v)};
     };

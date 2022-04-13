@@ -53,7 +53,7 @@ namespace jluna
             void join();
             void schedule();
 
-            template<Unboxable T>
+            template<is_unboxable T>
             T result();
 
             bool is_done() const;

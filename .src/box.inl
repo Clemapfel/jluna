@@ -10,103 +10,103 @@
 
 namespace jluna
 {
-    template<IsJuliaValuePointer T>
+    template<is_julia_value_pointer T>
     unsafe::Value* box(T value)
     {
         return (unsafe::Value*) value;
     }
 
-    template<Is<std::nullptr_t> T>
+    template<is<std::nullptr_t> T>
     unsafe::Value* box(T)
     {
         return jl_nothing;
     }
 
-    template<Is<bool> T>
+    template<is<bool> T>
     unsafe::Value* box(T value)
     {
         return jl_box_bool(value);
     }
 
-    template<Is<std::bool_constant<true>> T>
+    template<is<std::bool_constant<true>> T>
     unsafe::Value* box(T value)
     {
         return jl_box_bool(true);
     }
 
-    template<Is<std::bool_constant<false>> T>
+    template<is<std::bool_constant<false>> T>
     unsafe::Value* box(T value)
     {
         return jl_box_bool(false);
     }
     
-    template<Is<char> T>
+    template<is<char> T>
     unsafe::Value* box(T value)
     {
         return detail::convert(jl_char_type, jl_box_int8((int8_t) value));
     }
 
-    template<Is<uint8_t> T>
+    template<is<uint8_t> T>
     unsafe::Value* box(T value)
     {
         return jl_box_uint8((uint8_t) value);
     }
 
-    template<Is<uint16_t> T>
+    template<is<uint16_t> T>
     unsafe::Value* box(T value)
     {
         return jl_box_uint16((uint16_t) value);
     }
 
-    template<Is<uint32_t> T>
+    template<is<uint32_t> T>
     unsafe::Value* box(T value)
     {
         return jl_box_uint32((uint32_t) value);
     }
 
-    template<Is<uint64_t> T>
+    template<is<uint64_t> T>
     unsafe::Value* box(T value)
     {
         return jl_box_uint64((uint64_t) value);
     }
 
-    template<Is<int8_t> T>
+    template<is<int8_t> T>
     unsafe::Value* box(T value)
     {
         return jl_box_int8((int8_t) value);
     }
 
-    template<Is<int16_t> T>
+    template<is<int16_t> T>
     unsafe::Value* box(T value)
     {
         return jl_box_int16((int16_t) value);
     }
 
-    template<Is<int32_t> T>
+    template<is<int32_t> T>
     unsafe::Value* box(T value)
     {
         return jl_box_int32((int32_t) value);
     }
 
-    template<Is<int64_t> T>
+    template<is<int64_t> T>
     unsafe::Value* box(T value)
     {
         return jl_box_int64((int64_t) value);
     }
 
-    template<Is<float> T>
+    template<is<float> T>
     unsafe::Value* box(T value)
     {
         return jl_box_float32((float) value);
     }
 
-    template<Is<double> T>
+    template<is<double> T>
     unsafe::Value* box(T value)
     {
         return jl_box_float64((double) value);
     }
 
-    template<Is<std::string> T>
+    template<is<std::string> T>
     unsafe::Value* box(T value)
     {
         gc_pause;
@@ -116,7 +116,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<const char*> T>
+    template<is<const char*> T>
     unsafe::Value* box(T value)
     {
         gc_pause;
@@ -192,7 +192,7 @@ namespace jluna
         return unsafe::call(pair, box<T1>(value.first), box<T2>(value.second));
     }
 
-    template<IsTuple T>
+    template<is_tuple T>
     unsafe::Value* box(T value)
     {
         gc_pause;

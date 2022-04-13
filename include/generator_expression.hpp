@@ -70,7 +70,7 @@ namespace jluna
             /// @brief cast to C++ type
             /// @tparam resulting type
             /// @returns T
-            template<Unboxable T>
+            template<is_unboxable T>
             operator T();
 
             /// @brief prefix advance by 1 state

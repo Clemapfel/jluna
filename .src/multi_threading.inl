@@ -5,7 +5,7 @@
 
 namespace jluna
 {
-    template<Unboxable T>
+    template<is_unboxable T>
     T Task::result()
     {
         static auto* getproperty = unsafe::get_function(jl_base_module, "getproperty"_sym);

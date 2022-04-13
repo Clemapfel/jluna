@@ -44,14 +44,14 @@ namespace jluna
             /// @param name: variable name, should not contain "."
             /// @param value
             /// @returns jluna::Proxy to value after assignment
-            template<Boxable T>
+            template<is_boxable T>
             Proxy assign(const std::string& variable_name, T value);
 
             /// @brief assign variable with given name in module, if variable does not exist, create it
             /// @param name: variable name, should not contain "."
             /// @param value
             /// @returns jluna::Proxy to value after assignment
-            template<Boxable T>
+            template<is_boxable T>
             Proxy create_or_assign(const std::string& variable_name, T value);
 
             /// @brief get variable value as named proxy
@@ -63,7 +63,7 @@ namespace jluna
             /// @tparam value type
             /// @param variable name
             /// @returns value
-            template<Unboxable T>
+            template<is_unboxable T>
             T get(const std::string& variable_name);
 
             /// @brief creates new variable in main, then returns named proxy to it
@@ -161,7 +161,7 @@ namespace jluna
             /// @param real
             /// @param imaginary
             /// @returns *named* proxy to newly created value
-            template<IsPrimitive T>
+            template<is_primitive T>
             [[nodiscard]] Proxy new_complex(const std::string& name, T real = 0, T imag = 0);
 
             /// @brief creates new variable in main, then returns named proxy to it
@@ -169,7 +169,7 @@ namespace jluna
             /// @param variable_name: exact name of variable
             /// @param vector
             /// @returns *named* proxy to newly created value
-            template<Boxable T>
+            template<is_boxable T>
             [[nodiscard]] Proxy new_vector(const std::string& name, const std::vector<T>& = {});
 
             /// @brief creates new variable in main, then returns named proxy to it
@@ -178,7 +178,7 @@ namespace jluna
             /// @param variable_name: exact name of variable
             /// @param map
             /// @returns *named* proxy to newly created value
-            template<Boxable Key_t, Boxable Value_t>
+            template<is_boxable Key_t, is_boxable Value_t>
             [[nodiscard]] Proxy new_dict(const std::string& name, const std::map<Key_t, Value_t>& = {});
 
             /// @brief creates new variable in main, then returns named proxy to it
@@ -187,7 +187,7 @@ namespace jluna
             /// @param variable_name: exact name of variable
             /// @param unordered_map
             /// @returns *named* proxy to newly created value
-            template<Boxable Key_t, Boxable Value_t>
+            template<is_boxable Key_t, is_boxable Value_t>
             [[nodiscard]] Proxy new_dict(const std::string& name, const std::unordered_map<Key_t, Value_t>& = {});
 
             /// @brief creates new variable in main, then returns named proxy to it
@@ -195,7 +195,7 @@ namespace jluna
             /// @param variable_name: exact name of variable
             /// @param set
             /// @returns *named* proxy to newly created value
-            template<Boxable T>
+            template<is_boxable T>
             [[nodiscard]] Proxy new_set(const std::string& name, const std::set<T>& value = {});
 
             /// @brief creates new variable in main, then returns named proxy to it
@@ -205,7 +205,7 @@ namespace jluna
             /// @param first
             /// @param second
             /// @returns *named* proxy to newly created value
-            template<Boxable T1, Boxable T2>
+            template<is_boxable T1, is_boxable T2>
             [[nodiscard]] Proxy new_pair(const std::string& name, T1 first, T2 second);
 
             /// @brief creates new variable in main, then returns named proxy to it
@@ -213,7 +213,7 @@ namespace jluna
             /// @param variable_name: exact name of variable
             /// @param values
             /// @returns *named* proxy to newly created value
-            template<Boxable... Ts>
+            template<is_boxable... Ts>
             [[nodiscard]] Proxy new_tuple(const std::string& name, Ts...);
 
             /// @brief get name
@@ -225,7 +225,7 @@ namespace jluna
             /// @param variable_name: exact name of variable
             /// @param dims: length in each dimension
             /// @returns *named* proxy to newly created array, filled with undef
-            template<Boxable T, size_t N, Is<size_t>... Dims>
+            template<is_boxable T, size_t N, is<size_t>... Dims>
             [[nodiscard]] Array<T, N> new_array(const std::string& name, Dims... dims);
 
             /// @brief wrap c-property parent
@@ -255,7 +255,7 @@ namespace jluna
     inline Module Core;
 
     /// @brief unbox to module
-    template<Is<Module> T>
+    template<is<Module> T>
     inline T unbox(unsafe::Value* value)
     {
         detail::assert_type((unsafe::DataType*) jl_typeof(value), jl_module_type);
@@ -263,7 +263,7 @@ namespace jluna
     }
 
     /// @brief box jluna::Module to Base.Module
-    template<Is<Module> T>
+    template<is<Module> T>
     inline unsafe::Value* box(T value)
     {
         return value.operator unsafe::Value*();

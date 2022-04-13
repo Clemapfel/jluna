@@ -56,13 +56,13 @@ namespace jluna
     }
 
 
-    template<Is<unsafe::Value*> T>
+    template<is<unsafe::Value*> T>
     T unbox(unsafe::Value* in)
     {
         return in;
     }
 
-    template<Is<bool> T>
+    template<is<bool> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -71,7 +71,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<char> T>
+    template<is<char> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -80,7 +80,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<uint8_t> T>
+    template<is<uint8_t> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -89,7 +89,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<uint16_t> T>
+    template<is<uint16_t> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -98,7 +98,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<uint32_t> T>
+    template<is<uint32_t> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -107,7 +107,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<uint64_t> T>
+    template<is<uint64_t> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -116,7 +116,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<int8_t> T>
+    template<is<int8_t> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -125,7 +125,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<int16_t> T>
+    template<is<int16_t> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -134,7 +134,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<int32_t> T>
+    template<is<int32_t> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -143,7 +143,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<int64_t> T>
+    template<is<int64_t> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -152,7 +152,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<float> T>
+    template<is<float> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -161,7 +161,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<double> T>
+    template<is<double> T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -170,7 +170,7 @@ namespace jluna
         return out;
     }
 
-    template<Is<std::string> T>
+    template<is<std::string> T>
     T unbox(unsafe::Value* value)
     {
         return std::string(detail::to_string(value));
@@ -271,7 +271,7 @@ namespace jluna
         return out;
     }
 
-    template<IsPair T>
+    template<is_pair T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;
@@ -314,18 +314,18 @@ namespace jluna
     }
 
     class Symbol;
-    template<Is<Symbol> T>
+    template<is<Symbol> T>
     T unbox(unsafe::Value*);
 
     class Module;
-    template<Is<Module> T>
+    template<is<Module> T>
     T unbox(unsafe::Value*);
 
     class Type;
-    template<Is<Type> T>
+    template<is<Type> T>
     T unbox(unsafe::Value*);
 
-    template<IsTuple T>
+    template<is_tuple T>
     T unbox(unsafe::Value* value)
     {
         gc_pause;

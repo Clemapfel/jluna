@@ -7,7 +7,7 @@
 
 namespace jluna
 {
-    template<Boxable T>
+    template<is_boxable T>
     Proxy Module::assign(const std::string& variable_name, T new_value)
     {
         static jl_function_t* assign_in_module = unsafe::get_function("jluna"_sym, "assign_in_module"_sym);
@@ -19,7 +19,7 @@ namespace jluna
         return out;
     }
 
-    template<Boxable T>
+    template<is_boxable T>
     Proxy Module::create_or_assign(const std::string& variable_name, T new_value)
     {
         static jl_function_t* assign_in_module = unsafe::get_function("jluna"_sym, "create_or_assign_in_module"_sym);
@@ -107,49 +107,49 @@ namespace jluna
         return create_or_assign(name, (unsafe::Value*) jl_symbol(value.c_str()));
     }
 
-    template<IsPrimitive T>
+    template<is_primitive T>
     Proxy Module::new_complex(const std::string& name, T real, T imag)
     {
         return create_or_assign(name, box<std::complex<T>>(std::complex<T>(real, imag)));
     }
 
-    template<Boxable T>
+    template<is_boxable T>
     Proxy Module::new_vector(const std::string& name, const std::vector<T>& value)
     {
         return create_or_assign(name, box<std::vector<T>>(value));
     }
 
-    template<Boxable Key_t, Boxable Value_t>
+    template<is_boxable Key_t, is_boxable Value_t>
     Proxy Module::new_dict(const std::string& name, const std::map<Key_t, Value_t>& value)
     {
         return create_or_assign(name, box<std::map<Key_t, Value_t>>(value));
     }
 
-    template<Boxable Key_t, Boxable Value_t>
+    template<is_boxable Key_t, is_boxable Value_t>
     Proxy Module::new_dict(const std::string& name, const std::unordered_map<Key_t, Value_t>& value)
     {
         return create_or_assign(name, box<std::unordered_map<Key_t, Value_t>>(value));
     }
 
-    template<Boxable T>
+    template<is_boxable T>
     Proxy Module::new_set(const std::string& name, const std::set<T>& value)
     {
         return create_or_assign(name, box<std::set<T>>(value));
     }
 
-    template<Boxable T1, Boxable T2>
+    template<is_boxable T1, is_boxable T2>
     Proxy Module::new_pair(const std::string& name, T1 first, T2 second)
     {
         return create_or_assign(name, box<std::pair<T1, T2>>(std::pair<T1, T2>(first, second)));
     }
 
-    template<Boxable... Ts>
+    template<is_boxable... Ts>
     Proxy Module::new_tuple(const std::string& name, Ts... args)
     {
         return create_or_assign(name, box<std::tuple<Ts...>>(std::make_tuple(args...)));
     }
 
-    template<Boxable T, size_t N, Is<size_t>... Dims>
+    template<is_boxable T, size_t N, is<size_t>... Dims>
     Array<T, N> Module::new_array(const std::string& name, Dims... dims)
     {
         static_assert(sizeof...(Dims) == N, "wrong number of dimension initializers");
@@ -170,7 +170,7 @@ namespace jluna
         return Main[name];
     }
 
-    template<Unboxable T>
+    template<is_unboxable T>
     T Module::get(const std::string& variable_name)
     {
         static auto* eval = unsafe::get_function(jl_base_module, "eval"_sym);

@@ -13,8 +13,8 @@ Please navigate to the appropriate section by clicking the links below:
   3.2 [Manual Collection](#manually-triggering-gc)<br>
 4. [**Boxing / Unboxing**](#boxing--unboxing)<br>
   4.1 [Manual](#manual-unboxing)<br>
-  4.2 [(Un)Boxable as Concepts](#concepts)<br>
-  4.3 [List of (Un)Boxables](#list-of-unboxables)<br>
+  4.2 [(Un)is_boxable as Concepts](#concepts)<br>
+  4.3 [List of (Un)is_boxables](#list-of-unboxables)<br>
 5. [**Accessing Variables through Proxies**](#accessing-variables)<br>
   5.1 [Mutating Variables](#mutating-variables)<br>
   5.2 [Accessing Fields](#accessing-fields)<br>
@@ -174,14 +174,14 @@ The property of being (un)boxable is represented in C++ as two concepts:
 ```cpp
 // an "unboxable" is any T for whom unbox<T>(unsafe::Value*) -> T is defined
 template<typename T>
-concept Unboxable = requires(T t, unsafe::Value* v)
+concept is_unboxable = requires(T t, unsafe::Value* v)
 {
     {unbox<T>(v)};
 };
 
 /// a "boxable" is any T for whom box(T) -> unsafe::Value* is defined
 template<typename T>
-concept Boxable = requires(T t)
+concept is_boxable = requires(T t)
 {
     {box(t)};
 };
@@ -210,16 +210,16 @@ Any type fulfilling the above requirements is accepted by most `jluna` functions
 This also means that for a 3rd party class `MyClass` to be compatible with `jluna`, one only needs to define:
 
 ```cpp
-template<Is<MyClass> T> 
+template<is<MyClass> T> 
 unsafe::Value* box(T value);
 
-template<Is<MyClass> T>
+template<is<MyClass> T>
 T unbox(unsafe::Value* value);
 ```
 
-Where `Is<T, U>` is a concept that resolves to true if `U` and `T` are the same type.
+Where `is<T, U>` is a concept that resolves to true if `U` and `T` are the same type.
 
-### List of (Un)Boxables
+### List of (Un)is_boxables
 
 The following types are both boxable and unboxable:
 
@@ -264,7 +264,7 @@ std::map<T, U>           => Dict{T, U}      [1]
 std::unordered_map<T, U> => Dict{T, U}      [1]
 std::set<T>              => Set{T, U}       [1]
 
-[1] where T, U are also (Un)Boxables
+[1] where T, U are also (Un)is_boxables
 [2] where R is the rank of the array
 
 std::function<T()>                       => function () -> T  [3]
@@ -274,7 +274,7 @@ std::function<T(unsafe::Value*, unsafe::Value*, unsafe::Value*)>       => functi
 std::function<T(unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*)> => function (::Any, ::Any, ::Any, ::Any) -> T  [3]
 std::function<T(std::vector<unsafe::Value*>)>      => function (::Vector{Any}) -> T  [3]
         
-[3] where T is a Boxable
+[3] where T is a is_boxable
         
 Usertype<T>::original_type                  => T [4]
         
@@ -327,7 +327,7 @@ std::cout << as_int << std::endl;
 1234
 ```
 
-While both ways get us the desired value, neither is a good way to actually manage the variable itself. How do we reassign it? Can we dereference the C-pointer? Who has ownership of the memory? Is it safe from the garbage collector? <br>All these questions are hard to manage using the C-API, however `jluna` offers a simultaneous: `jluna::Proxy`.
+While both ways get us the desired value, neither is a good way to actually manage the variable itself. How do we reassign it? Can we dereference the C-pointer? Who has ownership of the memory? is it safe from the garbage collector? <br>All these questions are hard to manage using the C-API, however `jluna` offers a simultaneous: `jluna::Proxy`.
 
 ### Proxies
 
@@ -1072,8 +1072,8 @@ cppcall(::Symbol, xs...) -> Any
 
 Unlike Julias `ccall`, we do not supply return or argument types, all of these are automatically deduced by `jluna`. We are furthmernore not limited to C-friendly types:
 
-+ any `Boxable` can be used as return type
-+ any `Unboxable` can be used as argument type
++ any `is_boxable` can be used as return type
++ any `is_unboxable` can be used as argument type
 
 We will learn more about how to make our own custom types compatible with functions in the [~~section on usertypes~~](#usertypes).
 
@@ -1217,7 +1217,7 @@ register_function("template_function_vector_float_" [](unsafe::Value* in) -> uns
 
 ### Boxing Lambdas
 
-While not mentioned for clarity until now, lambdas with the allowed signature are actually `Boxable`. This means we can assign lambdas to proxies:
+While not mentioned for clarity until now, lambdas with the allowed signature are actually `is_boxable`. This means we can assign lambdas to proxies:
 
 ```cpp
 // create a new empty variable named "lambda" Julia-side
@@ -1791,7 +1791,7 @@ To classify a type means to evaluate a condition based on a types attributes, in
     Type(State::eval("return Ref{AbstractFloat}")).is_abstract_ref_type(); //true
     Type(State::eval("return Ref{AbstractFloat}(Float32(1))")).is_abstract_ref_type(); // false
     ```
-+ `is_typename(T)`: is the `.name` property of the type equal to `Base.typename(T)`. Can be thought of as "Is the type a T"
++ `is_typename(T)`: is the `.name` property of the type equal to `Base.typename(T)`. Can be thought of as "is the type a T"
     ```cpp
     // is the type an Array:
     Type(State::safe_eval("return Array")).is_typename("Array"); // true
@@ -2183,29 +2183,29 @@ By making the instance an argument, the Julia function emulate the C++ behavior 
 We now want to implement boxing and unboxing for both frogs and tadpoles. When defining these functions for a custom type, they need to adhere to the following signatures exactly:
 
 ```cpp
-template<Is<U> T>
+template<is<U> T>
 unsafe::Value* box(T);
 
-template<Is<U> T>
+template<is<U> T>
 T unbox(unsafe::Value*);
 ```
 
-Where `Is<U>` is a concept that enforces `T` to be equal to `U`. We need to use concepts and template functions here, so the syntax `box<U>(/*...*/)` and `unbox<U>(/*...*/)` are valid, which is required by `jluna`s functions. The `box` and `unbox` signatures for `Frog` and `Frog::Tadpole` then look like this:
+Where `is<U>` is a concept that enforces `T` to be equal to `U`. We need to use concepts and template functions here, so the syntax `box<U>(/*...*/)` and `unbox<U>(/*...*/)` are valid, which is required by `jluna`s functions. The `box` and `unbox` signatures for `Frog` and `Frog::Tadpole` then look like this:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 unsafe::Value* box(T in)
 {}
 
-template<Is<Frog> T>
+template<is<Frog> T>
 unsafe::Value* box(T in)
 {}
 
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 T unbox(unsafe::Value* in)
 {}
 
-template<Is<Frog> T>
+template<is<Frog> T>
 T unbox(unsafe::Value* in)
 {}
 ```
@@ -2213,13 +2213,13 @@ T unbox(unsafe::Value* in)
 Because we are handling raw C-pointers and not proxies, we need to manually protect ourself from the garbage collector (GC). This is done best, by using `jluna::GCSentinel`, which is a class that disables the GC while it is in scope:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
 }
 
-template<Is<Frog> T>
+template<is<Frog> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -2229,7 +2229,7 @@ unsafe::Value* box(T in)
 To instance the Julia-side versions of the classes, we need access to their Julia-side constructors. We can do so using `jl_find_function`, using the result like a function to create instances:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -2238,7 +2238,7 @@ unsafe::Value* box(T in)
     auto* out = jluna::safe_call(tadpole_ctor);
 }
 
-template<Is<Frog> T>
+template<is<Frog> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -2259,10 +2259,10 @@ end
 ```
 The example in this section was specifically setup this way, to illustrate how, when the Julia-type is pre-defined and cannot be extended, we will often do extra work to make C++ and Julia play nice together. We cannot extend the Julia-side `Frog` class, which is why we need to create this wrapper function to construct a frog instead. 
 
-Accessing and calling the function inside `box<Is<Frog>>`:
+Accessing and calling the function inside `box<is<Frog>>`:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -2271,7 +2271,7 @@ unsafe::Value* box(T in)
     auto* out = jluna::safe_call(tadpole_ctor);
 }
 
-template<Is<Frog> T>
+template<is<Frog> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -2286,7 +2286,7 @@ Where we also had to manually box the string, because we are not dealing with pr
 Lastly, we need to update the newly created Julia-side instance with the actual values of the C++-side instance. To do this, we use `Base.setfield!`. Note, however, that the Julia-side `Frog` is immutable. This is why we created the generator function, the only way to make Julia-side frogs have the same name as C++-side frogs, is to assign their name to a tadpole, then evolving it. Because of this, the frog instanced in `box<Frog>` does not need to be modified further:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -2300,7 +2300,7 @@ unsafe::Value* box(T in)
     return out;
 }
 
-template<Is<Frog> T>
+template<is<Frog> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -2316,7 +2316,7 @@ Where we used `jluna::Symbol` create a symbol `:_name`, Julia-side. We used the 
 Now that we have box fully written, we can turn our attention to unbox. Unboxing is much simpler, all we need to do, is to access the properties of the Julia-side instances using `Base.getfield`. Because we are now back C++-side, we use `Tadpole::evolve` to create a frog:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();
@@ -2330,7 +2330,7 @@ T unbox(unsafe::Value* in)
     return out;
 }
 
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();
@@ -2488,8 +2488,8 @@ Please navigate to the appropriate section by clicking the links below:
   3.2 [Manual Collection](#manually-triggering-gc)<br>
 4. [**Boxing / Unboxing**](#boxing--unboxing)<br>
   4.1 [Manual](#manual-unboxing)<br>
-  4.2 [(Un)Boxable as Concepts](#concepts)<br>
-  4.3 [List of (Un)Boxables](#list-of-unboxables)<br>
+  4.2 [(Un)is_boxable as Concepts](#concepts)<br>
+  4.3 [List of (Un)is_boxables](#list-of-unboxables)<br>
 5. [**Accessing Variables through Proxies**](#accessing-variables)<br>
   5.1 [Mutating Variables](#mutating-variables)<br>
   5.2 [Accessing Fields](#accessing-fields)<br>
@@ -2647,14 +2647,14 @@ The property of being (un)boxable is represented in C++ as two concepts:
 ```cpp
 // an "unboxable" is any T for whom unbox<T>(unsafe::Value*) -> T is defined
 template<typename T>
-concept Unboxable = requires(T t, unsafe::Value* v)
+concept is_unboxable = requires(T t, unsafe::Value* v)
 {
     {unbox<T>(v)};
 };
 
 /// a "boxable" is any T for whom box(T) -> unsafe::Value* is defined
 template<typename T>
-concept Boxable = requires(T t)
+concept is_boxable = requires(T t)
 {
     {box(t)};
 };
@@ -2683,16 +2683,16 @@ Any type fulfilling the above requirements is accepted by most `jluna` functions
 This also means that for a 3rd party class `MyClass` to be compatible with `jluna`, one only needs to define:
 
 ```cpp
-template<Is<MyClass> T> 
+template<is<MyClass> T> 
 unsafe::Value* box(T value);
 
-template<Is<MyClass> T>
+template<is<MyClass> T>
 T unbox(unsafe::Value* value);
 ```
 
-Where `Is<T, U>` is a concept that resolves to true if `U` and `T` are the same type.
+Where `is<T, U>` is a concept that resolves to true if `U` and `T` are the same type.
 
-### List of (Un)Boxables
+### List of (Un)is_boxables
 
 The following types are both boxable and unboxable:
 
@@ -2737,7 +2737,7 @@ std::map<T, U>           => Dict{T, U}      *
 std::unordered_map<T, U> => Dict{T, U}      *
 std::set<T>              => Set{T, U}       *
 
-* where T, U are also (Un)Boxables
+* where T, U are also (Un)is_boxables
 ° where R is the rank of the array
 
 std::function<void()>                       => function () -> Nothing     
@@ -2805,7 +2805,7 @@ std::cout << as_int << std::endl;
 1234
 ```
 
-While both ways get us the desired value, neither is a good way to actually manage the variable itself. How do we reassign it? Can we dereference the C-pointer? Who has ownership of the memory? Is it safe from the garbage collector? <br>All these questions are hard to manage using the C-API, however `jluna` offers a simultaneous: `jluna::Proxy`.
+While both ways get us the desired value, neither is a good way to actually manage the variable itself. How do we reassign it? Can we dereference the C-pointer? Who has ownership of the memory? is it safe from the garbage collector? <br>All these questions are hard to manage using the C-API, however `jluna` offers a simultaneous: `jluna::Proxy`.
 
 ### Proxies
 
@@ -3550,8 +3550,8 @@ cppcall(::Symbol, xs...) -> Any
 
 Unlike Julias `ccall`, we do not supply return or argument types, all of these are automatically deduced by `jluna`. We are furthmernore not limited to C-friendly types:
 
-+ any `Boxable` can be used as return type
-+ any `Unboxable` can be used as argument type
++ any `is_boxable` can be used as return type
++ any `is_unboxable` can be used as argument type
 
 We will learn more about how to make our own custom types compatible with functions in the [~~section on usertypes~~](#usertypes).
 
@@ -3695,7 +3695,7 @@ register_function("template_function_vector_float_" [](unsafe::Value* in) -> uns
 
 ### Boxing Lambdas
 
-While not mentioned for clarity until now, lambdas with the allowed signature are actually `Boxable`. This means we can assign lambdas to proxies:
+While not mentioned for clarity until now, lambdas with the allowed signature are actually `is_boxable`. This means we can assign lambdas to proxies:
 
 ```cpp
 // create a new empty variable named "lambda" Julia-side
@@ -4269,7 +4269,7 @@ To classify a type means to evaluate a condition based on a types attributes, in
     Type(State::eval("return Ref{AbstractFloat}")).is_abstract_ref_type(); //true
     Type(State::eval("return Ref{AbstractFloat}(Float32(1))")).is_abstract_ref_type(); // false
     ```
-+ `is_typename(T)`: is the `.name` property of the type equal to `Base.typename(T)`. Can be thought of as "Is the type a T"
++ `is_typename(T)`: is the `.name` property of the type equal to `Base.typename(T)`. Can be thought of as "is the type a T"
     ```cpp
     // is the type an Array:
     Type(State::safe_eval("return Array")).is_typename("Array"); // true
@@ -4655,29 +4655,29 @@ By making the instance an argument, the Julia function emulate the C++ behavior 
 We now want to implement boxing and unboxing for both frogs and tadpoles. When defining these functions for a custom type, they need to adhere to the following signatures exactly:
 
 ```cpp
-template<Is<U> T>
+template<is<U> T>
 unsafe::Value* box(T);
 
-template<Is<U> T>
+template<is<U> T>
 T unbox(unsafe::Value*);
 ```
 
-Where `Is<U>` is a concept that enforces `T` to be equal to `U`. We need to use concepts and template functions here, so the syntax `box<U>(/*...*/)` and `unbox<U>(/*...*/)` are valid, which is required by `jluna`s functions. The `box` and `unbox` signatures for `Frog` and `Frog::Tadpole` then look like this:
+Where `is<U>` is a concept that enforces `T` to be equal to `U`. We need to use concepts and template functions here, so the syntax `box<U>(/*...*/)` and `unbox<U>(/*...*/)` are valid, which is required by `jluna`s functions. The `box` and `unbox` signatures for `Frog` and `Frog::Tadpole` then look like this:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 unsafe::Value* box(T in)
 {}
 
-template<Is<Frog> T>
+template<is<Frog> T>
 unsafe::Value* box(T in)
 {}
 
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 T unbox(unsafe::Value* in)
 {}
 
-template<Is<Frog> T>
+template<is<Frog> T>
 T unbox(unsafe::Value* in)
 {}
 ```
@@ -4685,13 +4685,13 @@ T unbox(unsafe::Value* in)
 Because we are handling raw C-pointers and not proxies, we need to manually protect ourself from the garbage collector (GC). This is done best, by using `jluna::GCSentinel`, which is a class that disables the GC while it is in scope:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
 }
 
-template<Is<Frog> T>
+template<is<Frog> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -4701,7 +4701,7 @@ unsafe::Value* box(T in)
 To instance the Julia-side versions of the classes, we need access to their Julia-side constructors. We can do so using `jl_find_function`, using the result like a function to create instances:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -4710,7 +4710,7 @@ unsafe::Value* box(T in)
     auto* out = jluna::safe_call(tadpole_ctor);
 }
 
-template<Is<Frog> T>
+template<is<Frog> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -4731,10 +4731,10 @@ end
 ```
 The example in this section was specifically setup this way, to illustrate how, when the Julia-type is pre-defined and cannot be extended, we will often do extra work to make C++ and Julia play nice together. We cannot extend the Julia-side `Frog` class, which is why we need to create this wrapper function to construct a frog instead. 
 
-Accessing and calling the function inside `box<Is<Frog>>`:
+Accessing and calling the function inside `box<is<Frog>>`:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -4743,7 +4743,7 @@ unsafe::Value* box(T in)
     auto* out = jluna::safe_call(tadpole_ctor);
 }
 
-template<Is<Frog> T>
+template<is<Frog> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -4758,7 +4758,7 @@ Where we also had to manually box the string, because we are not dealing with pr
 Lastly, we need to update the newly created Julia-side instance with the actual values of the C++-side instance. To do this, we use `Base.setfield!`. Note, however, that the Julia-side `Frog` is immutable. This is why we created the generator function, the only way to make Julia-side frogs have the same name as C++-side frogs, is to assign their name to a tadpole, then evolving it. Because of this, the frog instanced in `box<Frog>` does not need to be modified further:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -4772,7 +4772,7 @@ unsafe::Value* box(T in)
     return out;
 }
 
-template<Is<Frog> T>
+template<is<Frog> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -4788,7 +4788,7 @@ Where we used `jluna::Symbol` create a symbol `:_name`, Julia-side. We used the 
 Now that we have box fully written, we can turn our attention to unbox. Unboxing is much simpler, all we need to do, is to access the properties of the Julia-side instances using `Base.getfield`. Because we are now back C++-side, we use `Tadpole::evolve` to create a frog:
 
 ```cpp
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();
@@ -4802,7 +4802,7 @@ T unbox(unsafe::Value* in)
     return out;
 }
 
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();

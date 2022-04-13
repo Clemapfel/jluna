@@ -56,13 +56,13 @@ namespace jluna
             /// @brief access field
             /// @param field_name
             /// @returns unboxed value
-            template<Unboxable T>
+            template<is_unboxable T>
             T operator[](const std::string& field);
 
             /// @brief access field
             /// @param field_name
             /// @returns unboxed value
-            template<Unboxable T, typename U, std::enable_if_t<std::is_same_v<U, char>, Bool> = true>
+            template<is_unboxable T, typename U, std::enable_if_t<std::is_same_v<U, char>, Bool> = true>
             T operator[](const U* field);
 
             /// @brief linear indexing, if array type, returns getindex result
@@ -73,7 +73,7 @@ namespace jluna
             /// @brief linear indexing, if array type returns getindex result
             /// @param index
             /// @returns field as proxy
-            template<Unboxable T>
+            template<is_unboxable T>
             T operator[](size_t);
 
             /// @brief cast to Any
@@ -87,7 +87,7 @@ namespace jluna
 
             /// @brief implicitly convert to T via unboxing
             /// @returns value as T
-            template<Unboxable T, std::enable_if_t<not std::is_same_v<T, std::string>, bool> = true>
+            template<is_unboxable T, std::enable_if_t<not std::is_same_v<T, std::string>, bool> = true>
             operator T() const;
 
             /// @brief implicitly downcast to base
@@ -119,12 +119,12 @@ namespace jluna
 
             /// @brief call with any arguments
             /// @tparams Args_t: types of arguments, need to be boxable
-            template<Boxable... Args_t>
+            template<is_boxable... Args_t>
             Proxy safe_call(Args_t&&...);
 
             /// call with arguments and exception forwarding, if proxy is a callable function
             /// @tparams Args_t: types of arguments, need to be boxable
-            template<Boxable... Args_t>
+            template<is_boxable... Args_t>
             Proxy operator()(Args_t&&...);
 
             /// @brief check whether assigning to this proxy will modify values julia-side
@@ -139,7 +139,7 @@ namespace jluna
             /// @brief assign value to proxy, this modifies the value julia-side
             /// @param T: value
             /// @returns reference to self
-            template<Boxable T>
+            template<is_boxable T>
             Proxy& operator=(T);
 
             /// @brief create a new unnamed proxy that holds the same value

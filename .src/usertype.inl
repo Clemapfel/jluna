@@ -122,13 +122,13 @@ namespace jluna
         return out;
     }
 
-    template<IsUsertype T>
+    template<is_usertype T>
     T unbox(unsafe::Value* in)
     {
        return Usertype<T>::unbox(in);
     }
 
-    template<IsUsertype T>
+    template<is_usertype T>
     unsafe::Value* box(T in)
     {
         return Usertype<T>::box(in);

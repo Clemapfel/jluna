@@ -14,7 +14,7 @@ namespace jluna
 {
     /// @brief declare T to be a usertype at compile time, uses C++-side name as Julia-side typename
     /// @param T: type
-    #define set_usertype_enabled(T) template<> struct jluna::usertype_enabled<T> {static_assert(IsDefaultConstructible<T>, "types managed by Usertype<T> need to be default constructable"); constexpr static inline const char* name = #T; constexpr static inline bool value = true;};
+    #define set_usertype_enabled(T) template<> struct jluna::usertype_enabled<T> {static_assert(is_default_constructible<T>, "types managed by Usertype<T> need to be default constructable"); constexpr static inline const char* name = #T; constexpr static inline bool value = true;};
 
     /// @brief customizable wrapper for non-julia type T
     /// @note for information on how to use this class, visit https://github.com/Clemapfel/jluna/blob/master/docs/manual.md#usertypes

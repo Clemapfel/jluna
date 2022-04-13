@@ -23,13 +23,13 @@ namespace jluna::unsafe
     /// @brief preserve a julia heap-allocated object until unsafe::gc_release is called
     /// @param object: pointer
     /// @returns id, keep track of this as it is needed to free the object
-    template<IsJuliaValue T>
+    template<is_julia_value T>
     [[nodiscard]] size_t gc_preserve(T* value);
 
     /// @brief preserve multiple values
     /// @param values: pointer
     /// @returns vector of ids, needed to free the objects
-    template<IsJuliaValuePointer... Ts, std::enable_if_t<(sizeof...(Ts) > 2), bool> = true>
+    template<is_julia_value_pointer... Ts, std::enable_if_t<(sizeof...(Ts) > 2), bool> = true>
     [[nodiscard]] std::vector<size_t> gc_preserve(Ts... values);
 
     /// @brief free a preserved object
@@ -67,7 +67,7 @@ namespace jluna::unsafe
     /// @param function
     /// @param args
     /// @returns result
-    template<IsJuliaValuePointer... Args_t>
+    template<is_julia_value_pointer... Args_t>
     unsafe::Value* call(unsafe::Function* function, Args_t... args);
 
     /// @brief call type ctor with args
@@ -75,14 +75,14 @@ namespace jluna::unsafe
     /// @param type
     /// @param args
     /// @returns result
-    template<IsJuliaValuePointer... Args_t>
+    template<is_julia_value_pointer... Args_t>
     unsafe::Value* call(unsafe::DataType* type, Args_t... args);
 
     /// @brief ctor julia-side expression
     /// @param symbol
     /// @params arguments (optional)
     /// @returns pointer to julia-side expression
-    template<IsJuliaValuePointer... Args_t>
+    template<is_julia_value_pointer... Args_t>
     unsafe::Expression* Expr(unsafe::Symbol*, Args_t...);
 
     /// @brief eval expression in module scope
@@ -234,7 +234,7 @@ namespace jluna::unsafe
     /// @brief box without type checking
     /// @param value
     /// @returns julia-side value of equivalent type to C++ arg
-    template<IsJuliaValue T>
+    template<is_julia_value T>
     unsafe::Value* unsafe_box(T*);
 
     /// @brief unbox without type checking

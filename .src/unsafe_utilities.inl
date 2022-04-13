@@ -5,20 +5,20 @@
 
 namespace jluna::unsafe
 {
-    template<IsJuliaValuePointer... Args_t>
+    template<is_julia_value_pointer... Args_t>
     unsafe::Value* call(Function* function, Args_t... args)
     {
         std::array<jl_value_t*, sizeof...(Args_t)> wrapped = {(unsafe::Value*) args...};
         return jl_call(function, wrapped.data(), wrapped.size());
     }
 
-    template<IsJuliaValuePointer... Args_t>
+    template<is_julia_value_pointer... Args_t>
     unsafe::Value* call(DataType* type, Args_t... args)
     {
         return jl_new_struct(type, args...);
     }
 
-    template<IsJuliaValuePointer... Args_t>
+    template<is_julia_value_pointer... Args_t>
     unsafe::Expression* Expr(unsafe::Symbol* first, Args_t... other)
     {
         static unsafe::Function* expr = unsafe::get_function(jl_base_module, "Expr"_sym);
@@ -52,7 +52,7 @@ namespace jluna::unsafe
         }
     }
 
-    template<IsJuliaValue T>
+    template<is_julia_value T>
     size_t gc_preserve(T* in)
     {
         auto* value = (unsafe::Value*) in;
@@ -67,7 +67,7 @@ namespace jluna::unsafe
         return res;
     }
 
-    template<IsJuliaValuePointer... Ts, std::enable_if_t<(sizeof...(Ts) > 2), bool>>
+    template<is_julia_value_pointer... Ts, std::enable_if_t<(sizeof...(Ts) > 2), bool>>
     std::vector<size_t> gc_preserve(Ts... values)
     {
         std::vector<size_t> out;
@@ -190,163 +190,163 @@ namespace jluna::unsafe
         array->length = new_size;
     }
 
-    template<IsJuliaValue T>
+    template<is_julia_value T>
     unsafe::Value* unsafe_box(T* in)
     {
         return in;
     }
 
-    template<Is<bool> T>
+    template<is<bool> T>
     unsafe::Value* unsafe_box(bool in)
     {
         return jl_box_bool(in);
     }
 
-    template<Is<char> T>
+    template<is<char> T>
     unsafe::Value* unsafe_box(char in)
     {
         return jl_box_char(in);
     }
 
-    template<Is<int8_t> T>
+    template<is<int8_t> T>
     unsafe::Value* unsafe_box(int8_t in)
     {
         return jl_box_int8(in);
     }
 
-    template<Is<int16_t> T>
+    template<is<int16_t> T>
     unsafe::Value* unsafe_box(int16_t in)
     {
         return jl_box_int16(in);
     }
 
-    template<Is<int32_t> T>
+    template<is<int32_t> T>
     unsafe::Value* unsafe_box(int32_t in)
     {
         return jl_box_int32(in);
     }
     
-    template<Is<int64_t> T>
+    template<is<int64_t> T>
     unsafe::Value* unsafe_box(int64_t in)
     {
         return jl_box_int64(in);
     }
 
-    template<Is<uint8_t> T>
+    template<is<uint8_t> T>
     unsafe::Value* unsafe_box(uint8_t in)
     {
         return jl_box_uint8(in);
     }
 
-    template<Is<uint16_t> T>
+    template<is<uint16_t> T>
     unsafe::Value* unsafe_box(uint16_t in)
     {
         return jl_box_uint16(in);
     }
 
-    template<Is<uint32_t> T>
+    template<is<uint32_t> T>
     unsafe::Value* unsafe_box(uint32_t in)
     {
         return jl_box_uint32(in);
     }
 
-    template<Is<uint64_t> T>
+    template<is<uint64_t> T>
     unsafe::Value* unsafe_box(uint64_t in)
     {
         return jl_box_uint64(in);
     }
 
-    template<Is<float> T>
+    template<is<float> T>
     unsafe::Value* unsafe_box(float in)
     {
         return jl_box_float32(in);
     }
     
-    template<Is<double> T>
+    template<is<double> T>
     unsafe::Value* unsafe_box(double in)
     {
         return jl_box_float64(in);
     }
 
-    template<Is<std::string> T>
+    template<is<std::string> T>
     unsafe::Value* unsafe_box(const T& in)
     {
         return jl_array_to_string(jl_ptr_to_array_1d(jl_apply_array_type((jl_value_t*) jl_char_type, 1), in.data(), in.size(), 0));
     }
 
-    template<Is<bool> T>
+    template<is<bool> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return jl_unbox_bool(in);
     }
 
-    template<Is<char> T>
+    template<is<char> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return char(jl_unbox_uint32(in));
     }
 
-    template<Is<int8_t> T>
+    template<is<int8_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<int8_t*>(in));
     }
     
-    template<Is<int16_t> T>
+    template<is<int16_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<int16_t*>(in));
     }
     
-    template<Is<int32_t> T>
+    template<is<int32_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<int32_t*>(in));
     }
     
-    template<Is<int64_t> T>
+    template<is<int64_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<int64_t*>(in));
     }
     
-    template<Is<uint8_t> T>
+    template<is<uint8_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<uint8_t*>(in));
     }
     
-    template<Is<uint16_t> T>
+    template<is<uint16_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<uint16_t*>(in));
     }
     
-    template<Is<uint32_t> T>
+    template<is<uint32_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<uint32_t*>(in));
     }
     
-    template<Is<uint64_t> T>
+    template<is<uint64_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<uint64_t*>(in));
     }
     
-    template<Is<Float32> T>
+    template<is<Float32> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<Float32*>(in));
     }
     
-    template<Is<Float64> T>
+    template<is<Float64> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<Float64*>(in));
     }
 
-    template<Is<std::string> T>
+    template<is<std::string> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return std::string(jl_string_ptr(in));

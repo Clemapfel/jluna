@@ -30,7 +30,7 @@ namespace jluna
     /// @param function
     /// @param args
     /// @returns result
-    template<IsJuliaValuePointer... Args_t>
+    template<is_julia_value_pointer... Args_t>
     unsafe::Value* safe_call(unsafe::Function* function, Args_t... args);
 
     /// @brief evaluate string with exception forwarding
@@ -45,7 +45,7 @@ namespace jluna
 
     /// @brief call julia-side println on values
     /// @param values
-    template<IsJuliaValuePointer... Ts>
+    template<is_julia_value_pointer... Ts>
     void println(Ts...);
 
     /// @brief get julia-side undef

@@ -80,7 +80,7 @@ const char* frogs_dot_jl = R"(
 )";
 
 // box cpp Frog::Tadpole to julia Tadpole
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -95,7 +95,7 @@ unsafe::Value* box(T in)
 }
 
 // box cpp Frog to julia Frog
-template<Is<Frog> T>
+template<is<Frog> T>
 unsafe::Value* box(T in)
 {
     auto sentinel = GCSentinel();
@@ -106,7 +106,7 @@ unsafe::Value* box(T in)
 }
 
 // unbox julia Tadpole to cpp Frog::Tadpole
-template<Is<Frog::Tadpole> T>
+template<is<Frog::Tadpole> T>
 T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();
@@ -121,7 +121,7 @@ T unbox(unsafe::Value* in)
 }
 
 // unbox julia Frog to cpp Frog
-template<Is<Frog> T>
+template<is<Frog> T>
 T unbox(unsafe::Value* in)
 {
     auto sentinel = GCSentinel();
