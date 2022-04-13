@@ -48,6 +48,20 @@ namespace jluna
     template<typename T, typename... Args_t>
     concept LambdaType = std::is_invocable<T, Args_t...>::value and not std::is_base_of<Proxy, T>::value;
 
+    /// @concept function returns void
+
+    template <typename ... Args>
+    constexpr bool return_void(void(Args ...)) { return true; }
+
+    template <typename R, typename ... Args>
+    constexpr bool return_void(R(Args ...)) { return false; }
+
+    template<typename T>
+    concept ReturnsVoid = requires(T t)
+    {
+        return_void(t);
+    };
+
     /// @concept: can be reinterpret-cast to jl_value_t*
     template<typename T>
     concept IsJuliaValuePointer =

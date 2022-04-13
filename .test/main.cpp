@@ -16,17 +16,35 @@ struct NonJuliaType
 };
 set_usertype_enabled(NonJuliaType);
 
+
+
+
+void f() {return;}
+
 int main()
 {
     initialize(4);
 
-    auto t = ThreadPool::create([]() -> void
+    auto no_void = []() -> size_t
+    {
+        jl_eval_string("println(\"success\")");
+        return 1234;
+    };
+
+    auto yes_void = []() -> void
     {
         jl_eval_string("println(\"success\")");
         return;
-    });
+    };
+
+    println(box(yes_void()));
+
+    std::cout << ReturnsVoid<decltype(yes_void)> << ReturnsVoid<decltype(no_void)> << std::endl;
+    /*
     t.schedule();
     t.join();
+    std::cout << t.result<size_t>() << std::endl;
+     */
     return 0;
 
     return 0;

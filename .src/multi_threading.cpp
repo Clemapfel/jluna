@@ -8,7 +8,8 @@
 
 namespace jluna
 {
-    Task::Task(std::function<unsafe::Value*()>* in)
+    Task::Task(std::function<unsafe::Value*()>* in, size_t id)
+        : _threadpool_id(id)
     {
         static auto* make_task = unsafe::get_function("jluna"_sym, "make_task"_sym);
         _value = jluna::safe_call(make_task, box(reinterpret_cast<size_t>(in)));
@@ -18,6 +19,15 @@ namespace jluna
     Task::~Task()
     {
         unsafe::gc_release(_value_id);
+
+        ThreadPool::_storage_lock.lock();
+        ThreadPool::_storage.erase(_threadpool_id);
+        ThreadPool::_storage_lock.unlock();
+    }
+
+    Task::operator _jl_value_t*()
+    {
+        return _value;
     }
 
     void Task::join()

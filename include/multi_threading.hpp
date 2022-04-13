@@ -43,8 +43,12 @@ namespace jluna
 {
     class Task
     {
+        friend class ThreadPool;
+
         public:
             ~Task();
+
+            operator unsafe::Value*();
 
             void join();
             void schedule();
@@ -56,34 +60,44 @@ namespace jluna
             bool is_failed() const;
             bool is_running() const;
 
-        //protected:
-            Task(std::function<unsafe::Value*()>*);
+        protected:
+            /// @brief private ctor, use ThreadPool::create to create a task
+            Task(std::function<unsafe::Value*()>*, size_t);
 
         private:
             unsafe::Value* _value;
             size_t _value_id;
+            size_t _threadpool_id;
     };
 
     struct ThreadPool
     {
+        friend class Task;
+
         /// @brief create a task around given lambda
         /// @tparam Return_t: return type of lambda, has to be either (un)boxable or void
         /// @param lambda
         /// @return task
-        template<typename Lambda_t>
+        template<typename Lambda_t,
+            std::enable_if_t<
+                std::is_same_v<std::invoke_result_t<Lambda_t()>, void>,
+            bool> = true>
+        static Task create(Lambda_t);
+
+        template<typename Lambda_t,
+            std::enable_if_t<
+                not std::is_same_v<std::invoke_result_t<Lambda_t()>, void>,
+            bool> = true>
         static Task create(Lambda_t);
 
         /// @brief create a task around given lambda
         /// @tparam Return_t: return type of lambda, has to be either (un)boxable or void
         /// @param lambda
         /// @return task
-        template<typename Return_t,
-            LambdaType<Return_t> Lambda_t,
-            std::enable_if_t<
-                (Boxable<Return_t> and Unboxable<Return_t>) or
-                std::is_same_v<Return_t, void>,
-            bool> = true>
+        template<typename Lambda_t>
         static Task create_and_schedule(Lambda_t);
+
+        protected:
 
         private:
             static inline size_t _current_id = 0;

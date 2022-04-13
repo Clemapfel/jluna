@@ -18,7 +18,10 @@ namespace jluna
         return unbox<T>(unsafe::call(getproperty, _value, sym));
     }
 
-    template<typename Lambda_t>
+    template<typename Lambda_t,
+            std::enable_if_t<
+                std::is_same_v<std::invoke_result_t<Lambda_t()>, void>,
+            bool>>
     Task ThreadPool::create(Lambda_t lambda)
     {
         _storage_lock.lock();
@@ -26,36 +29,33 @@ namespace jluna
             lambda();
             return jl_nothing;
         }));
-        auto out = Task(_storage.at(_current_id).get());
+        auto out = Task(_storage.at(_current_id).get(), _current_id);
+        _current_id += 1;
         _storage_lock.unlock();
         return out;
     }
 
-    /*
-    template<Boxable T, LambdaType<T> Lambda_t>
+    template<typename Lambda_t,
+            std::enable_if_t<
+                not std::is_same_v<std::invoke_result_t<Lambda_t()>, void>,
+            bool>>
     Task ThreadPool::create(Lambda_t lambda)
     {
         _storage_lock.lock();
-        auto res = _storage.emplace({_current_id,
-              std::make_unique<std::function<unsafe::Value*>>([lambda]() -> unsafe::Value*
-        {
+        _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda]() -> unsafe::Value* {
             return box(lambda());
-        })});
-
-        return Task(&res.second);
+        }));
+        auto out = Task(_storage.at(_current_id).get(), _current_id);
+        _current_id += 1;
+        _storage_lock.unlock();
+        return out;
     }
-     */
 
-    template<typename Return_t,
-        LambdaType<Return_t> Lambda_t,
-        std::enable_if_t<
-            (Boxable<Return_t> and Unboxable<Return_t>) or
-            std::is_same_v<Return_t, void>,
-        bool>>
+    template<typename Lambda_t>
     Task ThreadPool::create_and_schedule(Lambda_t lambda)
     {
-        auto out = create(lambda);
-        out.schedule();
-        return out;
+        auto task = create(lambda);
+        task.schedule();
+        return task;
     }
 }
