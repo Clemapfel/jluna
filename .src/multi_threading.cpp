@@ -8,6 +8,7 @@
 
 namespace jluna
 {
+    /*
     Task::Task(std::function<unsafe::Value*()>* in, size_t id)
         : _threadpool_id(id)
     {
@@ -41,5 +42,6 @@ namespace jluna
         static auto* schedule = unsafe::get_function(jl_base_module, "schedule"_sym);
         jluna::safe_call(schedule, _value);
     }
+     */
 }
 

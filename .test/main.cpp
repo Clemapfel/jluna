@@ -35,12 +35,9 @@ int main()
 {
     initialize(4);
 
-    std::function<void(size_t)> wrapped = yes_void_lambda;
-    //auto t = ThreadPool::create(static_cast<std::function<void(size_t)>>(yes_void_lambda), size_t(1234));
-    auto t = ThreadPool::create(wrapped, size_t(1234));
-    t.schedule();
-    t.join();
-    std::cout << t.result<size_t>() << std::endl;
+    std::cout << jl_nothing << std::endl;
+    return 0;
+
 
     return 0;
 

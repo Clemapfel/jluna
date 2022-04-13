@@ -11,6 +11,8 @@
 #include <include/box.hpp>
 
 #include <thread>
+#include <optional>
+#include <condition_variable>
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -41,24 +43,72 @@
 
 namespace jluna
 {
+    /// @brief the result of a thread
+    template<typename Value_t>
+    class Future
+    {
+        template<typename>
+        friend class Task;
+
+        public:
+            /// @brief ctor
+            Future();
+
+            /// @brief access the value, thread-safe
+            /// @returns optional, contains no value if task is failed or not yet done
+            std::optional<Value_t> get();
+
+            /// @brief check if value is available, thread-safe
+            /// @returns true if task .is_done() returns true, false otherwise
+            bool is_available();
+
+            /// @brief pause the current thread until the futures value becomes available
+            /// @returns value, if task failed, optional will not contain a value
+            std::optional<Value_t> wait();
+
+        protected:
+            void set_value(Value_t);
+
+            std::mutex _mutex;
+            std::condition_variable _cv;
+            std::unique_lock<std::mutex> _cv_lock;
+            std::unique_ptr<Value_t> _value;
+    };
+
+    /// @brief equivalent of std::thread, is actually a Julia-side 'Task'
+    template<typename Result_t>
     class Task
     {
         friend class ThreadPool;
 
         public:
+            /// @brief dtor
             ~Task();
 
+            /// @brief access the Julia-side value of type Task
             operator unsafe::Value*();
 
+            /// @brief stall the thread this function is called from until the task is done
             void join();
+
+            /// @brief start the thread
             void schedule();
 
-            template<is_unboxable T>
-            T result();
-
+            /// @brief is task finished
+            /// @returns true if .result() is available, false otherwise
             bool is_done() const;
+
+            /// @brief is task failed
+            /// @returns true if task has failed and exited, false otherwise
             bool is_failed() const;
+
+            /// @brief is task active
+            /// @returns true if .result() is not yet available and the task has not yielded(), false otherwise
             bool is_running() const;
+
+            /// @brief access the tasks result
+            /// @returns future
+            Future<Result_t>& result();
 
         protected:
             /// @brief private ctor, use ThreadPool::create to create a task
@@ -68,72 +118,52 @@ namespace jluna
             unsafe::Value* _value;
             size_t _value_id;
             size_t _threadpool_id;
+            std::unique_ptr<Future<Result_t>> _future;
     };
 
+    /// @brief threadpool that allows scheduled C++-side tasks to safely access the Julia State from within a thread.
+    /// Pool cannot be resized, it will use the native Julia threads to execute any C++-side tasks
     struct ThreadPool
     {
+        template<typename>
         friend class Task;
 
-        /// @brief create a task around given lambda
-        /// @tparam Return_t: return type of lambda, has to be either (un)boxable or void
-        /// @param lambda
-        /// @return task
-        /// @warning copy ctor is invoked for all arguments during task creation, if you don't want values to be copied, wrap them in a std::ref
-        /*
-        template<is<void> Return_t>
-        static Task create(std::function<Return_t()>);
-
-        template<is_not<void> Return_t>
-        static Task create(std::function<Return_t()>);
-         */
-
-        template<typename Return_t, typename Lambda_t, typename... Args_t>
-        static Task create(Lambda_t lambda, Args_t... args)
-        {
-            return create(static_cast<std::function<Return_t(Args_t...)>>(lambda), args...);
-        }
-
+        /// @brief create a task from a std::function returning void
+        /// @param f: function returning void
+        /// @param args: arguments
+        /// @returns Task, not yet scheduled
+        /// @note once the task is done, .result() will return an object of type jluna::Nothing_t
+        /// @warning during task creation, the copy ctor is invoked for each argument in args, to avoid this, wrap the argument into a std::ref first
         template<typename... Args_t>
-        static Task create(const std::function<void(Args_t...)>& lambda, Args_t... args)
-        {
-            _storage_lock.lock();
-            _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda, args...]() -> unsafe::Value* {
-                lambda(args...);
-                return jl_nothing;
-            }));
-            auto out = Task(_storage.at(_current_id).get(), _current_id);
-            _current_id += 1;
-            _storage_lock.unlock();
-            return out;
-        }
+        static auto create(const std::function<void(Args_t...)>& f, Args_t... args);
 
+        /// @brief create a task from a std::function returning non-void
+        /// @param f: function returning void
+        /// @param args: arguments
+        /// @returns Task, not yet scheduled
+        /// @warning during task creation, the copy ctor is invoked for each argument in args, to avoid this, wrap the argument into a std::ref first
         template<is_not<void> Return_t, typename... Args_t>
-        static Task create(const std::function<Return_t()>& lambda, Args_t... args)
-        {
-            _storage_lock.lock();
-            _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda, args...]() -> unsafe::Value* {
-                return box(lambda(args...));
-            }));
-            auto out = Task(_storage.at(_current_id).get(), _current_id);
-            _current_id += 1;
-            _storage_lock.unlock();
-            return out;
-        }
+        static auto create(const std::function<Return_t()>& f, Args_t... args);
 
-        /// @brief create a task around given lambda
-        /// @tparam Return_t: return type of lambda, has to be either (un)boxable or void
+        /// @brief create a task from a lambda
+        /// @tparam Return_t: return type of lambda, needs to be manually specified
+        /// @tparam Lambda_t: deduced automatically
+        /// @tparam Args_t: deduced automatically
         /// @param lambda
-        /// @return task
-        template<typename Lambda_t>
-        static Task create_and_schedule(Lambda_t);
-
-        protected:
+        /// @param args: arguments
+        /// @returns Task, not yet scheduled
+        /// @warning during task creation, the copy ctor is invoked for each argument in args, to avoid this, wrap the argument into a std::ref first
+        template<typename Return_t, typename Lambda_t, typename... Args_t>
+        static auto create(Lambda_t lambda, Args_t... args);
 
         private:
             static inline size_t _current_id = 0;
             static inline std::mutex _storage_lock = std::mutex();
-            static inline std::map<size_t, std::unique_ptr<std::function<unsafe::Value*()>>> _storage = {};
+            static inline std::map<size_t, std::unique_ptr<std::function<unsafe::Value*()>>> _threads = {};
     };
+
+    /// @brief pause the current task, has to be called from within a task allocated via ThreadPool::create
+    void yield();
 }
 
 #include <.src/multi_threading.inl>
