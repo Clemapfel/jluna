@@ -20,11 +20,12 @@ set_usertype_enabled(NonJuliaType);
 size_t no_void_true(size_t) {return 1234;}
 void yes_void_true(size_t) {return;}
 
-auto no_void_lambda = []() -> size_t{
-    return 1234;
+auto no_void_lambda = [](size_t in) -> size_t{
+    return in;
 };
 
-auto yes_void_lambda = []() -> void {
+auto yes_void_lambda = [](size_t in) -> void {
+    std::cout << in << std::endl;
     return;
 };
 
@@ -34,7 +35,9 @@ int main()
 {
     initialize(4);
 
-    auto t = ThreadPool::create(yes_void_lambda);
+    std::function<void(size_t)> wrapped = yes_void_lambda;
+    //auto t = ThreadPool::create(static_cast<std::function<void(size_t)>>(yes_void_lambda), size_t(1234));
+    auto t = ThreadPool::create(wrapped, size_t(1234));
     t.schedule();
     t.join();
     std::cout << t.result<size_t>() << std::endl;

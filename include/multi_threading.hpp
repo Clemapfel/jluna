@@ -78,6 +78,7 @@ namespace jluna
         /// @tparam Return_t: return type of lambda, has to be either (un)boxable or void
         /// @param lambda
         /// @return task
+        /// @warning copy ctor is invoked for all arguments during task creation, if you don't want values to be copied, wrap them in a std::ref
         /*
         template<is<void> Return_t>
         static Task create(std::function<Return_t()>);
@@ -86,11 +87,18 @@ namespace jluna
         static Task create(std::function<Return_t()>);
          */
 
-        static Task create(std::function<void()> lambda)
+        template<typename Return_t, typename Lambda_t, typename... Args_t>
+        static Task create(Lambda_t lambda, Args_t... args)
+        {
+            return create(static_cast<std::function<Return_t(Args_t...)>>(lambda), args...);
+        }
+
+        template<typename... Args_t>
+        static Task create(const std::function<void(Args_t...)>& lambda, Args_t... args)
         {
             _storage_lock.lock();
-            _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda]() -> unsafe::Value* {
-                lambda();
+            _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda, args...]() -> unsafe::Value* {
+                lambda(args...);
                 return jl_nothing;
             }));
             auto out = Task(_storage.at(_current_id).get(), _current_id);
@@ -99,12 +107,12 @@ namespace jluna
             return out;
         }
 
-        template<is_not<void> Return_t>
-        static Task create(std::function<Return_t()> lambda)
+        template<is_not<void> Return_t, typename... Args_t>
+        static Task create(const std::function<Return_t()>& lambda, Args_t... args)
         {
             _storage_lock.lock();
-            _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda]() -> unsafe::Value* {
-                return box(lambda());
+            _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda, args...]() -> unsafe::Value* {
+                return box(lambda(args...));
             }));
             auto out = Task(_storage.at(_current_id).get(), _current_id);
             _current_id += 1;
