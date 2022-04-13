@@ -20,21 +20,14 @@ int main()
 {
     initialize(4);
 
-    size_t test = -1;
-static std::function<unsafe::Value*()> lambda = [t_ptr = &test](){
-    static auto* f = unsafe::get_function(jl_base_module, "println"_sym);
-    jl_call1(f, box("success"));
-    return jl_nothing;
-};
-
-auto task = Task(&lambda);
-task.schedule();
-task.join();
-    std::cout << task.result<Int64>() << std::endl;
+    auto t = ThreadPool::create([]() -> void
+    {
+        jl_eval_string("println(\"success\")");
+        return;
+    });
+    t.schedule();
+    t.join();
     return 0;
-
-    auto thread = std::thread(lambda);
-    thread.join();
 
     return 0;
 

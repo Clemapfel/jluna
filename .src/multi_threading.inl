@@ -18,30 +18,21 @@ namespace jluna
         return unbox<T>(unsafe::call(getproperty, _value, sym));
     }
 
-    template<typename Return_t,
-            LambdaType<Return_t> Lambda_t,
-            std::enable_if_t<std::is_same_v<Return_t, void>, bool>
-    >
+    template<typename Lambda_t>
     Task ThreadPool::create(Lambda_t lambda)
     {
         _storage_lock.lock();
-        auto res = _storage.emplace({_current_id,
-              std::make_unique<std::function<unsafe::Value*>>([lambda]() -> unsafe::Value*
-        {
+        _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda]() -> unsafe::Value* {
             lambda();
             return jl_nothing;
-        })});
+        }));
+        auto out = Task(_storage.at(_current_id).get());
         _storage_lock.unlock();
-
-        return Task(&res.second);
+        return out;
     }
 
-    template<typename Return_t,
-            LambdaType<Return_t> Lambda_t,
-            std::enable_if_t<
-                (Boxable<Return_t> and Unboxable<Return_t>)
-                and not std::is_same_v<Return_t, void>,
-            bool>>
+    /*
+    template<Boxable T, LambdaType<T> Lambda_t>
     Task ThreadPool::create(Lambda_t lambda)
     {
         _storage_lock.lock();
@@ -53,6 +44,7 @@ namespace jluna
 
         return Task(&res.second);
     }
+     */
 
     template<typename Return_t,
         LambdaType<Return_t> Lambda_t,

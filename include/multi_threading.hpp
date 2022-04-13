@@ -56,7 +56,7 @@ namespace jluna
             bool is_failed() const;
             bool is_running() const;
 
-        protected:
+        //protected:
             Task(std::function<unsafe::Value*()>*);
 
         private:
@@ -70,18 +70,7 @@ namespace jluna
         /// @tparam Return_t: return type of lambda, has to be either (un)boxable or void
         /// @param lambda
         /// @return task
-        template<typename Return_t,
-            LambdaType<Return_t> Lambda_t,
-            std::enable_if_t<
-                (Boxable<Return_t> and Unboxable<Return_t>)
-                and not std::is_same_v<Return_t, void>,
-            bool> = true>
-        static Task create(Lambda_t);
-
-        template<typename Return_t,
-            LambdaType<Return_t> Lambda_t,
-            std::enable_if_t<std::is_same_v<Return_t, void>,
-            bool> = true>
+        template<typename Lambda_t>
         static Task create(Lambda_t);
 
         /// @brief create a task around given lambda
