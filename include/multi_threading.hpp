@@ -43,12 +43,17 @@
 
 namespace jluna
 {
+    namespace detail {
+        class FutureHandler;
+    }
+
     /// @brief the result of a thread
     template<typename Value_t>
     class Future
     {
         template<typename>
         friend class Task;
+        friend class detail::FutureHandler;
 
         public:
             /// @brief ctor
@@ -66,7 +71,7 @@ namespace jluna
             /// @returns value, if task failed, optional will not contain a value
             std::optional<Value_t> wait();
 
-        protected:
+        private:
             void set_value(Value_t);
 
             std::mutex _mutex;
@@ -111,10 +116,12 @@ namespace jluna
             Future<Result_t>& result();
 
         protected:
-            /// @brief private ctor, use ThreadPool::create to create a task
-            Task(std::function<unsafe::Value*()>*, size_t);
+            /// @brief privated ctor, use ThreadPool::create to create a task
+            Task(size_t);
 
         private:
+            void initialize(std::function<unsafe::Value*()>*);
+
             unsafe::Value* _value;
             size_t _value_id;
             size_t _threadpool_id;
@@ -159,7 +166,7 @@ namespace jluna
         private:
             static inline size_t _current_id = 0;
             static inline std::mutex _storage_lock = std::mutex();
-            static inline std::map<size_t, std::unique_ptr<std::function<unsafe::Value*()>>> _threads = {};
+            static inline std::map<size_t, std::unique_ptr<std::function<unsafe::Value*()>>> _storage = {};
     };
 
     /// @brief pause the current task, has to be called from within a task allocated via ThreadPool::create

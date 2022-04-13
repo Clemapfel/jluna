@@ -41,6 +41,18 @@ namespace jluna
         return get();
     }
 
+    namespace detail
+    {
+        struct FutureHandler
+        {
+            template<typename T>
+            static inline void update_future(Future<T>& future, T value)
+            {
+                future.set_value(value);
+            }
+        };
+    }
+
     template<typename T>
     void Future<T>::set_value(T value)
     {
@@ -52,8 +64,69 @@ namespace jluna
 
     // ###
 
-    implement task, future already notifies waiting threads. Add Future.set_value to lambda wrappers
-    in create
+    template<typename T>
+    Task<T>::Task(size_t id)
+        : _threadpool_id(id), _future(std::make_unique<Future<T>>())
+    {}
+
+    template<typename T>
+    Task<T>::~Task()
+    {
+        unsafe::gc_release(_value_id);
+
+        ThreadPool::_storage_lock.lock();
+        ThreadPool::_storage.erase(_threadpool_id);
+        ThreadPool::_storage_lock.unlock();
+    }
+
+    template<typename T>
+    void Task<T>::initialize(std::function<unsafe::Value*()>* in)
+    {
+        static auto* make_task = unsafe::get_function("jluna"_sym, "make_task"_sym);
+        _value = jluna::safe_call(make_task, box(reinterpret_cast<size_t>(in)));
+        _value_id = unsafe::gc_preserve(_value);
+    }
+
+    template<typename T>
+    void Task<T>::join()
+    {
+        static auto* wait = unsafe::get_function(jl_base_module, "wait"_sym);
+        jluna::safe_call(wait, _value);
+    }
+
+    template<typename T>
+    void Task<T>::schedule()
+    {
+        static auto* schedule = unsafe::get_function(jl_base_module, "schedule"_sym);
+        jluna::safe_call(schedule, _value);
+    }
+
+    template<typename T>
+    bool Task<T>::is_done() const
+    {
+        static auto* istaskdone = unsafe::get_function(jl_base_module, "istaskdone"_sym);
+        jluna::safe_call(istaskdone, _value);
+    }
+
+    template<typename T>
+    bool Task<T>::is_failed() const
+    {
+        static auto* istaskfailed = unsafe::get_function(jl_base_module, "istaskfailed"_sym);
+        jluna::safe_call(istaskfailed, _value);
+    }
+
+    template<typename T>
+    bool Task<T>::is_running() const
+    {
+        static auto* istaskstarted = unsafe::get_function(jl_base_module, "istaskstarted"_sym);
+        jluna::safe_call(istaskstarted, _value);
+    }
+
+    template<typename T>
+    Future<T>& Task<T>::result()
+    {
+        return _future;
+    }
 
     // ###
 
@@ -67,26 +140,41 @@ namespace jluna
     auto ThreadPool::create(const std::function<void(Args_t...)>& lambda, Args_t... args)
     {
         _storage_lock.lock();
-        _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda, args...]() -> unsafe::Value* {
+
+        auto task = Task<unsafe::Value*>(_current_id);
+        auto function = _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda, future = std::ref(task.result()) ,args...]() -> unsafe::Value* {
             lambda(args...);
+            detail::FutureHandler::update_future<unsafe::Value*>(future, jl_nothing);
             return jl_nothing;
         }));
-        auto out = Task<unsafe::Value*>(_storage.at(_current_id).get(), _current_id);
+        task.initialize(_storage.at(_current_id).get());
+
         _current_id += 1;
         _storage_lock.unlock();
-        return out;
+        return task;
     }
 
     template<is_not<void> Return_t, typename... Args_t>
     auto ThreadPool::create(const std::function<Return_t()>& lambda, Args_t... args)
     {
         _storage_lock.lock();
-        _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda, args...]() -> unsafe::Value* {
-            return lambda(args...);
+
+        auto task = Task<unsafe::Value*>(_current_id);
+        auto function = _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda, future = std::ref(task.result()) ,args...]() -> unsafe::Value* {
+            Return_t res = lambda(args...);
+            detail::FutureHandler::update_future<Return_t>(future, res);
+            return box(res);
         }));
-        auto out = Task<Return_t>(_storage.at(_current_id).get(), _current_id);
+        task.initialize(_storage.at(_current_id).get());
+
         _current_id += 1;
         _storage_lock.unlock();
-        return out;
+        return task;
+    }
+
+    inline void yield()
+    {
+        static auto* jl_yield = unsafe::get_function(jl_base_module, "yield"_sym);
+        jluna::safe_call(jl_yield);
     }
 }
