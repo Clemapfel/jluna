@@ -35,8 +35,15 @@ struct function_traits<Return_t(Args_t...)>
     using argument_type = std::tuple_element_t<i, argument_ts>;
 };
 
-template<typename T, typename... Args_t>
-using forward_as_function = std::invoke_result_t<T, Args_t...>(Args_t...);
+
+template<typename T, typename Return_t, typename... Args_t>
+concept IsFunctionWithSignature =
+    std::is_invocable_v<T, Args_t...> and
+    std::conditional_t<
+        std::is_void_v<Return_t>,
+        std::is_void<typename function_traits<T>::return_t>,
+        std::is_same<typename function_traits<T>::return_t, Return_t>
+    >::value;
 
 /*
 
@@ -56,12 +63,6 @@ struct forward_as_function<std::function<Return_t(Args_t...)>>
 };
  */
 
-
-
-
-template<typename T, typename... Args_t>
-concept ReturnsVoid = std::is_void_v<typename function_traits<forward_as_function<T, Args_t...>>::return_t>;
-
 size_t no_void_true(size_t) {return 1234;}
 void yes_void_true(size_t) {return;}
 
@@ -79,10 +80,10 @@ int main()
 {
     initialize(4);
 
-    std::cout << "yes true: \t" << ReturnsVoid<decltype(yes_void_true), size_t> << std::endl;
-    std::cout << "no true: \t" << ReturnsVoid<decltype(no_void_true), size_t> << std::endl;
-    std::cout << "yes lambda: " << ReturnsVoid<decltype(yes_void_lambda), size_t> << std::endl;
-    std::cout << "no lambda: \t" << ReturnsVoid<decltype(no_void_lambda), size_t> << std::endl;
+    std::cout << "yes true: \t" << IsFunctionWithSignature<decltype(yes_void_true), void, size_t> << std::endl;
+    std::cout << "no true: \t" << IsFunctionWithSignature<decltype(no_void_true), void, size_t> << std::endl;
+    std::cout << "yes lambda: " << IsFunctionWithSignature<decltype(yes_void_lambda), void, size_t> << std::endl;
+    std::cout << "no lambda: \t" << IsFunctionWithSignature<decltype(no_void_lambda), void, size_t> << std::endl;
 
     /*
     t.schedule();
