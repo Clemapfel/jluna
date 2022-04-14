@@ -362,7 +362,9 @@ So far, we have learned how to do basic things like calling functions/code using
 
 ## Multi Threading
 
-Given Julias application in high-performance computing and its native multi-threading support, it is only natural a Julia wrapper should also allow for asynchronous execution. We run into a problem however. Consider the following:
+Given Julias application in high-performance computing, and its native multi-threading support, it is only natural a Julia wrapper should also allow for asynchronous execution in a similarly convenient and performant manner. 
+
+In relation to specifically a C++ <-> Julia environment, we run into a problem, however. Consider the following:
 
 ```cpp
 #include <jluna.hpp>
@@ -394,20 +396,24 @@ Allocations: 782030 (Pool: 781753; Big: 277); GC: 1
 Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)
 ```
 
-It segfaults without an error. This is, because the Julia C-API is seemingly hardcoded to prevent any call of C-API functions from anywhere but master scope (the scope of the thread, `main` is executed in). For obvious reasons, this makes things quite difficult, because, **we cannot access the Julia state from within a C++-side thread**. This has nothing to do with `jluna`, it is how the C-API was designed. 
+It segfaults without an error. 
 
-Given this, we can immediately throw out using any of the C++ `std::`s multi-threading support. It is important to keep this in mind, if our application already uses these frameworks, we have to take care not to call any code that interacts with Julia, be it through the Julia C-API or through `jluna` (which, of course, is build on top the Julia C-API).
+This is, because the Julia C-API is seemingly hardcoded to prevent any call of C-API functions from anywhere but master scope (the scope of the thread, `main` is executed in). For obvious reasons, this makes things quite difficult, because, **we cannot access the Julia state from within a C++-side thread**. This has nothing to do with `jluna`, it is how the C-API was designed. 
 
-All is not lost, however. `jluna` offers its own multi-threading framework, allowing for parallel execution of truly arbitrary C++ code, even if that code access the Julia state.
+Given this, we can immediately throw out using any of the C++ `std::thread`-related multi-threading support, as well as libraries like libuv. It is important to keep this in mind, if our application already uses these frameworks, we have to take care to never execute code that interacts with Julia from within a thread. This includes any of `jluna`s functionalities, as it is, of course, build entirely on the Julia C-API.
+
+All is not lost, however: `jluna` offers its own multi-threading framework, allowing for parallel execution of truly arbitrary C++ code - even if that code interacts with the Julia state.
 
 ### Initializing the Julia Threadpool
 
-In Julia, we have to decide the number of threads we want to use on startup. In the Julia REPL, we would use the `-threads` argument. In `jluna`, we instead give the number of desired threads to `jluna::initialize`:
+In Julia, we have to decide the number of threads we want to use *before startup*. 
+In the Julia REPL, we would use the `-threads` (or `-t`) argument. In `jluna`, we instead give the desired threads as an argument to `jluna::initialize`:
 
 ```cpp
 int main()
 {
-    jluna::initialize(8);
+    jluna::initialize(8); 
+    // equivalent to `julia -t 8`
     (...)
 }
 ```
@@ -421,17 +427,18 @@ If left unspecified, `jluna` will initialize Julia with exactly 1 thread. We can
 using namespace jluna;
 
 initialize(JULIA_NUM_THREADS_AUTO);
+// equivalent to `julia -t auto`
 ```
 
-This sets the number of threads to number of local CPU threads, just like setting the environment variable `JULIA_NUM_THREADS` to `auto` would do.
+This sets the number of threads to number of local CPU threads, just like setting environment variable `JULIA_NUM_THREADS` to `auto` would do.
 
-Note that any already existing `JULIA_NUM_THREAD` variable in the environment the `jluna` executable is run in is overridden. We always need to specify the number of threads through `jluna::initialize`.
+Note that any already existing `JULIA_NUM_THREAD` variable in the environment the `jluna` executable is run in, is ignored and overridden. We can only specify the number of threads through `jluna::initialize`.
 
 ### Spawning a Task
 
-Owning to its in-between-language status, `jluna`s threadpool architecture borrows a bit from both C++ and Julia.
+Owning to its status of being in-between two languages with differying vocabulary and design decisions, `jluna`s thread pool architecture borrows a bit from both C++ and Julia.
 
-To execute a C++-side function, we have to wrap it in a `jluna::Task`. We cannot initialize a task directly, rather, we use `jluna::ThreadPool::create`:
+To execute a C++-side piece of code, we have to first wrap it into a C++ lambda, then wrap that lambda in a `jluna::Task`. We cannot initialize a task directly, rather, we use `jluna::ThreadPool::create`:
 
 ```cpp
 using namespace jluna;
@@ -443,15 +450,19 @@ std::function<size_t(size_t)> forward_arg = [](size_t in) -> size_t {
 
 auto& task = ThreadPool::create(forward_arg, size_t(1234));
 ```
-> **C++ Hint**: Always specify the trailing return type of any C++ lambda using `->`. In this example, we manually specified `forward_arg` to have a return a value of type `size_t` by writing `[](size_t in) -> size_t { //...`.
+> **C++ Hint**: `std::function` describes C++ function objects with a fully specified signature (i.e. not template functions or pure lambdas (of type `auto`)). If our function has a the signature `(T1, T2, T3, ...) -> TR`, it can be only be bound to `std::function<TR(T1, T2, T3, ...)>`
 
-Here, `create` takes multiple arguments:
+> **C++ Hint**: Always specify the trailing return type of any C++ lambda using `->`. In this example, we manually specified `forward_arg` to return a value of type `size_t` by writing `[](size_t in) -> size_t { //...`.
 
-The first is a `std::function` object, which, in our case, was initialized by assigning a C++ lambda with the signature `(size_t) -> size_t` to the variable `forward_arg`. 
+Here, `ThreadPool::create` takes multiple arguments:
 
-Any following objects given to `ThreadPool::create` will be used as the argument for the given lambda. In our case, because we specified `size_t(1234)`, the ThreadPool will invoke our lambda `forward_arg` with that argument.
+The first argument is a `std::function` object, which, in our case, was initialized by assigning a C++ lambda with the signature `(size_t) -> size_t` to the variable `forward_arg`. 
 
-Unlike C++-threads but much like Julia tasks, `jluna::Task` does not immediately start execution once it is created. We need to manually start is using `.schedule()`. We can then wait for its execution to finish using `.join()`, which pauses the thread `.join()` was called from until the task completes.
+Any following objects given to `ThreadPool::create` will be used as the **arguments for the given function**. In our case, because we specified `size_t(1234)`, the thread pool will invoke our lambda `forward_arg` with that argument and only that argument.
+
+Unlike C++-threads (but much like Julia tasks), `jluna::Task` does not immediately start execution once it is constructed. We need to manually "start" is using `.schedule()`. 
+
+We can wait for its execution to finish using `.join()`. This  stalls the thread `.join()` was called from until the task completes:
 
 ```cpp
 std::function<size_t(size_t)> forward_arg = [](size_t in) -> size_t {
@@ -467,9 +478,18 @@ task.join();
 lambda called with 1234
 ```
 
-Note how, even though we called the Julia function `println`, executing the task *did not segfault*. `jluna`s threadpool is the only way to call C++-side functions that access the Julia state concurrently like this.
+Note how, even though we called the Julia function `println`, the task **did not segfault**. Using `jluna`s thread pool is the only way to call C++-side functions that access the Julia state concurrently.
 
-We have declared `task` to be a reference: `auto& task = //...`. This is because any created task is owned by the threadpool. It cannot be moved or copied. All we are allowed to do, is keep a reference to it, and interact with it. 
+We declared `task` to be a reference:
+
+```cpp
+// correct:
+auto& task = ThreadPool::create(//...
+        
+// wrong:
+auto task = ThreadPool::create(//...
+```
+This is because any created task is owned and managed only by the thread pool. It cannot be moved or copied. All we are allowed to do, is keep a reference to it, and interact with it. If a task goes out of scope before 
 
 We can check the status of any task using the following member functions:
 
@@ -601,7 +621,7 @@ A similar approach can be taken when trying to safely modify non-thread-safe C++
 
 #### Interacting with `jluna::Task` from Julia
 
-Internally, `jluna` makes accessing the Julia-state from a C++-sided, asynchronously executed function possible by wrapping it in an actual Julia-side task, then using Julias native threadpool to execute it. This has some beneficial side-effects.
+Internally, `jluna` makes accessing the Julia-state from a C++-sided, asynchronously executed function possible by wrapping it in an actual Julia-side task, then using Julias native thread pool to execute it. This has some beneficial side-effects.
 
 `yield`, called from C++ like so:
 
@@ -668,7 +688,7 @@ auto& task = ThreadPool::create<void>(lambda); // <void> specified manually
 
 #### Do **NOT** use `@threadcall`
 
-Lastly, a warning: Julia has a macro called `@threadcall`, which purports to simply execute a `ccall` in a new thread. Internally, it actually uses the libuv threadpool for this, not the native Julia threadpool. Because the C-API is seemingly hardcoded to segfault any attempt at accessing the Julia state through any non-master C-side thread, using `@threadcall` to call arbitrary code also segfaults. Because of this, it is not recommended to use `@threadcall` in any circumstances. Instead, call `ccall` from within a proper `Base.Task`, or use `jluna`s threadpool to execute C-side code.
+Lastly, a warning: Julia has a macro called `@threadcall`, which purports to simply execute a `ccall` in a new thread. Internally, it actually uses the libuv thread pool for this, not the native Julia thread pool. Because the C-API is seemingly hardcoded to segfault any attempt at accessing the Julia state through any non-master C-side thread, using `@threadcall` to call arbitrary code also segfaults. Because of this, it is not recommended to use `@threadcall` in any circumstances. Instead, call `ccall` from within a proper `Base.Task`, or use `jluna`s thread pool to execute C-side code.
 
 ---
 

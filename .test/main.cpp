@@ -34,16 +34,37 @@ int main()
 {
     initialize(4);
 
-auto lambda = []() {    // auto this time
-  return;
-};
+    auto l1 = []() -> void
+    {
+        size_t i = 0;
+        while(true)
+            std::cout << i++ << std::endl;
+    };
 
-auto& task = ThreadPool::create<void>(lambda);
-task.schedule();
-task.join();
+    auto l2 = []() -> void
+    {
+        int i = 0;
+        while(true)
+            std::cout << i-- << std::endl;
+    };
 
-std::cout << task.result().get().value() << std::endl;
+    auto l3 = []() -> void
+    {
+        return;
+    };
 
+    auto& t1 = ThreadPool::create<void>(l1);
+    auto& t2 = ThreadPool::create<void>(l2);
+    auto& t3 = ThreadPool::create<void>(l3);
+
+    t3.schedule();
+    t1.schedule();
+    //t2.schedule();
+
+    t3.join();
+
+
+    std::cout << "done." << std::endl;
     return 0;
 
     Test::test("unsafe: gc", []() {
