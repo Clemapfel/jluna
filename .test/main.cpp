@@ -32,37 +32,39 @@ using test_t = std::function<void(size_t)>;
 
 int main()
 {
-    initialize(4);
 
-    auto l1 = []() -> void
+    initialize(8);
     {
-        size_t i = 0;
-        while(true)
-            std::cout << i++ << std::endl;
-    };
+        auto l1 = []() -> size_t {
+            for (size_t i = 0; i < 1000; ++i)
+                std::cout << i << std::endl;
+            return 1;
+        };
 
-    auto l2 = []() -> void
-    {
-        int i = 0;
-        while(true)
-            std::cout << i-- << std::endl;
-    };
+        auto l2 = []() -> size_t {
+            for (int i = 0; i > -1000; --i)
+                std::cout << i << std::endl;
+            return 2;
+        };
 
-    auto l3 = []() -> void
-    {
-        return;
-    };
+        auto l3 = []() -> void {
+        };
 
-    auto& t1 = ThreadPool::create<void>(l1);
-    auto& t2 = ThreadPool::create<void>(l2);
-    auto& t3 = ThreadPool::create<void>(l3);
 
-    t3.schedule();
-    t1.schedule();
-    //t2.schedule();
+        auto& t1 = ThreadPool::create<size_t>(l1);
+        auto& t2 = ThreadPool::create<size_t>(l2);
+        auto& t3 = ThreadPool::create<void>(l3);
 
-    t3.join();
+        t1.schedule();
+        t2.schedule();
+        t3.schedule();
 
+        t3.join();
+        t3.join();
+    }
+
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(1s);
 
     std::cout << "done." << std::endl;
     return 0;

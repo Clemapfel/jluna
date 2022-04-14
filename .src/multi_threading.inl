@@ -74,9 +74,9 @@ namespace jluna
     {
         unsafe::gc_release(_value_id);
 
-        ThreadPool::_storage_lock.lock();
+        //ThreadPool::_storage_lock.lock();
         ThreadPool::_storage.erase(_threadpool_id);
-        ThreadPool::_storage_lock.unlock();
+        //ThreadPool::_storage_lock.unlock();
     }
 
     template<typename T>
@@ -145,7 +145,7 @@ namespace jluna
     template<typename... Args_t>
     Task<unsafe::Value*>& ThreadPool::create(const std::function<void(Args_t...)>& lambda, Args_t... args)
     {
-        _storage_lock.lock();
+        ///_storage_lock.lock();
 
         Task<unsafe::Value*>* task = new Task<unsafe::Value*>(_current_id);
         _storage.emplace(_current_id,
@@ -160,14 +160,14 @@ namespace jluna
         auto* out = reinterpret_cast<Task<unsafe::Value*>*>(it.first.get());
         out->initialize(it.second.get());
         _current_id += 1;
-        _storage_lock.unlock();
+       /// _storage_lock.unlock();
         return std::ref(*out);
     }
 
     template<is_not<void> Return_t, typename... Args_t>
     Task<Return_t>& ThreadPool::create(const std::function<Return_t(Args_t...)>& lambda, Args_t... args)
     {
-        _storage_lock.lock();
+        //_storage_lock.lock();
 
         Task<Return_t>* task = new Task<Return_t>(_current_id);
         _storage.emplace(_current_id,
@@ -182,7 +182,7 @@ namespace jluna
         auto* out = reinterpret_cast<Task<Return_t>*>(it.first.get());
         out->initialize(it.second.get());
         _current_id += 1;
-        _storage_lock.unlock();
+        //_storage_lock.unlock();
         return std::ref(*out);
     }
 
