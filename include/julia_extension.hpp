@@ -129,7 +129,7 @@ extern "C"
     inline size_t jl_tuple_len(jl_value_t* tuple)
     {
         static jl_function_t* length = jl_get_function(jl_base_module, "length");
-        return jl_unbox_int64(jl_call1(length, tuple));
+        return (size_t) jl_unbox_int64(jl_call1(length, tuple));
     }
 
     /// @brief hash julia-side by first converting to symbol
@@ -147,7 +147,7 @@ extern "C"
     inline size_t jl_length(jl_value_t* value)
     {
         static jl_function_t* length = jl_get_function(jl_base_module, "length");
-        return jl_unbox_int64(jl_call1(length, value));
+        return (size_t) jl_unbox_int64(jl_call1(length, value));
     }
 
     /// @brief return string as expression
