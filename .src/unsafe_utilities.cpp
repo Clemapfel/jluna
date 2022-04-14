@@ -104,11 +104,8 @@ namespace jluna::unsafe
     {
         gc_pause;
         static auto _ = detail::gc_init();
-        static unsafe::Value* heap = get_value(jl_main_module, "__jluna_heap"_sym);
-        static unsafe::Value* heap_index = get_value(jl_main_module, "__jluna_heap_index"_sym);
-
-        static unsafe::Function* delete_key = get_function(jl_base_module, "delete!"_sym);
-        call(delete_key, heap, jl_box_uint64(id));
+        static unsafe::Value* delete_from_heap = get_value(jl_main_module, "__jluna_delete_from_heap"_sym);
+        call(delete_from_heap, jl_box_uint64(id));
         gc_unpause;
     }
 

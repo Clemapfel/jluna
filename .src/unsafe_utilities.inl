@@ -46,6 +46,12 @@ namespace jluna::unsafe
                     unlock(__jluna_heap_lock);
                     return __jluna_heap_index[];
                 end
+
+                function __jluna_delete_from_heap(ptr::UInt64)
+                    lock(__jluna_heap_lock)
+                    delete!(__jluna_heap, ptr)
+                    unlock(__jluna_heap_lock);
+                end
             )");
             initialized = true;
             return nullptr;
