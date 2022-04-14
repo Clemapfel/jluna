@@ -80,9 +80,11 @@ namespace jluna
             std::unique_ptr<Value_t> _value;
     };
 
+    struct TaskSuper {};
+
     /// @brief equivalent of std::thread, is actually a Julia-side 'Task'
     template<typename Result_t>
-    class Task
+    class Task : public TaskSuper
     {
         friend class ThreadPool;
 
@@ -142,7 +144,7 @@ namespace jluna
         /// @note once the task is done, .result() will return an object of type jluna::Nothing_t
         /// @warning during task creation, the copy ctor is invoked for each argument in args, to avoid this, wrap the argument into a std::ref first
         template<typename... Args_t>
-        static auto create(const std::function<void(Args_t...)>& f, Args_t... args);
+        static Task<unsafe::Value*>& create(const std::function<void(Args_t...)>& f, Args_t... args);
 
         /// @brief create a task from a std::function returning non-void
         /// @param f: function returning void
@@ -150,8 +152,9 @@ namespace jluna
         /// @returns Task, not yet scheduled
         /// @warning during task creation, the copy ctor is invoked for each argument in args, to avoid this, wrap the argument into a std::ref first
         template<is_not<void> Return_t, typename... Args_t>
-        static auto create(const std::function<Return_t()>& f, Args_t... args);
+        static Task<Return_t>& create(const std::function<Return_t(Args_t...)>& f, Args_t... args);
 
+        /*
         /// @brief create a task from a lambda
         /// @tparam Return_t: return type of lambda, needs to be manually specified
         /// @tparam Lambda_t: deduced automatically
@@ -161,12 +164,17 @@ namespace jluna
         /// @returns Task, not yet scheduled
         /// @warning during task creation, the copy ctor is invoked for each argument in args, to avoid this, wrap the argument into a std::ref first
         template<typename Return_t, typename Lambda_t, typename... Args_t>
-        static auto create(Lambda_t lambda, Args_t... args);
+        static Task<Return_t>& create(Lambda_t lambda, Args_t... args);
+         */
 
         private:
             static inline size_t _current_id = 0;
             static inline std::mutex _storage_lock = std::mutex();
-            static inline std::map<size_t, std::unique_ptr<std::function<unsafe::Value*()>>> _storage = {};
+            static inline std::map<size_t,
+                std::pair<
+                    std::unique_ptr<TaskSuper>,
+                    std::unique_ptr<std::function<unsafe::Value*()>>
+                >> _storage = {};
     };
 
     /// @brief pause the current task, has to be called from within a task allocated via ThreadPool::create

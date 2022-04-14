@@ -13,10 +13,10 @@ namespace jluna
     template<typename T>
     std::optional<T> Future<T>::get()
     {
-        auto out = std::optional<T>();
+        std::optional<T> out;
         _mutex.lock();
         if (_value != nullptr)
-            out.value() = std::copy(_value.get());
+            out = std::optional<T>(*(_value.get()));
         _mutex.unlock();
         return out;
     }
@@ -105,71 +105,81 @@ namespace jluna
     bool Task<T>::is_done() const
     {
         static auto* istaskdone = unsafe::get_function(jl_base_module, "istaskdone"_sym);
-        jluna::safe_call(istaskdone, _value);
+        return jl_unbox_bool(jluna::safe_call(istaskdone, _value));
     }
 
     template<typename T>
     bool Task<T>::is_failed() const
     {
         static auto* istaskfailed = unsafe::get_function(jl_base_module, "istaskfailed"_sym);
-        jluna::safe_call(istaskfailed, _value);
+        return jl_unbox_bool(jluna::safe_call(istaskfailed, _value));
     }
 
     template<typename T>
     bool Task<T>::is_running() const
     {
         static auto* istaskstarted = unsafe::get_function(jl_base_module, "istaskstarted"_sym);
-        jluna::safe_call(istaskstarted, _value);
+        return jl_unbox_bool(jluna::safe_call(istaskstarted, _value));
     }
 
     template<typename T>
     Future<T>& Task<T>::result()
     {
-        return _future;
+        return std::ref(*_future.get());
     }
 
     // ###
 
+    /*
     template<typename Return_t, typename Lambda_t, typename... Args_t>
-    auto ThreadPool::create(Lambda_t lambda, Args_t... args)
+    Task<Return_t>&  ThreadPool::create(Lambda_t lambda, Args_t... args)
     {
         return create(static_cast<std::function<Return_t(Args_t...)>>(lambda), args...);
     }
+     */
 
     template<typename... Args_t>
-    auto ThreadPool::create(const std::function<void(Args_t...)>& lambda, Args_t... args)
+    Task<unsafe::Value*>& ThreadPool::create(const std::function<void(Args_t...)>& lambda, Args_t... args)
     {
         _storage_lock.lock();
 
-        auto task = Task<unsafe::Value*>(_current_id);
-        auto function = _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda, future = std::ref(task.result()) ,args...]() -> unsafe::Value* {
-            lambda(args...);
-            detail::FutureHandler::update_future<unsafe::Value*>(future, jl_nothing);
-            return jl_nothing;
-        }));
-        task.initialize(_storage.at(_current_id).get());
-
+        Task<unsafe::Value*>* task = new Task<unsafe::Value*>(_current_id);
+        _storage.emplace(_current_id,
+            std::make_pair(
+            std::unique_ptr<TaskSuper>(task),
+            std::make_unique<std::function<unsafe::Value*()>>([lambda, future = std::ref(task->result()) ,args...]() -> unsafe::Value* {
+                lambda(args...);
+                detail::FutureHandler::update_future<unsafe::Value*>(future, jl_nothing);
+                return jl_nothing;
+        })));
+        auto& it = _storage.find(_current_id)->second;
+        auto* out = reinterpret_cast<Task<unsafe::Value*>*>(it.first.get());
+        out->initialize(it.second.get());
         _current_id += 1;
         _storage_lock.unlock();
-        return task;
+        return std::ref(*out);
     }
 
     template<is_not<void> Return_t, typename... Args_t>
-    auto ThreadPool::create(const std::function<Return_t()>& lambda, Args_t... args)
+    Task<Return_t>& ThreadPool::create(const std::function<Return_t(Args_t...)>& lambda, Args_t... args)
     {
         _storage_lock.lock();
 
-        auto task = Task<unsafe::Value*>(_current_id);
-        auto function = _storage.emplace(_current_id, std::make_unique<std::function<unsafe::Value*()>>([lambda, future = std::ref(task.result()) ,args...]() -> unsafe::Value* {
-            Return_t res = lambda(args...);
-            detail::FutureHandler::update_future<Return_t>(future, res);
-            return box(res);
-        }));
-        task.initialize(_storage.at(_current_id).get());
-
+        Task<Return_t>* task = new Task<Return_t>(_current_id);
+        _storage.emplace(_current_id,
+            std::make_pair(
+            std::unique_ptr<TaskSuper>(task),
+            std::make_unique<std::function<unsafe::Value*()>>([lambda, future = std::ref(task->result()) ,args...]() -> unsafe::Value* {
+                auto res = lambda(args...);
+                detail::FutureHandler::update_future<Return_t>(future, res);
+                return box(res);
+        })));
+        auto& it = _storage.find(_current_id)->second;
+        auto* out = reinterpret_cast<Task<Return_t>*>(it.first.get());
+        out->initialize(it.second.get());
         _current_id += 1;
         _storage_lock.unlock();
-        return task;
+        return std::ref(*out);
     }
 
     inline void yield()
