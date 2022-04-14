@@ -39,7 +39,7 @@ namespace jluna
         auto* res = jl_call(safe_call, params.data(), params.size());
         forward_last_exception();
 
-        jl_gc_enable(true);
+        jl_gc_enable(before);
         return res;
     }
 }

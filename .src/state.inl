@@ -20,7 +20,7 @@ namespace jluna::State
             auto* name = jl_symbol(symbol.c_str());
             auto* out = jl_call2(create_or_assign, (Any*) name, value);
             jl_gc_unpause;
-            return Proxy(value, name);
+            return Proxy(out, name);
         }
     }
     
@@ -164,7 +164,7 @@ namespace jluna::State
 
     // ###
 
-    inline Proxy new_unnamed_undef(const std::string& name)
+    inline Proxy new_unnamed_undef()
     {
         return Proxy(jl_undef_initializer());
     }
