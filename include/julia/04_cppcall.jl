@@ -167,6 +167,8 @@ function make_task(ptr::UInt64)
         res_ptr = ccall((:invoke, _cppcall._library_name), Csize_t, (Csize_t,), ptr);
         return unsafe_pointer_to_objref(Ptr{Any}(res_ptr))
     end
+
+    #res.sticky = false
 end
 
 # obfuscate internal state to encourage using operator[] sytanx

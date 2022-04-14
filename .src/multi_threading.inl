@@ -74,16 +74,22 @@ namespace jluna
     {
         unsafe::gc_release(_value_id);
 
-        //ThreadPool::_storage_lock.lock();
+        ThreadPool::_storage_lock.lock();
         ThreadPool::_storage.erase(_threadpool_id);
-        //ThreadPool::_storage_lock.unlock();
+        ThreadPool::_storage_lock.unlock();
     }
 
     template<typename T>
     void Task<T>::initialize(std::function<unsafe::Value*()>* in)
     {
         static auto* make_task = unsafe::get_function("jluna"_sym, "make_task"_sym);
-        _value = jluna::safe_call(make_task, box(reinterpret_cast<size_t>(in)));
+        _value = unsafe::call(make_task, box(reinterpret_cast<size_t>(in)));
+
+        static auto* setfield = unsafe::get_function(jl_base_module, "setfield!"_sym);
+        static auto* sticky = jl_symbol("sticky");
+
+        unsafe::call(setfield, _value, sticky, jl_box_bool(false));
+
         _value_id = unsafe::gc_preserve(_value);
     }
 
