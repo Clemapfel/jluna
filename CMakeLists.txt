@@ -83,8 +83,6 @@ add_library(
     jluna_c_adapter SHARED
     .src/c_adapter.hpp
     .src/c_adapter.cpp
-    include/mutex.hpp
-    .src/mutex.cpp
 )
 
 target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
@@ -151,7 +149,7 @@ add_library(jluna SHARED
     .src/usertype.inl
 
     include/multi_threading.hpp
-    .src/multi_threading.cpp
+    .src/multi_threading.inl
 )
 
 target_compile_features(jluna PUBLIC cxx_std_20)

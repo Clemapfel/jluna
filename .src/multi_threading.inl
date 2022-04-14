@@ -130,13 +130,17 @@ namespace jluna
 
     // ###
 
-    /*
-    template<typename Return_t, typename Lambda_t, typename... Args_t>
-    Task<Return_t>&  ThreadPool::create(Lambda_t lambda, Args_t... args)
+    template<is_not<void> Return_t, typename Lambda_t, typename... Args_t>
+    Task<Return_t>& ThreadPool::create(Lambda_t lambda, Args_t... args)
     {
         return create(static_cast<std::function<Return_t(Args_t...)>>(lambda), args...);
     }
-     */
+
+    template<is<void> Return_t, typename Lambda_t, typename... Args_t>
+    Task<unsafe::Value*>& ThreadPool::create(Lambda_t lambda, Args_t... args)
+    {
+        return create(static_cast<std::function<Return_t(Args_t...)>>(lambda), args...);
+    }
 
     template<typename... Args_t>
     Task<unsafe::Value*>& ThreadPool::create(const std::function<void(Args_t...)>& lambda, Args_t... args)
@@ -181,6 +185,8 @@ namespace jluna
         _storage_lock.unlock();
         return std::ref(*out);
     }
+
+    // ###
 
     inline void yield()
     {

@@ -132,6 +132,7 @@ namespace jluna
 
     /// @brief threadpool that allows scheduled C++-side tasks to safely access the Julia State from within a thread.
     /// Pool cannot be resized, it will use the native Julia threads to execute any C++-side tasks
+    /// @note during task creation, the copy ctor will be invoked for all arguments `args` and the functions return value. To avoid this, wrap the type in an std::ref
     struct ThreadPool
     {
         template<typename>
@@ -141,31 +142,31 @@ namespace jluna
         /// @param f: function returning void
         /// @param args: arguments
         /// @returns Task, not yet scheduled
-        /// @note once the task is done, .result() will return an object of type jluna::Nothing_t
-        /// @warning during task creation, the copy ctor is invoked for each argument in args, to avoid this, wrap the argument into a std::ref first
+        /// @note once the task is done, .result() will return a future with value of type jluna::Nothing_t
         template<typename... Args_t>
         static Task<unsafe::Value*>& create(const std::function<void(Args_t...)>& f, Args_t... args);
 
         /// @brief create a task from a std::function returning non-void
-        /// @param f: function returning void
+        /// @param f: function
         /// @param args: arguments
         /// @returns Task, not yet scheduled
-        /// @warning during task creation, the copy ctor is invoked for each argument in args, to avoid this, wrap the argument into a std::ref first
         template<is_not<void> Return_t, typename... Args_t>
         static Task<Return_t>& create(const std::function<Return_t(Args_t...)>& f, Args_t... args);
 
-        /*
-        /// @brief create a task from a lambda
-        /// @tparam Return_t: return type of lambda, needs to be manually specified
-        /// @tparam Lambda_t: deduced automatically
-        /// @tparam Args_t: deduced automatically
-        /// @param lambda
+        /// @brief create a task from a lambda returning void
+        /// @param f: lambda returning void
         /// @param args: arguments
         /// @returns Task, not yet scheduled
-        /// @warning during task creation, the copy ctor is invoked for each argument in args, to avoid this, wrap the argument into a std::ref first
-        template<typename Return_t, typename Lambda_t, typename... Args_t>
+        /// @note once the task is done, .result() will return a future with value of type jluna::Nothing_t
+        template<is<void> Return_t, typename Lambda_t, typename... Args_t>
+        static Task<unsafe::Value*>& create(Lambda_t lambda, Args_t... args);
+
+        /// @brief create a task from a lambda returning non-void
+        /// @param f: lambda returning void
+        /// @param args: arguments
+        /// @returns Task, not yet scheduled
+        template<is_not<void> Return_t, typename Lambda_t, typename... Args_t>
         static Task<Return_t>& create(Lambda_t lambda, Args_t... args);
-         */
 
         private:
             static inline size_t _current_id = 0;

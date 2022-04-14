@@ -34,11 +34,15 @@ int main()
 {
     initialize(4);
 
-    std::function<size_t(size_t)> f = no_void_lambda;
-    auto& t1 = ThreadPool::create(f, size_t(1234));
-    t1.schedule();
-    t1.join();
-    std::cout << t1.result().get().value() << std::endl;
+auto lambda = []() {    // auto this time
+  return;
+};
+
+auto& task = ThreadPool::create<void>(lambda);
+task.schedule();
+task.join();
+
+std::cout << task.result().get().value() << std::endl;
 
     return 0;
 

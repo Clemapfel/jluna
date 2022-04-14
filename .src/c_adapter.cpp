@@ -1,7 +1,6 @@
 #ifdef __cplusplus
 
 #include <include/julia_wrapper.hpp>
-#include <include/mutex.hpp>
 
 #include <iostream>
 #include <thread>
@@ -68,7 +67,7 @@ extern "C"
         size_t invoke(size_t function_ptr)
         {
             return reinterpret_cast<size_t>(
-                (*reinterpret_cast<std::function<unsafe::Value*()>*>(function_ptr))()
+                (*reinterpret_cast<std::function<jl_value_t*()>*>(function_ptr))()
             );
         }
     }
