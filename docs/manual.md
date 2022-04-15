@@ -578,6 +578,332 @@ Additionally, `jluna::Module` provides the following two functions wrapping the 
 + `M.add_using("PackageName")`
   - equivalent to calling `using PackageName` inside `M`
 
+---
+
+## Specialized Proxies: Types
+
+We've seen specialized module-, symbol- and array-proxies. `jluna` has a fourth kind of proxy, `jluna::Type`, which wraps all of Julias very powerful introspection functionalities in one class.
+
+While some overlap is present, `jluna::Type` is not a direct equivalent of `Base.Type{T}`. 
+
+### Constructing a Type
+
+There are multiple ways to construct a type proxy:
+
+```cpp
+// get type of proxy
+auto general_proxy = Main.safe_eval("return " + /* ... */);
+auto type = general_proxy.get_type();
+
+// implicit cast
+Type type = Main.safe_eval("return Base.Vector");
+```
+
+### Base Types
+
+This is only necessary for user-defined types. For most types in `Base`, jluna offers a pre-defined type proxy in the global namespace, similar to the `Main` and `Base` module proxies.
+
+The following types are available this way:
+
+| `jluna` constant name | Julia-side name|
+|-------------------|---------|
+| `AbstractArray_t` | `AbstractArray{T, N}` |
+| `AbstractChar_t` | `AbstractChar` |
+| `AbstractFloat_t`| `AbstractFloat` |
+| `AbstractString_t`| `AbstractString` |
+| `Any_t`| `Any` |
+| `Array_t`| `Array{T, N}` |
+| `Bool_t`| `Bool` |
+| `Char_t`| `Char` |
+| `DataType_t`| `DataType` |
+| `DenseArray_t`| `DenseArray{T, N}` |
+| `Exception_t`| `Exception` |
+| `Expr_t`| `Expr` |
+| `Float16_t`| `Float16` |
+| `Float32_t`| `Float32` |
+| `Float64_t`| `Float64` |
+| `Function_t`| `Function` |
+| `GlobalRef_t`| `GlobalRef` |
+| `IO_t`| `IO` |
+| `Int8_t`| `Int8` |
+| `Int16_t`| `Int16` |
+| `Int32_t`| `Int32` |
+| `Int64_t`| `Int64` |
+| `Int128_t`| `Int128` |
+| `Integer_t`| `Integer` |
+| `UInt8_t`| `UInt8` |
+| `UInt16_t`| `UInt16` |
+| `UInt32_t`| `UInt32` |
+| `UInt64_t`| `UInt64` |
+| `UInt128_t`| `UInt128` |
+| `Unsigned_t`| `Unsigned` |
+| `Signed_t`| `Signed` |
+| `LineNumberNode_t`| `LineNumberNode` |
+| `Method_t`| `Method` |
+| `Module_t`| `Module` |
+| `NTuple_t`| `NTuple{T, N}` |
+| `NamedTuple_t`| `NamedTuple` |
+| `Nothing_t`| `Nothing` |
+| `Number_t`| `Number` |
+| `Pair_t`| `Pair{T, U}` |
+| `Ptr_t`| `Ptr{T}` |
+| `QuoteNode_t`| `QuoteNode` |
+| `Real_t`| `Real` |
+| `Ref_t`| `Ref{T}` |
+| `String_t`| `String` |
+| `Symbol_t`| `Symbol` |
+| `Task_t`| `Task` |
+| `Tuple_t`| `Tuple{T...}` |
+| `Type_t`| `Type{T}` |
+| `TypeVar_t`| `TypeVar` |
+| `UndefInitializer_t`| `UndefInitializer` |
+| `Union_t`| `Union{T...}` |
+| `UnionAll_t`| `UnionAlll` |
+| `VecElement_t`| `VecElement{T}` |
+| `WeakRef_t`| `WeakRef` |
+
+Where `T`, `U` are arbitrary types, `N` is an Integer
+
+### Type Order
+
+Julia types can be ordered. To conceptualize this, the relation of types is best thought of as a directed graph. Each node of the graph is a type, each edge is directed, where, if the edge goes from type A to type B, then `B <: A`. That is, B is a subtype of A, or equivalently `A >: B`, A is a supertype of B.
+
+This relational nature is heavily used in Julias multiple dispatch and type inference, for now, however, it gives us a way to put types in relation to each other. `jluna::Type` offers multiple functions for this:
+
+```cpp
+// (*this) <: other
+bool is_subtype_of(const Type& other) const;
+
+// (*this) >: other
+bool is_supertype_of(const Type& other) const;
+
+// (*this) <: other && (*this) >: other
+bool is_same_as(const Type&) const;
+```
+
+Because we can assign an order to types in this way, `jluna::Type` also provides proper boolean comparison operators:
+
+```cpp
+// (*this) <: other
+bool operator<(const Type& other) const;
+
+// other >: (*this)
+bool operator>(const Type& other) const;
+
+// (*this) === other
+bool operator==(const Type& other) const;
+
+// !((*this) === other)
+bool operator!=(const Type& other) const;
+```
+
+This ordering becomes relevant when talking about `TypeVar`s. 
+
+> **Julia Hint**: `Base.TypeVar` is a class that represents a not yet defined type, such as a parameter for a struct. It has a lower bound `lb` and upper bound `ub`, where for all types `t` represented by the TypeVar, it holds that `lb <: t <: ub`
+
+
+TypeVars can be thought of as a sub-graph of the type-graph. An unrestricted types upper bound is `Any`, while its lower bound is `Union{}`. A declaration like `T where {T <: Integer}` restricts the upper bound to `Integer`, though any type that is "lower" along the sub-graph originating at `Integer` can still bind to `T`. This is useful to keep in mind.
+
+### Type Info
+
+When gathering information about types, it is important to understand the difference between a types **fields**, its **parameters**, its **properties** and its **methods**. Consider the following type declaration:
+
+```julia
+# in Julia
+mutable struct MyType{T <: Integer, U}
+    _field1
+    _field2::T
+    _field3::U
+    
+    function MyType(a::T, b::U) where {T, U}
+        return new{T, U}(undef, a, b)
+    end
+end
+```
+
+This type is a parametric type, it has two **parameters** called `T` and `U`. `T`s upper bound is `Integer` while `U` is unrestricted, its upper bound is `Any`.
+
+`MyType` has 3 **fields**:
++ `_field1` which is unrestricted
++ `_field2` which is declared as type `T`, thus it's upper bound is also `Integer`
++ `_field3` which is declared as type `U`, however because `U` is unrestricted, `_field3` is too
+
+The type has 1 **method**, `MyType(::T, ::U)`, which is its constructor.
+
+This type furthermore has the following properties:
+
+```julia
+println(propertynames(MyType.body.body))
+```
+```
+(:name, :super, :parameters, :types, :instance, :layout, :size, :hash, :flags)
+```
+These behave like fields but are not part of the declaration. We will learn more about what exactly each property means, and how to access them later on.
+
+### Parameters
+
+We can access the name and types of the parameters of a type using `jluna::Type::get_parameters`:
+
+```cpp
+State::safe_eval(R"(
+    mutable struct MyType{T <: Integer, U}
+        _field1
+        _field2::T
+        _field3::U
+
+        function MyType(a::T, b::U) where {T, U}
+            return new{T, U}(undef, a, b)
+        end
+    end
+)");
+
+Type my_type = Main["MyType"];
+std::vector<std::pair<Symbol, Type>> parameters = my_type.get_parameters();
+
+for (auto& pair : parameters)
+    std::cout << pair.first.operator std::string() << " => " << pair.second.operator std::string() << std::endl;
+```
+```
+T => Integer
+U => Any
+```
+`get_parameters` returns a vector of pairs where:
++ `.first` is a symbol that is the name of the corresponding parameter 
++ `.second` is the parameters upper type bound
+  
+In case of `T`, the upper bound is `Base.Integer`, because we restricted it as such in the declaration. For `U`, there is no restriction, which is why its upper bound is the default: `Any`.
+
+We can retrieve the number of parameters directly using `get_n_parameters()`. This saves allocating the vector of pairs.
+
+### Fields
+
+We can access the fields of a type in a similar way, using `jluna::Type::get_fields`:
+
+```cpp
+State::safe_eval(R"(
+    mutable struct MyType{T <: Integer, U}
+        _field1
+        _field2::T
+        _field3::U
+
+        function MyType(a::T, b::U) where {T, U}
+            return new{T, U}(undef, a, b)
+        end
+    end
+)");
+
+Type my_type = Main["MyType"];
+std::vector<std::pair<Symbol, Type>> fields = my_type.get_fields();
+
+for (auto& pair : fields)
+    std::cout << pair.first.operator std::string() << " => " << pair.second.operator std::string() << std::endl;
+```
+```
+_field1 => Any
+_field2 => Integer
+_field3 => Any
+```
+We, again, get a vector of pairs where `.first` is the name, `.second` is the upper type bound of the corresponding field.
+
+### Methods
+
+(this feature is not yet implemented, until then, use `Base.methods(::Type)`)
+
+### Properties
+
+(this feature is not yet implemented, until then, use `Base.getproperty(::Type, ::Symbol)`)
+
+### Type Classification
+
+To classify a type means to evaluate a condition based on a types attributes, in order to get information about how similiar or different clusters of types are. `jluna` offers a number of convenient classifications, some of which are available as part of the Julia core library, some of which are not. This section will list all, along with their meaning:
+
++ `is_primitive`: was the type declared using the keyword `primitive`
+    ```cpp
+    Bool_t.is_primitive()    // true
+    Module_t.is_primitive(); // false
+    ```
++ `is_struct_type`: was the type declared using the keyword `struct`
+    ```cpp
+    Bool_t.is_struct_type()    // false
+    Module_t.is_struct_type(); // true
+    ```
++ `is_declared_mutable`: was the type declared using `mutable`
+    ```cpp
+    Bool_t.is_declared_mutable()    // false
+    Module_t.is_declared_mutable(); // true
+    ```
++ `is_isbits`: is the type a `isbits` type, meaning it is immutable and contains no references to other values that rae not also isbits or primitives
+    ```cpp
+    Bool_t.is_declared_mutable()    // true
+    Module_t.is_declared_mutable(); // false
+    ```
++ `is_singleton`: a type `T` is a singleton iff:
+    - `T` is immutable and a structtype
+    - for types `A`, `B` if `A <: B` and `B <: A` then `A === B`
+    ```cpp
+    State.eval("struct Singleton end");
+    Type singleton_type = Main["Singleton"];
+    singleton_type.is_singleton(); // true
+    ```
++ `is_abstract_type`: was the type declared using the `abstract` keyword
+    ```cpp
+    Float32_t.is_abstract_type()          // false
+    AbstractFloat_t.is_abstract_type();   // true
+    ```
++ `is_abstract_ref_type`: is the type a reference whose value type is an abstract type.
+    ```cpp
+    Type(jluna::safe_eval("return Ref{AbstractFloat}")).is_abstract_ref_type(); //true
+    Type(jluna::safe_eval("return Ref{AbstractFloat}(Float32(1))")).is_abstract_ref_type(); // false
+    ```
++ `is_typename(T)`: is the `.name` property of the type equal to `Base.typename(T)`. Can be thought of as "is the type a T"
+    ```cpp
+    // is the type an Array:
+    Type(State::safe_eval("return Array")).is_typename("Array"); // true
+    Type(State::safe_eval("return Array{Integer, 3}")).is_typename("Array"); // also true
+    ```
+  
+### "Unrolling" Types
+
+There is a subtle difference between how `jluna` evaluates properties and how pure Julia does. Consider the following:
+
+```julia
+# in julia
+function is_array_type(type::Type) 
+    return getproperty(type, :name) == Base.typename(Array)
+end
+
+println(is_array_type(Base.Array))
+```
+
+Some may expect this to print `true`, however, this is not the case. It actually prints `false`.
+
+This is because `Base.Array` is a parametric type. `typeof(Array)` is actually `UnionAll`, which does not have a property `:name`:
+
+```julia
+println(propertynames(Array))
+```
+```
+(:var, :body)
+```
+To access the property `:name` we need to first *unroll* the type. This means we need to specialize all parameters of a type. Once we do so, it seizes to be a `UnionAll`.
+
+```julia
+type = Array
+while (hasproperty(type, :body))
+    type = type.body
+end
+
+println(type)
+println(propertynames(type))
+```
+```
+Array{T, N}
+(:name, :super, :parameters, :types, :instance, :layout, :size, :hash, :flags)
+```
+
+Once fully unrolled, we have access to the properties necessary for introspection. `jluna` does this unrolling automatically for all types initialized by `jluna::initialize` (see the [previous sections list](#base-types)).
+
+If desired, we can fully specialize a user-intialized type manually using the member function `.unroll()`. Without this, many of the introspection features will be unavaiable.
 
 ---
 
@@ -912,6 +1238,14 @@ auto& task = ThreadPool::create<void>(lambda); // <void> specified manually
 Lastly, a warning: Julia has a macro called `@threadcall`, which purports to simply execute a `ccall` in a new thread. Internally, it actually uses the libuv thread pool for this, not the native Julia thread pool. Because the C-API is seemingly hardcoded to segfault any attempt at accessing the Julia state through any non-master C-side thread, using `@threadcall` to call arbitrary code also segfaults. Because of this, it is not recommended to use `@threadcall` in any circumstances. Instead, call `ccall` from within a proper `Base.Task`, or use `jluna`s thread pool to execute C-side code.
 
 ---
+
+## The `unsafe` Library
+
+Parallelizing ones code is the easiest way to get a huge increase in performance. While making sure all the multi-threading runs properly can be complicated, a potentially harder way to get things to optimal performance is sacrificing jlunas most central feature: safety.
+
+One way to do this is to resot to the C-API, this, however, is cumbersome and not garuanteed to actually be any faster. jluna is fairly well optimized and itself uses the C-API in the fastest potential way
+
+
 
 
 

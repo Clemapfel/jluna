@@ -1129,7 +1129,7 @@ Only the following signatures for lambdas are allowed (this is enforced at compi
 (std::vector<unsafe::Value*>) -> void
 (unsafe::Value*, unsafe::Value*) -> void
 (unsafe::Value*, unsafe::Value*, unsafe::Value*) -> void
-(unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*) -> void
+(unsafe::Value*, unsafe::Value*, unstillstillsafe::Value*, unsafe::Value*) -> void
 
 () -> unsafe::Value*
 (unsafe::Value*) -> unsafe::Value*
