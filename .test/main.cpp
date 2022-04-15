@@ -32,7 +32,21 @@ using test_t = std::function<void(size_t)>;
 
 int main()
 {
-    initialize(8);
+    for (size_t i = 0; i < 10000000; ++i)
+    {
+        initialize(8);
+
+        Main.safe_eval(R"(
+            f(x) = 0.5 * x
+        )");
+
+        double in = 123018231.31231;
+        double out = Main["f"](in);
+
+        jluna::safe_eval("println(length(jluna.memory_handler._refs[]))");
+    }
+
+    return 0;
 
     auto& loop = ThreadPool::create<void>([]() -> void {
 

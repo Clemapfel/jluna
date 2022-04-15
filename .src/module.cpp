@@ -37,6 +37,16 @@ namespace jluna
         return jluna::safe_call(isdefined, value(), jl_symbol(name.c_str()));
     }
 
+    void Module::import(const std::string& package_name)
+    {
+        this->safe_eval("import " + package_name);
+    }
+
+    void Module::add_using(const std::string& package_name)
+    {
+        this->safe_eval("using " + package_name);
+    }
+
     Proxy Module::safe_eval(const std::string& code)
     {
         return jluna::safe_eval(code, value());

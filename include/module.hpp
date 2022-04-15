@@ -241,6 +241,12 @@ namespace jluna
             /// @returns Base.isdefined(this, :name)
             bool is_defined(const std::string& variable_name) const;
 
+            /// @brief import a package
+            void import(const std::string& package_name);
+
+            /// @brief import names
+            void add_using(const std::string& package_name);
+
         private:
             jl_module_t* value() const;
     };
