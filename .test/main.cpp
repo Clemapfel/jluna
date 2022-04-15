@@ -32,6 +32,8 @@ using test_t = std::function<void(size_t)>;
 
 int main()
 {
+    jluna::initialize(8);
+
     auto& loop = ThreadPool::create<void>([]() -> void {
 
         size_t i = 0;

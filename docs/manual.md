@@ -403,7 +403,100 @@ So far, we have learned how to do basic things like calling functions/code using
 
 ---
 
-## Multi Threading
+## Modules
+
+We have already seen `jluna::Module` in the introductory sections, it's time to get to know it more closely. `jluna::Module` (`Module`, henceforth) inherits publicly from `jluna::Proxy`, meaning it sports all the same functions and functionalities we discussed previously, along with a few additional ones.
+
+#### Assign in Module
+
+Let's say we have a module `M` in main scope that has a single variable `var`:
+
+```cpp
+jluna::safe_eval(R"(
+    module M
+        var = []
+    end
+)");
+
+Module M = Main.safe_eval("return M");
+```
+
+We've already seen that we can modify this variable using `M.safe_eval`, however this is a fairly badly performing option, because we have to go to the `Meta.parse` and `eval` all over.
+
+Much faster is using `Module::assign`:
+
+```cpp
+// works but slow:
+M.safe_eval("var = [777]");
+
+// works and super fast:
+M.assign("var", 777);
+```
+
+Where the first argument of assign is the variables name, the second argument is the new desired value.
+
+If the variable we want to assign does not exist yet, we can performantly create it using `create_or_assign`:
+
+```cpp
+M.create_or_assign("new_var", 777);
+Base["println"](M["new_var"]);
+```
+```
+777
+```
+
+As the name suggest, if the variable does not yet exist, it is created. If the variable does already exist, `create_or_assign` acts identical to `assign`.
+
+#### Creating a new Variable
+
+A convenient and highly useful function is `Module::new_*`, for example `Module::new_undef("var_name")` creates a new variable named `var_name` in the module and assigns it `undef`. The return value of this function is a named proxy pointing to that variable, making the following syntax possible:
+
+```cpp
+Main.new_undef("variable") = // any value here
+```
+
+The following `new_*` functions are available:
+
+| jluna Name | argument type(s) | Julia-side Type of Result |
+|------------|-----------|---------------------------|
+| `new_undef`  | `void`  | `UndefInitializer` |
+| `new_bool`   | `bool`  |  `Bool`
+| `new_uint8`   | `UInt8`  | `UInt8`  | 
+| `new_uint16`   | `UInt16`  |  `UInt16`  |
+| `new_uint32`   | `UInt32`  |  `UInt32`  |
+| `new_uint64`   | `UInt64`  |  `UInt64`  | 
+| `new_int8`   | `Int8`  |   `Int8`  |
+| `new_int16`   | `Int16`  |  `Int16`  | 
+| `new_int32`   | `Int32`  |  `Int32`  |
+| `new_int64`   | `Int64`  | `Int64`  |
+| `new_float32`   | `Float32`  | `Float32`  |
+| `new_float64`   | `Float64`  | `Float64`  |
+| `new_string` | `std::string` | `String` |
+| `new_symbol` | `std::string` | `Symbol` |
+| `new_complex` | `T`, `T` | `Complex{T}` |
+| `new_vector` | `std::vector<T>` | `Vector{T}` |
+| `new_dict` | `std::map<T, U>` | `Dict{T, U}` |
+| `new_dict` | `std::unordered_map<T, U>` | `Dict{T, U}` |
+| `new_set` | `std::set<T>` | `Set{T}` |
+| `new_pair` | `T`, `T` | `Pair{T, T}` |
+| `new_tuple` | `T1` , `T2`, `T3`, ... | `Tuple{T1, T2, T3, ...}` |
+| `new_array<T>` | `D1`, `D2`, ..., `Dn` | `Array{T, n}` of size `D1 * D2 * ... * Dn` |
+
+This is the most performant way to create variables new variables module scope. 
+
+#### `import` / `using`
+
+Additionally, `jluna::Module` provides the following two functions wrapping the `using` and `import` functionality of modules:
+
++ `M.import("PackageName")`
+  - equivalent to calling `import PackageName` inside `M`
++ `M.add_using("PackageName")`
+  - equivalent to calling `using PackageName` inside `M`
+
+
+---
+
+## Muli Threading
 
 Given Julias application in high-performance computing, and its native multi-threading support, it is only natural a Julia wrapper should also allow for asynchronous execution in a similarly convenient and performant manner. 
 
