@@ -403,7 +403,92 @@ So far, we have learned how to do basic things like calling functions/code using
 
 ---
 
-## Modules
+
+## Specialized Proxies: Symbols
+
+Another specialized type of proxy is the symbol proxy. It holds a Julia-side `Base.Symbol`.
+
+We can create a symbol proxy in the following ways:
+
+```cpp
+// new unnamed proxy
+auto unnamed_symbol = Symbol("symbol_value");
+
+// new named proxy
+auto named_symbol = Main.new_symbol("symbol_var", "symbol_value")
+// generates variable `symbol_var` in main scope, then assigns it :symbol_value
+```
+
+Where, unlike with general proxy, the value the proxy is pointing to is asserted to be of type `Base.Symbol`. 
+
+### Symbol Hashing
+
+The main additional functionality `jluna::Symbol` brings, is that of *constant time hashing*.
+
+A hash is essentially a `UInt64` we assign to things as a label. In Julia, hashes are unique and there a no hash collisions. This means if `A != B` then `hash(A) != hash(B)` and, furthermore, if `hash(A) == hash(B)` then `A === B`.
+
+Unlike with many other classes, `Base.Symbol` can be hashed in constant time. This is because the hash is precomputed at the time of construction. 
+
+We can access the hash of a symbol proxy using `.hash()`
+
+```cpp
+auto symbol = Symbol("abc");
+std::cout << "name: " << symbol.operator std::string() << std::endl;
+std::cout << "hash: " << symbol.hash() << std::endl;
+```
+```
+name: abc
+hash: 16076289990349425027
+```
+
+In most cases, it is impossible to predict which hash will be assigned to which symbol. This also means for Symbols `s1` and `s2` if `string(s1) < string(s2)` this does not mean `hash(s1) < hash(s2)`. This is very important to realize, **symbol comparison is not lexicographical comparison**.
+
+Having taken note of this, `jluna::Symbol` provides the following comparison operators:
+
+```cpp
+/// (*this).hash() == other.hash()
+bool operator==(const Symbol& other) const;
+
+/// (*this).hash() != other.hash()
+bool operator!=(const Symbol& other) const;
+
+/// (*this).hash() < other.hash()
+bool operator<(const Symbol& other) const;
+
+/// (*this).hash() <= other.hash()
+bool operator<=(const Symbol& other) const;
+
+/// (*this).hash() >= other.hash()
+bool operator>=(const Symbol& other) const;
+
+/// (*this).hash() > other.hash()
+bool operator>(const Symbol& other) const;
+```
+
+To further illustrate the way symbols are compared, consider the following example using `std::set`, which orders its elements according to their user-defined comparison operators:
+
+```cpp
+auto set = std::set<Symbol>();
+for (auto str : {"abc", "bcd", "cde", "def"})
+    set.insert(Symbol(str));
+
+// print in order
+for (auto symbol : set)
+    std::cout << symbol.operator std::string() << " (" << symbol.hash() << ")" << std::endl;
+```
+```
+cde (10387276483961993059)
+bcd (11695727471843261121)
+def (14299692412389864439)
+abc (16076289990349425027)
+```
+
+We see that, lexicographically, the symbols are out of order. They are, however, ordered properly according to their hashes.
+
+
+---
+
+## Specialized Proxies: Modules
 
 We have already seen `jluna::Module` in the introductory sections, it's time to get to know it more closely. `jluna::Module` (`Module`, henceforth) inherits publicly from `jluna::Proxy`, meaning it sports all the same functions and functionalities we discussed previously, along with a few additional ones.
 
@@ -496,7 +581,7 @@ Additionally, `jluna::Module` provides the following two functions wrapping the 
 
 ---
 
-## Muli Threading
+## Multi Threading
 
 Given Julias application in high-performance computing, and its native multi-threading support, it is only natural a Julia wrapper should also allow for asynchronous execution in a similarly convenient and performant manner. 
 
