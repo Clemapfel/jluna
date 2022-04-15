@@ -23,6 +23,11 @@ namespace jluna
 
     void initialize(const std::string& path, size_t n_threads)
     {
+        static bool is_initialized = false;
+
+        if (is_initialized)
+            return;
+
         setenv("JULIA_NUM_THREADS", n_threads == 0 ? "auto" : std::to_string(n_threads).c_str(), 1);
 
         if (path.empty())
@@ -85,6 +90,8 @@ namespace jluna
         detail::initialize_types();
 
         std::atexit(&jluna::detail::on_exit);
+
+        is_initialized = true;
     }
 
     unsafe::Value* safe_eval(const std::string& code, unsafe::Module* module)
