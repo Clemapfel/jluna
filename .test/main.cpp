@@ -49,8 +49,6 @@ int main()
     std::cout << "done" << std::endl;
     return 0;
 
-
-
     auto l1 = []() -> void {
         for (size_t i = 1; i < 20; ++i)
             std::cout << i << std::endl;

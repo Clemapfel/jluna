@@ -1091,42 +1091,32 @@ The user is responsible for any potential data races a `jluna::Task` may trigger
 
 ### Thread Safety
 
-The following `jluna` features are thread-safe, as of version `0.9.0`:
+As a general rule, any of jlunas functionality is thread-safe, as long as two threads are not modifying the same object at the same time.
 
-+ any C++-side interaction with `jluna::Proxy`:
-  - ctors / dtors
-  - `.safe_call` and `operator()`
-  - `operator[]`
-  - `operator=`
-  - `get_*`
-  - etc.
-+ any C++-side interaction with `jluna::Usertype<T>`
-  - `implement`
-  - `add_field`
-  - `etc.`
-+ `""_gen`
-+ unsafe utilities:<br>
-    - `unsafe::gc_*`
-    - `unsafe::get_function`
-    - `unsafe::call`
-    - `unsafe::eval`, `unsafe::Expr`
-    - all `box` / `unbox` calls
-    
-All other features should be assumed to **not** be thread-safe. 
+For example, `jluna::safe_call` can be called from multiple threads, as the code executed within that `safe_call` is unrelated. Similarly, we can freely create unrelated proxies and modify them individually, but if we create two proxies that reference the same julia-variable and mutate both of them at the same time, we run into the data-race problems.
 
-This is most notable when using functions that modify the global Julia state, such as: 
-+ `jluna::safe_call`
-+ `jluna::safe_eval`
-+ `Module::safe_eval`
-+ `Module::assign`
-+ `Module::create_or_assign`
-+ `Module::get`
-+ `Module::new_*`
-+ etc. 
-  
-The user is responsible for any potential unintended interactions calling these function concurrently may cause. 
+The user is required to ensure thread-safety in these conditions, just like the would in Julia. jluna has no hidden pitfalls or behind-the-scene machinery that multi-threading may throw a wrench into, however any user-created object is outside of jlunas responsibility.
 
-As an example for how to deal with this, let's say we have the following variable in `Main`:
+As a list of individual, thread-safe functions would be too expansive, here are some classes of operations that are always threadsafe:
+
++ all functions in `include/safe_utilities.hpp`
+  - `safe_call`
+  - `safe_eval`
+  - `initialize`
+  - `println`
++ creating a generator expression is thread-safe
+  - modifying the same generator expression is not
++ creating a proxy through any method is thread-safe
+  - modifying a proxy is not
++ allocating a `jluna::Array` is thread-safe
+  - modifying the same array is not
++ etc.
+
+User should use common sense to determine, when it is necessary to "lock" and object down. If it is necessary, the following section guides users on how to do that.
+
+### Thread-Safety in Julia
+
+As an example for how to make modifying an object thread-safe, let's say we have the following variable in `Main`:
 
 ```julia
 # in julia
@@ -1162,7 +1152,24 @@ auto push_to_modify = [](size_t)
 
 Since `push_to_modify` will be executed through `jluna::ThreadPool`, the Julia function `lock` will stall the thread, allowing for safe access.
 
-A similar approach can be taken when trying to safely modify non-thread-safe C++-side objects. Instead of the lock we would use a C++-side `std::mutex`.
+### Thread-Safety in C++
+
+A similar approach can be taken when trying to safely modify  C++-side objects. Instead of a Julia-side lock, we use a C++-side `jluna::Mutex`, which is a simple wrapper around a Julia-side `ReentrantLock`:
+
+```cpp
+jluna::Vector<size_t> to_be_modified;
+auto to_be_modified_lock = jluna::Mutex();
+
+auto push_to_modify = [](size_t)
+{
+    to_be_modified_lock.lock();
+  
+    // modify here
+  
+    to_be_modified_lock.unlock();
+    return;
+}
+```
 
 ### Closing Notes
 
@@ -1239,23 +1246,8 @@ Lastly, a warning: Julia has a macro called `@threadcall`, which purports to sim
 
 ---
 
-## The `unsafe` Library
+## Performance Optimization
 
-Parallelizing ones code is the easiest way to get a huge increase in performance. While making sure all the multi-threading runs properly can be complicated, a potentially harder way to get things to optimal performance is sacrificing jlunas most central feature: safety.
+In this section, we will investigate `jluna`s performance, analyzing benchmark results and explaining why certain things are faster than others. Hopefully this will educate users on how they can achieve the best performance themslef.
 
-One way to do this is to resot to the C-API, this, however, is cumbersome and not garuanteed to actually be any faster. jluna is fairly well optimized and itself uses the C-API in the fastest potential way
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+(this section is not yet complete.)
