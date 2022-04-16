@@ -34,6 +34,16 @@ int main()
 {
     jluna::initialize(8);
 
+    auto* julia_side = box<char>(char(120));
+    Base["println"](julia_side);
+
+    char back_cpp_side = unbox<char>(julia_side);
+    std::cout << (int) back_cpp_side << std::endl;
+
+return 0;
+
+return 0;
+
     auto& loop = ThreadPool::create<void>([]() -> void {
 
         size_t i = 0;

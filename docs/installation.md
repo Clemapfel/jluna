@@ -17,11 +17,11 @@ The following is a step-by-step guide on how to install jluna, and how to create
    
 ## Installing jluna
 
-This section will guide users on how to install `jluna`, either globally or in a folder-contained manner.
+This section will guide users on how to install jluna, either globally or in a folder-contained manner.
 
 ### Cloning from Git
 
-We first need to download `jluna`, to do this we navigate into any public folder (henceforth assumed to be `Desktop`) and execute:
+We first need to download jluna, to do this we navigate into any public folder (henceforth assumed to be `Desktop`) and execute:
 
 ```bash
 git clone https://github.com/clemapfel/jluna.git
@@ -30,7 +30,7 @@ mkdir build
 cd build
 ```
 
-This will have cloned the `jluna` git repository into the folder `Desktop/jluna`. 
+This will have cloned the jluna git repository into the folder `Desktop/jluna`. 
 
 ### Configure CMake
 
@@ -49,7 +49,7 @@ Where `<compiler>` is one of:
 And `<path>` is the desired install path. `-DCMAKE_INSTALL_PREFIX=<path>` is optional, if it is specified manually (not recommended), keep note of this path as we will need it later.
 
 
-> Window supports is experimental. This means using MSVC may work, however this is currently untested. The [cpp compiler support]() page seems to imply that MSVC 19.30 or newer is required to compile `jluna`.
+> Window supports is experimental. This means using MSVC may work, however this is currently untested. The [cpp compiler support]() page seems to imply that MSVC 19.30 or newer is required to compile jluna.
 
 Some errors may appear here, if this is the case, head to [troubleshooting](#troubleshooting).
 
@@ -70,7 +70,7 @@ make install
 
 Which will create two shared libraries `libjluna.*`, and `libjluna_c_adapter.*`, where `*` is the platform-dependent library suffix.
 
-Now that `jluna` is installed on our system, we can access it using:
+Now that jluna is installed on our system, we can access it using:
 
 ```cmake
 # in users own CMakeLists.txt
@@ -129,7 +129,7 @@ If building your library triggers linker or compiler errors, head to [troublesho
 
 ### Permission Denied
 
-During `make install`, or during execution of the bash script, your OS may notify you that it was unable to write to a folder due to missing permissions. To fix this, either run `make install` as `sudo` (or as administrator on windows), or specify a different folder using `-DCMAKE_INSTALL_PREFIX` for which `jluna` or cmake does have write/read permission.
+During `make install`, or during execution of the bash script, your OS may notify you that it was unable to write to a folder due to missing permissions. To fix this, either run `make install` as `sudo` (or as administrator on windows), or specify a different folder using `-DCMAKE_INSTALL_PREFIX` for which jluna or cmake does have write/read permission.
 
 ### Unable to detect the Julia executable
 
@@ -148,7 +148,7 @@ CMake Error at cmake/find/FindJulia.cmake:5 (message):
   correctly.
 ```
 
-This error appears, because `jluna` was unable to locate the julia package on your system. To make `jluna` aware of the location manually, we can pass the following variable to the cmake command:
+This error appears, because jluna was unable to locate the julia package on your system. To make jluna aware of the location manually, we can pass the following variable to the cmake command:
 
 ```bash
 cmake .. -DJULIA_BINDIR=path/to/your/julia/bin -DCMAKE_COMPILER=g++-10
@@ -234,7 +234,7 @@ target_include_directories(<your target> PRIVATE
 Where 
 
 + <your target> is the build target, a library or executable
-+ `<path to jluna>` is the install path of the `jluna` shared libary, possibly specified during cmake configuration using `-DCMAKE_INSTALL_PREFIX`
++ `<path to jluna>` is the install path of the jluna shared libary, possibly specified during cmake configuration using `-DCMAKE_INSTALL_PREFIX`
 + `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
 
 ### Cannot find libjluna_c_adapter
@@ -261,7 +261,7 @@ terminate called after throwing an instance of 'jluna::JuliaException'
 signal (6): Aborted
 ```
 
-To allow the local julia state to interface with `jluna`, it needs the shared C-adapter-library to be available. During `make install`, `jluna` modifies its own code to keep track of the location of the C-adapter. If it was moved, `jluna` may no longer be able to find it.
+To allow the local julia state to interface with jluna, it needs the shared C-adapter-library to be available. During `make install`, jluna modifies its own code to keep track of the location of the C-adapter. If it was moved, jluna may no longer be able to find it.
 To fix this, recompile jluna, as detailed [above](#make-install). 
 
 
@@ -275,7 +275,7 @@ The C-adapter library is always installed into the directory specified by `CMAKE
 >   State::initialize();
 >   (...)
 > ```
-> A future release of `jluna` will provide a proper solution for this.
+> A future release of jluna will provide a proper solution for this.
 
 ---
 

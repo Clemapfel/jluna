@@ -397,12 +397,231 @@ Main.safe_eval("println(vec_var)");
 
 > **Hint**: In C++, indices are 0-based. In Julia, they are 1-based. This can be quite confusing considering we are operating in both languages at the same time. See the [section on arrays]() for more information 
 
+---
+
 ## Proxies
 
-So far, we have learned how to do basic things like calling functions/code using jluna. In previous examples, you may have noticed that it was never explicitly said, what the `auto` in a statement like `auto cpp_var = Main["julia var"]` deduces to. To fully understand how mutating and accessing variables works, we need to talk about the most central feature of jluna: `jluna::Proxy`.
+So far, this manual has intentionally obfuscated what type `auto` resolves to in a statement like this:
+
+```cpp
+jluna::safe_eval("new_var = 1234");
+auto new_var = Main["new_var"];
+```
+
+Indeed, `new_var` is not an integer, it is a `jluna::Proxy`. To fully understand how it works, we first need to discuss how/if memory is shared between the C++ and Julia state.
+
+### Shared & Separate Memory
+
+By default, most memory allocated C++-side is incompatible with Julia. For example, a C++-side variable of type `char` is an 8-bit number, while a Julia-side `Char` has 32 bit. For more complex classes such as `std::set` compared to `Base.set`, the memory is even more different.
+
+Because of this, it is best to assume that we have to first reformat and C++ memory before moving it Julia-side. In jluna, the inverse is not true, however. We do not have to reformat Julia-side memory to interact with it C++-side. This is possible because of `jluna::Proxy`
+
+`jluna::Proxy` is a proxy of arbitrary Julia-side memory. Internally, it simply holds a pointer to whatever memory it is managing. Copying the proxy copies this pointer, not the Julia-side memory. Moving the proxy does not affect the Julia-side memory. Instead, we use a proxies member functions to interact with the Julia-side memory.
+
+### Constructing a Proxy
+
+We rarely construct proxies from raw pointers (see the [section on `unsafe`](##uns))
+
+
 
 ---
 
+## Specialized Proxies: Arrays
+
+One of the nicest features of Julia is its array interface, so it is only natural a Julia wrapper should extend all that functionality to a C++ canvas. While we learned before that we can actually use a `jluna::Proxy` like an array using `operator[]`:
+
+```cpp
+auto array_proxy = Main.safe_eval("return [1, 2, 3, 4]");
+Int64 third = array_proxy[2];
+std::cout << third << std::endl;
+```
+```
+3
+```
+
+This does not even come close to all the options available to a proper `Base.Array`. To tranform a `jluna::Proxy` to a `jluna::Array`, use `.as`:
+
+```cpp
+Proxy array_proxy = Main.safe_eval("return Int64[1, 2, 3, 4]");
+auto array = array_proxy.as<Array<Int64, 1>>();
+```
+
+or, more conveniently, we use an implicit static cast:
+
+```cpp
+Array<Int64, 1> array = Main.safe_eval("return Int64[1, 2, 3, 4]");
+```
+
+We see that `jluna::Array<T, N>` has two template parameters:
+
++ `T` is the **value type** of the array, all elements are assumed to be of this type
++ `N` is the **dimensionality** of the array, sometimes called the *rank*. A 1d array is a vector, a 2d array is a matrix, etc.
+
+Both these template arguments directly correspond to the Julia-side parameters of `Base.Array`.
+
+Note that we have declared the Julia-side vector `[1, 2, 3, 4]` to be of value-type `Int64`. This is important, because we specified the C++-side array to also have that value-type. On construction, `jluna::Array` will check if the value types match (that is, wether for all elements `e_n` in the Julia-side array, it holds that `e_n <: T`), if they do not, an exception is thrown.
+
+Because the match does not have to be exact (see the section on [type ordering](#type-order)), we can simply declare the value type to be `Any`, which then lets us move any assortment of objects into the same array. jluna actually provides a typedef for this:
+
+> **C++ Hint**: A `typedef` or `using` is a way to declare a type alias. It is giving a type a new name while keeping the old name valid, most commonly used to simplify syntax
+
+```cpp
+using Array1d = // equivalent to Base.Array<Any, 1>
+using Array2d = // equivalent to Base.Array<Any, 1>
+using Array3d = // equivalent to Base.Array<Any, 1>
+```
+
+## Accessing Array Indices
+
+First, we set up our two arrays for this section:
+
+```cpp
+Array<Int64, 1> array_1d = jluna::safe_eval("return Int64[1, 2, 3, 4, 5]");
+Array<Int64, 2> array_2d = jluna::safe_eval("return reshape(Int64[i for i in 1:9], 3, 3)");
+
+Base["println"]("array_1d: ", array_1d);
+Base["println"]("array_2d: ", array_2d);
+```
+```
+array_1d: [1, 2, 3, 4, 5]
+array_2d: [1 4 7; 2 5 8; 3 6 9]
+```
+
+To get a specific element of an array, we use `.at`:
+
+```cpp
+Int64 one_d_at_3 = array_1d.at(2);
+Int64 two_d_at_2_2 = array_2d.at(1, 1);
+
+std::cout << one_d_at_3 << std::endl;
+std::cout << one_d_at_2_2 << std::endl;
+```
+```
+3
+5
+```
+
+For a 1d array, `at` takes a single argument, it's linear index. For a 2d array, `at` takes two arguments, one index for each dimension. This extends to any dimensionality, for a 5d array, we would call `at` with 5 integers.
+
+For syntactic consistency, `jluna::Array` also sports `operator[]`, which is called in the exact same way as `at` would be, the difference is that for `at` only, the indices are bounds-checked. This adheres to the functionality of `std::vector<T>::at` and `std::vector<T>::operator[]`.
+
+### Linear Indexing
+
+While n-dimensional indexing is only available for array of rank 2 or higher, linear indexing is available for all arrays. We can linear-index any array using `operator[](size_t)`
+
+```cpp
+Array<Int64, 3> array_3d = jluna::safe_eval("return reshape(Int64[i for i in 1:(3*3*3)], 3, 3, 3)");
+std::cout << (Int64) array_3d[3] << std::endl;
+```
+```
+4
+```
+Linear indexing accesses the n-th element in column-first order.
+
+### List Indexing
+
+jluna also supports Julia-style list indexing when using `operator[]`:
+
+```cpp
+Array<Int64, 1> vector = jluna::safe_eval("return [i for i in 1:10]");
+auto sub_vector = vector.at({1, 5, 2, 7});
+
+Base["printlnt"](sub_vector);
+```
+```
+[2, 6, 3, 8]
+```
+> **C++ Hint**: Here, the sytnax used for `{1, 5, 2, 7}` is called a "brace-enclosed initializer list", which is a form of [aggregate initialization](https://en.cppreference.com/w/cpp/language/aggregate_initialization) in C++. It can be best though of as a proto-vector, the compiler will infer the vectors type and construct it for us. In our case, because `Array::operator[]` expects a list of integer, it will interpret `{1, 5, 2, 7}` as an constructor for `std::vector<size_t>`.<br>
+> see also: [list initialization](https://en.cppreference.com/w/cpp/language/list_initialization)
+
+### 0-base vs. 1-base
+
+This is about as good a place as any to talk about index bases. Consider the following:
+
+```cpp
+Array<Int64, 1> array = jluna::safe_eval("return Int64[1, 2, 3, 4, 5, 6]");
+
+std::cout << "cpp: " << (Int64) array.at(3) << std::endl;
+std::cout << "jl : " << (Int64) Base["getindex"](array, 3) << std::endl;
+```
+```
+cpp: 4
+jl : 3
+```
+
+C++ indices are 0-based, this means `at(3)` will give use the (3 - 0)th element, which for our vector is `4`. In Julia, indices are 1-based, meaning `getindex(array, 3)` will gives us the (3 - 1)th element, which is `3`.
+
+The following table illustrates how to translate C++-side indexing into Julia-side indexing:
+
+| N | Julia | jluna |
+|------|-------|--------------------------|
+| 1    | `M[1]` | `M.at(0)` or `M[0]`|
+| 2    | `M[1, 2]` | `M.at(0, 1)`|
+| 3    | `M[1, 2, 3]` | `M.at(0, 1, 2)`|
+| Any  | `M[ [1, 13, 7] ]` | `M[ {0, 12, 6} ]` |
+| Any  | `M[i for i in 1:10]` | `M["i for i in 1:10"_gen]`
+|      |        |     |
+| *    | `M[:]` | not available |
+
+### Iterating
+
+The main advantage `jluna::Array` has over the C-APIs `jl_array_t` is that it is *iterable*:
+
+```cpp
+Array<Int64, 1> array = jluna::safe_eval("return Int64[1, 2, 3, 4, 5, 6]");
+
+for (Int64 i : array)
+    std::cout << i << " ";
+
+std::cout << std::endl;
+```
+```
+1 2 3 4 5 6 
+```
+> **C++ Hint**: `std::endl` adds a `\n` to the stream, then flushes it
+
+If we declared the iterator type as `auto`, it is even assignable:
+
+```cpp
+for (auto iterator : array)
+    it = (Int64) it + 1;
+
+Base["println"](array);
+```
+```
+[2, 3, 4, 5, 6, 7]
+```
+
+This modifies the underlying Julia-array with minimal overhead. If the array is also a named proxy, it will also modify the corresponding Julia-side variable.
+
+### Additional Member Functions
+
+#### Size of Array
+
+To get the size of an array, we use `get_n_elements`:
+
+```cpp
+Array<size_t, 1> vec = jluna::safe_eval("return UInt64[i for i in 1:333]");
+std::cout << vec.get_n_elements() << std::endl;
+```
+```
+333
+```
+
+#### jluna::Vector
+
+For arrays of dimensionality 1, a special proxy called `jluna::Vector` is provided. It directly inherits from `jluna::Array` so all of `Array`s functionalities are also available to `Vector`. In addition, the following member functions are only available for `jluna::Vector`:
+
++ `insert(size_t pos, T value)`
+  - insert element `value` at position `pos` (0-based)
++ `erase(size_t pos)`
+  - delete the element at position `pos` (0-based)
++ `push_front(T)`
+  - push element to the front, such that it is now at position 0
++ `push_back(T)`
+  - push element to the back of the vector
+
+---
 
 ## Specialized Proxies: Symbols
 
@@ -582,7 +801,7 @@ Additionally, `jluna::Module` provides the following two functions wrapping the 
 
 ## Specialized Proxies: Types
 
-We've seen specialized module-, symbol- and array-proxies. `jluna` has a fourth kind of proxy, `jluna::Type`, which wraps all of Julias very powerful introspection functionalities in one class.
+We've seen specialized module-, symbol- and array-proxies. jluna has a fourth kind of proxy, `jluna::Type`, which wraps all of Julias very powerful introspection functionalities in one class.
 
 While some overlap is present, `jluna::Type` is not a direct equivalent of `Base.Type{T}`. 
 
@@ -605,7 +824,7 @@ This is only necessary for user-defined types. For most types in `Base`, jluna o
 
 The following types are available this way:
 
-| `jluna` constant name | Julia-side name|
+| jluna constant name | Julia-side name|
 |-------------------|---------|
 | `AbstractArray_t` | `AbstractArray{T, N}` |
 | `AbstractChar_t` | `AbstractChar` |
@@ -815,7 +1034,7 @@ We, again, get a vector of pairs where `.first` is the name, `.second` is the up
 
 ### Type Classification
 
-To classify a type means to evaluate a condition based on a types attributes, in order to get information about how similiar or different clusters of types are. `jluna` offers a number of convenient classifications, some of which are available as part of the Julia core library, some of which are not. This section will list all, along with their meaning:
+To classify a type means to evaluate a condition based on a types attributes, in order to get information about how similiar or different clusters of types are. jluna offers a number of convenient classifications, some of which are available as part of the Julia core library, some of which are not. This section will list all, along with their meaning:
 
 + `is_primitive`: was the type declared using the keyword `primitive`
     ```cpp
@@ -864,7 +1083,7 @@ To classify a type means to evaluate a condition based on a types attributes, in
   
 ### "Unrolling" Types
 
-There is a subtle difference between how `jluna` evaluates properties and how pure Julia does. Consider the following:
+There is a subtle difference between how jluna evaluates properties and how pure Julia does. Consider the following:
 
 ```julia
 # in julia
@@ -901,9 +1120,138 @@ Array{T, N}
 (:name, :super, :parameters, :types, :instance, :layout, :size, :hash, :flags)
 ```
 
-Once fully unrolled, we have access to the properties necessary for introspection. `jluna` does this unrolling automatically for all types initialized by `jluna::initialize` (see the [previous sections list](#base-types)).
+Once fully unrolled, we have access to the properties necessary for introspection. jluna does this unrolling automatically for all types initialized by `jluna::initialize` (see the [previous sections list](#base-types)).
 
 If desired, we can fully specialize a user-intialized type manually using the member function `.unroll()`. Without this, many of the introspection features will be unavaiable.
+
+---
+
+## The `unsafe` Library
+
+> Waning: Misuse of this part of jluna can lead to exception-less crashes, data corruption and memory leaks. Only user who are confident and familiar with C-style programs with no safety-nets are encouraged to employ these functions
+
+So far, a lot of jlunas functionality was intentionally obfuscated to allow more novice users to use jluna in a way that is easy to understand and 100% safe. For some applications, however, the gloves need to come off. This section will detail how to surrender the most central of jlunas conceits: safety. In return, we get *optimal performance*, achieving overheads of only 0 - 5% compared to the C-API, while some functions are actually faster than that native C-API functions.
+
+In line with the way this topic was pushed to the back of this manual, all of the not-safe functionality in jluna is inside the `jluna::unsafe` nested namespace.
+
+### Unsafe Types
+
+Without `jluna::Proxy`, we reference Julia-side values through raw C-pointers. A C-pointer has a type, however there is no guarantee, only the assumption that whatever it is pointing to is actually of that type.
+
+The most used Julia pointer types are:
+
++ `unsafe::Value*`
+  - a pointer to any Julia value, but not necessarily a value of type `Any`
++ `unsafe::Function*`
+  - a pointer to a callable Julia object, not necessarily a `Base.Function`
++ `unsafe::Symbol*`
+  - pointer to a `Base.Symbol`
++ `unsafe::Module*`
+  - pointer to a `Base.Module`
++ `unsafe::Expression*`
+  - pointer to a `Base.Expr`
++ `unsafe::Array*`
+  - pointer to a `Base.Array` of arbitrary value type and dimensionality (rank)
++ `unsafe::DataType`
+  - pointer to a `Base.Type`, including `UnionAll` and not-yet-unrolled types
+  
+Note that an `unsafe::Value*` could be pointing to a `Base.Symbol`, `Base.Module`, `Base.Array`, etc.
+  
+### Calling Julia Functions
+
+So far, we used proxies to call Julia-functions with Julia-values. In the `unsafe` library, we do so using `unsafe::call`. 
+
+First, we need to get a pointer to any given function. This is done via `unsafe::get_function`, which takes the module the function is in, as well as the function name as a symbol:
+
+```cpp
+auto* println = unsafe::get_function(jl_base_module, "println"_sym);
+```
+
+Where `_sym` is a string-literal operator that converts its argument to a Julia-side symbol using the C-APIs `jl_symbol` function. `jl_base_module` is an `unsafe::Module*`, pointing to `Base`.
+
+We can then call this function using `unsafe::call`:
+
+```cpp
+auto* res = unsafe::call(println, (unsafe::Value*) jl_main_module);
+```
+```
+Main
+```
+
+If an exception is thrown during the `unsafe::call`, the user will not be notified and the function will return a `nulltpr`, potentially causing an exception-less segfault when accessing the returned value, expecting it to be valid.
+
+jluna actually offers a middle ground between the `Proxy::call` and `unsafe::call`: `jluna::safe_call`. This function also returns an `unsafe::Value*`, however any exception that is raised during invokation of the function is forwarded to C++. Unless absolute peak performance is needed, it is generally recommended to use `jluna::safe_call` in place of `unsafe::call`, as both functions have the same signature.
+
+For an unsafe version of `Module::safe_eval`, the unsafe library provides the `_eval` literal operator:
+
+```cpp
+"println(\"unsafely printed\")"_eval;
+```
+```
+unsafely printed
+```
+
+Though, as discussed before, executing code as strings is fairly slow and not recommended unless unavoidable.
+
+Just like with `unsafe::call`, no exception forwarding happens during `_eval` and it will return `nullptr` if parsing the string or its execution was unsuccesfull.
+  
+### Boxing / Unboxing
+
+So far, we have used the proxies `operator=` to transfer C++-side memory to Julia, while `Proxy::operator T()` transformed Julia-side memory to C++. Internally, both of these functionalities are actually handled by two functions `box` and `unbox`.
+
+Recall that Julia-side memory and C++-side memory do not necessarily have the same memory layout. 
+
+Transforming C++-side memory such that it is compatible with the Julia-state is called **boxing**. `box` has the following signature:
+
+```cpp
+template<typename T>
+unsafe::Value* box(T);
+```
+
+Transforming Julia-side memory such that it is compatible with the C++-state is called **unboxing**, which has the following signature:
+
+```cpp
+template<typename T>
+T unbox(unsafe::Value*);
+```
+
+As an example, consider the following C++-side value:
+
+```cpp
+char cpp_side = 120;
+```
+
+If we want to move this value to Julia, we use `box<char>`:
+
+```cpp
+unsafe::Value* julia_side = box<char>(cpp_side);
+Base["println"](julia_side);
+```
+```
+x
+```
+
+Where `x` is the 120th ASCII character.
+
+To then move the now Julia-side memory back C++-side, we use `unbox<char>`:
+
+```cpp
+char back_cpp_side = unbox<char>(julia_side);
+std::cout << (int) back_cpp_side << std::endl;
+```
+```
+120
+```
+
+This way of explicitly moving values between states can be quite cumbersome syntactically, which is why `jluna::Proxy` does all of this implicitly.
+
+Similar to the list of types a proxy can be assigning with, the following type can both be `boxed` and `unboxed`:
+
+
+
+
+
+
 
 ---
 
@@ -945,16 +1293,16 @@ Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)
 
 It segfaults without an error. 
 
-This is, because the Julia C-API is seemingly hardcoded to prevent any call of C-API functions from anywhere but master scope (the scope of the thread, `main` is executed in). For obvious reasons, this makes things quite difficult, because, **we cannot access the Julia state from within a C++-side thread**. This has nothing to do with `jluna`, it is how the C-API was designed. 
+This is, because the Julia C-API is seemingly hardcoded to prevent any call of C-API functions from anywhere but master scope (the scope of the thread, `main` is executed in). For obvious reasons, this makes things quite difficult, because, **we cannot access the Julia state from within a C++-side thread**. This has nothing to do with jluna, it is how the C-API was designed. 
 
-Given this, we can immediately throw out using any of the C++ `std::thread`-related multi-threading support, as well as libraries like libuv. It is important to keep this in mind, if our application already uses these frameworks, we have to take care to never execute code that interacts with Julia from within a thread. This includes any of `jluna`s functionalities, as it is, of course, build entirely on the Julia C-API.
+Given this, we can immediately throw out using any of the C++ `std::thread`-related multi-threading support, as well as libraries like libuv. It is important to keep this in mind, if our application already uses these frameworks, we have to take care to never execute code that interacts with Julia from within a thread. This includes any of jlunas functionalities, as it is, of course, build entirely on the Julia C-API.
 
-All is not lost, however: `jluna` offers its own multi-threading framework, allowing for parallel execution of truly arbitrary C++ code - even if that code interacts with the Julia state.
+All is not lost, however: jluna offers its own multi-threading framework, allowing for parallel execution of truly arbitrary C++ code - even if that code interacts with the Julia state.
 
 ### Initializing the Julia Threadpool
 
 In Julia, we have to decide the number of threads we want to use *before startup*. 
-In the Julia REPL, we would use the `-threads` (or `-t`) argument. In `jluna`, we instead give the desired threads as an argument to `jluna::initialize`:
+In the Julia REPL, we would use the `-threads` (or `-t`) argument. In jluna, we instead give the desired threads as an argument to `jluna::initialize`:
 
 ```cpp
 int main()
@@ -968,7 +1316,7 @@ int main()
 [JULIA][LOG] initialization successful (8 threads).
 ```
 
-If left unspecified, `jluna` will initialize Julia with exactly 1 thread. We can set the number of threads to `auto` by supplying the following constant to `jluna::initialize`:
+If left unspecified, jluna will initialize Julia with exactly 1 thread. We can set the number of threads to `auto` by supplying the following constant to `jluna::initialize`:
 
 ```cpp
 using namespace jluna;
@@ -979,11 +1327,11 @@ initialize(JULIA_NUM_THREADS_AUTO);
 
 This sets the number of threads to number of local CPU threads, just like setting environment variable `JULIA_NUM_THREADS` to `auto` would do.
 
-Note that any already existing `JULIA_NUM_THREAD` variable in the environment the `jluna` executable is run in, is ignored and overridden. We can only specify the number of threads through `jluna::initialize`.
+Note that any already existing `JULIA_NUM_THREAD` variable in the environment the jluna executable is run in, is ignored and overridden. We can only specify the number of threads through `jluna::initialize`.
 
 ### Spawning a Task
 
-Owning to its status of being in-between two languages with differying vocabulary and design decisions, `jluna`s thread pool architecture borrows a bit from both C++ and Julia.
+Owning to its status of being in-between two languages with differying vocabulary and design decisions, jlunas thread pool architecture borrows a bit from both C++ and Julia.
 
 To execute a C++-side piece of code, we have to first wrap it into a C++ lambda, then wrap that lambda in a `jluna::Task`. We cannot initialize a task directly, rather, we use `jluna::ThreadPool::create`:
 
@@ -1025,7 +1373,7 @@ task.join();
 lambda called with 1234
 ```
 
-Note how, even though we called the Julia function `println`, the task **did not segfault**. Using `jluna`s thread pool is the only way to call C++-side functions that access the Julia state concurrently.
+Note how, even though we called the Julia function `println`, the task **did not segfault**. Using jlunas thread pool is the only way to call C++-side functions that access the Julia state concurrently.
 
 We declared `task` to be a reference:
 
@@ -1175,7 +1523,7 @@ auto push_to_modify = [](size_t)
 
 #### Interacting with `jluna::Task` from Julia
 
-Internally, `jluna` makes accessing the Julia-state from a C++-sided, asynchronously executed function possible by wrapping it in an actual Julia-side task, then using Julias native thread pool to execute it. This has some beneficial side-effects.
+Internally, jluna makes accessing the Julia-state from a C++-sided, asynchronously executed function possible by wrapping it in an actual Julia-side task, then using Julias native thread pool to execute it. This has some beneficial side-effects.
 
 `yield`, called from C++ like so:
 
@@ -1228,7 +1576,7 @@ auto& task = ThreadPool::create(lambda);
    41 | auto& task = ThreadPool::create(lambda);
       |              ~~~~~~~~~~~~~~~~~~^~~~~~~~
 ```
-We get a compiler error. This is, because in C++, non-specialized lambdas do not yet have a specific return-type. This allows for the users to specify `auto` for both the return and argument types of a lambda, however for `jluna`, things need to have a clear type in order to know how to allocate both the task and its futures. To still allow any lambda to be used for `ThreadPool::create`, `jluna` offers a templated version of `create` that takes a single, user-specified template argument: the return type of the lamdba:
+We get a compiler error. This is, because in C++, non-specialized lambdas do not yet have a specific return-type. This allows for the users to specify `auto` for both the return and argument types of a lambda, however for jluna, things need to have a clear type in order to know how to allocate both the task and its futures. To still allow any lambda to be used for `ThreadPool::create`, jluna offers a templated version of `create` that takes a single, user-specified template argument: the return type of the lamdba:
 
 ```cpp
 auto lambda = []() -> void {    // still auto
@@ -1238,16 +1586,16 @@ auto lambda = []() -> void {    // still auto
 auto& task = ThreadPool::create<void>(lambda); // <void> specified manually
 ```
 
-`jluna` now knows to implicitely bind the lambda to a `std::function<void()>` and the above code will compile and work just as expected.
+jluna now knows to implicitely bind the lambda to a `std::function<void()>` and the above code will compile and work just as expected.
 
 #### Do **NOT** use `@threadcall`
 
-Lastly, a warning: Julia has a macro called `@threadcall`, which purports to simply execute a `ccall` in a new thread. Internally, it actually uses the libuv thread pool for this, not the native Julia thread pool. Because the C-API is seemingly hardcoded to segfault any attempt at accessing the Julia state through any non-master C-side thread, using `@threadcall` to call arbitrary code also segfaults. Because of this, it is not recommended to use `@threadcall` in any circumstances. Instead, call `ccall` from within a proper `Base.Task`, or use `jluna`s thread pool to execute C-side code.
+Lastly, a warning: Julia has a macro called `@threadcall`, which purports to simply execute a `ccall` in a new thread. Internally, it actually uses the libuv thread pool for this, not the native Julia thread pool. Because the C-API is seemingly hardcoded to segfault any attempt at accessing the Julia state through any non-master C-side thread, using `@threadcall` to call arbitrary code also segfaults. Because of this, it is not recommended to use `@threadcall` in any circumstances. Instead, call `ccall` from within a proper `Base.Task`, or use jlunas thread pool to execute C-side code.
 
 ---
 
 ## Performance Optimization
 
-In this section, we will investigate `jluna`s performance, analyzing benchmark results and explaining why certain things are faster than others. Hopefully this will educate users on how they can achieve the best performance themslef.
+In this section, we will investigate jlunas performance, analyzing benchmark results and explaining why certain things are faster than others. Hopefully this will educate users on how they can achieve the best performance themslef.
 
 (this section is not yet complete.)

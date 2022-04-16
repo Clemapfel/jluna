@@ -3,7 +3,7 @@
 ![](./header.png)
 
 Julia is a beautiful language, it is well-designed, and well-documented. Julias C-API is also well-designed, less beautiful, and much less... documented.
-Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua ⭤ C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), `jluna` aims to fully wrap the official julia C-API, replacing it in usage in projects with C++ as the host language, by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
+Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua ⭤ C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), jluna aims to fully wrap the official julia C-API, replacing it in usage in projects with C++ as the host language, by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
 
 ---
 
@@ -146,7 +146,7 @@ NonJuliaType(["new"])
 ---
 
 ### Features
-Some of the many advantages `jluna` has over the C-API include:
+Some of the many advantages jluna has over the C-API include:
 
 + expressive, generic syntax
 + automatically detects and links Julia during cmake
@@ -158,7 +158,7 @@ Some of the many advantages `jluna` has over the C-API include:
 + verbose exception forwarding, compile-time assertions
 + inline documentation for IDEs, for both C++ and Julia code 
 + verbose manual & documentation, written by a human
-+ freely mix `jluna` and the C-API
++ freely mix jluna and the C-API
 + And more!
 
 ### Planned (but not yet implemented):
@@ -180,14 +180,14 @@ Advanced users are encouraged to check the headers (available in `jluna/include/
 
 ## Dependencies
 
-`jluna` aims to be as modern as is practical. It uses C++20 features extensively and aims to support the newest julia version, rather than focusing on backwards compatibility. If you are looking for a C++ library that supports julia 1.5 or lower, consider checking out [CxxWrap](https://github.com/JuliaInterop/CxxWrap.jl) instead.
+jluna aims to be as modern as is practical. It uses C++20 features extensively and aims to support the newest julia version, rather than focusing on backwards compatibility. If you are looking for a C++ library that supports julia 1.5 or lower, consider checking out [CxxWrap](https://github.com/JuliaInterop/CxxWrap.jl) instead.
 
-For `jluna` you'll need:
+For jluna you'll need:
 + [**Julia 1.7.0**](https://julialang.org/downloads/#current_stable_release) (or higher)
 + [**cmake 3.12**](https://cmake.org/download/) (or higher)
 + C++ Compiler (see below)
 
-Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang++-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are fully supported. g++-11 is the primary compiler used for development of `jluna` and is thus recommended. MSVC 19.32 seems to work, however stability remains untested.
+Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang++-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are fully supported. g++-11 is the primary compiler used for development of jluna and is thus recommended. MSVC 19.32 seems to work, however stability remains untested.
 
 ---
 
@@ -210,7 +210,7 @@ make install
 Where 
 + `<C++ Compiler>` is one of `g++-10`, `g++-11`, `clang++-12`
 
-Afterwards, you can make `jluna` available to your library using 
+Afterwards, you can make jluna available to your library using 
 
 ```cmake
 # inside your own CMakeLists.txt
@@ -229,7 +229,7 @@ If errors appear at any point, head to [troubleshooting](./docs/installation.md#
 
 ### Creating a Project from Scratch
 
-`jluna` offers a one-line wizard for installing it and creating a new project. This option is only recommended for novice users, more experienced users should create the project themself and link it as detailed above.
+jluna offers a one-line wizard for installing it and creating a new project. This option is only recommended for novice users, more experienced users should create the project themself and link it as detailed above.
 
 > this feature is only available on unix systems
 
@@ -249,9 +249,9 @@ If errors appear at any point, head to [troubleshooting](./docs/installation.md#
 
 ## License
 
-The current and all prior releases of `jluna` are supplied under MIT license, available [here](./LICENSE.txt).
+The current and all prior releases of jluna are supplied under MIT license, available [here](./LICENSE.txt).
 
-I would like to ask people using this library in commercial or university settings, to disclose their usage of `jluna` in some small way (for example, at the end of the credits or via a citation) and to make clear the origin of the work (for example by linking this github page). Unlike the text in `LICENSE.txt`, this is not a legally binding condition, only a personal request by me, the developer.
+I would like to ask people using this library in commercial or university settings, to disclose their usage of jluna in some small way (for example, at the end of the credits or via a citation) and to make clear the origin of the work (for example by linking this github page). Unlike the text in `LICENSE.txt`, this is not a legally binding condition, only a personal request by me, the developer.
 
 For collaboration or further questions, feel free to [contact me](https://www.clemens-cords.com/contact).
 
@@ -261,7 +261,7 @@ C.
 ---
 
 ## Credits
-`jluna` was designed and implemented by [Clem Cords](https://github.com/Clemapfel).
+jluna was designed and implemented by [Clem Cords](https://github.com/Clemapfel).
 
 #### March 2022:<br>
 + cmake improvements by [friendlyanon](https://github.com/friendlyanon)
