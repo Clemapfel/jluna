@@ -34,12 +34,32 @@ int main()
 {
     jluna::initialize(8);
 
-    auto* julia_side = box<char>(char(120));
-    Base["println"](julia_side);
+    struct NonJuliaObject
+{
+    Int64 _value;
 
-    char back_cpp_side = unbox<char>(julia_side);
-    std::cout << (int) back_cpp_side << std::endl;
+    NonJuliaObject(Int64 in)
+        : _value(in)
+    {}
 
+    void double_value(size_t n)
+    {
+        for (size_t i = 0; i < n; ++i)
+            _value = 2 * _value;
+    }
+};
+
+auto instance = NonJuliaObject(13);
+
+Main.new_undef("modify_instance") = [
+  instance_ref = std::ref(instance)
+](size_t n) -> void {
+    instance_ref.get().double_value(n);
+    return;
+};
+
+Main.safe_eval("modify_instance(3)");
+std::cout << instance._value << std::endl;
 return 0;
 
 return 0;

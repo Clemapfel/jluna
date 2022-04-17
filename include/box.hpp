@@ -198,7 +198,7 @@ namespace jluna
     template<typename T>
     concept is_boxable = requires(T t)
     {
-        {box(t)};
+        {box<decltype(t)>(t)};
     };
 }
 

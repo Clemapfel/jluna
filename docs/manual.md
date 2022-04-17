@@ -422,8 +422,6 @@ Because of this, it is best to assume that we have to first reformat and C++ mem
 
 We rarely construct proxies from raw pointers (see the [section on `unsafe`](##uns))
 
-
-
 ---
 
 ## Specialized Proxies: Arrays
@@ -796,6 +794,116 @@ Additionally, `jluna::Module` provides the following two functions wrapping the 
   - equivalent to calling `import PackageName` inside `M`
 + `M.add_using("PackageName")`
   - equivalent to calling `using PackageName` inside `M`
+
+---
+
+## Calling C++ Functions from Julia
+
+We've seen how to call Julia functions from C++, but jluna offers users the other way around as well.
+
+To call a C++ function, we need to assign a named or unnamed proxy a lambda that wraps the C++ function.
+
+> **C++ Hint**: Lambdas are C++s anonymous function objects. Their usage is broad and they offers more flexbility than a static function. Before continuing, it is recommend to read up on the basics of lambda, for example [here](https://docs.microsoft.com/en-us/cpp/cpp/lambda-expressions-in-cpp). Users are expected to know about trailing return types and capture clauses from this point onward.
+
+Let's say we have the following simple function:
+
+```cpp
+Int64 add_two(Int64 a, Int64 b)
+{
+    return a + b;
+}
+```
+
+First, we need to *wrap* this function in a lambda:
+
+```cpp
+auto wrapped = [](Int64 a, Int64 b) -> Int64
+{
+    return add_two(a, b);
+};
+```
+
+Always manually specify the trailing return type of a lambda when using them with jluna. Do not use `auto` for either the return type or any argument type.
+
+We can now create a new named Julia-side variable and simply assign it our wrapped lambda:
+
+```cpp
+Main.new_undef("add_two") = wrapped;
+```
+
+And that's all we need to do, now any Julia code can call `add_two`. The julia function has the same signature `(Int64, Int64) -> Int64` and the return value is forwarded to Julia, just like a normal Julia function:
+
+
+```cpp
+Main.safe_eval("println(add_two(123, 111))");
+```
+```
+234
+```
+
+### Allowed Signatures
+
+Not all function signatures are supported by jluna. A lambda can only have the following signatures:
+
+```cpp
+() -> T_r
+(T1) -> T_r
+(T1, T2) -> T_r
+(T1, T2, T3) -> T_r
+(std::vector<T>) -> T_r
+```
+
+Where 
++ `T_r` is `void` or a [TODO type](TODO)
++ `T1`, `T2`, `T3` are a [TODO type](TODO)
+
+This may seem limiting, how could we execute arbitrary C++ code when we are only allowed to use functions with this signature and only TODO types? The answer: captures.
+
+### Using non-C++ Objects
+
+Lets say we have the following C++ class:
+
+```cpp
+struct NonJuliaObject
+{
+    Int64 _value;
+    
+    NonJuliaObject(Int64 in)
+        : _value(in)
+    {}
+    
+    void double_value(size_t n)
+    {
+        for (size_t i = 0; i < n; ++i)
+            _value = 2 * _value;
+    }
+};
+
+auto instance = NonJuliaObject(13);
+```
+
+This object is obviously not TODO. Furthermore we can't call it through our signatures because we would need to hand the lambda an instance as an argument, so it knows what to modify. Well, we may not be able to give the instance as an argument, but we are able to give the instance through captures:
+
+```cpp
+auto instance = NonJuliaObject(13);
+
+Main.new_undef("modify_instance") = [
+  instance_ref = std::ref(instance)
+](size_t n) -> void {
+    instance.double_value(n);
+    return;
+};
+```
+> **C++ Hint**: `std::ref` is used to create a [reference wrapper](https://en.cppreference.com/w/cpp/utility/functional/reference_wrapper) around any instanced object. It is very similar to Julias `Base.Ref`.  
+    
+Here, we creaed a new Julia variable in `Main` called `modify_instance`. We then assigned this variable an anonymous lambda (a lambda that was not bound to a C++-side variable) that **captures the instance we want to modify** using a reference wrapper. This way, the instance is available inside the lambda body, but it is not part of the function signature, which is still `(size_t) -> void`, which is allowed.
+
+Now, when we call this function:
+
+```cpp
+Main.safe_eval("modify_instance(3)");
+std::cout << instance._value << std::endl;
+```
 
 ---
 
