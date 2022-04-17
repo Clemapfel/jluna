@@ -1236,7 +1236,7 @@ This proxy is then assigned a lambda of signature `() -> void`, which is a valid
 State::eval("println(Main.lambda)");
 ```
 ```
-Main.jluna._cppcall.UnnamedFunctionProxy(
+Main.jluna.cppcall.UnnamedFunctionProxy(
   Symbol("#1"), 
   (...)
 )
@@ -3714,7 +3714,7 @@ This proxy is then assigned a lambda of signature `() -> void`, which is a valid
 State::eval("println(Main.lambda)");
 ```
 ```
-Main.jluna._cppcall.UnnamedFunctionProxy(
+Main.jluna.cppcall.UnnamedFunctionProxy(
   Symbol("#1"), 
   (...)
 )

@@ -53,7 +53,7 @@ namespace jluna
         forward_last_exception();
 
         std::stringstream str;
-        str << "jluna._cppcall.eval(:(const _c_adapter_path = \"";
+        str << "jluna.cppcall.eval(:(const _c_adapter_path = \"";
         str << (jluna::detail::c_adapter_path_override.empty() ?  jluna::detail::c_adapter_path : jluna::detail::c_adapter_path_override);
         str << "\"))";
 
@@ -64,7 +64,7 @@ namespace jluna
         detail::initialize_types();
 
         jl_eval_string(R"(
-            if isdefined(Main, :jluna) #& jluna._cppcall.verify_library()
+            if isdefined(Main, :jluna) #& jluna.cppcall.verify_library()
                 print("[JULIA][LOG] ")
                 Base.printstyled("initialization successful (" * string(Threads.nthreads()) * " threads).\n"; color = :green)
             else

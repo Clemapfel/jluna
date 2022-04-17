@@ -559,53 +559,75 @@ module jluna
         end
     end
 
-    module _cppcall
+    module cppcall
 
         #const _c_adapter_path = "<call jluna::initialize to initialize this field>";
 
         """
         object that is callable like a function, but executes C++-side code
         """
-        struct UnnamedFunctionProxy{NArgs}
+        struct UnnamedFunctionProxy{NArgs <: Cint}
 
-            _native_handle::UInt64
+            _native_handle::Ptr{Cvoid}
+            # points to C-side function
 
-            function UnnamedFunctionProxy{N}(id::UInt64) where N
+            _n_args::Cint
+            #  0: (void) -> Any
+            #  1: (Any) -> Any
+            #  2: (Any, Any) -> Any
+            #  3: (Any, Any, Any) -> Any
+            #  -1: (Array{Any, 1}) -> Any
 
-                out = new{N}(id)
+            function UnnamedFunctionProxy{N}(ptr::Ptr{Cvoid}) where N <: Cint
+
+                out = new{N}(ptr, N)
                 finalizer(function (t::UnnamedFunctionProxy{N})
-                    ccall((:free_function, _cppcall._library_name), Cvoid, (Csize_t, Csize_t), t._native_handle, 0)
+                    ccall((:free_lambda, cppcall._c_adapter_path), Cvoid, (Ptr{Cvoid}, Cint), t._native_handle, t._n_args)
                 end, out);
             end
         end
 
-        """
-        `make_unnamed_function_proxy(::UInt64, n::UInt64) -> UnnamedFunctionProxy{n}`
-        """
-        make_unnamed_function_proxy(id::UInt64, n_args::UInt64) = return UnnamedFunctionProxy{n_args}(id)
 
-        """
-        `invoke_function(id::UInt64, n::UInt64) -> Ptr{Any}`
-        """
-        function invoke_function(id::UInt64, xs...)
 
+        invoke_function(f::UnnamedFunctionProxy{N}, xs::Ptr{Any}...) where N = return Ptr{Nothing}(0);
+
+        function invoke_function(f::UnnamedFunctionProxy{0}) ::Ptr{Any}
+            return ccall((:invoke_lambda_0, cppcall._c_adapter_path), Ptr{Any}, NTuple{0, Ptr{Any}});
         end
 
-        # call operator for (void) -> Any
+        function invoke_function(f::UnnamedFunctionProxy{1}, arg1::Ptr{Any}) ::Ptr{Any}
+            return ccall((:invoke_lambda_1, cppcall._c_adapter_path), Ptr{Any}, NTuple{1, Ptr{Any}}, arg1);
+        end
+
+        function invoke_function(f::UnnamedFunctionProxy{2}, arg1::Ptr{Any}, arg2::Ptr{Any}) ::Ptr{Any}
+            return ccall((:invoke_lambda_2, cppcall._c_adapter_path), Ptr{Any}, NTuple{2, Ptr{Any}}, arg1, arg2);
+        end
+
+        function invoke_function(f::UnnamedFunctionProxy{3}, arg1::Ptr{Any}, arg2::Ptr{Any}, arg3::Ptr{Any}) ::Ptr{Any}
+            return ccall((:invoke_lambda_3, cppcall._c_adapter_path), Ptr{Any}, NTuple{3, Ptr{Any}}, arg1, arg2);
+        end
+
+        function invoke_function(f::UnnamedFunctionProxy{Cint(-1)}, vec::Vector) ::Ptr{Any}
+            return ccall((:invoke_lambda_n, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Vector},), pointer_from_objref(vec));
+        end
+
         function (f::UnnamedFunctionProxy{N})(xs...) where N
 
             n = length(xs...)
 
+            const to_ptr = pointer_from_objref
+            const from_ptr = unsafe_pointer_to_objref
+
             if n == N == 0
-                return unsafe_pointer_to_objref(invoke_function(f._native_handle));
+                return from_ptr(invoke_function(f));
             elseif n == N == 1
-                return unsafe_pointer_to_objref(invoke_function(f._native_handle, xs[1]));
+                return from_ptr(invoke_function(f, to_ptr(xs[1])));
             elseif n == N == 2
-                return unsafe_pointer_to_objref(invoke_function(f._native_handle, xs[1], xs[2]));
+                return from_ptr(invoke_function(f, to_ptr(xs[1]), to_ptr(xs[2])));
             elseif n == N == 3
-                return unsafe_pointer_to_objref(invoke_function(f._native_handle, xs[1], xs[2], xs[3]));
+                return from_pt(invoke_function(f, to_ptr(xs[1]), to_ptr(xs[2]), to_ptr(xs[3])));
             elseif N != 0 && N != 1 && N != 2 & N != 3
-                return unsafe_pointer_to_objref(invoke_function(f._native_handle, xs...));
+                return from_ptr(invoke_function(f, to_ptr([xs...])));
             else
                 throw(ErrorException(
                     "MethodError: when trying to invoke unnamedFunctionProxy #" * string(_native_handle) *
@@ -614,20 +636,4 @@ module jluna
             end
         end
     end
-end
-
-using Main.jluna;
-
-"""
-`cppall(::Symbol, ::Any...) -> Any`
-
-Call a lambda registered via `jluna::State::register_function` using `xs...` as arguments.
-After the C++-side function returns, return the resulting object
-(or `nothing` if the C++ function returns `void`)
-
-This function is not thread-safe and should not be used in a parallel context
-"""
-function cppcall(function_name::Symbol, xs...) ::Any
-
-    return nothing;
 end

@@ -1,4 +1,4 @@
-module _cppcall
+module cppcall
 
     mutable struct State
         _arguments::Tuple
@@ -39,7 +39,7 @@ module _cppcall
             x = new{N, Return_t}(id, function (xs...) Main.cppcall(_id, xs...) end, N)
 
             @lock unnamed_function_proxy_ctor_lock finalizer(function (t::UnnamedFunctionProxy{N, Return_t})
-                ccall((:free_function, _cppcall._library_name), Cvoid, (Csize_t,), hash(t._id))
+                ccall((:free_function, cppcall._library_name), Cvoid, (Csize_t,), hash(t._id))
             end, x)
 
             return x
@@ -104,43 +104,43 @@ module _cppcall
     """
     `set_result(::Any) -> Nothing`
 
-    modify _cppcall state result
+    modify cppcall state result
     """
     function set_result(x::Any) ::Nothing
 
-        global _cppcall.get_state().x._result = x
+        global cppcall.get_state().x._result = x
         return nothing
     end
 
     """
     `get_result() -> Any`
 
-    access _cppcall result
+    access cppcall result
     """
     function get_result() ::Any
 
-        return _cppcall.get_state().x._result
+        return cppcall.get_state().x._result
     end
 
     """
     `set_arguments(xs...) -> Nothing`
 
-    modify _cppcall state argument tuple
+    modify cppcall state argument tuple
     """
     function set_arguments(xs...) ::Nothing
 
-        global _cppcall.get_state().x._arguments = xs
+        global cppcall.get_state().x._arguments = xs
         return nothing
     end
 
     """
     `get_result() -> Tuple`
 
-    access _cppcall state argument tuple
+    access cppcall state argument tuple
     """
     function get_arguments() ::Tuple
 
-        return _cppcall.get_state().x._arguments
+        return cppcall.get_state().x._arguments
     end
 
     """
@@ -150,12 +150,12 @@ module _cppcall
     """
     function verify_library() ::Bool
 
-        if isfile(_cppcall._library_name)
+        if isfile(cppcall._library_name)
             return true
         end
 
         message = "when trying to initialize jluna.cppcall: "
-        message *= "cannot find " * _cppcall._library_name
+        message *= "cannot find " * cppcall._library_name
 
         println(sprint(Base.showerror, AssertionError(message), backtrace()))
         return false
@@ -164,7 +164,7 @@ end
 
 function make_task(ptr::UInt64)
     return Task() do;
-        res_ptr = ccall((:invoke, _cppcall._library_name), Csize_t, (Csize_t,), ptr);
+        res_ptr = ccall((:invoke, cppcall._library_name), Csize_t, (Csize_t,), ptr);
         return unsafe_pointer_to_objref(Ptr{Any}(res_ptr))
     end
 

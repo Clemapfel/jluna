@@ -1,6 +1,7 @@
 #ifdef __cplusplus
 
 #include <include/julia_wrapper.hpp>
+#include <include/cppcall.hpp>
 
 #include <iostream>
 #include <thread>
@@ -11,73 +12,64 @@ extern "C"
 {
     namespace jluna::c_adapter
     {
-        size_t invoke(size_t function_ptr)
+
+        unsafe::Value* make(void* function_ptr, int n_args)
         {
-            return reinterpret_cast<size_t>(
-                (*reinterpret_cast<std::function<jl_value_t*()>*>(function_ptr))()
-            );
+            static auto* make = (jl_function_t*) jl_eval_string("return jluna.cppcall.make_unnamed_function_proxy");
+            return jluna::safe_call(make, (jl_value_t*) function_ptr, jl_box_int64(n_args));
         }
 
-        void test(jl_value_t* in)
+        void free_lambda(void* in, int n_args)
         {
-            static jl_function_t* println = jl_get_function(jl_base_module, "println");
-            jl_call1(println, in);
-        }
-        /*
-        void call_function(size_t id)
-        {
-            static jl_function_t* get_args = jl_get_function((jl_module_t*) jl_eval_string("return Main.jluna._cppcall"), "get_arguments");
-            static jl_function_t* set_result = jl_get_function((jl_module_t*) jl_eval_string("return Main.jluna._cppcall"), "set_result");
-            jl_value_t* tuple = jl_call0(get_args);
-            jl_value_t* res = nullptr;
-
-            res = _functions.at(id).first(tuple);
-
-            if (res == nullptr) // catch returning nullptr
-                res = jl_nothing;
-
-            jl_call1(set_result, res);
+            if (n_args == 0)
+                delete (lambda_0_arg*) in;
+            else if (n_args == 1)
+                delete (lambda_1_arg*) in;
+            else if (n_args == 2)
+                delete (lambda_2_arg*) in;
+            else if (n_args == 3)
+                delete (lambda_3_arg*) in;
+            else if (n_args == -1)
+                delete (lambda_n_arg*) in;
+            else
+                throw std::invalid_argument("In c_adapter::free: " + std::to_string(n_args) + " is a invalid number of arguments");
         }
 
-        size_t hash(const std::string& str)
+        unsafe::Value* invoke_lambda_0(void* function_ptr)
         {
-            return jl_symbol(str.c_str())->hash;
+            return (*reinterpret_cast<lambda_0_arg*>(function_ptr))();
         }
 
-        void register_function(const std::string& name, size_t n_args, std::function<jl_value_t*(jl_value_t*)>&& lambda)
+        unsafe::Value* invoke_lambda_1(void* function_ptr, unsafe::Value* x)
         {
-            [[unlikely]]
-            if (name.find('.') != std::string::npos)
-            {
-                std::string str = "In register_function(\"" + name + "\"): function names cannot begin with \'#\' or contain \'.\' in any place";
-                throw std::invalid_argument(str.c_str());
-            }
-
-            _functions.insert({hash(name), std::make_pair(lambda, n_args)});
+            return (*reinterpret_cast<lambda_1_arg*>(function_ptr))(x);
         }
 
-        void unregister_function(const std::string& name)
+        unsafe::Value* invoke_lambda_2(void* function_ptr, unsafe::Value* x, unsafe::Value* y)
         {
-            _functions.erase(hash(name));
+            return (*reinterpret_cast<lambda_2_arg*>(function_ptr))(x, y);
         }
 
-        bool is_registered(size_t id)
+        unsafe::Value* invoke_lambda_3(void* function_ptr, unsafe::Value* x, unsafe::Value* y, unsafe::Value* z)
         {
-            auto it = _functions.find(id);
-            return it != _functions.end();
+            return (*reinterpret_cast<lambda_3_arg*>(function_ptr))(x, y, z);
         }
 
-        size_t get_n_args(size_t id)
+        unsafe::Value* invoke_lambda_n(void* function_ptr, unsafe::Array* vector)
         {
-            return _functions.at(id).second;
+            std::vector<unsafe::Value*> args;
+            args.reserve(jl_array_len(vector));
+
+            for (size_t i = 0; i < jl_array_len(vector); ++i)
+                args.push_back(jl_arrayref(vector, i));
+
+            return (*reinterpret_cast<lambda_n_arg*>(function_ptr))(args);
         }
 
-        void free_function(size_t id)
+        jl_value_t* test()
         {
-            _functions.erase(id);
-        }*/
-
-
+            return (jl_value_t*) jl_main_module;
+        }
     }
 }
 

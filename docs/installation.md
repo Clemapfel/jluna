@@ -251,7 +251,7 @@ The following error may appear:
 AssertionError: when trying to initialize jluna.cppcall: cannot find /home/Desktop/jluna/libjluna_c_adapter.so
 Stacktrace:
  [1] verify_library()
-   @ Main.jluna._cppcall ./none:951
+   @ Main.jluna.cppcall ./none:951
  [2] top-level scope
    @ none:2
 [JULIA][ERROR] initialization failed.
