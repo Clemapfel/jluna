@@ -9,6 +9,7 @@
 #include <include/unsafe_utilities.hpp>
 #include <include/safe_utilities.hpp>
 #include <include/box.hpp>
+#include <include/proxy.hpp>
 
 #include <unordered_map>
 #include <functional>
@@ -16,9 +17,12 @@
 namespace jluna
 {
     template<is_function_with_n_args<0> Function_t>
-    unsafe::Function* register_function(Function_t f)
+    unsafe::Value* register_function(Function_t f)
     {
-
+        std::function<unsafe::Value*()> in = [f]()
+        {
+            return box_function_result(f);
+        };
     }
 
 }

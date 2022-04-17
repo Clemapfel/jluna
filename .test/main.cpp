@@ -6,6 +6,7 @@
 #include <jluna.hpp>
 #include <thread>
 #include <include/multi_threading.hpp>
+#include <include/box.hpp>
 
 using namespace jluna;
 using namespace jluna::detail;
@@ -37,7 +38,9 @@ int main()
 
     jluna::initialize(8);
 
-
+    auto return_void = []() -> void {return;};
+    println(box_function_result(yes_void_lambda, 1));
+    println(box_function_result(no_void_lambda, 1));
 
 return 0;
 
