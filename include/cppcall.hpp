@@ -6,6 +6,8 @@
 #pragma once
 
 namespace jluna
-{}
+{
+
+}
 
 #include <.src/cppcall.inl>

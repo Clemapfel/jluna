@@ -95,6 +95,9 @@ namespace jluna
         using argument_type = std::tuple_element_t<i, argument_ts>;
     };
 
+    template<typename T, size_t i>
+    using get_nth_argument_t = std::tuple_element_t<i, typename function_traits<T>::argument_ts>;
+
     /// @brief forward function or lambda as C-literal function
     template<typename T>
     struct forward_as_function;
