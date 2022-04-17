@@ -3,10 +3,9 @@
 // Created on 31.01.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/cppcall.hpp>
+#include <.src/common.hpp>
 
 #include <iostream>
-
 
 namespace jluna
 {
@@ -18,6 +17,12 @@ namespace jluna
 
     template<is<std::nullptr_t> T>
     unsafe::Value* box(T)
+    {
+        return jl_nothing;
+    }
+
+    template<is<void> T>
+    unsafe::Value* box(T value)
     {
         return jl_nothing;
     }
@@ -216,6 +221,8 @@ namespace jluna
         return out;
     }
 
+    /*
+
     template<LambdaType<> T>
     unsafe::Value* box(T lambda)
     {
@@ -251,4 +258,5 @@ namespace jluna
     {
         return register_unnamed_function<T>(lambda);
     }
+     */
 }

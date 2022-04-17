@@ -114,7 +114,7 @@ namespace jluna
     template<typename T>
     using forward_as_function_v = typename forward_as_function<T>::value;
 
-    /// @brief concept: check signature of argument function or lambda
+    /// @concept: check signature of argument function or lambda
     template<typename T, typename Return_t, typename... Args_t>
     concept is_function_with_signature =
     std::is_invocable_v<forward_as_function_v<T>, Args_t...> and
@@ -123,6 +123,10 @@ namespace jluna
         std::is_void<typename function_traits<forward_as_function_v<T>>::return_t>,
         std::is_same<typename function_traits<forward_as_function_v<T>>::return_t, Return_t>
     >::value;
+
+    /// @concept: function with n args
+    template<typename T, size_t N>
+    concept is_function_with_n_args = (function_traits<T>::n_args == N);
 
     /// @concept: can be reinterpret-cast to jl_value_t*
     template<typename T>

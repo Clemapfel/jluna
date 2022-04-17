@@ -30,119 +30,17 @@ auto yes_void_lambda = [](size_t in) -> void {
 
 using test_t = std::function<void(size_t)>;
 
+
+
 int main()
 {
+
+    jl_array_data()
     jluna::initialize(8);
-
-    struct NonJuliaObject
-{
-    Int64 _value;
-
-    NonJuliaObject(Int64 in)
-        : _value(in)
-    {}
-
-    void double_value(size_t n)
-    {
-        for (size_t i = 0; i < n; ++i)
-            _value = 2 * _value;
-    }
-};
-
-auto instance = NonJuliaObject(13);
-
-Main.new_undef("modify_instance") = [
-  instance_ref = std::ref(instance)
-](size_t n) -> void {
-    instance_ref.get().double_value(n);
-    return;
-};
-
-Main.safe_eval("modify_instance(3)");
-std::cout << instance._value << std::endl;
+    //std::cout << is_function_with_n_args<forward_as_function_v<decltype(yes_void_lambda)>, 1> << std::endl;
 return 0;
 
-return 0;
-
-    auto& loop = ThreadPool::create<void>([]() -> void {
-
-        size_t i = 0;
-        while(true)
-            std::cout << i++ << std::endl;
-    });
-
-    loop.schedule();
-
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(0.1s);
-
-    std::cout << "done" << std::endl;
-    return 0;
-
-    auto l1 = []() -> void {
-        for (size_t i = 1; i < 20; ++i)
-            std::cout << i << std::endl;
-    };
-
-    auto l2 = []() -> void {
-        for (int i = 0; i > -10; --i)
-            std::cout << i << std::endl;
-    };
-
-    auto& t1 = ThreadPool::create<void>(l1);
-    auto& t2 = ThreadPool::create<void>(l2);
-
-    t1.schedule();
-    t2.schedule();
-
-    t1.join();
-
-    return 0;
-
-    /*
-    Main.create_or_assign("l1", l1);
-    Main.create_or_assign("l2", l2);
-
-    jluna::safe_eval(R"(
-        begin
-            #local t1 = Threads.@spawn l1()
-            #local t2 = Threads.@spawn l2()
-
-local t1 = Threads.Task(() -> begin l1() end)
-local t2 = Threads.Task(() -> begin l2() end)
-
-#t1.sticky = false
-#t2.sticky = false
-
-Threads.schedule(t1)
-Threads.schedule(t2)
-
-Threads.wait(t1)
-        end
-    )");
-
-    return 0;
-
-    auto* t1 = jl_eval_string("return Task(l1)");
-    unsafe::gc_preserve(t1);
-    auto* t2 = jl_eval_string("return Task(l2)");
-    unsafe::gc_preserve(t2);
-
-    auto* schedule = unsafe::get_function(jl_base_module, "schedule"_sym);
-
-    jluna::safe_call(schedule, t1);
-    jluna::safe_call(schedule, t2);
-
-    auto* wait = unsafe::get_function(jl_base_module, "wait"_sym);
-
-    jluna::safe_call(wait, t2);
-    return 0;
-
-
-*/
-
-    return 0;
-
+/*
     Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");
@@ -1511,6 +1409,7 @@ Threads.wait(t1)
     });
 
     Test::conclude();
+    */
 }
 
 

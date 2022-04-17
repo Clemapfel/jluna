@@ -1,255 +1,157 @@
 // 
 // Copyright 2022 Clemens Cords
-// Created on 31.01.22 by clem (mail@clemens-cords.com)
+// Created on 17.04.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/exceptions.hpp>
-#include <.src/c_adapter.hpp>
-#include <.src/common.hpp>
+#include <include/typedefs.hpp>
+#include <include/mutex.hpp>
+#include <include/concepts.hpp>
+#include <include/unsafe_utilities.hpp>
+#include <include/safe_utilities.hpp>
+#include <include/box>
 
-namespace jluna
+#include <unordered_map>
+#include <functional>
+
+namespace jluna::detail
 {
-    namespace detail
+    using lambda_0_arg = std::function<unsafe::Value*()>;
+    using lambda_1_arg = std::function<unsafe::Value*(unsafe::Value*)>;
+    using lambda_2_arg = std::function<unsafe::Value*(unsafe::Value*, unsafe::Value*)>;
+    using lambda_3_arg = std::function<unsafe::Value*(unsafe::Value*, unsafe::Value*, unsafe::Value*)>;
+    using lambda_n_arg = std::function<unsafe::Value*(const std::vector<unsafe::Value*>&)>;
+
+    static inline std::unordered_map<size_t, lambda_0_arg> _0_arg = {};
+    static inline std::unordered_map<size_t, lambda_1_arg> _1_arg = {};
+    static inline std::unordered_map<size_t, lambda_2_arg> _2_arg = {};
+    static inline std::unordered_map<size_t, lambda_3_arg> _3_arg = {};
+    static inline std::unordered_map<size_t, lambda_n_arg> _n_arg = {};
+
+    static inline jluna::Mutex _lambda_0_lock = jluna::Mutex();
+    static inline jluna::Mutex _lambda_1_lock = jluna::Mutex();
+    static inline jluna::Mutex _lambda_2_lock = jluna::Mutex();
+    static inline jluna::Mutex _lambda_3_lock = jluna::Mutex();
+    static inline jluna::Mutex _lambda_n_lock = jluna::Mutex();
+
+    static inline size_t _lambda_id = 0;
+
+    void free_lambda(size_t id, int n_args)
     {
-        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<std::is_same_v<Return_t, void>, bool> = true>
-        unsafe::Value* invoke_lambda(const Lambda_t* func, Args_t... args)
+        switch(n_args)
         {
-            (*func)(args...);
-            return jl_nothing;
+            case 0:
+                _lambda_0_lock.lock();
+                _0_arg.erase(id);
+                _lambda_0_lock.unlock();
+                break;
+            case 1:
+                _lambda_1_lock.lock();
+                _1_arg.erase(id);
+                _lambda_1_lock.unlock();
+                break;
+            case 2:
+                _lambd_2_lock.lock();
+                _2_arg.erase(id);
+                _lambda_2_lock.unlock();
+                break;
+            case 3:
+                _lambda_3_lock.lock();
+                _3_arg.erase(id);
+                _lambda_3_lock.unlock();
+                break;
+            case -1:
+                _lambda_n_lock.lock();
+                _n_arg.erase(id);
+                _lambda_n_lock.unlock();
+                break;
         }
-
-        template<typename Lambda_t, typename Return_t, typename... Args_t, std::enable_if_t<not std::is_same_v<Return_t, void>, bool> = true>
-        unsafe::Value* invoke_lambda(const Lambda_t* func, Args_t... args)
-        {
-            auto res = (*func)(args...);
-            return box(res);
-        }
-
-        static inline size_t _unnamed_function_id = 1;
     }
 
-    template<LambdaType<> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda)
+    unsafe::Value* invoke_0_args(size_t id)
     {
-        throw_if_uninitialized();
-
-        c_adapter::register_function(name, 0, [lambda](unsafe::Value* tuple) -> unsafe::Value* {
-
-            gc_pause;
-            auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t>>(
-                    &lambda
-            );
-            gc_unpause;
-            return out;
-        });
-    }
-
-    template<LambdaType<unsafe::Value*> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda)
-    {
-        throw_if_uninitialized();
-
-        c_adapter::register_function(name, 1, [lambda](unsafe::Value* tuple) -> unsafe::Value* {
-
-            gc_pause;
-            auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, unsafe::Value*>, unsafe::Value*>(
-                    &lambda,
-                    jl_get_nth_field(tuple, 0)
-            );
-            gc_unpause;
-            return out;
-        });
-    }
-
-    template<LambdaType<unsafe::Value*, unsafe::Value*> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda)
-    {
-        throw_if_uninitialized();
-
-        c_adapter::register_function(name, 2, [lambda](unsafe::Value* tuple) -> unsafe::Value* {
-
-            gc_pause;
-            auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*>, unsafe::Value*, unsafe::Value*>(
-                    &lambda,
-                    jl_get_nth_field(tuple, 0),
-                    jl_get_nth_field(tuple, 1)
-            );
-            gc_unpause;
-            return out;
-        });
-    }
-
-    template<LambdaType<unsafe::Value*, unsafe::Value*, unsafe::Value*> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda)
-    {
-        throw_if_uninitialized();
-
-        c_adapter::register_function(name, 3, [lambda](unsafe::Value* tuple) -> unsafe::Value* {
-
-            gc_pause;
-            auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*, unsafe::Value*>, unsafe::Value*, unsafe::Value*, unsafe::Value*>(
-                    &lambda,
-                    jl_get_nth_field(tuple, 0),
-                    jl_get_nth_field(tuple, 1),
-                    jl_get_nth_field(tuple, 2)
-            );
-            gc_unpause;
-            return out;
-        });
-    }
-
-    template<LambdaType<unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda)
-    {
-        throw_if_uninitialized();
-
-        c_adapter::register_function(name, 4, [lambda](unsafe::Value* tuple) -> unsafe::Value* {
-
-            gc_pause;
-            auto out = detail::invoke_lambda<Lambda_t, std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*>, unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*>(
-                    &lambda,
-                    jl_get_nth_field(tuple, 0),
-                    jl_get_nth_field(tuple, 1),
-                    jl_get_nth_field(tuple, 2),
-                    jl_get_nth_field(tuple, 3)
-            );
-            gc_unpause;
-            return out;
-        });
-    }
-
-    template<LambdaType<std::vector<unsafe::Value*>> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda)
-    {
-        throw_if_uninitialized();
-
-        c_adapter::register_function(name, 1, [lambda](unsafe::Value* tuple) -> unsafe::Value* {
-
-            std::vector<unsafe::Value*> wrapped;
-
-            for (size_t i = 0; i < detail::tuple_length(tuple); ++i)
-                wrapped.push_back(jl_get_nth_field(tuple, i));
-
-            gc_pause;
-            auto out = detail::invoke_lambda<
-                Lambda_t,
-                std::invoke_result_t<Lambda_t, std::vector<unsafe::Value*>>,
-                std::vector<unsafe::Value*>>(
-                    &lambda, wrapped
-            );
-            gc_unpause;
-            return out;
-        });
-    }
-
-    template<LambdaType<> Lambda_t>
-    unsafe::Function* register_unnamed_function(const Lambda_t& lambda)
-    {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
-        register_function(id, lambda);
-
-        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
-
         gc_pause;
+        _lambda_0_lock.lock();
+        auto& f = _0_arg.at(id);
+        _lambda_0_lock.unlock();
 
-        unsafe::Value* res;
-        if (std::is_same_v<std::invoke_result_t<Lambda_t>, void>)
-            res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(0), (unsafe::Value*) jl_nothing_type);
-        else
-            res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(0), (unsafe::Value*) jl_any_type);
-
+        auto* res = f();
         gc_unpause;
         return res;
     }
 
-    template<LambdaType<unsafe::Value*> Lambda_t>
-    unsafe::Function* register_unnamed_function(const Lambda_t& lambda)
+    unsafe::Value* invoke_1_args(size_t id, unsafe::Value* arg1)
     {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
-        register_function(id, lambda);
-
-        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
-
         gc_pause;
+        _lambda_1_lock.lock();
+        auto& f = _1_arg.at(id);
+        _lambda_1_lock.unlock();
 
-        unsafe::Value* res;
-        if (std::is_same_v<std::invoke_result_t<Lambda_t, unsafe::Value*>, void>)
-            res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(1), (unsafe::Value*) jl_nothing_type);
-        else
-            res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(1), (unsafe::Value*) jl_any_type);
-
+        auto* res = f(arg1);
         gc_unpause;
         return res;
     }
 
-    template<LambdaType<unsafe::Value*, unsafe::Value*> Lambda_t>
-    unsafe::Function* register_unnamed_function(const Lambda_t& lambda)
+    unsafe::Value* invoke_2_args(size_t id, unsafe::Value* arg1, unsafe::Value* arg2)
     {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
-        register_function(id, lambda);
-
-        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
-
         gc_pause;
-        unsafe::Value* res;
-        if (std::is_same_v<std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*>, void>)
-            res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(2), (unsafe::Value*) jl_nothing_type);
-        else
-            res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(2), (unsafe::Value*) jl_any_type);
+        _lambda_2_lock.lock();
+        auto& f = _2_arg.at(id);
+        _lambda_2_lock.unlock();
 
+        auto* res = f(arg1, arg2);
         gc_unpause;
         return res;
     }
 
-    template<LambdaType<unsafe::Value*, unsafe::Value*, unsafe::Value*> Lambda_t>
-    unsafe::Function* register_unnamed_function(const Lambda_t& lambda)
+    unsafe::Value* invoke_3_args(size_t id, unsafe::Value* arg1, unsafe::Value* arg2, unsafe::Value* arg3)
     {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
-        register_function(id, lambda);
-
-        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
-
         gc_pause;
-        unsafe::Value* res;
-        if (std::is_same_v<std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*, unsafe::Value*>, void>)
-            res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(3), (unsafe::Value*) jl_nothing_type);
-        else
-            res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(3), (unsafe::Value*) jl_any_type);
+        _lambda_3_lock.lock();
+        auto& f = _3_arg.at(id);
+        _lambda_3_lock.unlock();
 
+        auto* res = f(arg1, arg2, arg3);
         gc_unpause;
         return res;
     }
 
-    template<LambdaType<unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*> Lambda_t>
-    unsafe::Function* register_unnamed_function(const Lambda_t& lambda)
+    unsafe::Value* invoke_n_args(size_t id, unsafe::Value** args_ptr, size_t n_args)
     {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
-        register_function(id, lambda);
-        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
-
         gc_pause;
-        unsafe::Value* res;
-        if (std::is_same_v<std::invoke_result_t<Lambda_t, unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*>, void>)
-            res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(4), (unsafe::Value*) jl_nothing_type);
-        else
-            res = jl_call3(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(4), (unsafe::Value*) jl_any_type);
+        std::vector<unsafe::Value*> args;
+        args.reserve(n_args);
+        for (size_t i = 0; i < n_args; ++i)
+            args.push_back(args_ptr[i]);
 
-        gc_unpause;
-        return res;
-    }
+        _lambda_n_lock.lock();
+        auto& f = _n_arg.at(id);
+        _lambda_n_lock.lock();
 
-    template<LambdaType<std::vector<unsafe::Value*>> Lambda_t>
-    unsafe::Function* register_unnamed_function(const Lambda_t& lambda)
-    {
-        std::string id = "#" + std::to_string(detail::_unnamed_function_id++);
-        register_function(id, lambda);
-
-        static jl_function_t* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna._cppcall"), "new_unnamed_function"_sym);
-
-        gc_pause;
-        auto* res = jl_call2(new_unnamed_function, (unsafe::Value*) jl_symbol(id.c_str()), jl_box_int64(-1));
+        auto* res = f(args);
         gc_unpause;
         return res;
     }
 }
 
+namespace jluna
+{
+    template<is_function_with_n_args<0> Function_t>
+    unsafe::Function* register_function(Function_t f)
+    {
+        using namespace detail;
+
+        _lambda_0_lock.lock();
+        _0_arg.emplace(_lambda_id, [f]() -> unsafe::Value* {
+
+            return box(f());
+        });
+
+        gc_pause;
+        static auto* new_unnamed_function = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna._cppcall"), "new_unnamed_function");
+        auto* out = jluna::safe_call(new_unnamed_function, box<UInt64>(_lambda_id), box<int>(0));
+        _lambda_0_lock.unlock();
+        gc_unpause;
+        return out;
+    }
+
+}
