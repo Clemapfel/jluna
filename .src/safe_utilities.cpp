@@ -35,24 +35,10 @@ namespace jluna
         else
             jl_init_with_image(path.c_str(), nullptr);
 
+        forward_last_exception();
         setenv("JULIA_NUM_THREADS", "", 1);
 
-        { // execute jluna julia code in pieces
-            using namespace jluna::detail;
-            std::stringstream str;
-            str << module_start;
-                str << include_01;
-                str << include_02;
-                str << include_03;
-                str << include_04;
-            str << module_end;
-
-            str << include_05;
-            str << include_06;
-
-            jl_eval_string(str.str().c_str());
-        }
-
+        jl_eval_string(detail::julia_source);
         forward_last_exception();
 
         jl_eval_string(R"(
@@ -67,15 +53,18 @@ namespace jluna
         forward_last_exception();
 
         std::stringstream str;
-        str << "jluna._cppcall.eval(:(const _library_name = \"";
+        str << "jluna._cppcall.eval(:(const _c_adapter_path = \"";
         str << (jluna::detail::c_adapter_path_override.empty() ?  jluna::detail::c_adapter_path : jluna::detail::c_adapter_path_override);
         str << "\"))";
 
         jl_eval_string(str.str().c_str());
         forward_last_exception();
 
+        detail::initialize_modules();
+        detail::initialize_types();
+
         jl_eval_string(R"(
-            if isdefined(Main, :jluna) & jluna._cppcall.verify_library()
+            if isdefined(Main, :jluna) #& jluna._cppcall.verify_library()
                 print("[JULIA][LOG] ")
                 Base.printstyled("initialization successful (" * string(Threads.nthreads()) * " threads).\n"; color = :green)
             else
@@ -85,9 +74,6 @@ namespace jluna
             end
         )");
         forward_last_exception();
-
-        detail::initialize_modules();
-        detail::initialize_types();
 
         std::atexit(&jluna::detail::on_exit);
 

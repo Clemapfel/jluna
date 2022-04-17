@@ -11,6 +11,19 @@ extern "C"
 {
     namespace jluna::c_adapter
     {
+        size_t invoke(size_t function_ptr)
+        {
+            return reinterpret_cast<size_t>(
+                (*reinterpret_cast<std::function<jl_value_t*()>*>(function_ptr))()
+            );
+        }
+
+        void test(jl_value_t* in)
+        {
+            static jl_function_t* println = jl_get_function(jl_base_module, "println");
+            jl_call1(println, in);
+        }
+        /*
         void call_function(size_t id)
         {
             static jl_function_t* get_args = jl_get_function((jl_module_t*) jl_eval_string("return Main.jluna._cppcall"), "get_arguments");
@@ -62,14 +75,9 @@ extern "C"
         void free_function(size_t id)
         {
             _functions.erase(id);
-        }
+        }*/
 
-        size_t invoke(size_t function_ptr)
-        {
-            return reinterpret_cast<size_t>(
-                (*reinterpret_cast<std::function<jl_value_t*()>*>(function_ptr))()
-            );
-        }
+
     }
 }
 

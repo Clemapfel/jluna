@@ -35,8 +35,9 @@ using test_t = std::function<void(size_t)>;
 int main()
 {
 
-    jl_array_data()
     jluna::initialize(8);
+
+    jluna::safe_eval("ccall((:test, jluna._cppcall._c_adapter_path), Cvoid, (Ptr{Any},), pointer_from_objref([1, 2, 3, 4]))");
     //std::cout << is_function_with_n_args<forward_as_function_v<decltype(yes_void_lambda)>, 1> << std::endl;
 return 0;
 
