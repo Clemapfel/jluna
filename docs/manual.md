@@ -1776,134 +1776,6 @@ RGBA(1.0f0, 0.0f0, 1.0f0, 1.0f0)
 
 We see that now, `Main.RGBA` is a proper Julia type and `jl_rgba` got the correct values according to each fields boxing / unboxing routine.
 
----
-
-## The `unsafe` Library
-
-> Waning: Misuse of this part of jluna can lead to exception-less crashes, data corruption and memory leaks. Only user who are confident and familiar with C-style programs with no safety-nets are encouraged to employ these functions
-
-So far, a lot of jlunas functionality was intentionally obfuscated to allow more novice users to use jluna in a way that is easy to understand and 100% safe. For some applications, however, the gloves need to come off. This section will detail how to surrender the most central of jlunas conceits: safety. In return, we get *optimal performance*, achieving overheads of only 0 - 5% compared to the C-API, while some functions are actually faster than that native C-API functions.
-
-In line with the way this topic was pushed to the back of this manual, all of the not-safe functionality in jluna is inside the `jluna::unsafe` nested namespace.
-
-### Unsafe Types
-
-Without `jluna::Proxy`, we reference Julia-side values through raw C-pointers. A C-pointer has a type, however there is no guarantee, only the assumption that whatever it is pointing to is actually of that type.
-
-The most used Julia pointer types are:
-
-+ `unsafe::Value*`
-  - a pointer to any Julia value, but not necessarily a value of type `Any`
-+ `unsafe::Function*`
-  - a pointer to a callable Julia object, not necessarily a `Base.Function`
-+ `unsafe::Symbol*`
-  - pointer to a `Base.Symbol`
-+ `unsafe::Module*`
-  - pointer to a `Base.Module`
-+ `unsafe::Expression*`
-  - pointer to a `Base.Expr`
-+ `unsafe::Array*`
-  - pointer to a `Base.Array` of arbitrary value type and dimensionality (rank)
-+ `unsafe::DataType`
-  - pointer to a `Base.Type`, including `UnionAll` and not-yet-unrolled types
-  
-Note that an `unsafe::Value*` could be pointing to a `Base.Symbol`, `Base.Module`, `Base.Array`, etc.
-  
-### Calling Julia Functions
-
-So far, we used proxies to call Julia-functions with Julia-values. In the `unsafe` library, we do so using `unsafe::call`. 
-
-First, we need to get a pointer to any given function. This is done via `unsafe::get_function`, which takes the module the function is in, as well as the function name as a symbol:
-
-```cpp
-auto* println = unsafe::get_function(jl_base_module, "println"_sym);
-```
-
-Where `_sym` is a string-literal operator that converts its argument to a Julia-side symbol using the C-APIs `jl_symbol` function. `jl_base_module` is an `unsafe::Module*`, pointing to `Base`.
-
-We can then call this function using `unsafe::call`:
-
-```cpp
-auto* res = unsafe::call(println, (unsafe::Value*) jl_main_module);
-```
-```
-Main
-```
-
-If an exception is thrown during the `unsafe::call`, the user will not be notified and the function will return a `nulltpr`, potentially causing an exception-less segfault when accessing the returned value, expecting it to be valid.
-
-jluna actually offers a middle ground between the `Proxy::call` and `unsafe::call`: `jluna::safe_call`. This function also returns an `unsafe::Value*`, however any exception that is raised during invokation of the function is forwarded to C++. Unless absolute peak performance is needed, it is generally recommended to use `jluna::safe_call` in place of `unsafe::call`, as both functions have the same signature.
-
-For an unsafe version of `Module::safe_eval`, the unsafe library provides the `_eval` literal operator:
-
-```cpp
-"println(\"unsafely printed\")"_eval;
-```
-```
-unsafely printed
-```
-
-Though, as discussed before, executing code as strings is fairly slow and not recommended unless unavoidable.
-
-Just like with `unsafe::call`, no exception forwarding happens during `_eval` and it will return `nullptr` if parsing the string or its execution was unsuccesfull.
-  
-### Boxing / Unboxing
-
-So far, we have used the proxies `operator=` to transfer C++-side memory to Julia, while `Proxy::operator T()` transformed Julia-side memory to C++. Internally, both of these functionalities are actually handled by two functions `box` and `unbox`.
-
-Recall that Julia-side memory and C++-side memory do not necessarily have the same memory layout. 
-
-Transforming C++-side memory such that it is compatible with the Julia-state is called **boxing**. `box` has the following signature:
-
-```cpp
-template<typename T>
-unsafe::Value* box(T);
-```
-
-Transforming Julia-side memory such that it is compatible with the C++-state is called **unboxing**, which has the following signature:
-
-```cpp
-template<typename T>
-T unbox(unsafe::Value*);
-```
-
-As an example, consider the following C++-side value:
-
-```cpp
-char cpp_side = 120;
-```
-
-If we want to move this value to Julia, we use `box<char>`:
-
-```cpp
-unsafe::Value* julia_side = box<char>(cpp_side);
-Base["println"](julia_side);
-```
-```
-x
-```
-
-Where `x` is the 120th ASCII character.
-
-To then move the now Julia-side memory back C++-side, we use `unbox<char>`:
-
-```cpp
-char back_cpp_side = unbox<char>(julia_side);
-std::cout << (int) back_cpp_side << std::endl;
-```
-```
-120
-```
-
-This way of explicitly moving values between states can be quite cumbersome syntactically, which is why `jluna::Proxy` does all of this implicitly.
-
-Similar to the list of types a proxy can be assigning with, the following type can both be `boxed` and `unboxed`:
-
-
-
-
-
----
 
 ## Multi Threading
 
@@ -2095,9 +1967,9 @@ For example, `jluna::safe_call` can be called from multiple threads, as the code
 
 The user is required to ensure thread-safety in these conditions, just like the would in Julia. jluna has no hidden pitfalls or behind-the-scene machinery that multi-threading may throw a wrench into, however any user-created object is outside of jlunas responsibility.
 
-As a list of individual, thread-safe functions would be too expansive, here are some classes of operations that are always threadsafe:
+A function-by-function run-down of thread-safety would be too expansive, so this is a list that aims to be a rule-of-thumb. Any function not mentioned here should be assumed to be **not** thread-safe:
 
-+ all functions in `include/safe_utilities.hpp`
++ all functions in `include/safe_utilities.hpp` are thread-safe:
   - `safe_call`
   - `safe_eval`
   - `initialize`
@@ -2108,9 +1980,7 @@ As a list of individual, thread-safe functions would be too expansive, here are 
   - modifying a proxy is not
 + allocating a `jluna::Array` is thread-safe
   - modifying the same array is not
-+ etc.
-
-User should use common sense to determine, when it is necessary to "lock" and object down. If it is necessary, the following section guides users on how to do that.
++ modifying a usertype and implementing it is thread-safe
 
 ### Thread-Safety in Julia
 
@@ -2241,6 +2111,304 @@ jluna now knows to implicitely bind the lambda to a `std::function<void()>` and 
 #### Do **NOT** use `@threadcall`
 
 Lastly, a warning: Julia has a macro called `@threadcall`, which purports to simply execute a `ccall` in a new thread. Internally, it actually uses the libuv thread pool for this, not the native Julia thread pool. Because the C-API is seemingly hardcoded to segfault any attempt at accessing the Julia state through any non-master C-side thread, using `@threadcall` to call arbitrary code also segfaults. Because of this, it is not recommended to use `@threadcall` in any circumstances. Instead, call `ccall` from within a proper `Base.Task`, or use jlunas thread pool to execute C-side code.
+
+---
+
+## The `unsafe` Library
+
+> Waning: Misuse of this part of jluna can lead to exception-less crashes, data corruption and memory leaks. Only user who are confident and familiar with C-style programs with no safety-nets are encouraged to employ these functions
+
+So far, a lot of jlunas functionality was intentionally obfuscated to allow more novice users to use jluna in a way that is easy to understand and 100% safe. For some applications, however, the gloves need to come off. This section will detail how to surrender the most central of jlunas conceits: safety. In return, we get *optimal performance*, achieving overheads of only 0 - 5% compared to the C-API, while some functions are actually faster than that native C-API functions.
+
+In line with the way this topic was pushed to the back of this manual, all of the not-safe functionality in jluna is inside the `jluna::unsafe` nested namespace.
+
+### Unsafe Types
+
+Without `jluna::Proxy`, we reference Julia-side values through raw C-pointers. A C-pointer has a type, however there is no guarantee, only the assumption that whatever it is pointing to is actually of that type.
+
+The most used Julia pointer types are:
+
++ `unsafe::Value*`
+  - a pointer to any Julia value, but not necessarily a value of type `Any`
++ `unsafe::Function*`
+  - a pointer to a callable Julia object, not necessarily a `Base.Function`
++ `unsafe::Symbol*`
+  - pointer to a `Base.Symbol`
++ `unsafe::Module*`
+  - pointer to a `Base.Module`
++ `unsafe::Expression*`
+  - pointer to a `Base.Expr`
++ `unsafe::Array*`
+  - pointer to a `Base.Array` of arbitrary value type and dimensionality (rank)
++ `unsafe::DataType`
+  - pointer to a `Base.Type`, including `UnionAll` and not-yet-unrolled types
+  
+Note that an `unsafe::Value*` could be pointing to a `Base.Symbol`, `Base.Module`, `Base.Array`, etc.
+
+For any object inheriting from `jluna::Proxy`, we can access the raw `unsafe::Value*` to the memory it is managing by using `operator unsafe::Value*()`:
+
+> **C++ Hint**: `operator T()` of object `x` is implicitly invoked when either calling `static_cast<T>(x)` or performing a C-style cast `(T) x`
+ 
+```cpp
+auto proxy = Main.safe_eval("return 1234");
+unsafe::Value* raw = static_cast<unsafe::Value*>(proxy);
+
+std::cout << *(reinterpret_cast<Int64*>(raw)) << std::endl;
+```
+```
+1234
+```
+  
+### Calling Julia Functions
+
+So far, we used proxies to call Julia-functions with Julia-values. In the `unsafe` library, we do so using `unsafe::call`. 
+
+First, we need to get a pointer to any given function. This is done via `unsafe::get_function`, which takes the module the function is in, as well as the function name as a symbol:
+
+```cpp
+auto* println = unsafe::get_function(jl_base_module, "println"_sym);
+```
+
+Where `_sym` is a string-literal operator that converts its argument to a Julia-side symbol using the C-APIs `jl_symbol` function. `jl_base_module` is an `unsafe::Module*`, pointing to `Base`.
+
+We can then call this function using `unsafe::call`:
+
+```cpp
+auto* res = unsafe::call(println, (unsafe::Value*) jl_main_module);
+```
+```
+Main
+```
+
+If an exception is thrown during the `unsafe::call`, the user will not be notified and the function will return a `nulltpr`, potentially causing an exception-less segfault when accessing the returned value, expecting it to be valid.
+
+jluna actually offers a middle ground between the `Proxy::call` and `unsafe::call`: `jluna::safe_call`. This function also returns an `unsafe::Value*`, however any exception that is raised during invokation of the function is forwarded to C++. Unless absolute peak performance is needed, it is generally recommended to use `jluna::safe_call` in place of `unsafe::call`, as both functions have the same signature.
+
+For an unsafe version of `Module::safe_eval`, the unsafe library provides the `_eval` literal operator:
+
+```cpp
+"println(\"unsafely printed\")"_eval;
+```
+```
+unsafely printed
+```
+
+Though, as discussed before, executing code as strings is fairly slow and not recommended unless unavoidable.
+
+Just like with `unsafe::call`, no exception forwarding happens during `_eval` and it will return `nullptr` if parsing the string or its execution was unsuccesfull.
+  
+### Boxing / Unboxing
+
+So far, we have used the proxies `operator=` to transfer C++-side memory to Julia, while `Proxy::operator T()` transformed Julia-side memory to C++. Internally, both of these functionalities are actually handled by two functions `box` and `unbox`. 
+
+Recall that Julia-side memory and C++-side memory do not necessarily have the same memory layout. 
+
+Transforming C++-side memory such that it is compatible with the Julia-state is called **boxing**. `box` has the following signature:
+
+```cpp
+template<typename T>
+unsafe::Value* box(T);
+```
+
+Transforming Julia-side memory such that it is compatible with the C++-state is called **unboxing**, which has the following signature:
+
+```cpp
+template<typename T>
+T unbox(unsafe::Value*);
+```
+
+As an example, consider the following C++-side value:
+
+```cpp
+char cpp_side = 120;
+```
+
+If we want to move this value to Julia, we use `box<char>`:
+
+```cpp
+unsafe::Value* julia_side = box<char>(cpp_side);
+Base["println"](julia_side);
+```
+```
+x
+```
+
+Where `x` is the 120th ASCII character.
+
+The result `julia_side` is a pointer to the raw memory, containing the newly allocated char.
+
+To then move the now Julia-side memory back C++-side, we use `unbox<char>`:
+
+```cpp
+char back_cpp_side = unbox<char>(julia_side);
+std::cout << (int) back_cpp_side << std::endl;
+```
+```
+120
+```
+
+This way of explicitly moving values between states can be quite cumbersome syntactically, which is why `jluna::Proxy` does all of this implicitly.
+
+Note that `box<T>` and `unbox<T>` should always be called with an explicit template argument. This is actually required for `unbox`, but technically optional for `box`. To make sure a value is boxed into what the user desired, it should always be called with an explicit template argument.
+
+### Protecting Values from the Garbage Collector
+
+The result of `box` is a `unsafe::Value*`, a raw C-pointer. The value this pointer points to **is not protected from the garbage collector**. At any time after the resolution of `box`, the julia GC may deallocate our value right under our nose. This can't happen when using proxies - it is the entire point of them - but it can when handling raw pointers. 
+
+Because of this, usage of the pure C-API can be very annoying, as we have to micro-manage each value depending on how it was allocated. As a general rule of thumb: Any value that is not explicitely referenced by either a Julia-side named variable or a Julia-side `Ref`, can be garbage collected at any point, usually segfaulting the entire application. This includes the result of `box`, `jluna::safe_call`, `unsafe::call` and most `unsafe` functions returning pointers in general.
+
+To prevent this, the `unsafe` library provides `unsafe::gc_preserve`. This function does not invalidate whatever pointer it is given and protects the object pointed to from the GC. `gc_preserve` returns a `size_t` which is called the **id** of a value:
+
+```cpp
+unsafe::Value* value = box<Int64>(1234);
+size_t value_id = unsafe::gc_preserve(value);
+```
+
+Keeping track of this id is incredibly important, because, to free the value such that it can be garbage collected when we want it to, we need to call `unsafe::gc_release`, which takes the id as an argument:
+
+```cpp
+unsafe::Value* value = box<Int64>(1234);
+size_t value_id = unsafe::gc_preserve(value);
+
+// value is safe from the GC here
+
+unsafe::gc_release(value_id);
+
+// value can be garbage collected here
+```
+
+If we loose track of `value_id` or we forget to call `gc_release`, the value will never be deallocated and a memory leak will occurr.
+
+#### Disabling the GC
+
+Alternatively to using `gc_preserve`, we can also simply disable the GC globally. The `unsafe` library provides `gc_disable`, `gc_enable` and `gc_is_enabled` for this. jluna provides a convenient macro for this:
+
+```cpp
+gc_pause; 
+
+// everything here is safe from the GC
+
+gc_unpause;
+```
+
+Unlike `gc_disable` / `gc_enable`, `gc_pause` will remember the state of the GC when it was called and restore it with `gc_unpause`, depending on whether it was enabled or disabled when `gc_pause` was first called.
+
+### Accessing & Mutating a Variable
+
+The `unsafe` library provides the following functions to access and mutate named Julia variables:
+
++ `get_value(Module* m, Symbol* name)`: get the value of variable `name` in module `m` as an unsafe pointer
++ `set_value(Module* m, Symbol* name, Value* new_value)`: set the value of variable `name` in module `m` to `new_value`. No exception forwarding occurres
++ `get_field(Value* owner, Symbol* field)`: get value of field named `field` of `owner`
++ `set_field(Value* owner, Symbol* field, Value* new_value*)`: set field `field` of owner `owner` to `new_value`
+
+All of these functions will be vastly superior in terms of performance to assembling an expression or using a proxy to mutate a value.
+
+---
+
+### `unsafe` Array Interface
+
+One of the most important high-performance tasks is modifying large arrays. `box` usually invokes a copy which is unacceptable in these circumstances. The unsafe library provides a 0-overhead interface to creating and modifying arrays, by internally operating on the raw Julia memory.
+
+Note that we can simply access the data of a `jluna::Array` by `static_cast`ing it to `unsafe::Value*`:
+
+```cpp
+Array<Int64, 2> array = //...
+unsafe::Array* raw_data = static_cast<unsafe::Array*>(array);
+```
+
+This will cause no reallocation, it simply forwards the pointer to the Julia-side data.
+
+Elements of an array are stored in column-first order in Julia. To access the actual memory of these elements, we can use the field `data` of `unsafe::Array*`, or the C-API function `jl_array_data`.
+
+### Accessing an Array Element
+
+The `unsafe` library provides `get_index(Array*, size_t...)` and `set_index(Array*, size_t...=`, two 0-overhead functions that manipulate array indices. No bounds-checking is performed and there is no mechanism in place to verify that potential value types match. 
+
+
+Similarly to `jluna::Array`, a 1d array takes 1 index, a 2d array 2 indices and a Nd array, N indices. Any array of any rank can furthermore be accessed with the linear index version which only takes a single index as an argument.
+
+#### Allocate a New Array
+
+`unsafe` supports arrays of any rank, however arrays of rank 1 (vectors) and rank 2 (matrices) are far better optimizied and should be preferred in performance-critical environemnts, if at all possible.
+
+To allocate a new array, we use `unsafe::new_array`. This function takes `Rank + 1` arguments. The first argument is the arrays value type (as an `unsafe::Value*`), each subsequent argument is a `size_t` representing the size in that dimension. For example:
+
+```cpp
+// allocate a 10-element vector of strings
+auto* vec_10 = unsafe::new_array(String_t, 10);
+
+// allocate a 5x5 matrix of Int32s
+auto* mat_5x5 = unsafe::new_array(Int32_t, 5, 5);
+
+// allocated a 2x2x2x2 array of bools
+auto* arr_2x2x2x2 = unsafe::new_array(Bool_t, 2, 2, 2, 2);
+```
+
+Where we used the jluna-provided global type proxies, which are implicitly `static_cast` to their pointer.
+
+After allocation, all values of an array will be of the given type, initialized as `undef`. 
+
+#### Creating a Thin Wrapper around already existing Data
+
+In high-performance applications, we often do not have enough RAM to have two of the same data in memory at the same time. To address this, the `unsafe` library provides a function that creates a *thin wrapper* around already existing data. A thin wrapper is an array whos data does not belong to it. We basically set the data-pointer of a newly array to already existing memory, the user is responsible for keeping that memory correctly formatted and in-scope.
+
+Simliar to `new_array`, `new_array_from_data` takes Rank + 2 elements:
+
++ value type (as an `unsafe::Value*`)
++ pointer to already existing data (as a `void*`)
++ Rank-many indices, specifying the size of an array
+
+It is important to realize that no bounds-checking or verification that the data is actually formatted according to the arrays value type is performed If we have an array of `size_t`s, which are 64-bit long and we use its data to create an array of `uint8_t`s, the `size_t`s memory will simply be interpreted as if it were consecutively stored `uint8_t`s, leading to data corruption.
+
+#### Resizing an Array
+
+The `unsafe` library provides `resize_array`, which takes as its arguments the array, along with the new dimensions, similar to `new_array`. 
+
+For 1D and 2D arrays only, "slicing", making an array smaller in one or more dimensions, is very fast. No allocation is performed when slicing, unlike when growing an array.
+
+The values of the newly added data after expanding an array are set to `undef`. Recall that Julia-arrays are stored column-first order, so expanding a matrix in the x-direction will lead to new values being inserted into each column, potentially corrupting the order of elements.
+
+#### Replacing an Arrays Data
+
+To avoid copying, jluna provides `override_array`, which replaces an arrays data with that of another. Not allocation is performed and at no point will the amount of memory grow beyond the initial space of both arrays. 
+As no copying is invoke, if we overrode array B with array A, the user is responsible for keeping array A in scope, otherwise array Bs data will also be deallocated.
+
+Similarly, `swap_array_data` replaces arrays B data with that of A, and arrays A data with that of B. Unlike `override_array`, jluna needs to create a temporary copy of one of the arrays, potentially increasing the amount of memory consumed by the size of one of the arrays.
+
+---
+
+### Shared Memory
+
+In the section on proxies, we said that, to move a value from C++ to Julia or vice-versa, we first need to change its memory format such that it is interpretable by the other language. This is not technically true, as for a very limited number of types, Julia and C++ have the exact same memory format. For these types, `box` / `unboxing` is a 0-cost operation, no actual computation is performed which is obviously desired in performance-critical applications.
+
+For the following types only, `box` / `unboxing` has no cost
+
+```cpp
+bool
+int8_t
+int16_t
+int32_t
+int64_t
+uint8_t
+uint16_t
+uint32_t
+uint64_t
+float
+double
+
+const char*
+std::string
+
+nullptr_t
+std::vector<T> °
+
+° Where T is also a no-cost-(Un)Boxable
+```
+
+All of these types have the destinction of having a `C*` type Julia-side: `Csize_t`, `Cstring`, `Cvoid`, etc.. For these types and only these types, Julia and C++ truly share memory.
+
+For these types, the `unsafe` library provides 0-cost `box` / `unbox` functions, called `unsafe::unsafe_box` / `unsafe::unsafe_unbox`. The "safe" `box` / `unbox` do some sanity checking and exception forwarding, even for C-types, making `unsafe_box`/ `unsafe_unbox` calls the performance-wise optimal way of moving memory between states.
 
 ---
 
