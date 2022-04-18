@@ -291,29 +291,6 @@ namespace jluna
         protected:
             using Array<Value_t, 1>::_content;
     };
-
-    /// @brief box array
-    /// @param array
-    /// @returns pointer to newly allocated julia-side value
-    template<typename T,
-        typename Value_t = typename T::value_type,
-        size_t Rank = T::rank,
-        std::enable_if_t<std::is_same_v<T, Array<Value_t, Rank>>, bool> = true>
-    unsafe::Value* box(T value)
-    {
-        return value.operator unsafe::Value*();
-    }
-
-    /// @brief box vector
-    /// @param vector
-    /// @returns pointer to newly allocated julia-side value
-    template<typename T,
-        typename Value_t = typename T::value_type,
-        std::enable_if_t<std::is_same_v<T, Vector<Value_t>>, bool> = true>
-    unsafe::Value* box(T value)
-    {
-        return value.operator unsafe::Value*();
-    }
 }
 
 #include <.src/array.inl>

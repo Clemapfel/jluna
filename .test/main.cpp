@@ -18,9 +18,89 @@ struct NonJuliaType
 };
 set_usertype_enabled(NonJuliaType);
 
+Int64 add(Int64 a, Int64 b)
+{
+    return a + b;
+}
+
+struct NonJuliaObject
+{
+    Int64 _value;
+
+    NonJuliaObject(Int64 in)
+        : _value(in)
+    {}
+
+    void double_value(size_t n)
+    {
+        for (size_t i = 0; i < n; ++i)
+            _value = 2 * _value;
+    }
+};
+
+namespace jluna
+{
+    struct RGBA
+    {
+        float _red;
+        float _green;
+        float _blue;
+        float _alpha;
+
+        RGBA(float r, float g, float b)
+            : _red(r), _green(g), _blue(b), _alpha(1)
+        {}
+
+        RGBA()
+            : _red(0), _green(0), _blue(0), _alpha(1)
+        {}
+    };
+}
+set_usertype_enabled(RGBA);
+
 int main()
 {
     jluna::initialize(8);
+
+// ###
+
+// in function scope, i.e. inside main
+Usertype<RGBA>::add_property<float>(
+    "_red",
+    [](RGBA& in) -> float {return in._red;},
+    [](RGBA& out, float in) -> void {out._red;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_green",
+    [](RGBA& in) -> float {return in._green;},
+    [](RGBA& out, float in) -> void {out._green;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_blue",
+    [](RGBA& in) -> float {return in._blue;},
+    [](RGBA& out, float in) -> void {out._blue;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_alpha",
+    [](RGBA& in) -> float {return in._alpha;},
+    [](RGBA& out, float in) -> void {out._alpha;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_value",
+    [](RGBA& in) -> float {
+        float max = 0;
+        for (auto v : {in._red, in._green, in._blue})
+            max = std::max(v, max);
+        return max;
+    }
+);
+
+Usertype<RGBA>::implement();
+
+Main.new_undef("jl_rgba") = RGBA(1, 0, 1);
+Main.safe_eval("println(jl_rgba); println(fieldnames(RGBA))");
+
+return 0;
 
     Test::test("unsafe: gc", []() {
 

@@ -376,7 +376,14 @@ module jluna
         make_unnamed_proxy_id(id::UInt64) = return Expr(:ref, Expr(:ref, _refs_expression, id))
 
         # make as named with owner and symbol name
-        make_named_proxy_id(id::Symbol, owner_id::ProxyID) ::ProxyID = return Expr(:(.), owner_id, QuoteNode(id))
+        function make_named_proxy_id(id::Symbol, owner_id::ProxyID) ::ProxyID
+
+            if owner_id == :Main
+                return id
+            else
+                return Expr(:(.), owner_id, QuoteNode(id))
+            end
+        end
 
         # make as named with main as owner and symbol name
         make_named_proxy_id(id::Symbol, owner_id::Nothing) ::ProxyID = return id
@@ -660,7 +667,7 @@ module jluna
                 return from_pointer(invoke_function(f, to_pointer([xs...])));
             else
                 throw(ErrorException(
-                    "MethodError: when trying to invoke <C++ Lambda#" * string(_native_handle) * ">" *
+                    "MethodError: when trying to invoke <C++ Lambda#" * string(f._native_handle) * ">" *
                     ": wrong number of arguments. expected " * string(N) * ", got " * string(n) * "."
                    *  (n <= 3 ? "" : "\n\nTo create a C++-function that can take n > 3 arguments, simply make a 1-argument function with the only argument being an n-sized tuple or collection.")
                 ))
@@ -701,7 +708,7 @@ module jluna
     """
     function implement(template::Proxy, m::Module = Main) ::Type
 
-        @lock template._lock begin
+        @lock template._value._lock begin
             out::Expr = :(mutable struct $(template._typename) end)
             deleteat!(out.args[3].args, 1)
 
@@ -727,7 +734,7 @@ module jluna
     """
     function Base.setindex!(proxy::Proxy, value, key::Symbol) ::Nothing
 
-        @lock proxy._lock begin
+        @lock proxy._value._lock begin
             if (!haskey(proxy._value._fields, key))
                 push!(proxy._value._fieldnames_in_order, key)
             end
@@ -744,7 +751,7 @@ module jluna
     function Base.getindex(proxy::Proxy, value, key::Symbol) #::Auto
 
         out::Any = undef
-        @lock proxy._lock begin
+        @lock proxy._value._lock begin
             out = proxy._value._fields[key]
         end
         return out

@@ -395,7 +395,7 @@ Main.safe_eval("println(vec_var)");
 [9999, 2, 3, 4]
 ```
 
-> **Hint**: In C++, indices are 0-based. In Julia, they are 1-based. This can be quite confusing considering we are operating in both languages at the same time. See the [section on arrays]() for more information 
+> **Hint**: In C++, indices are 0-based. In Julia, they are 1-based. This can be quite confusing considering we are operating in both languages at the same time. See the [section on arrays]() for more information
 
 ---
 
@@ -803,65 +803,93 @@ We've seen how to call Julia functions from C++, but jluna offers users the othe
 
 To call a C++ function, we need to assign a named or unnamed proxy a lambda that wraps the C++ function.
 
-> **C++ Hint**: Lambdas are C++s anonymous function objects. Their usage is broad and they offers more flexbility than a static function. Before continuing, it is recommend to read up on the basics of lambda, for example [here](https://docs.microsoft.com/en-us/cpp/cpp/lambda-expressions-in-cpp). Users are expected to know about trailing return types and capture clauses from this point onward.
+> **C++ Hint**: Lambdas are C++s anonymous function objects. Before continuing with this section, it is recommend to read up on the basics of lambdas [here](https://docs.microsoft.com/en-us/cpp/cpp/lambda-expressions-in-cpp). Users are expected to know about basic syntax, trailing return types and capture clauses from this point onward.
 
-Let's say we have the following simple function:
+### Creating a Function Object
+
+Let's say we have the following, simple lambda:
 
 ```cpp
-Int64 add_two(Int64 a, Int64 b)
+auto add = [](Int64 a, Int64 b) -> Int64 
 {
     return a + b;
-}
-```
-
-First, we need to *wrap* this function in a lambda:
-
-```cpp
-auto wrapped = [](Int64 a, Int64 b) -> Int64
-{
-    return add_two(a, b);
 };
 ```
 
-Always manually specify the trailing return type of a lambda when using them with jluna. Do not use `auto` for either the return type or any argument type.
+This function has the signature `(Int64, Int64) -> Int64`. Always manually specify the trailing return type of lambdas using `->`, do not use `auto` for either the lambdas return- or any of the argument-types.
 
-We can now create a new named Julia-side variable and simply assign it our wrapped lambda:
+To make this function available to Julia, we use `as_julia_function`. This expression takes a function-object (be it a lambda or a static function) as it's argument. It takes the functions signature as the template argument. We need to manually specify the signature, so jluna knows what types to forward for both ther arguments and return types.
 
-```cpp
-Main.new_undef("add_two") = wrapped;
-```
-
-And that's all we need to do, now any Julia code can call `add_two`. The julia function has the same signature `(Int64, Int64) -> Int64` and the return value is forwarded to Julia, just like a normal Julia function:
-
+Because `add` has the signature `(Int64, Int64) -> Int64`, we use `as_julia_function<Int64(Int64, Int64)>`. We can then assign the returned object to a Julia variable like so:
 
 ```cpp
-Main.safe_eval("println(add_two(123, 111))");
+Main.create_or_assign("add", as_julia_function<Int64(Int64, Int64)>(add));
+```
+
+From this point onwards, we can simply call the C++-side `add` by using the newly created Julia-side variable `Main.add`:
+
+```cpp
+Main.safe_eval("println(add(1, 3))");
 ```
 ```
-234
+4
 ```
+
+The return value of `as_julia_function` is a Julia-side object. This means we can assign it to already existing proxies, or use it as an argument for a Julia-side function.
 
 ### Allowed Signatures
 
-Not all function signatures are supported by jluna. A lambda can only have the following signatures:
+Not all function signatures are supported when using `as_julia_function`. Its argument can only have the following signatures:
 
 ```cpp
 () -> T_r
 (T1) -> T_r
 (T1, T2) -> T_r
 (T1, T2, T3) -> T_r
-(std::vector<T>) -> T_r
 ```
 
 Where 
 + `T_r` is `void` or a [TODO type](TODO)
 + `T1`, `T2`, `T3` are a [TODO type](TODO)
 
-This may seem limiting, how could we execute arbitrary C++ code when we are only allowed to use functions with this signature and only TODO types? The answer: captures.
+This may seem limiting at first, how could we execute arbitrary C++ code when we are only allowed to use functions with this signature and only TODO types? 
+
+### Taking Any Number of Arguments
+
+Let's say we want to write a function that takes any number of `String`s and concatenates them. Obviously, just 3 arguments are not enough, so we have to find a workaround. One way is to use a 1-argument function that takes a vector of strings:
+
+```cpp
+auto concat_all = [](jluna::Array<std::string, 1> arg) -> std::string
+{
+    std::stringstream str;
+    for (std::string : arg)
+        str << arg;
+    
+    str << std::endl;
+    return str.str();
+};
+```
+> **C++ Hint**: `std::stringstream` is a stream that we can write strings into using `operator<<`. We then flush it using `std::endl` and convert it's contents to a single `std::string` using the member function `str`. More info can be found [here](https://en.cppreference.com/w/cpp/io/basic_stringstream)
+
+This lambda has the signatue `(jluna::Array<std::string, 1>) -> std::string`.
+
+We can then call `concat_all` with any number of arguments by first wrapping them in a Julia-side vector:
+
+```cpp
+Main.create_or_assign("concat_all", as_julia_function<std::string(jluna::Array<std::string, 1>)>(concat_all));
+Main.safe_eval(R"(println(concat_all(["GA", "TT", "AC", "A"])))");
+```
+```
+GATTACA
+```
+
+If we want our lambda to take any number of differently-typed arguments, we can either wrap them in a `jluna::Array1d` (which has the value type `Any` and thus any collection of differently type elements can be contained within) or we can use a `std::tuple`.
 
 ### Using non-C++ Objects
 
-Lets say we have the following C++ class:
+We've learned how to workaround the restriction on the number of arguments, but what about the types? Not all types are [TODO](), however we can still use arbitrary C++ types by cleverly employing captures:
+
+Let's say we have the following C++ class:
 
 ```cpp
 struct NonJuliaObject
@@ -878,32 +906,42 @@ struct NonJuliaObject
             _value = 2 * _value;
     }
 };
-
-auto instance = NonJuliaObject(13);
 ```
 
-This object is obviously not TODO. Furthermore we can't call it through our signatures because we would need to hand the lambda an instance as an argument, so it knows what to modify. Well, we may not be able to give the instance as an argument, but we are able to give the instance through captures:
+This object is obviously not TODO. Furthermore, we can't call it through our signatures because we would need to hand the lambda an instance as an argument, so it knows what to modify. While we may not be able to give the instance as an *argument*, we are able to give the instance through a **capture**, as captures do not affect a lambdas signature:
 
 ```cpp
 auto instance = NonJuliaObject(13);
 
-Main.new_undef("modify_instance") = [
-  instance_ref = std::ref(instance)
-](size_t n) -> void {
-    instance.double_value(n);
+auto modify_instance = [instance_ref = std::ref(instance)] (size_t n) -> void
+{
+    instance_ref.get().double_value(n);
     return;
 };
-```
-> **C++ Hint**: `std::ref` is used to create a [reference wrapper](https://en.cppreference.com/w/cpp/utility/functional/reference_wrapper) around any instanced object. It is very similar to Julias `Base.Ref`.  
-    
-Here, we creaed a new Julia variable in `Main` called `modify_instance`. We then assigned this variable an anonymous lambda (a lambda that was not bound to a C++-side variable) that **captures the instance we want to modify** using a reference wrapper. This way, the instance is available inside the lambda body, but it is not part of the function signature, which is still `(size_t) -> void`, which is allowed.
 
-Now, when we call this function:
+Main.create_or_assign("modify_instance", as_julia_function<void(size_t)>(modify_instance));
+```
+> **C++ Hint**: `std::ref` is used to create a [reference wrapper](https://en.cppreference.com/w/cpp/utility/functional/reference_wrapper) around any instanced object. It is very similar to Julias `Base.Ref` in functionality. To "unwrap" it, we use `.get()` in C++, where we would use `[]` in Julia
+    
+Lambda syntax can get quite complicated, so let's talk through this step by step. Firstly, we create a lambda with signature `(size_t) -> void` which operators on an instance of type `NonJuliaObject`, calling `.double_value(n)` where `n` is the argument of the lambda.
+
+Rather than handing the lambda the instance it needs to modify as an argument, we have *captured* it using `[instance_ref = std::ref(instance)]`. Here, we create a new, named capture variable `instance_ref` and assigned it a reference wrapper around the out-of-lambda `instance`. This makes the wrapper available inside the lambda function body without changing it's signature.
+
+Lastly, we created a new variable called `Main.modify_instance` and assigned it the result of `as_julia_function<void(size_t)>`, which takes the signature of the C++-side `modify_instance` lambda as the template argument.
+
+Note that, as long as the lambda stays in scope, the C++-side `instance` will too. This is because the lambda capture the reference wrapper `instance_ref` by value. Just like a normal reference, a reference wrapper will keep whatever it is wrapped from going out of scope as long as the wrapper exists.
+
+After all this, we can call the function:
 
 ```cpp
 Main.safe_eval("modify_instance(3)");
 std::cout << instance._value << std::endl;
 ```
+```
+104
+```
+
+And it modified the out-of-Julia instance!
 
 ---
 
@@ -1234,6 +1272,216 @@ If desired, we can fully specialize a user-intialized type manually using the me
 
 ---
 
+## Usertypes
+
+So far, we were only able to move TODO types to Julia. In some applications, this can be quite limiting. To address this, jluna provides a user-interface for making any C++ type a TODO type. 
+
+### Usertype Interface
+
+Consider the following C++ class:
+
+```cpp
+struct RGBA
+{
+    float _red;
+    float _green;
+    float _blue;
+    float _alpha;
+    
+    RGBA(float r, float g, float b)
+        : _red(r), _green(g), _blue(b), _alpha(1)
+    {}
+};
+```
+
+While it may be possible to manually translate this class into a Julia-side `NamedTuple`, this is rarely the best option. For more complex classes, this is often not possible at all. To make classes like this a TODO type, we use `jluna::Usertype<T>`, the usertype interface.
+
+### Step 1: Making the Type compliant
+
+For a type `T` to be manageable by `Usertype<T>`, it needs to be *default constructable*. `RGBA` currently has no default constructor, so we need to add it:
+
+```cpp
+struct RGBA
+{
+    float _red;
+    float _green;
+    float _blue;
+    float _alpha;
+    
+    RGBA(float r, float g, float b)
+        : _red(r), _green(g), _blue(b), _alpha(1)
+    {}
+    
+    RGBA() 
+        : _red(0), _green(0), _blue(0), _alpha(1
+    {}
+};
+```
+
+If the type `T` is not default constructable, a static assertion is raised at compile time.
+
+### Step 2: Enabling the Interface
+
+To make jluna aware that we will be using the usertype interface for `RGBA`, we need to **enable it at compile time**. To do this, we use the `set_usertype_enabled` macro, executed in non-block scope.
+
+> **C++ Hint**: Non-block scope (sometimes called global scope) is any scope that is not inside a namespace, function, struct, or block. As an example, `int main()` has to be declared in global scope
+
+```cpp
+struct RGBA
+{
+    /* ... */
+};
+
+set_usertype_enabled(RGBA); 
+```
+
+This sets up `Usertype<T>` for us. Among other things, it declares the Julia-side name of `RGBA`. By default, this name is that same as the C++ side name, `"RGBA"` in our case.
+
+### Step 3: Adding Property Routines
+
+To add a property for `RGBA`s `_red`, we use the following function (at runtime):
+
+> **C++ Hint**: A *property* of a struct type is what would be called a "field" in Julia or a "member" in C++. It is any named variable of any type (including functions) that is namespaced within a struct. All three terms will be used interchangeably here
+
+```cpp
+Usertype<RGBA>::add_property<Float32>(
+    "_red_jl",
+    [](RGBA& in) -> Float32 {
+        return in._red;
+    },
+    [](RGBA& out Float32 in) -> void {
+        out._red;
+    }
+);
+```
+
+This call has a lot going on so it's best to investigate it closely.
+
+Firstly, we have the template argument, `Float32` in our case. This decides the Julia-side type of the Julia-side instances field. 
+
+The first argument is the Julia-side instances' fields name. Usually we want this name to be the same as C++-side, `_red`, but to avoid confusing, for the sake of this section only the C++-side field is called `_red` while the corresponding Julia-side field is `_red_jl`.
+
+The second argument of `add_property` is called the **boxing routine**. This function always has the signature `(T&) -> Property_t`, where `T` is the usertype-manage type (`RGBA` for us) and `Property_t` is the type of the field (`Float32`).
+The boxing routine governs what value to assign the Julia-side field. It takes the C++-side instance, accesses the value `_red`, then returns that value which will then be assigned to the Julia-side instances `_red_jl`.
+
+The third argument is optional, it is called the **unboxing routine**. It always has the signature `(T&, Property_t) -> void`. When a Julia-side instance of `RGBA` is moved back C++-side, the unboxing routine governs, what value the now C++-sides `RGBA` fields `_red` will be assigned. If left unspecified, the value will be the default value. If the unboxing routine is specified, the value of `_red` will be its result.
+
+In summary:
+
++ template argument governs the Julia-side type of the field
++ first argument is the name of the Julia-side field
++ the boxing routine decides what value the Julia-side field will be assigned when moving the object C++ -> Julia
++ the unboxing routine decides what value the C++-side field will be assigned when moving the object Julia -> C++
+
+Now that we know how to add fields, we can do so for the `_green`, `_blue` and `_alpha`:
+
+```cpp
+// in namespace scope
+struct RGBA
+{
+    float _red;
+    float _green;
+    float _blue;
+    float _alpha;
+    
+    RGBA(float r, float g, float b)
+        : _red(r), _green(g), _blue(b), _alpha(1)
+    {}
+    
+    RGBA() 
+        : _red(0), _green(0), _blue(0), _alpha(1
+    {}
+};
+set_usertype_enabled(RGBA);
+
+// ###
+
+// in function scope, i.e. inside main
+Usertype<RGBA>::add_property<float>(
+    "_red",
+    [](RGBA& in) -> float {return in._red;},
+    [](RGBA& out, float in) -> void {out._red;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_green",
+    [](RGBA& in) -> float {return in._green;},
+    [](RGBA& out, float in) -> void {out._green;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_blue",
+    [](RGBA& in) -> float {return in._blue;},
+    [](RGBA& out, float in) -> void {out._blue;}
+);
+Usertype<RGBA>::add_property<float>(
+    "_alpha",
+    [](RGBA& in) -> float {return in._alpha;},
+    [](RGBA& out, float in) -> void {out._alpha;}
+);
+```
+
+Note that now, the Julia-side field is actually called `_red`, which is better style than the `_red_jl` we used only for clarity.
+
+To illustrate that properties do not have to directly correspond with members of the C++ class, we'll add another Julia-side-only field that represents the `value` component from the HSV color system (sometimes also called "lightness"). It is defined as the maximum of red, green and blue, given a color in RGBA:
+
+```cpp
+Usertype<RGBA>::add_property<float>(
+    "_value",
+    [](RGBA& in) -> float {
+        float max = 0;
+        for (auto v : {in._red, in._green, in._blue})
+            max = std::max(v, max);
+        return max;
+    }
+);
+```
+
+We leave the unboxing routine for `_value` unspecified, because there is no field called `_value` to assign to for C++-side instances.
+
+### Step 4: Implementing the Type
+
+Having added all properties to the usertype interface, we make the Julia state aware of the interface by calling:
+
+```cpp
+// in main
+Usertype<RGBA>::implement();
+```
+
+This creates a new type Julia-side type that has the architecture we just gave it. For end-users, this happens behind the scene, however, internally, the following expression is assembled and evaluated:
+
+```julia
+mutable struct RGBA
+    _red::Float32
+    _green::Float32
+    _blue::Float32
+    _alpha::Float32
+    _value::Float32
+    RGBA() = new(0.0f0, 0.0f0, 0.0f0, 1.0f0, 0.0f0)
+end
+```
+
+We see that jluna assembled a mutable struct type, whose field names and types are as specified. Even the order in which we called `add_field` for specific names is preserved. This becomes important for the default constructor (a constructor that takes no arguments). The default values for each of the types fields are those of an unmodified, default-initialized instance of `T` (`RGBA()` in our case). This is why the type needs to be default constructable.
+
+> **C++ Hint**: "default initialization" or "default construction" refers to the state of an object of type `T` that was instanced using the expression `T()`
+
+### Step 5: Usage
+
+After `Usertype<RGBAB>::implement()`, we can use `RGBA` just like any other TODO type:
+
+```cpp
+Main.new_undef("jl_rgba") = RGBA(1, 0, 1);
+Main.safe_eval("println(jl_rgba);");
+Main.safe_eval("println(fieldnames(RGBA))");
+```
+```
+RGBA(1.0f0, 0.0f0, 1.0f0, 1.0f0)
+(:_red, :_green, :_blue, :_alpha, :_value)
+```
+> **Julia Hint**: `Base.fieldnames` takes a type (not an instance of a type) and returns the symbols of a types fields, in order.
+
+We see that now, `Main.RGBA` is a proper Julia type and `jl_rgba` got the correct values according to each fields boxing / unboxing routine.
+
+---
+
 ## The `unsafe` Library
 
 > Waning: Misuse of this part of jluna can lead to exception-less crashes, data corruption and memory leaks. Only user who are confident and familiar with C-style programs with no safety-nets are encouraged to employ these functions
@@ -1354,8 +1602,6 @@ std::cout << (int) back_cpp_side << std::endl;
 This way of explicitly moving values between states can be quite cumbersome syntactically, which is why `jluna::Proxy` does all of this implicitly.
 
 Similar to the list of types a proxy can be assigning with, the following type can both be `boxed` and `unboxed`:
-
-
 
 
 

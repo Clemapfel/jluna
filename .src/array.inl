@@ -5,6 +5,48 @@
 
 namespace jluna
 {
+    /// @brief box array
+    /// @param array
+    /// @returns pointer to newly allocated julia-side value
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        size_t Rank = T::rank,
+        std::enable_if_t<std::is_same_v<T, Array<Value_t, Rank>>, bool> = true>
+    unsafe::Value* box(T value)
+    {
+        return value.operator unsafe::Value*();
+    }
+
+    /// @brief box vector
+    /// @param vector
+    /// @returns pointer to newly allocated julia-side value
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        std::enable_if_t<std::is_same_v<T, Vector<Value_t>>, bool> = true>
+    unsafe::Value* box(T value)
+    {
+        return value.operator unsafe::Value*();
+    }
+
+    /// @brief unbox to array
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        size_t Rank = T::rank,
+        std::enable_if_t<std::is_same_v<T, Array<Value_t, Rank>>, bool> = true>
+    T unbox(unsafe::Value* in)
+    {
+        return Array<Value_t, Rank>(in);
+    }
+
+    /// @brief unbox to vector
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        std::enable_if_t<std::is_same_v<T, Vector<Value_t>>, bool> = true>
+    T unbox(unsafe::Value* in)
+    {
+        return Vector<Value_t>(in);
+    }
+
     namespace detail
     {
         template<typename Value_t, size_t N>
