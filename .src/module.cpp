@@ -10,13 +10,13 @@
 namespace jluna
 {
     Module::Module(jl_module_t* value)
-        : Proxy((unsafe::Value*) value, value->name)
+        : Proxy((unsafe::Value*) value, value->name), _mutex()
     {
         detail::assert_type((unsafe::DataType*) jl_typeof((unsafe::Value*) value), jl_module_type);
     }
 
     Module::Module(Proxy* owner)
-        : Proxy(*owner)
+        : Proxy(*owner), _mutex()
     {
         detail::assert_type((unsafe::DataType*) jl_typeof(owner->operator unsafe::Value*()), jl_module_type);
     }

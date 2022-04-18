@@ -1967,20 +1967,24 @@ For example, `jluna::safe_call` can be called from multiple threads, as the code
 
 The user is required to ensure thread-safety in these conditions, just like the would in Julia. jluna has no hidden pitfalls or behind-the-scene machinery that multi-threading may throw a wrench into, however any user-created object is outside of jlunas responsibility.
 
-A function-by-function run-down of thread-safety would be too expansive, so this is a list that aims to be a rule-of-thumb. Any function not mentioned here should be assumed to be **not** thread-safe:
+A function-by-function run-down of thread-safety would be too expansive, so this is a list that aims to be a rule-of-thumb:
 
 + all functions in `include/safe_utilities.hpp` are thread-safe:
   - `safe_call`
   - `safe_eval`
   - `initialize`
   - `println`
-+ creating a generator expression is thread-safe
-  - modifying the same generator expression is not
 + creating a proxy through any method is thread-safe
   - modifying a proxy is not
 + allocating a `jluna::Array` is thread-safe
   - modifying the same array is not
-+ modifying a usertype and implementing it is thread-safe
++ `Module::new_*`, `Module::create`, `Module::create_or_assign` are thread-safe
+  - all other interaction with modules is not, including `Module::safe_eval`
++ modifying a `Usertype` and implementing it is thread-safe
++ creating a generator expression is thread-safe
+  - modifying the same generator expression is not
+  
+Any other functionality should be assumed to **not** be thread-safe. Instead, users will be required to manually "lock" and object and manage concurrent interaction. The following sections will give an example on how to achieve this using `jluna::Mutex` or `Base.ReentrantLock`.
 
 ### Thread-Safety in Julia
 
@@ -2043,7 +2047,7 @@ auto push_to_modify = [](size_t)
 
 #### Interacting with `jluna::Task` from Julia
 
-Internally, jluna makes accessing the Julia-state from a C++-sided, asynchronously executed function possible by wrapping it in an actual Julia-side task, then using Julias native thread pool to execute it. This has some beneficial side-effects.
+Internally, jluna makes accessing the Julia-state from a C++-sided, asynchronously executed function possible, by wrapping it in an actual Julia-side `Task`, then using Julias native thread pool to execute it. This has some beneficial side-effects.
 
 `yield`, called from C++ like so:
 
