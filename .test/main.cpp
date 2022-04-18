@@ -62,45 +62,16 @@ int main()
 {
     jluna::initialize(8);
 
-// ###
+Main.safe_eval("jl_var = [7, 7, 7]");
+auto named_proxy = Main["jl_var"];
+auto unnamed_proxy = Main.safe_eval("return jl_var");
 
-// in function scope, i.e. inside main
-Usertype<RGBA>::add_property<float>(
-    "_red",
-    [](RGBA& in) -> float {return in._red;},
-    [](RGBA& out, float in) -> void {out._red;}
-);
-Usertype<RGBA>::add_property<float>(
-    "_green",
-    [](RGBA& in) -> float {return in._green;},
-    [](RGBA& out, float in) -> void {out._green;}
-);
-Usertype<RGBA>::add_property<float>(
-    "_blue",
-    [](RGBA& in) -> float {return in._blue;},
-    [](RGBA& out, float in) -> void {out._blue;}
-);
-Usertype<RGBA>::add_property<float>(
-    "_alpha",
-    [](RGBA& in) -> float {return in._alpha;},
-    [](RGBA& out, float in) -> void {out._alpha;}
-);
-Usertype<RGBA>::add_property<float>(
-    "_value",
-    [](RGBA& in) -> float {
-        float max = 0;
-        for (auto v : {in._red, in._green, in._blue})
-            max = std::max(v, max);
-        return max;
-    }
-);
+std::cout << "named  : " << named_proxy.get_name() << std::endl;
+std::cout << "unnamed: " << unnamed_proxy.get_name() << std::endl;
 
-Usertype<RGBA>::implement();
-
-Main.new_undef("jl_rgba") = RGBA(1, 0, 1);
-Main.safe_eval("println(jl_rgba); println(fieldnames(RGBA))");
-
-return 0;
+std::cout << "named  : " << named_proxy.is_mutating() << std::endl;
+std::cout << "unnamed: " << unnamed_proxy.is_mutating() << std::endl;
+    return 0;
 
     Test::test("unsafe: gc", []() {
 
