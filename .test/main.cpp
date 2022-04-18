@@ -18,40 +18,12 @@ struct NonJuliaType
 };
 set_usertype_enabled(NonJuliaType);
 
-size_t no_void_true() {return 1234;}
-void yes_void_true() {return;}
-
-auto no_void_lambda = [](size_t in) -> size_t{
-    return in;
-};
-
-auto yes_void_lambda = [](size_t in) -> void {
-    std::cout << "called" << std::endl;
-    return;
-};
-
-using test_t = std::function<void(size_t)>;
-
-template<typename Function_t, typename Lambda_t>
-auto as_function(Lambda_t lambda)
-{
-    return std::function<Function_t>(lambda);
-}
 
 
 int main()
 {
     jluna::initialize(8);
 
-    auto lambda = [](){
-       std::cout << "called" << std::endl;
-    };
-    Main.create_or_assign("lambda", as_julia_function<void()>(lambda));
-
-    Main.safe_eval("lambda()");
-    return 0;
-
-/*
     Test::test("unsafe: gc", []() {
 
         auto* value = jl_eval_string("return [123, 434, 342]");
@@ -1024,76 +996,23 @@ int main()
 
     });
 
-    Test::test("C: hash", []() {
-
-        const std::string str = "(±)☻aödunÖAOA12891283912";
-
-        size_t a = jluna::c_adapter::hash(str);
-        size_t b = jl_unbox_uint64(
-                jl_call1(jl_get_function(jl_base_module, "hash"), (jl_value_t*) jl_symbol(str.data())));
-
-        Test::assert_that(a == b);
-    });
-
-    Test::test("C: register/unregister", []() {
-
-        std::string name = "test";
-        size_t id = c_adapter::hash(name);
-        register_function(name, []() -> void {});
-        Test::assert_that(c_adapter::is_registered(id));
-
-        c_adapter::unregister_function(name);
-        Test::assert_that(not c_adapter::is_registered(id));
-    });
-
-    Test::test("C: reject name", []() {
-
-        bool thrown = false;
-        try
-        {
-            register_function(".", []() -> void {});
-        }
-        catch (...)
-        {
-            thrown = true;
-        }
-
-        Test::assert_that(thrown);
-    });
-
     Test::test("C: call success", []() {
 
-        register_function("test", [](jl_value_t* in) -> jl_value_t* {
+        Main.create_or_assign("test", as_julia_function<Int64(Int64)>([](Int64 in) {
 
-            auto as_int = jl_unbox_int64(in);
-            as_int += 11;
-            return jl_box_int64(as_int);
-        });
+            return in + 11;
+        }));
 
-        Main.safe_eval("@assert cppcall(:test, 100) == 111");
+        Main.safe_eval("@assert test(100) == 111");
     });
 
-    Test::test("C: not registered", []() {
-
-        bool thrown = false;
-        try
-        {
-            Main.safe_eval("cppcall(:unnamed)");
-        }
-        catch (...)
-        {
-            thrown = true;
-        }
-
-        Test::assert_that(thrown);
-    });
 
     Test::test("C: forward exception", []() {
 
-        register_function("test", []() -> void {
+        Main.create_or_assign("test", as_julia_function<Nothing()>([]() -> void {
 
             throw std::out_of_range("123");
-        });
+        }));
 
         bool thrown = false;
 
@@ -1109,14 +1028,12 @@ int main()
 
     Test::test("C: reject wrong-sized tuple", []() {
 
-        register_function("zero", []() -> void {});
-        register_function("one", [](jl_value_t*) -> void {});
-        register_function("two", [](jl_value_t*, jl_value_t*) -> void {});
-        register_function("three", [](jl_value_t*, jl_value_t*, jl_value_t*) -> void {});
-        register_function("four", [](jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*) -> void {});
-        register_function("vec", [](std::vector<jl_value_t*>) -> void {});
+        Main.create_or_assign("zero", as_julia_function<void()>([]() -> void {}));
+        Main.create_or_assign("one", as_julia_function<void(jl_value_t*)>([](jl_value_t*) -> void {}));
+        Main.create_or_assign("two", as_julia_function<void(jl_value_t*, jl_value_t*)>([](jl_value_t*, jl_value_t*) -> void {}));
+        Main.create_or_assign("three", as_julia_function<void(jl_value_t*, jl_value_t*, jl_value_t*)>([](jl_value_t*, jl_value_t*, jl_value_t*) -> void {}));
 
-        for (std::string e : {"one", "two", "three", "four", "vec"})
+        for (std::string e : {"one", "two", "three"})
         {
             bool thrown = false;
             try
@@ -1146,31 +1063,7 @@ int main()
     Test::test("Symbol: Hash", []() {
 
         auto proxy = Symbol("abc");
-
-        Test::assert_that(Base["hash"](proxy).operator size_t() == jluna::c_adapter::hash("abc"));
-    });
-
-    Test::test("Symbol: Comparison", []() {
-
-        auto a1 = Symbol("abc");
-        auto a2 = Symbol("abc");
-        auto b = Symbol("ß213");
-
-        Test::assert_that(a1 == a2);
-        Test::assert_that(a1 != b);
-
-        if (c_adapter::hash("abc") < c_adapter::hash("ß213"))
-        {
-            Test::assert_that(a1 < b);
-            Test::assert_that(a1 <= b);
-            Test::assert_that(a1 <= a2);
-        }
-        else
-        {
-            Test::assert_that(a1 > b);
-            Test::assert_that(a1 >= b);
-            Test::assert_that(a1 >= a2);
-        }
+        proxy.hash() == (size_t) Base["hash"]((unsafe::Value*) proxy);
     });
 
     Test::test("Type: CTOR", []() {
@@ -1420,7 +1313,6 @@ int main()
     });
 
     Test::conclude();
-    */
 }
 
 

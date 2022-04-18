@@ -46,6 +46,8 @@ namespace jluna
     /// @brief 64-bit double interpreted as Float64 julia-side
     using Float64 = double;
 
+    #define Nothing void
+
     namespace unsafe
     {
         /// @brief address of julia-side memory

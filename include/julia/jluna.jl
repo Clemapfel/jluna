@@ -598,15 +598,15 @@ module jluna
         end
 
         function invoke_function(f::UnnamedFunction{1}, arg1::Ptr{Any}) ::Ptr{Any}
-            return ccall((:invoke_lambda_1, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Any},), arg1);
+            return ccall((:invoke_lambda_1, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}), arg1);
         end
 
         function invoke_function(f::UnnamedFunction{2}, arg1::Ptr{Any}, arg2::Ptr{Any}) ::Ptr{Any}
-            return ccall((:invoke_lambda_2, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Any}, Ptr{Any}), arg1, arg2);
+            return ccall((:invoke_lambda_2, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}, Ptr{Any}), arg1, arg2);
         end
 
         function invoke_function(f::UnnamedFunction{3}, arg1::Ptr{Any}, arg2::Ptr{Any}, arg3::Ptr{Any}) ::Ptr{Any}
-            return ccall((:invoke_lambda_3, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Any}, Ptr{Any}, Ptr{Any}), arg1, arg2, arg3);
+            return ccall((:invoke_lambda_3, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}, Ptr{Any}, Ptr{Any}), arg1, arg2, arg3);
         end
 
         function (f::UnnamedFunction{N})(xs...) where N

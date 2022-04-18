@@ -31,6 +31,7 @@ namespace jluna
 
             /// @brief decay to C-type
             operator jl_sym_t*() const;
+            using Proxy::operator unsafe::Value*;
 
             /// @brief hash, constant runtime
             /// @returns hash

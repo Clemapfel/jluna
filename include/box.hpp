@@ -141,30 +141,6 @@ namespace jluna
     /// @brief box std::tuple<Ts...> to Tuple{Ts...}
     template<is_tuple T>
     unsafe::Value* box(T value);
-    
-    /// @brief box lambda with signature () -> Any
-    template<LambdaType<> T>
-    unsafe::Value* box(T lambda);
-
-    /// @brief box lambda with signature (Any) -> Any
-    template<LambdaType<unsafe::Value*> T>
-    unsafe::Value* box(T lambda);
-
-    /// @brief box lambda with signature (Any, Any) -> Any
-    template<LambdaType<unsafe::Value*, unsafe::Value*> T>
-    unsafe::Value* box(T lambda);
-
-    /// @brief box lambda with signature (Any, Any, Any) -> Any
-    template<LambdaType<unsafe::Value*, unsafe::Value*, unsafe::Value*> T>
-    unsafe::Value* box(T lambda);
-
-    /// @brief box lambda with signature (Any, Any, Any, Any) -> Any
-    template<LambdaType<unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*> T>
-    unsafe::Value* box(T lambda);
-
-    /// @brief box lambda with signature (vector{Any}) -> Any
-    template<LambdaType<std::vector<unsafe::Value*>> T>
-    unsafe::Value* box(T lambda);
 
     /// @brief box jluna::Symbol to Symbol
     class Proxy;
@@ -174,11 +150,7 @@ namespace jluna
     /// @brief box jluna::Symbol to Symbol
     class Symbol;
     template<is<Symbol> T>
-    unsafe::Value* box(T);
-
-    /// @brief box string to symbol
-    template<is<Symbol> T>
-    unsafe::Value* box(T);
+    unsafe::Value* box(T value);
 
     /// @brief box jluna::Module to Module
     class Module;
@@ -198,7 +170,10 @@ namespace jluna
     template<typename T>
     concept is_boxable = requires(T t)
     {
-        {box<T>(t)};
+        box(t);
+    } or requires(T t)
+    {
+        (unsafe::Value*) t;
     };
 
     template<typename Function_t, typename... Args_t, std::enable_if_t<std::is_void_v<std::invoke_result_t<Function_t, Args_t...>>, bool> = true>
