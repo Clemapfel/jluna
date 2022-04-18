@@ -18,8 +18,6 @@ struct NonJuliaType
 };
 set_usertype_enabled(NonJuliaType);
 
-
-
 int main()
 {
     jluna::initialize(8);

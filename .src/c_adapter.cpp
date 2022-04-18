@@ -56,6 +56,11 @@ extern "C"
         {
             return (*reinterpret_cast<lambda_3_arg*>(function_ptr))(x, y, z);
         }
+
+        void* to_pointer(jl_value_t* in)
+        {
+            return (void*) in;
+        }
     }
 }
 
