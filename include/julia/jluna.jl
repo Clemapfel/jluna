@@ -588,28 +588,43 @@ module jluna
             end
         end
 
+        """
+        `make_unnamed_function(::Ptr{Cvoid}, n::Integer) -> UnnamedFunction{n}
+
+        wrapper for UnnamedFunction ctor
+        """
         function make_unnamed_function(ptr::Ptr{Cvoid}, n::Integer)
             return UnnamedFunction{n}(ptr)
         end
 
+        """
+        `invoke_function(::UnnamedFunction) -> Ptr{Any}`
+
+        invoke function with 0 args
+        """
         function invoke_function(f::UnnamedFunction{0}) ::Ptr{Any}
             return ccall((:invoke_lambda_0, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid},), f._native_handle);
         end
 
+        # overload for 1 arg
         function invoke_function(f::UnnamedFunction{1}, arg1::Ptr{Any}) ::Ptr{Any}
             return ccall((:invoke_lambda_1, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}), f._native_handle, arg1);
         end
 
+        # overload for 2 args
         function invoke_function(f::UnnamedFunction{2}, arg1::Ptr{Any}, arg2::Ptr{Any}) ::Ptr{Any}
             return ccall((:invoke_lambda_2, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}, Ptr{Any}), f._native_handle, arg1, arg2);
         end
 
+        # overload for 3 args
         function invoke_function(f::UnnamedFunction{3}, arg1::Ptr{Any}, arg2::Ptr{Any}, arg3::Ptr{Any}) ::Ptr{Any}
             return ccall((:invoke_lambda_3, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}, Ptr{Any}, Ptr{Any}), f._native_handle, arg1, arg2, arg3);
         end
 
         """
         `to_pointer(::Any) -> Ptr{Cvoid}`
+
+        get pointer to any object (including immutable ones)
         """
         function to_pointer(x) ::Ptr{Any}
             return ccall((:to_pointer, cppcall._c_adapter_path), Ptr{Cvoid}, (Any,), x)
@@ -617,11 +632,18 @@ module jluna
 
         """
         `from_pointer(::Ptr{Cvoid}) -> Any`
+
+        wrap unsafe_pointer_to_objref
         """
         function from_pointer(ptr::Ptr{Any})
             return unsafe_pointer_to_objref(ptr)
         end
 
+        """
+        `UnnamedFunction(xs...) -> Any`
+
+        invoke UnnamedFunction, checks for correct number of arguments
+        """
         function (f::UnnamedFunction{N})(xs...) where N
 
             n = length(xs)
@@ -651,7 +673,9 @@ module jluna
 
         _fieldnames_in_order::Vector{Symbol}
         _fields::Dict{Symbol, Union{Any, Missing}}
-        ProxyInternal() = new(Vector{Symbol}(), Dict{Symbol, Union{Any, Missing}}())
+        _lock::Base.ReentrantLock
+
+        ProxyInternal() = new(Vector{Symbol}(), Dict{Symbol, Union{Any, Missing}}(), Base.ReentrantLock())
     end
 
     # proxy as deepcopy of cpp-side usertype object
@@ -663,25 +687,37 @@ module jluna
         Proxy(name::Symbol) = new(name, ProxyInternal())
     end
 
+    """
+    `new_proxy(::Symbol) -> Proxy`
+
+    wrap proxy ctor
+    """
     new_proxy(name::Symbol) = return Proxy(name)
 
+    """
+    `implement(::Proxy, ::Module) -> Type`
+
+    translate a usertype proxy into an actual julia type
+    """
     function implement(template::Proxy, m::Module = Main) ::Type
 
-        out::Expr = :(mutable struct $(template._typename) end)
-        deleteat!(out.args[3].args, 1)
+        @lock template._lock begin
+            out::Expr = :(mutable struct $(template._typename) end)
+            deleteat!(out.args[3].args, 1)
 
-        for name in template._value._fieldnames_in_order
-            push!(out.args[3].args, Expr(:(::), name, :($(typeof(template._value._fields[name])))))
+            for name in template._value._fieldnames_in_order
+                push!(out.args[3].args, Expr(:(::), name, :($(typeof(template._value._fields[name])))))
+            end
+
+            new_call::Expr = Expr(:(=), Expr(:call, template._typename), Expr(:call, :new))
+
+            for name in template._value._fieldnames_in_order
+                push!(new_call.args[2].args, template._value._fields[name])
+            end
+
+            push!(out.args[3].args, new_call)
+            Base.eval(m, out)
         end
-
-        new_call::Expr = Expr(:(=), Expr(:call, template._typename), Expr(:call, :new))
-
-        for name in template._value._fieldnames_in_order
-            push!(new_call.args[2].args, template._value._fields[name])
-        end
-
-        push!(out.args[3].args, new_call)
-        Base.eval(m, out)
         return m.eval(template._typename)
     end
 
@@ -689,13 +725,15 @@ module jluna
     `setindex!(::Proxy, <:Any, ::Symbol) -> Nothing`
     extend base.setindex!
     """
-    function Base.setindex!(proxy::Main.jluna.Proxy, value, key::Symbol) ::Nothing
+    function Base.setindex!(proxy::Proxy, value, key::Symbol) ::Nothing
 
-        if (!haskey(proxy._value._fields, key))
-            push!(proxy._value._fieldnames_in_order, key)
+        @lock proxy._lock begin
+            if (!haskey(proxy._value._fields, key))
+                push!(proxy._value._fieldnames_in_order, key)
+            end
+
+            proxy._value._fields[key] = value
         end
-
-        proxy._value._fields[key] = value
         return nothing
     end
 
@@ -703,7 +741,12 @@ module jluna
     `getindex(::Proxy, ::Symbol) -> Any`
     extend base.getindex
     """
-    function Base.getindex(proxy::Main.jluna.Proxy, value, key::Symbol) #::Auto
-        return proxy._value._fields[key]
+    function Base.getindex(proxy::Proxy, value, key::Symbol) #::Auto
+
+        out::Any = undef
+        @lock proxy._lock begin
+            out = proxy._value._fields[key]
+        end
+        return out
     end
 end
