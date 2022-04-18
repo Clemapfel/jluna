@@ -99,37 +99,40 @@ namespace jluna
     using get_nth_argument_t = std::tuple_element_t<i, typename function_traits<T>::argument_ts>;
 
     /// @brief forward function or lambda as C-literal function
-    template<typename T>
-    struct forward_as_function;
-
-    template<typename Return_t, typename... Args_t>
-    struct forward_as_function<Return_t(Args_t...)>
+    namespace detail
     {
-        using value = Return_t(Args_t...);
-    };
+        template<typename T>
+        struct as_c_function;
 
-    template<typename Return_t, typename... Args_t>
-    struct forward_as_function<std::function<Return_t(Args_t...)>>
-    {
-        using value = Return_t(Args_t...);
-    };
+        template<typename Return_t, typename... Args_t>
+        struct as_c_function<Return_t(Args_t...)>
+        {
+            using value = Return_t(Args_t...);
+        };
 
-    template<typename T>
-    using forward_as_function_v = typename forward_as_function<T>::value;
+        template<typename Return_t, typename... Args_t>
+        struct as_c_function<std::function<Return_t(Args_t...)>>
+        {
+            using value = Return_t(Args_t...);
+        };
+
+        template<typename T>
+        using as_c_function_v = typename as_c_function<T>::value;
+    }
 
     /// @concept: check signature of argument function or lambda
     template<typename T, typename Return_t, typename... Args_t>
     concept is_function_with_signature =
-    std::is_invocable_v<forward_as_function_v<T>, Args_t...> and
+    std::is_invocable_v<detail::as_c_function_v<T>, Args_t...> and
     std::conditional_t<
         std::is_void_v<Return_t>,
-        std::is_void<typename function_traits<forward_as_function_v<T>>::return_t>,
-        std::is_same<typename function_traits<forward_as_function_v<T>>::return_t, Return_t>
+        std::is_void<typename function_traits<detail::as_c_function_v<T>>::return_t>,
+        std::is_same<typename function_traits<detail::as_c_function_v<T>>::return_t, Return_t>
     >::value;
 
     /// @concept: function with n args
     template<typename T, size_t N>
-    concept is_function_with_n_args = (function_traits<T>::n_args == N);
+    concept is_function_with_n_args = (function_traits<detail::as_c_function_v<T>>::n_args == N);
 
     /// @concept: can be reinterpret-cast to jl_value_t*
     template<typename T>

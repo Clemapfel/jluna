@@ -15,8 +15,11 @@ extern "C"
 
         unsafe::Value* make(void* function_ptr, int n_args)
         {
-            static auto* make = (jl_function_t*) jl_eval_string("return jluna.cppcall.make_unnamed_function_proxy");
-            return jluna::safe_call(make, (jl_value_t*) function_ptr, jl_box_int64(n_args));
+            gc_pause;
+            static auto* make = (jl_function_t*) jl_eval_string("return jluna.cppcall.make_unnamed_function");
+            auto* res = jluna::safe_call(make, jl_box_voidpointer(function_ptr), jl_box_int64(n_args));
+            gc_unpause;
+            return res;
         }
 
         void free_lambda(void* in, int n_args)
@@ -29,14 +32,13 @@ extern "C"
                 delete (lambda_2_arg*) in;
             else if (n_args == 3)
                 delete (lambda_3_arg*) in;
-            else if (n_args == -1)
-                delete (lambda_n_arg*) in;
             else
                 throw std::invalid_argument("In c_adapter::free: " + std::to_string(n_args) + " is a invalid number of arguments");
         }
 
         unsafe::Value* invoke_lambda_0(void* function_ptr)
         {
+            std::cout << function_ptr << std::endl;
             return (*reinterpret_cast<lambda_0_arg*>(function_ptr))();
         }
 
@@ -53,22 +55,6 @@ extern "C"
         unsafe::Value* invoke_lambda_3(void* function_ptr, unsafe::Value* x, unsafe::Value* y, unsafe::Value* z)
         {
             return (*reinterpret_cast<lambda_3_arg*>(function_ptr))(x, y, z);
-        }
-
-        unsafe::Value* invoke_lambda_n(void* function_ptr, unsafe::Array* vector)
-        {
-            std::vector<unsafe::Value*> args;
-            args.reserve(jl_array_len(vector));
-
-            for (size_t i = 0; i < jl_array_len(vector); ++i)
-                args.push_back(jl_arrayref(vector, i));
-
-            return (*reinterpret_cast<lambda_n_arg*>(function_ptr))(args);
-        }
-
-        jl_value_t* test()
-        {
-            return (jl_value_t*) jl_main_module;
         }
     }
 }

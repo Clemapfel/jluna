@@ -566,7 +566,7 @@ module jluna
         """
         object that is callable like a function, but executes C++-side code
         """
-        struct UnnamedFunctionProxy{NArgs <: Cint}
+        mutable struct UnnamedFunction{NArgs}
 
             _native_handle::Ptr{Cvoid}
             # points to C-side function
@@ -576,47 +576,45 @@ module jluna
             #  1: (Any) -> Any
             #  2: (Any, Any) -> Any
             #  3: (Any, Any, Any) -> Any
-            #  -1: (Array{Any, 1}) -> Any
+            # all others invalid
 
-            function UnnamedFunctionProxy{N}(ptr::Ptr{Cvoid}) where N <: Cint
+            function UnnamedFunction{N}(ptr::Ptr{Cvoid}) where N
 
                 out = new{N}(ptr, N)
-                finalizer(function (t::UnnamedFunctionProxy{N})
-                    ccall((:free_lambda, cppcall._c_adapter_path), Cvoid, (Ptr{Cvoid}, Cint), t._native_handle, t._n_args)
+                finalizer(function (t::UnnamedFunction{N})
+                    ccall((:free_lambda, cppcall._c_adapter_path), Cvoid, (Csize_t, Cint), t._native_handle, t._n_args)
                 end, out);
+
+                return out;
             end
         end
 
-
-
-        invoke_function(f::UnnamedFunctionProxy{N}, xs::Ptr{Any}...) where N = return Ptr{Nothing}(0);
-
-        function invoke_function(f::UnnamedFunctionProxy{0}) ::Ptr{Any}
-            return ccall((:invoke_lambda_0, cppcall._c_adapter_path), Ptr{Any}, NTuple{0, Ptr{Any}});
+        function make_unnamed_function(ptr::Ptr{Cvoid}, n::Integer)
+            return UnnamedFunction{n}(ptr)
         end
 
-        function invoke_function(f::UnnamedFunctionProxy{1}, arg1::Ptr{Any}) ::Ptr{Any}
-            return ccall((:invoke_lambda_1, cppcall._c_adapter_path), Ptr{Any}, NTuple{1, Ptr{Any}}, arg1);
+        function invoke_function(f::UnnamedFunction{0}) ::Ptr{Any}
+            return ccall((:invoke_lambda_0, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid},), f._native_handle);
         end
 
-        function invoke_function(f::UnnamedFunctionProxy{2}, arg1::Ptr{Any}, arg2::Ptr{Any}) ::Ptr{Any}
-            return ccall((:invoke_lambda_2, cppcall._c_adapter_path), Ptr{Any}, NTuple{2, Ptr{Any}}, arg1, arg2);
+        function invoke_function(f::UnnamedFunction{1}, arg1::Ptr{Any}) ::Ptr{Any}
+            return ccall((:invoke_lambda_1, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Any},), arg1);
         end
 
-        function invoke_function(f::UnnamedFunctionProxy{3}, arg1::Ptr{Any}, arg2::Ptr{Any}, arg3::Ptr{Any}) ::Ptr{Any}
-            return ccall((:invoke_lambda_3, cppcall._c_adapter_path), Ptr{Any}, NTuple{3, Ptr{Any}}, arg1, arg2);
+        function invoke_function(f::UnnamedFunction{2}, arg1::Ptr{Any}, arg2::Ptr{Any}) ::Ptr{Any}
+            return ccall((:invoke_lambda_2, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Any}, Ptr{Any}), arg1, arg2);
         end
 
-        function invoke_function(f::UnnamedFunctionProxy{Cint(-1)}, vec::Vector) ::Ptr{Any}
-            return ccall((:invoke_lambda_n, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Vector},), pointer_from_objref(vec));
+        function invoke_function(f::UnnamedFunction{3}, arg1::Ptr{Any}, arg2::Ptr{Any}, arg3::Ptr{Any}) ::Ptr{Any}
+            return ccall((:invoke_lambda_3, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Any}, Ptr{Any}, Ptr{Any}), arg1, arg2, arg3);
         end
 
-        function (f::UnnamedFunctionProxy{N})(xs...) where N
+        function (f::UnnamedFunction{N})(xs...) where N
 
-            n = length(xs...)
+            n = length(xs)
 
-            const to_ptr = pointer_from_objref
-            const from_ptr = unsafe_pointer_to_objref
+            to_ptr = pointer_from_objref
+            from_ptr = unsafe_pointer_to_objref
 
             if n == N == 0
                 return from_ptr(invoke_function(f));
@@ -630,8 +628,9 @@ module jluna
                 return from_ptr(invoke_function(f, to_ptr([xs...])));
             else
                 throw(ErrorException(
-                    "MethodError: when trying to invoke unnamedFunctionProxy #" * string(_native_handle) *
-                    ": wrong number of arguments. expected: " * string(N) * ", got: " * string(n)
+                    "MethodError: when trying to invoke <C++ Lambda#" * string(_native_handle) * ">" *
+                    ": wrong number of arguments. expected " * string(N) * ", got " * string(n) * "."
+                   *  (n <= 3 ? "" : "\n\nTo create a C++-function that can take n > 3 arguments, simply make a 1-argument function with the only argument being an n-sized tuple or collection.")
                 ))
             end
         end

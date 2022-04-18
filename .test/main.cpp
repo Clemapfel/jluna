@@ -7,6 +7,7 @@
 #include <thread>
 #include <include/multi_threading.hpp>
 #include <include/box.hpp>
+#include <.src/cppcall.inl>
 
 using namespace jluna;
 using namespace jluna::detail;
@@ -17,32 +18,38 @@ struct NonJuliaType
 };
 set_usertype_enabled(NonJuliaType);
 
-size_t no_void_true(size_t) {return 1234;}
-void yes_void_true(size_t) {return;}
+size_t no_void_true() {return 1234;}
+void yes_void_true() {return;}
 
 auto no_void_lambda = [](size_t in) -> size_t{
     return in;
 };
 
 auto yes_void_lambda = [](size_t in) -> void {
-    std::cout << in << std::endl;
+    std::cout << "called" << std::endl;
     return;
 };
 
 using test_t = std::function<void(size_t)>;
 
+template<typename Function_t, typename Lambda_t>
+auto as_function(Lambda_t lambda)
+{
+    return std::function<Function_t>(lambda);
+}
 
 
 int main()
 {
-
     jluna::initialize(8);
 
-    auto return_void = []() -> void {return;};
-    println(box_function_result(yes_void_lambda, 1));
-    println(box_function_result(no_void_lambda, 1));
+    auto lambda = [](){
+       std::cout << "called" << std::endl;
+    };
+    Main.create_or_assign("lambda", as_julia_function<void()>(lambda));
 
-return 0;
+    Main.safe_eval("lambda()");
+    return 0;
 
 /*
     Test::test("unsafe: gc", []() {

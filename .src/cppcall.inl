@@ -17,71 +17,54 @@
 
 namespace jluna
 {
-    template<is_function_with_n_args<0> Function_t>
-    unsafe::Value* register_function(Function_t f)
+    template<typename Return_t>
+    unsafe::Value* register_function(std::function<Return_t()> f)
     {
-        auto* out = new c_adapter::lambda_0_arg([f]()
+        auto* out = new c_adapter::lambda_0_arg([f]() -> unsafe::Value*
         {
             return box_function_result(f);
         });
+        std::cout << out << std::endl;
 
         return c_adapter::make(out, 0);
     }
 
-    template<is_function_with_n_args<1> Function_t>
-    unsafe::Value* register_function(Function_t f)
+    template<typename Return_t, typename Arg1_t>
+    unsafe::Value* register_function(std::function<Return_t(Arg1_t)> f)
     {
-        using arg1_t = get_nth_argument_t<Function_t, 0>;
         auto* out = new c_adapter::lambda_1_arg([f](unsafe::Value* arg1)
         {
-            return box_function_result(f, unbox<arg1_t>(arg1));
+            return box_function_result(f, unbox<Arg1_t>(arg1));
         });
 
         return c_adapter::make(out, 1);
     }
 
-    template<is_function_with_n_args<2> Function_t>
-    unsafe::Value* register_function(Function_t f)
+    template<typename Return_t, typename Arg1_t, typename Arg2_t>
+    unsafe::Value* register_function(std::function<Return_t(Arg1_t, Arg2_t)> f)
     {
-        using arg1_t = get_nth_argument_t<Function_t, 0>;
-        using arg2_t = get_nth_argument_t<Function_t, 1>;
-
         auto* out = new c_adapter::lambda_2_arg([f](unsafe::Value* arg1, unsafe::Value* arg2)
         {
-            return box_function_result(f, unbox<arg1_t>(arg1), unbox<arg2_t>(arg2));
+            return box_function_result(f, unbox<Arg1_t>(arg1), unbox<Arg2_t>(arg2));
         });
 
         return c_adapter::make(out, 2);
     }
 
-    template<is_function_with_n_args<3> Function_t>
-    unsafe::Value* register_function(Function_t f)
+    template<typename Return_t, typename Arg1_t, typename Arg2_t, typename Arg3_t>
+    unsafe::Value* register_function(std::function<Return_t(Arg1_t, Arg2_t, Arg3_t)> f)
     {
-        using arg1_t = get_nth_argument_t<Function_t, 0>;
-        using arg2_t = get_nth_argument_t<Function_t, 1>;
-        using arg3_t = get_nth_argument_t<Function_t, 2>;
-
         auto* out = new c_adapter::lambda_3_arg([f](unsafe::Value* arg1, unsafe::Value* arg2, unsafe::Value* arg3)
         {
-            return box_function_result(f, unbox<arg1_t>(arg1), unbox<arg2_t>(arg2), unbox<arg3_t>(arg3));
+            return box_function_result(f, unbox<Arg1_t>(arg1), unbox<Arg2_t>(arg2), unbox<Arg3_t>(arg3));
         });
 
         return c_adapter::make(out, 3);
     }
 
-    template<typename Function_t, std::enable_if_t<
-        not is_function_with_n_args<f, 0> and
-        not is_function_with_n_args<f, 1> and
-        not is_function_with_n_args<f, 2> and
-        not is_function_with_n_args<f, 3>
-        , bool> = true>
-    unsafe::Value* register_function(Function_t f)
+    template<typename Function_t, typename _>
+    unsafe::Value* as_julia_function(_ lambda)
     {
-        auto* out = new c_adapter::lambda_n_arg([f](unsafe::Array* array) {
-
-
-
-        });
+        return register_function(std::function<Function_t>(lambda));
     }
-
 }

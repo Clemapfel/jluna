@@ -21,7 +21,7 @@ extern "C"
         using lambda_1_arg = std::function<unsafe::Value*(unsafe::Value*)>;
         using lambda_2_arg = std::function<unsafe::Value*(unsafe::Value*, unsafe::Value*)>;
         using lambda_3_arg = std::function<unsafe::Value*(unsafe::Value*, unsafe::Value*, unsafe::Value*)>;
-        using lambda_n_arg = std::function<unsafe::Value*(const std::vector<unsafe::Value*>&)>;
+        //using lambda_n_arg = std::function<unsafe::Value*(const std::vector<unsafe::Value*>&)>;
 
         /// @brief construct an UnnamedFunctionProxy object
         /// @param function_ptr: allocated with `new`
@@ -33,7 +33,7 @@ extern "C"
         unsafe::Value* invoke_lambda_1(void* function_ptr, unsafe::Value*);
         unsafe::Value* invoke_lambda_2(void* function_ptr, unsafe::Value*,  unsafe::Value*);
         unsafe::Value* invoke_lambda_3(void* function_ptr, unsafe::Value*,  unsafe::Value*, unsafe::Value*);
-        unsafe::Value* invoke_lambda_n(void* function_ptr, unsafe::Array* vector);
+        //unsafe::Value* invoke_lambda_n(void* function_ptr, unsafe::Array* vector);
 
         /// @brief `delete` a function pointer held
         /// @param pointer to function
@@ -49,6 +49,6 @@ unsafe::Value* invoke_lambda_0(void*);
 unsafe::Value* invoke_lambda_1(void*, unsafe::Value*);
 unsafe::Value* invoke_lambda_2(void*, unsafe::Value*,  unsafe::Value*);
 unsafe::Value* invoke_lambda_3(void*, unsafe::Value*,  unsafe::Value*, unsafe::Value*);
-unsafe::Value* invoke_lambda_n(void*, unsafe::Array*);
+//unsafe::Value* invoke_lambda_n(void*, unsafe::Array*);
 
 #endif
