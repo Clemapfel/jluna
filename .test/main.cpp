@@ -24,7 +24,7 @@ int main()
 {
     jluna::initialize(8);
 
-    std::vector<Task<unsafe::Value*>> tasks;
+    std::vector<Task<void>> tasks;
 
     {
         std::function<void()> print_numbers = []() -> void

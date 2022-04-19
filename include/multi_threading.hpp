@@ -140,7 +140,7 @@ namespace jluna
         /// @returns Task, not yet scheduled
         /// @note once the task is done, .result() will return a future with value of type jluna::Nothing_t
         template<typename... Args_t>
-        static Task<unsafe::Value*> create(const std::function<void(Args_t...)>& f, Args_t... args);
+        static Task<void> create(const std::function<void(Args_t...)>& f, Args_t... args);
 
         /// @brief create a task from a std::function returning non-void
         /// @param f: function
@@ -155,7 +155,7 @@ namespace jluna
         /// @returns Task, not yet scheduled
         /// @note once the task is done, .result() will return a future with value of type jluna::Nothing_t
         template<is<void> Return_t, typename Lambda_t, typename... Args_t>
-        static Task<unsafe::Value*> create(Lambda_t lambda, Args_t... args);
+        static Task<void> create(Lambda_t lambda, Args_t... args);
 
         /// @brief create a task from a lambda returning non-void
         /// @param f: lambda returning void

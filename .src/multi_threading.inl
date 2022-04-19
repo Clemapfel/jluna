@@ -157,6 +157,68 @@ namespace jluna
         return std::ref(*(_ref.get()._future.get()));
     }
 
+     // void specialization for nicer syntax
+    template<>
+    class Task<void>
+    {
+        friend class ThreadPool;
+
+        public:
+            ~Task() = default;
+            operator unsafe::Value*();
+            void join();
+            void schedule();
+            bool is_done() const;
+            bool is_failed() const;
+            bool is_running() const;
+            Future<unsafe::Value*>& result();
+
+        protected:
+            Task(std::reference_wrapper<detail::TaskValue<unsafe::Value*>>);
+
+        private:
+            std::reference_wrapper<detail::TaskValue<unsafe::Value*>> _ref;
+    };
+
+    Task<void>::Task(std::reference_wrapper<detail::TaskValue<unsafe::Value*>> ref)
+        : _ref(ref)
+    {}
+
+    void Task<void>::join()
+    {
+        static auto* wait = unsafe::get_function(jl_base_module, "wait"_sym);
+        jluna::safe_call(wait, _ref.get()._value);
+    }
+
+    void Task<void>::schedule()
+    {
+        static auto* schedule = unsafe::get_function(jl_base_module, "schedule"_sym);
+        jluna::safe_call(schedule, _ref.get()._value);
+    }
+
+    bool Task<void>::is_done() const
+    {
+        static auto* istaskdone = unsafe::get_function(jl_base_module, "istaskdone"_sym);
+        return jl_unbox_bool(jluna::safe_call(istaskdone, _ref.get()._value));
+    }
+
+    bool Task<void>::is_failed() const
+    {
+        static auto* istaskfailed = unsafe::get_function(jl_base_module, "istaskfailed"_sym);
+        return jl_unbox_bool(jluna::safe_call(istaskfailed, _ref.get()._value));
+    }
+
+    bool Task<void>::is_running() const
+    {
+        static auto* istaskstarted = unsafe::get_function(jl_base_module, "istaskstarted"_sym);
+        return jl_unbox_bool(jluna::safe_call(istaskstarted, _ref.get()._value));
+    }
+
+    Future<unsafe::Value*>& Task<void>::result()
+    {
+        return std::ref(*(_ref.get()._future.get()));
+    }
+
     // ###
 
     template<is_not<void> Return_t, typename Lambda_t, typename... Args_t>
@@ -166,13 +228,13 @@ namespace jluna
     }
 
     template<is<void> Return_t, typename Lambda_t, typename... Args_t>
-    Task<unsafe::Value*> ThreadPool::create(Lambda_t lambda, Args_t... args)
+    Task<void> ThreadPool::create(Lambda_t lambda, Args_t... args)
     {
         return create(static_cast<std::function<Return_t(Args_t...)>>(lambda), args...);
     }
 
     template<typename... Args_t>
-    Task<unsafe::Value*> ThreadPool::create(const std::function<void(Args_t...)>& lambda, Args_t... args)
+    Task<void> ThreadPool::create(const std::function<void(Args_t...)>& lambda, Args_t... args)
     {
         _storage_lock.lock();
 
@@ -190,7 +252,7 @@ namespace jluna
         out->initialize(it.second.get());
         _current_id += 1;
         _storage_lock.unlock();
-        return Task<unsafe::Value*>(std::ref(*out));
+        return Task<void>(std::ref(*out));
     }
 
     template<is_not<void> Return_t, typename... Args_t>
@@ -222,4 +284,6 @@ namespace jluna
         static auto* jl_yield = unsafe::get_function(jl_base_module, "yield"_sym);
         jluna::safe_call(jl_yield);
     }
+
+    // ###
 }
