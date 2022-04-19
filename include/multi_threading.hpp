@@ -43,9 +43,11 @@
 
 namespace jluna
 {
-    namespace detail {
+    namespace detail
+    {
         class FutureHandler;
         struct TaskSuper {};
+        template<typename>struct TaskValue;
     }
 
     /// @brief the result of a thread
@@ -53,7 +55,7 @@ namespace jluna
     class Future
     {
         template<typename>
-        friend class Task;
+        friend class TaskValue;
         friend class detail::FutureHandler;
 
         public:
@@ -81,15 +83,14 @@ namespace jluna
             std::unique_ptr<Value_t> _value;
     };
 
-    /// @brief equivalent of std::thread, is actually a Julia-side 'Task'
     template<typename Result_t>
-    class Task : public detail::TaskSuper
+    class Task
     {
         friend class ThreadPool;
 
         public:
             /// @brief dtor
-            ~Task();
+            ~Task() = default;
 
             /// @brief access the Julia-side value of type Task
             operator unsafe::Value*();
@@ -117,27 +118,12 @@ namespace jluna
             Future<Result_t>& result();
 
         protected:
-            /// @brief privated ctor, use ThreadPool::create to create a task
-            Task(size_t);
+            /// @brief ctor private, use ThreadPool::create
+            Task(std::reference_wrapper<detail::TaskValue<Result_t>>);
 
         private:
-            void initialize(std::function<unsafe::Value*()>*);
-
-            unsafe::Value* _value;
-            size_t _value_id;
-            size_t _threadpool_id;
-            std::unique_ptr<Future<Result_t>> _future;
+            std::reference_wrapper<detail::TaskValue<Result_t>> _ref;
     };
-
-    namespace detail
-    {
-        template<typename T> struct task_wrapper_aux {using value = Task<T>;};
-        template<> struct task_wrapper_aux<void> {using value = Task<unsafe::Value*>;};
-    }
-
-    // name wrapper for cleaner syntax
-    template<typename T>
-    using TaskWrapper = std::reference_wrapper<typename detail::task_wrapper_aux<T>::value>;
 
     /// @brief threadpool that allows scheduled C++-side tasks to safely access the Julia State from within a thread.
     /// Pool cannot be resized, it will use the native Julia threads to execute any C++-side tasks
@@ -146,7 +132,7 @@ namespace jluna
     struct ThreadPool
     {
         template<typename>
-        friend class Task;
+        friend class detail::TaskValue;
 
         /// @brief create a task from a std::function returning void
         /// @param f: function returning void
@@ -154,14 +140,14 @@ namespace jluna
         /// @returns Task, not yet scheduled
         /// @note once the task is done, .result() will return a future with value of type jluna::Nothing_t
         template<typename... Args_t>
-        static TaskWrapper<void> create(const std::function<void(Args_t...)>& f, Args_t... args);
+        static Task<unsafe::Value*> create(const std::function<void(Args_t...)>& f, Args_t... args);
 
         /// @brief create a task from a std::function returning non-void
         /// @param f: function
         /// @param args: arguments
         /// @returns Task, not yet scheduled
         template<is_not<void> Return_t, typename... Args_t>
-        static TaskWrapper<Return_t> create(const std::function<Return_t(Args_t...)>& f, Args_t... args);
+        static Task<Return_t> create(const std::function<Return_t(Args_t...)>& f, Args_t... args);
 
         /// @brief create a task from a lambda returning void
         /// @param f: lambda returning void
@@ -169,14 +155,14 @@ namespace jluna
         /// @returns Task, not yet scheduled
         /// @note once the task is done, .result() will return a future with value of type jluna::Nothing_t
         template<is<void> Return_t, typename Lambda_t, typename... Args_t>
-        static TaskWrapper<void> create(Lambda_t lambda, Args_t... args);
+        static Task<unsafe::Value*> create(Lambda_t lambda, Args_t... args);
 
         /// @brief create a task from a lambda returning non-void
         /// @param f: lambda returning void
         /// @param args: arguments
         /// @returns Task, not yet scheduled
         template<is_not<void> Return_t, typename Lambda_t, typename... Args_t>
-        static TaskWrapper<Return_t> create(Lambda_t lambda, Args_t... args);
+        static Task<Return_t> create(Lambda_t lambda, Args_t... args);
 
         private:
             static inline size_t _current_id = 0;

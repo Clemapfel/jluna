@@ -24,7 +24,7 @@ int main()
 {
     jluna::initialize(8);
 
-    std::vector<TaskWrapper<void>> tasks;
+    std::vector<Task<unsafe::Value*>> tasks;
 
     {
         std::function<void()> print_numbers = []() -> void
@@ -34,7 +34,7 @@ int main()
         };
 
         tasks.push_back(ThreadPool::create(print_numbers));
-        tasks.back().get().schedule();
+        tasks.back().schedule();
 
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(1ms);
@@ -62,12 +62,12 @@ int main()
             return 4;
         });
 
-        Test::assert_that(not task.get().is_running());
-        task.get().schedule();
-        task.get().join();
-        Test::assert_that(task.get().is_done());
+        Test::assert_that(not task.is_running());
+        task.schedule();
+        task.join();
+        Test::assert_that(task.is_done());
 
-        Test::assert_that(task.get().result().get().value() == 4);
+        Test::assert_that(task.result().get().value() == 4);
     });
 
     Test::conclude();
