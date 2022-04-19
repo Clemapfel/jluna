@@ -52,7 +52,7 @@ namespace jluna
 
             /// @brief create the type, setup through the interface, julia-side
             /// @param module: module in which the type is evaluated
-            static void implement(Module module = Main);
+            static void implement(unsafe::Module* module = Main);
 
             /// @brief has implement() been called at least once
             /// @returns bool

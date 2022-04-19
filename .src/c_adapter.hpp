@@ -42,6 +42,11 @@ extern "C"
 
         /// @brief get pointer to arbitrary object
         void* to_pointer(jl_value_t*);
+
+        /// @brief invoke function ptr, used within threadpool
+        /// @param function_pointer
+        /// @returns result pointer
+        size_t invoke_from_task(size_t function_ptr);
     }
 }
 

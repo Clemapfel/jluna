@@ -1983,6 +1983,7 @@ A function-by-function run-down of thread-safety would be too expansive, so this
 + modifying a `Usertype` and implementing it is thread-safe
 + creating a generator expression is thread-safe
   - modifying the same generator expression is not
++ `unsafe::gc_preserve` and `unsafe::gc_release` are thread-safe
   
 Any other functionality should be assumed to **not** be thread-safe. Instead, users will be required to manually "lock" and object and manage concurrent interaction. The following sections will give an example on how to achieve this using `jluna::Mutex` or `Base.ReentrantLock`.
 
@@ -2122,7 +2123,7 @@ Lastly, a warning: Julia has a macro called `@threadcall`, which purports to sim
 
 > Waning: Misuse of this part of jluna can lead to exception-less crashes, data corruption and memory leaks. Only user who are confident and familiar with C-style programs with no safety-nets are encouraged to employ these functions
 
-So far, a lot of jlunas functionality was intentionally obfuscated to allow more novice users to use jluna in a way that is easy to understand and 100% safe. For some applications, however, the gloves need to come off. This section will detail how to surrender the most central of jlunas conceits: safety. In return, we get *optimal performance*, achieving overheads of only 0 - 5% compared to the C-API, while some functions are actually faster than that native C-API functions.
+So far, a lot of jlunas functionality was intentionally obfuscated to allow more novice users to use jluna in a way that is easy to understand and 100% safe. For some applications, however, the gloves need to come off. This section will detail how to surrender the most central of jlunas conceits: safety. In return, we get *optimal performance*, achieving overheads of 0 - 5% compared to the C-API, while some functions are actually faster than that native C-API functions.
 
 In line with the way this topic was pushed to the back of this manual, all of the not-safe functionality in jluna is inside the `jluna::unsafe` nested namespace.
 

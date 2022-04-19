@@ -12,12 +12,13 @@ namespace jluna
     {
         static jl_function_t* assign_in_module = unsafe::get_function("jluna"_sym, "assign_in_module"_sym);
 
-        _lock.lock();
+        initialize_lock();
+        _lock->lock();
         gc_pause;
         jluna::safe_call(assign_in_module, value(), jl_symbol(variable_name.c_str()), box(new_value));
         auto out = this->operator[](variable_name);
         gc_unpause;
-        _lock.unlock();
+        _lock->unlock();
         return out;
     }
 
@@ -26,21 +27,24 @@ namespace jluna
     {
         static jl_function_t* assign_in_module = unsafe::get_function("jluna"_sym, "create_or_assign_in_module"_sym);
 
-        _lock.lock();
+        initialize_lock();
+        _lock->lock();
         gc_pause;
         jluna::safe_call(assign_in_module, this->value(), jl_symbol(variable_name.c_str()), box<T>(new_value));
         auto out = this->operator[](variable_name);
         gc_unpause;
-        _lock.unlock();
+        _lock->unlock();
         return out;
     }
     
     inline Proxy Module::new_undef(const std::string& name)
     {
         static auto* undef_t = (unsafe::DataType*) jl_eval_string("return UndefInitializer");
-        _lock.lock();
+
+        initialize_lock();
+        _lock->lock();
         auto out = create_or_assign(name, jl_new_struct(undef_t));
-        _lock.unlock();
+        _lock->unlock();
         return out;
     }
 
@@ -173,9 +177,10 @@ namespace jluna
             (add(dims, ++i), ...);
         }
 
-        _lock.lock();
+        initialize_lock();
+        _lock->lock();
         jluna::safe_eval(str.str());
-        _lock.unlock();
+        _lock->unlock();
         return Main[name];
     }
 

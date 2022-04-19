@@ -18,60 +18,39 @@ struct NonJuliaType
 };
 set_usertype_enabled(NonJuliaType);
 
-Int64 add(Int64 a, Int64 b)
-{
-    return a + b;
-}
-
-struct NonJuliaObject
-{
-    Int64 _value;
-
-    NonJuliaObject(Int64 in)
-        : _value(in)
-    {}
-
-    void double_value(size_t n)
-    {
-        for (size_t i = 0; i < n; ++i)
-            _value = 2 * _value;
-    }
-};
-
-namespace jluna
-{
-    struct RGBA
-    {
-        float _red;
-        float _green;
-        float _blue;
-        float _alpha;
-
-        RGBA(float r, float g, float b)
-            : _red(r), _green(g), _blue(b), _alpha(1)
-        {}
-
-        RGBA()
-            : _red(0), _green(0), _blue(0), _alpha(1)
-        {}
-    };
-}
-set_usertype_enabled(RGBA);
 
 int main()
 {
     jluna::initialize(8);
 
-Main.safe_eval("jl_var = [7, 7, 7]");
-auto named_proxy = Main["jl_var"];
-auto unnamed_proxy = Main.safe_eval("return jl_var");
+    Test::test("jluna::Mutex", [](){
 
-std::cout << "named  : " << named_proxy.get_name() << std::endl;
-std::cout << "unnamed: " << unnamed_proxy.get_name() << std::endl;
+        auto mutex = jluna::Mutex();
 
-std::cout << "named  : " << named_proxy.is_mutating() << std::endl;
-std::cout << "unnamed: " << unnamed_proxy.is_mutating() << std::endl;
+        Test::assert_that(not mutex.is_locked());
+        mutex.lock();
+        Test::assert_that(mutex.is_locked());
+        mutex.unlock();
+        Test::assert_that(not mutex.is_locked());
+    });
+
+    Test::test("Task", [](){
+
+        auto& task = ThreadPool::create<size_t>([]() -> size_t {
+            return 4;
+        });
+
+        Test::assert_that(not task.is_running());
+        task.schedule();
+        task.join();
+        Test::assert_that(task.is_done());
+
+        Test::assert_that(task.result().get().value() == 4);
+    });
+
+    Test::conclude();
     return 0;
+
 
     Test::test("unsafe: gc", []() {
 

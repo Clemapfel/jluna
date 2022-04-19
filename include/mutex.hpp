@@ -26,6 +26,10 @@ namespace jluna
             /// @brief lock if possible, otherwise return and continue
             void try_lock();
 
+            /// @brief is locked
+            /// @returns bool
+            bool is_locked() const;
+
             /// @brief get julia-side Base.ReentrantLock
             operator unsafe::Value*();
 

@@ -61,6 +61,13 @@ extern "C"
         {
             return (void*) in;
         }
+
+        size_t invoke_from_task(size_t function_ptr)
+        {
+            return reinterpret_cast<size_t>(
+                (*reinterpret_cast<std::function<unsafe::Value*()>*>(function_ptr))()
+            );
+        }
     }
 }
 

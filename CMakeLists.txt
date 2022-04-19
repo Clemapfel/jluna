@@ -125,6 +125,9 @@ add_library(jluna SHARED
 
     include/multi_threading.hpp
     .src/multi_threading.inl
+
+    include/mutex.hpp
+    .src/mutex.cpp
 )
 
 target_compile_features(jluna PUBLIC cxx_std_20)

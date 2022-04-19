@@ -28,6 +28,9 @@ namespace jluna
             /// @param proxy
             Module(Proxy*);
 
+            /// @brief dtor
+            ~Module();
+
             /// @brief decay to C-type
             operator jl_module_t*();
 
@@ -275,7 +278,9 @@ namespace jluna
 
         private:
             jl_module_t* value() const;
-            Mutex _lock;
+
+            void initialize_lock();
+            Mutex* _lock;
     };
 
     /// @brief Proxy of singleton Main, initialized by State::initialize

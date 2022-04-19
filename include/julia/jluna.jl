@@ -355,6 +355,13 @@ module jluna
     end
 
     """
+    `new_lock() -> Base.ReentrantLock`
+    """
+    function new_lock()
+        return Base.ReentrantLock();
+    end
+
+    """
     offers julia-side memory management for C++ jluna
     """
     module memory_handler
@@ -671,6 +678,17 @@ module jluna
                     ": wrong number of arguments. expected " * string(N) * ", got " * string(n) * "."
                    *  (n <= 3 ? "" : "\n\nTo create a C++-function that can take n > 3 arguments, simply make a 1-argument function with the only argument being an n-sized tuple or collection.")
                 ))
+            end
+        end
+
+
+        """
+        `make_task(::UInt64) -> Task`
+        """
+        function make_task(ptr::UInt64)
+            return Task() do;
+                res_ptr = ccall((:invoke_from_task, _c_adapter_path), Csize_t, (Csize_t,), ptr);
+                return unsafe_pointer_to_objref(Ptr{Any}(res_ptr))
             end
         end
     end

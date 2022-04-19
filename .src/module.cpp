@@ -10,15 +10,21 @@
 namespace jluna
 {
     Module::Module(jl_module_t* value)
-        : Proxy((unsafe::Value*) value, value->name), _mutex()
+        : Proxy((unsafe::Value*) value, value->name), _lock(nullptr)
     {
         detail::assert_type((unsafe::DataType*) jl_typeof((unsafe::Value*) value), jl_module_type);
     }
 
     Module::Module(Proxy* owner)
-        : Proxy(*owner), _mutex()
+        : Proxy(*owner), _lock(nullptr)
     {
         detail::assert_type((unsafe::DataType*) jl_typeof(owner->operator unsafe::Value*()), jl_module_type);
+    }
+
+    Module::~Module()
+    {
+        if (_lock != nullptr)
+            delete _lock;
     }
 
     jl_module_t * Module::value() const
@@ -60,5 +66,11 @@ namespace jluna
     Symbol Module::get_symbol() const
     {
         return Symbol(value()->name);
+    }
+
+    void Module::initialize_lock()
+    {
+        if (_lock == nullptr)
+            _lock = new Mutex();
     }
 }

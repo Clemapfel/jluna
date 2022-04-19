@@ -59,7 +59,7 @@ namespace jluna
     }
 
     template<typename T>
-    void Usertype<T>::implement(Module module)
+    void Usertype<T>::implement(unsafe::Module* module)
     {
         if (_name.get() == nullptr)
             initialize();
