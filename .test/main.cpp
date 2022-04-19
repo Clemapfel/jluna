@@ -23,6 +23,8 @@ int main()
 {
     jluna::initialize(8);
 
+    auto all = []() {
+
     Test::test("jluna::Mutex", [](){
 
         auto mutex = jluna::Mutex();
@@ -1339,8 +1341,22 @@ int main()
         Test::assert_that(backres01._field.size() == backres02._field.size());
         gc_unpause;
     });
+    };
+
+    /*
+    std::vector<std::reference_wrapper<jluna::Task<void>>> tasks;
+
+    for (size_t i = 0; i < 8; ++i)
+        tasks.emplace_back(ThreadPool::create<void>(all));
+
+    for (auto& t : tasks)
+        t.get().schedule();
+
+    for (auto& t : tasks)
+        t.get().join();
 
     Test::conclude();
+     */
 }
 
 

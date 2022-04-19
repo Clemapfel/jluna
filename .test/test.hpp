@@ -16,6 +16,7 @@ namespace jluna::detail
     struct Test
     {
         static inline std::map<std::string, std::string> _failed = {};
+        static inline std::mutex _mutex = std::mutex();
 
         class AssertionException : public std::exception
         {
@@ -66,7 +67,9 @@ namespace jluna::detail
             else
             {
                 std::cout << "[FAILED]";
+                _mutex.lock();
                 Test::_failed.insert({name, what});
+                _mutex.unlock();
             }
 
             std::cout << std::endl;

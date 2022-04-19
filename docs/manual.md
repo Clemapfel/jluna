@@ -1,14 +1,14 @@
 # jluna: Manual & Tutorial
 
-This manual will go over all of jlunas features and how to use them. It is structured in a way that ramps up in complexity, starting with basic things like calling functions and basic interaction between the C++ and Julia state and ending with multi-threading and performance optimization.
+This manual will cover most of jlunas features, how to use them and what to use them for. It is structured in a way that ramps up in complexity, starting with how to accomplish basic things like calling functions, basic interaction between the C++ and Julia state, more specialized applications like the array and module interface, how to deal with usertypes, then ending with multi-threaded applications and performance optimization.
 
 It is recommend that you read this manual in order, an interactive table of contents is provided for easy access.
 
-This manual assumes that all users are familiar with the basics of Julia. If this is not the case, it may be necessary to first work through the excellent [official manual](https://docs.julialang.org/en/v1/) to, at least, get an overview of Julias syntax and structure.
+This manual assumes that all users are familiar with the basics of Julia. If this is not the case, it may be necessary to first work through the excellent [official manual](https://docs.julialang.org/en/v1/) to at least get an overview of Julias syntax and structure.
 
-jluna makes extensive use of newer C++20 features and high-level techniques such as [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) and template meta functions. This may provide a barrier of entry to users less familiar with the intricacies of the language. To address this, hints in the form of qutation blocks are provided where necessary:
+jluna makes extensive use of newer C++20 features and high-level techniques such as [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) and template meta functions. This may provide a barrier of entry to users less familiar with the intricacies of the language. To address this, hints in the form of quotation blocks are provided where necessary:
 
-> **Hint**: Quotation blocks like these are reserved for additional information or explanations of C++ and/or Julia features only. Users who consider themself very familiar with both, can safely skip them. 
+> **Hint**: Quotation blocks like these are reserved for additional information or explanations of C++ and/or Julia features. Users who consider themself very familiar with both, can safely skip them. 
 
 ---
 
@@ -18,13 +18,15 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
 
 ### Installation
 
-This manual does not go over how download and build jluna. Instead, a step-by-step tutorial on how to install and create our own application using jluna, is available [here](./installation.md).
+This manual does not go over how download and build jluna. Instead, a step-by-step tutorial on how to install and create a C++ application using jluna from scratch is available [here](./installation.md).
 
 ---
 
 ### Initializating the Julia State
 
-Before any Julia or jluna functionality can be accessed, we need to *initialize the Julia state*. This sets up the Julia environment and loads most of jlunas functionalities. 
+Before any Julia or jluna functionality can be accessed, we need to initialize the Julia state. This sets up the Julia environment and loads most of jlunas functionalities. 
+
+A basic `main.cpp` will have the following structure:
 
 ```cpp
 // main.cpp
@@ -41,9 +43,11 @@ int main()
     return 0;
 }
 ```
-> **C++ Hint**: `using namespace jluna` makes it, such that in the scope the statement was declared, we do not have to prefix all jluna functions/object with their namespace `jluna::`. This is why we can write `initialize()`, instead of `jluna::initialize()`.
+> **C++ Hint**: `using namespace jluna` makes it, such that, in the scope the statement was declared, we do not have to prefix jluna functions/object with their namespace `jluna::`. This is why we can write `initialize()`, instead of `jluna::initialize()`.
 
-Where `#include <jluna.hpp>` makes all of jlunas functionality available to the user, and `jluna::initialize` should be executed during the programs runtime as early as possible.
+Where `#include <jluna.hpp>` makes all of jlunas functionality available to the user. 
+
+Note that you should never call the C-APIs `jl_atexit_hook`. At the end of runtime, jluna safely closes the Julia state automatically.
 
 ---
 
@@ -62,7 +66,7 @@ hello jluna
 
 Where `Main` is a pre-defined jluna object representing the `Main` module. 
 
-The function is called *safe*_eval, because it forwards any exceptions that may have occurred during execution of the string, throwing a `jluna::JuliaException`:
+The function is called **safe**_eval, because it forwards any exceptions that may have occurred during execution of the string as a `jluna::JuliaException`:
 
 ```cpp
 Main.safe_eval("sqrt(-1)");
@@ -105,11 +109,11 @@ Allocations: 1612085 (Pool: 1611171; Big: 914); GC: 2
 Process finished with exit code 134 (interrupted by signal 6: SIGABRT)
 ```
 
-Along with the exception, we also get the full stacktrace and line of code where the exception occurred. 
+Along with the exception, we also get the full Julia- and C++-side stacktrace. 
 
 #### Executing a File
 
-We can execute an entire file with `safe_eval_file`. This function calls the Julia-side function `Main.include`, using the path we provided:
+We can execute an entire file using `safe_eval_file`. This function calls the Julia-side function `Main.include`, using the path we provided:
 
 ```cpp
 Main.safe_eval_file("path/to/julia_file.jl");
@@ -117,7 +121,7 @@ Main.safe_eval_file("path/to/julia_file.jl");
 
 #### Executing Multiple Lines of Code
 
-If we want to execute more than just a single line, or if we want any special characters to be escaped automatically: *C++s raw string literal* is easy to remember and convenient:
+If we want to execute more than just a single line, or, if we want any special characters to be escaped automatically, C++s **raw string literal** conveniently accomplished this:
 
 ```cpp
 Main.safe_eval_file(R"(
@@ -129,12 +133,12 @@ Main.safe_eval_file(R"(
 first line
 second line
 ```
-> **C++ Hint**: Any characters in the text in-between the `R"(` `)"` are automatically escaped (if necessary). Without `R"()"`, we would have to write the above as `println(\"first line\");\nprintln(\"second line\");`
+> **C++ Hint**: Any characters in the text in-between the `R"(` `)"` are automatically escaped (if necessary). Without `R"()"`, we would have to write the above as `"println(\"first line\");\nprintln(\"second line\")";`
 
 
 ### Getting the Result of Julia Code
 
-Often, we want to access whatever result a piece of code returns. To do this, we simply capture the C++-side return value of `safe_eval` using a C++-side variable:
+Often, we want to access whatever result a piece of code returns. To do this in jluna, we capture the C++-side return value of `safe_eval` using a C++-side variable:
 
 ```cpp
 Int64 result = Main.safe_eval("return 1234");
@@ -149,9 +153,11 @@ Where `Int64` is a type alias of `long int`. Most of the C++ primitive types hav
 
 While the general case will be explained later, for now, be aware that **we have to manually specify the type** of the C++-side variable that captures the result, rather than using `auto`. 
 
-If the result of a Julia-side expression is of a different type than the declared C++-side variable, jluna will try to convert the result such that both types match:
+> **C++ Hint**: `auto` is a keyword that asks the compiler to automatically deduce the type of a variable at compile time.
 
-```
+If the result of a Julia-side expression is of a different type than the declared C++-side variable, jluna will try to convert the result of the Julia-side expression, such that it matches the C++-side type:
+
+```cpp
 UInt64 result = Main.safe_eval("return Char(14)");
 std::cout << result << std::endl;
 ```
@@ -163,7 +169,7 @@ In general, if the Julia-side value can be `Base.convert`ed to the declared C++-
 
 ### Executing Julia Code in Module Scope
 
-So far, we have used `Main.safe_eval`, which evaluates its argument in `Main` scope, similarly to how any code entered into the REPL would be evaluated. Sometimes this may not be desired. Consider the following example:
+So far, we have used `Main.safe_eval`, which evaluates its argument in `Main` scope, similarly to how any code entered into the REPL would be evaluated. Sometimes, this may not be desired. Consider the following example:
 
 ```cpp
 Main.safe_eval(R"(
@@ -178,12 +184,15 @@ Main.safe_eval("println(MyModule.var)");
 1234
 ```
 
-What happened here? Instead of assigning the variable `MyModule.var`, we actually created a new variable `Main.var`, instead. This is because the line `var = 9999` was executed *in Main scope* (the function `Main.eval` was used Julia-side). 
+What happened here? Instead of assigning the variable `MyModule.var`, we actually created a new variable `Main.var` and assigned it instead. This is because the line `var = 9999` was executed **in Main scope**, that is, the function `Main.eval` was used Julia-side to evaluated the expression. 
 
-To avoid this, we could just prefix `var` with the proper `MyModule.var`, however this may not always be the most convenient. If we want to modify multiple things in `MyModule` scope, we can instead do:
+To avoid this, we can instead do:
 
 ```cpp
+// access MyModule as jluna::Module
 Module my_module = Main.safe_eval("return MyModule");
+
+// use its safe_eval instead of Mains
 my_module.safe_eval("var = 777");
 
 Main.safe_eval("println(MyModule.var)");
@@ -196,11 +205,12 @@ Where we have explicitly declared the C++-side variable `my_module` to be of typ
 
 ### Calling Julia Functions
 
-While executing code using `safe_eval` is convenient, it has a significant performance impact. This is, because Julia needs to first `Meta.parse` the string, then evaluate the resulting expression.
+While executing code using `safe_eval` is convenient, it has a significant performance impact. This is, because Julia needs to first `Meta.parse` the string we hand it, then evaluate the resulting expression.
 
-> **Julia hint**: Meta.parse takes a string and treats it as a line of code. It returns an object of type `Expr`, which can then be `eval`ed into actual machine code. To learn more about expressions, see the [official manual page about metaprogramming](https://docs.julialang.org/en/v1/manual/metaprogramming/)
 
-Instead, users are encouraged to execute any given piece of Julia code by using a *function*. We can get a function (once) by using `save_eval("return function_name")`, then use that function over and over, at no performance cost compared to using pure Julia:
+> **Julia Hint**: `Meta.parse` takes a string and treats it as a line of code. It returns an object of type `Expr`, which can then be `eval`ed and compiled. To learn more about expressions, see the [official manual page on metaprogramming](https://docs.julialang.org/en/v1/manual/metaprogramming/)
+
+Instead, users are encouraged to execute any given piece of Julia code by using a **function**. We are able to access a function (once) by using `save_eval("return function_name")`, then use that function over and over, at no performance cost compared to using only Julia:
 
 ```cpp
 Main.safe_eval("f(x) = x^x");
@@ -212,7 +222,7 @@ std::cout << result << std::endl;
 8916100448256
 ```
 
-Where we now used `auto` as `f`s type.
+Where we now used `auto` as `f`s type. We will learn why this is necessary in the [section on proxies](#proxies).
 
 Calling functions using `()` is `safe`, meaning any exception is forwarded to C++, just like with `safe_eval`:
 
@@ -279,7 +289,7 @@ We learned how to access a named variable in a module by using `jluna::Module::o
 
 Let's say we have the following structtype:
 
-> **Julia hint**: A structtype is any type declared using `struct` or `mutable struct`
+> **Julia Hint**: A structtype is any type declared using `struct` or `mutable struct`
 
 ```cpp
 Main.safe_eval(R"(
@@ -292,8 +302,8 @@ Main.safe_eval(R"(
 auto cpp_instance = Main["jl_instance"];
 ```
 
-Here, we defined a new structtype `MyStruct`, which has a single field `_field`. We then created a Julia-side variable, `jl_instance`, which we bound a newly constructed `MyStruct` to. 
-To access the Julia-side `jl_instance`, we used `Main["jl_instance"]`, which we were allowed to use since `jl_instance` is a proper named variable.
+Here, we defined a new structtype `MyStruct`, which has a single field `_field`. We then created a Julia-side variable, `jl_instance`, to which we bound a newly constructed `MyStruct`. 
+To access the Julia-side `jl_instance`, we used `Main["jl_instance"]`, which we were allowed to use, since `jl_instance` is a proper named variable.
 
 We can access the field of `cpp_instance` like so:
 
@@ -305,11 +315,11 @@ std::cout << field_value << std::endl;
 9876
 ```
 
-Note again how we manually declared the type of the C++-side variable `field_value`. We did not use `auto`.
+Note again, how we manually declared the type of the C++-side variable `field_value` to be `Int64`. We did not use `auto`.
 
 ### Mutating Julia-side Values
 
-We can use `operator[]` to access Julia-side values, be it variables in a module or fields of a structtype. However, we can actually also *mutate* them:
+We can use `operator[]` to access Julia-side values, be it variables in a module or fields of a structtype. However, we can actually also **mutate** the variable itself:
 
 > **Hint**: To mutate a variable means to change its value without changing its name
 
@@ -359,11 +369,11 @@ std::cout << static_cast<Int64>(instance_field) << std::endl;
 > ```cpp
 > Int64 value = instance_field;
 > ```
-> In the latter example, `static_cast` (and thus the conversion operator) was implicitely called. This means we have already been using `static_cast` in the previous sections, be it implicitly.
+> In the latter example, `static_cast` (and thus the conversion operator) was implicitely called. This means we have already been using `static_cast` in the previous sections, just implicitly.
 > 
-> See the [official manual](https://en.cppreference.com/w/cpp/language/static_cast) for more information.
+> See the [C++ manual](https://en.cppreference.com/w/cpp/language/static_cast) for more information.
 
-The C++-variable `instance_field` directly refers to the Julia-side variable `Main.jl_instance._field` (recall the `MyStruct` is mutable). Because of this, **if we mutate the C++-side variable, we will also mutate the corresponding Julia-side variable**:
+The C++-variable `instance_field` directly refers to the Julia-side variable `Main.jl_instance._field` (recall that `MyStruct` is mutable). Because of this, **if we mutate the C++-side variable, we will also mutate the corresponding Julia-side variable**:
 
 ```cpp
 auto instance = Main["jl_instance"];
@@ -382,6 +392,8 @@ Or, in just one line:
 Main["jl_instance"]["_field"] = 1234;
 ```
 
+Which is highly convenient.
+
 #### Mutating Variables using `operator[](size_t)`
 
 Accessing and assigning the result of `operator[]` like this works for variables in Modules, fields of structs and even elements of collections:
@@ -395,7 +407,11 @@ Main.safe_eval("println(vec_var)");
 [9999, 2, 3, 4]
 ```
 
-> **Hint**: In C++, indices are 0-based. In Julia, they are 1-based. This can be quite confusing considering we are operating in both languages at the same time. See the [section on arrays]() for more information
+Where the Julia-side `vec_var` is a `Base.Array`.
+
+> **Hint**: In C++, indices are 0-based. In Julia, they are 1-based. This can be quite confusing considering we are operating in both languages at the same time. For now, using `operator[]` on a C++-side object requires indices to be 0-based. 
+>
+> See the [section on arrays]() for more information
 
 ---
 
@@ -408,31 +424,48 @@ jluna::safe_eval("new_var = 1234");
 auto new_var = Main["new_var"];
 ```
 
-Indeed, `new_var` is not an integer, it is a `jluna::Proxy`. To fully understand how it works, we first need to discuss how/if memory is shared between the C++ and Julia state.
+Indeed, `new_var` is not an integer, it is deduced to be a `jluna::Proxy`. To fully understand how this class works, we first need to discuss how / if memory is shared between the C++ and Julia state.
 
 ### Shared & Separate Memory
 
-By default, most memory allocated C++-side is incompatible with Julia. For example, a C++-side variable of type `char` is an 8-bit number, while a Julia-side `Char` has 32 bit. For more complex classes such as `std::set` compared to `Base.set`, the memory is even more different.
+By default, most memory allocated C++-side is incompatible with Julia. For example, a C++-side variable of type `char` is an 8-bit number, while a Julia-side `Char` has 32 bits. If we were to directly exchange memory between states, the value of the char would be corrupted. For more complex classes, for example comparing `std::set` to `Base.set`, the memory layout is even more different and directly sharing memoy is impossible.
 
-Because of this, it is best to assume that we have to first reformat and C++ memory before moving it Julia-side. In jluna, the inverse is not true, however. We do not have to reformat Julia-side memory to interact with it C++-side. This is possible because of `jluna::Proxy`
+Because of this, it is best to assume that we have to first **reformat** any C++-side memory before moving it Julia-side. 
 
-`jluna::Proxy` is a proxy of arbitrary Julia-side memory. Internally, it simply holds a pointer to whatever memory it is managing. Copying the proxy copies this pointer, not the Julia-side memory. Moving the proxy does not affect the Julia-side memory. Instead, we use a proxies member functions to interact with the Julia-side memory.
+In jluna, the **inverse is not true**. We do not have to reformat Julia-side memory to interact with it C++-side, which is the entire purpose of the library. This is made possible through `jluna::Proxy`.
+
+`jluna::Proxy` is a proxy, or stand-in, of arbitrary Julia-side memory. Internally, it simply holds a pointer to whatever memory it is managing. Copying the proxy copies this pointer, not the Julia-side memory. Moving the proxy does not affect the Julia-side memory. If we want to actually change the Julia-side memory being managed, we use the proxies member functions.
 
 ### Constructing a Proxy
 
-We rarely construct proxies from raw pointers (see the [section on `unsafe` usage](#unsafe)), instead a proxy will be the return value of a member function of another proxy. How can we make a proxy if we need a proxy, you may ask. As seen before, jluna offers pre-initialized proxies for `Main`, `Base` and `Core`. We will limit ourself to `Main` for this section.
+We rarely construct proxies from raw pointers (see the [section on `unsafe` usage](#unsafe)), instead, a proxy will be the return value of a member function of another proxy.
 
-To create a proxy from a value, we use `Main.safe_eval("return x")`, where x is a value:
+How can we make a proxy if we need a proxy to do so? As we've seen before, jluna offers pre-initialized proxies for `Main`, `Base` and `Core`. We will limit ourself to `Main` for this section. We can use these proxies to generate new proxies for us.
+
+To create a proxy from a value, we use `Main.safe_eval("return x")`, where x is a value or a variable (though only the value of that variable will be returned):
 
 ```cpp
 auto proxy = Main.safe_eval("return 1234");
 ```
 
-Here, `x` is `1234`, however it can be an arbitrary Julia type. 
+To reiterate, the resulting proxy, `proxy`, **does not contain the Julia-side value `1234`**. It only keeps a pointer to wherever `1234` is allocated.
 
-Here, `proxy` does not contain the Julia-side value `1234`. All it does it keep a pointer to whatever memory `1234` is allocated in. As long as `proxy` stays in scope, `1234` cannot be deallocated by the garbage collector, despite there not being any Julia-side reference to it.
+We can actually check the the pointer using `static_cast<unsafe::Value*>`, where `unsafe::Value*` is a raw pointer to arbitrary Julia-side memory:
 
-Because `proxy` points to Julia-side memory, we can use it with Julia-side functions:
+```cpp
+std::cout << static_cast<unsafe::Value*>(proxy) << std::endl;
+```
+```
+0x7f3a9e5cd8d0
+```
+
+(this pointer will, of course, be different anytime `1234` is allocated)
+
+As long as `proxy` stays in scope, `1234` cannot be deallocated by the garbage collector. This is, despite the fact that there is no Julia-side reference to it.
+
+> **Julia Hint**: In pure Julia, any value that is not the value of a named variable, inside a collection or reference by a `Base:Ref` is free to be garabge collected at any point. `jluna::Proxy` pevents this
+
+Not only does `proxy` point to Julia-side memory, it behaves exactly like it when used with Julia-side functions:
 
 ```cpp
 Base["println"](Base["^"](proxy, 2));
@@ -441,13 +474,16 @@ Base["println"](Base["^"](proxy, 2));
 1522756
 ```
 
-Here we're using the Julia-side function `Base.println` to print the result of the entirely Julia-side computed `(^)`.
+Here we're using the Julia-side function `Base.println` to print the result of the entirely Julia-side computed `(^)`. 
 
-> **Julia Hint**: In julia, an infix operator that has the symbol `x`, has the function definition `(x) = # ...`. The braces signal to Julia that whatever symbol is in-between them is an infix operator. Only certain characters can be used as infix operator, see [here](https://discourse.julialang.org/t/is-not-an-operator/20221/2)
+> **Julia Hint**: In Julia, an infix operator that has the symbol `x`, has the function definition `(x) = # ...`. The braces signal to Julia that whatever symbol is in-between them is an infix operator. Only certain characters can be used as infix operators, see [here](https://discourse.julialang.org/t/is-not-an-operator/20221/2)
+
+No memory was moved during this call. We called a Julia-function (`println` and `(^)`) with a Julia-side value `1234`. Other than having to access the proxies in the first place, the actual computation is exactly the same as if it was done in only Julia.
+
 
 ### Updating a Proxy
 
-The most central feature of jluna is that of updating a proxy. We can assign a proxy a C++-side value, which will make jluna move that value Julia-side:
+The most central feature of jluna is that of **updating** a proxy. If we assign a proxy a C++-side value, it will move this value Julia-side, then set its pointer to that newly allocated memory:
 
 ```cpp
 auto proxy = Main.safe_eval("return [1, 2, 3]");
@@ -461,9 +497,11 @@ Base["println"](Base["typeof"](proxy));
 Base["println"](Base["typeof"](proxy));
 ```
 
-`proxy`, here, is not pointing to the C++-side vector. Instead, jluna has implicitly converted the C++-side `std::vector<Int64>` to a Julia-side `Base.Vector{Int64}`. jluna has even accurately deduced the type of the resulting vector, based on the type fo the C++-side vector. 
+Our proxy, `proxy`, here, is not pointing to the C++-side vector. jluna has implicitly converted the C++-side `std::vector<Int64>` to a Julia-side `Base.Vector{Int64}`. It has even accurately deduced the type of the resulting vector, based on the type and value-type of the C++-side vector.
 
-What about the other way around? Recall that `proxy` is now pointing to a Julia-side `Int64[4, 5, 6]`. We can do the following:
+> **Hint**: Let `std::vector<T> x`, then `x`s type is `std::vector<T>`, `x`s value-type is `T`
+
+What about the other way around? Recall that `proxy` is now pointing to a Julia-side `Int64[4, 5, 6]`. We can actually do the following:
 
 ```cpp
 std::vector<UInt64> cpp_vector = proxy;
@@ -473,27 +511,41 @@ for (UInt64 i : cpp_vector)
 ```
 4 5 6 
 ```
+We have used the proxy as the right-hand side of an assignment. During execution, jluna has moved the Julia-side value `proxy` is pointing to (`Int64[4, 5, 6]`) to C++, potentially converting its memory layout. 
 
-jluna has detected that we want the Julia-side `Int64[4, 5, 6]` to be converted to a C++-side `std::vector<UInt64>`. Note that we changed value types here, Julia-side it was `Int64` but C++-side it is now `UInt64`. This works, we can convert `Int64` to `UInt64` and jluna has done so implicitly.
+Note how we changed value-types, Julia-side the value type was `Int64`, C++-side it is `UInt64`. jluna has detected this and implicitly converted all elements of the Julia-side `Array` during assignment of the C++-side `std::vector`
 
-The process of moving a C++-side value to Julia is called **boxing**. We **box** a value by using it as the right-hand expression of a proxy-assignment:
+### Boxing & Unboxing
 
-> **C++ Hint**: An assignment is any line of code of the form `x = y`. A "proxy assignment" is therefore any expressiong where `x` is of type `jluna::Proxy
+> **C++ Hint**: An assignment is any line of code of the form `x = y`. `x` is called the "left-hand expression", `y` is called the right-hand expression, owning to their respective position relative to the `=`
+
+#### Boxing
+
+The process of moving a C++-side value to Julia is called **boxing**. We **box** a value by assigning it to a proxy , that is:
++ the proxy is left-hand expression of the assignment
++ the value to be boxed is the right-hand epression of the assignment 
+
 ```cpp
 <Type Here> value = // ...
 jluna::Proxy proxy = value;
 ```
+#### Unboxing
 
-The process of moving a Julia-side value to C++ is called **unboxing**. We **unbox** a value by using it as the right-hand expression of a proxy assignment:
+The process of moving a Julia-side value to C++ is called **unboxing**. We **unbox** a proxy (and thus a Julia-side value) by assigning it to a non-proxy, C++-side variable, that is:
 
-```
++ the C++-side variable is the left-hand expression of the assignment
++ the proxy is the right-hand expression of the assignment
+
+```cpp
 jluna::Proxy proxy = // ...
 <Type Here> value = proxy;
 ```
 
+These concepts are important to understand, as they are central to how to move values between the Julia- and C++-state.
+
 ### (Un)Boxable Types
 
-A type that can be boxed is called a **Boxable**. A type that can be unboxed is called **Unboxable**. jluna offers two concepts `is_boxable` and `is_unboxable` that represent these properties.
+Note all types can be boxed and/or unboxed. A type that can be boxed is called a **Boxable**. A type that can be unboxed is called **Unboxable**. jluna offers two concepts `is_boxable` and `is_unboxable` that represent these properties.
 
 > **C++ Hint**: A concept is a new feature of C++20. It is used like so:
 > ```cpp
@@ -504,15 +556,19 @@ A type that can be boxed is called a **Boxable**. A type that can be unboxed is 
 > template<is_boxable T>
 > void do_something(T value);
 > ```
-> Because we specified the template argument of `do_something` to be a `is_boxable`, C++ will evaluate this condition at compile-time. If we called `do_something` with a value that is not boxable, a compiler error will be raised.
+> Because we specified the template argument of `do_something` to be a `is_boxable`, at compile time, C++ will evaluate this condition for the template argument type. If `do_something` was called with a value of a type that is not boxable, a compiler error will be raised
 
-A type that is both boxable and unboxable will be called **(Un)Boxable**. This is an important conceptualization. We can only use Boxables as the right-hand expression of a proxy-assignment, and we can only use Unboxables as the left-hand expression of an assignment from a proxy. Furthermore, not all types are (Un)Boxable by default.
+A type that is both boxable and unboxable is called **(Un)Boxable**. This is an important conceptualization, because:
+
++ we can only use **Boxables** as the **right-hand expression** of a proxy-assignment
++ we can only use **Unboxables** as the **left-hand expression** of an assignment.
+  
+Of course, an (Un)Boable can be used on either side.
 
 Out-of-the-box, the following types are (Un)Boxable:
 
-
 ```cpp
-// cpp type              // Julia-side type after boxing
+// cpp type (unboxed)    // Julia-side type (boxed)
 bool                     <=> Bool
 char                     <=> Char
 int8_t                   <=> Int8
@@ -526,64 +582,65 @@ uint64_t                 <=> UInt64
 float                    <=> Float32
 double                   <=> Float64
         
-void                     <=> Nothing
 nullptr_t                <=> Nothing
+void*                    <=> Ptr{Cvoid}
 
 std::string              <=> String
 std::string              <=> Symbol
-std::complex<T>          <=> Complex{T}      *
-std::vector<T>           <=> Vector{T}       *
-std::array<T, R>         <=> Vector{T}       *
-std::pair<T, U>          <=> Pair{T, U}      *
-std::tuple<Ts...>        <=> Tuple{Ts...}    *
-std::map<T, U>           <=> Dict{T, U}      *
-std::unordered_map<T, U> <=> Dict{T, U}      *
-std::set<T>              <=> Set{T, U}       *
+std::complex<T>          <=> Complex{T}    //[1]
+std::vector<T>           <=> Vector{T}     //[1]
+std::array<T, R>         <=> Vector{T}     //[1]
+std::pair<T, U>          <=> Pair{T, U}    //[1]
+std::tuple<Ts...>        <=> Tuple{Ts...}  //[1]
+std::map<T, U>           <=> Dict{T, U}    //[1]
+std::unordered_map<T, U> <=> Dict{T, U}    //[1]
+std::set<T>              <=> Set{T, U}     //[1]
 
 jluna::Proxy             <=> /* value-type deduced during runtime */
 jluna::Symbol            <=> Symbol
 jluna::Type              <=> Type
-jluna::Array<T, R>       <=> Array{T, R}     * °
-jluna::Vector<T>         <=> Vector{T}       *
+jluna::Array<T, R>       <=> Array{T, R}   //[1][2]
+jluna::Vector<T>         <=> Vector{T}     //[1]
 jluna::JuliaException    <=> Exception
 
-* where T, U are also (Un)Boxable
-° where R is the rank of the array
+// [1] where T, U are also (Un)Boxable
+// [2] where R is the rank of the array
         
-std::function<TR()>          <=> jluna.UnnamedFunction{0} *
-std::function<TR(T1)>        <=> jluna.UnnamedFunction{1} *
-std::function<TR(T1, T2)>    <=> jluna.UnnamedFunction{2} *
-std::function<TR(T1, T2, T3  <=> jluna.UnnamedFunction{3} *
+std::function<TR()>           <=> jluna.UnnamedFunction{0} //[3]
+std::function<TR(T1)>         <=> jluna.UnnamedFunction{1} //[3]
+std::function<TR(T1, T2)>     <=> jluna.UnnamedFunction{2} //[3]
+std::function<TR(T1, T2, T3)> <=> jluna.UnnamedFunction{3} //[3]
         
-* where TR, T1, T2, T3 are also (Un)Boxable     
+// [3] where TR, T1, T2, T3 are also (Un)Boxable     
 
-Usertype<T>::original_type   <=> T °
+Usertype<T>::original_type   <=> T //[4]
         
-° where T is an arbitrary C++ type
+// [4] where T is an arbitrary C++ type
 
 unsafe::Value*          <=> /* value-type deduced during runtime */
 unsafe::Module*         <=> Module
 unsafe::Function*       <=> /* value-type deduced during runtime */
 unsafe::Symbol*         <=> Symbol
 unsafe::Expression*     <=> Expr
-unsafe::Array*          <=> Array<T, R> °
+unsafe::Array*          <=> Array<T, R> //[5][6]
 unsafe::DataType*       <=> Type
         
-° where T is an arbitrary Julia type, R an Integer
+// [5] where T is an arbitrary Julia type
+// [6] where R is the rank of the array
 ```
 
-There are a lot of things on this list that we have not discussed, so it is recommended to come back to it as we progress through this manual.
+There are a lot of things on this list that we have not discussed yet. It was considered important to have an exhaustive list at this point, as it will be valuable when referencing back to this section.
 
-Most notably, most relevant `std::` types are supported out-of-the-box, they work immediately, meaning we can unbox a `Base.Set{T}` to a `std::set<T>`, box a `std::unordered_map<T, U>` to a `Base.Dict{T, U}`, etc. This is one of jlunas most valuable features, the Julia C-API only allows for boxing/unboxing of primitives.
+Most relevant `std::` types are supported out-of-the-box. All jluna types that reference Julia-side objects can be unboxed into their corresponding Julia-side value.
 
 ### Named & Unnamed Proxies
 
-We've seen before that we mutate Julia-side variable with proxies. To understand how this works, we need to be aware of the fact that there are two types of proxies in jluna: **named** and **unnamed**.
+We've seen before that we can mutate Julia-side variable with proxies. To understand how this works, we need to be aware of the fact that there are two types of proxies in jluna: **named** and **unnamed**.
 
 + A **unnamed proxy** manages a Julia-side **value**
 + A **named proxy** manages a Julia-side **variable**
 
-Here, "manage" means that the proxy keeps the thing it is managing save from the GC and that if the proxy is mutated, the thing being managed is also mutated.
+Here, "manage" means that, whatever the proxy points to is safe from the garabge collector, and, when the proxy is mutated, the thing being managed is mutated at the same time.
 
 #### Unnamed Proxies
 
@@ -604,17 +661,26 @@ That value will be boxed and move to Julia, after which the proxy will point to 
 If we have a Julia-side variable `jl_var`:
 
 ```cpp
+// declare variable
 Main.safe_eval("jl_var = [7, 7, 7]");
+
+// construct proxy
 auto unnamed_proxy = Main.safe_eval("return jl_var");
 ```
 
-Then using `Main.safe_eval("return` will **forward its value** to the unnamed proxy. If we modify the unnamed proxy again, the variable will not be modified:
+Then using `Main.safe_eval("return` will **only forward its value** to the unnamed proxy. If we modify the unnamed proxy again, the variable will not be modified:
 
 ```cpp
+// delcare variable
 Main.safe_eval("jl_var = [7, 7, 7]");
+
+// forward value to proxy
 auto unnamed_proxy = Main.safe_eval("return jl_var");
+
+// reassign proxy
 unnamed_proxy = 1234;
 
+// print
 Base["println"]("cpp: ", unnamed_proxy);
 Main.safe_eval(R"(println("jl : ", jl_var))");
 ```
@@ -623,22 +689,33 @@ cpp: 1234
 jl : [7, 7, 7]
 ```
 
+The proxy has changed the value it is pointing to, the value of `jl_var` remained unchanged.
+
 ### Named Proxy
 
-A named proxy behaves differently, firstly, we construct it using `operator[]`:
+We construct a named proxy using `operator[]`:
 
-```
+```cpp
+// declare variable
 Main.safe_eval("jl_var = [7, 7, 7]");
+
+// construct proxy
 auto named_proxy = Main["jl_var"];
 ```
 
 This proxy behaves exactly the same as an unnamed proxy, except **when the named proxy is mutated, it will mutate the corresponding Julia-side variable**:
 
 ```cpp
+// declare variable
 Main.safe_eval("jl_var = [7, 7, 7]");
-auto named_proxy = Main.safe_eval("return jl_var");
+
+// construct proxy
+auto named_proxy = Main["jl_var"];
+
+// reassign proxy
 named_proxy = 1234;
 
+// print
 Base["println"]("cpp: ", unnamed_proxy);
 Main.safe_eval(R"(println("jl : ", jl_var))");
 ```
@@ -647,13 +724,13 @@ cpp : 1234
 jl  : 1234
 ```
 
-This fact makes most of jlunas functionality possible.
+The value the proxy is pointing to, **and** the value of the variable `jl_var` has changed. This is because a named proxy remembers the name of the variable it was constructed from. If we modify the proxy, it will also modify the variable. 
 
 In summary: 
 
-We construct a **unnamed proxy** using `Module.safe_eval("return <value>")`. Mutating an unnamed proxy will mutate its value, but will not mutate any Julia-side variables.
-
-We construct a **named proxy** using `Module["<variable name<"]`. Mutating a named proxy will mutate its value **and** mutate its corresponding Julia-side variable.
++ We construct an **unnamed proxy** using `Module.safe_eval("return <value>")`. Mutating an unnamed proxy will mutate its value, but it will not mutate any Julia-side variables.
+<br><br>
++ We construct a **named proxy** using `Module["<variable name>"]`. Mutating a named proxy will mutate its value **and** mutate its corresponding Julia-side variable.
 
 ### Additional Member Functions
 
@@ -669,12 +746,12 @@ std::cout << "unnamed: " << unnamed_proxy.get_name() << std::endl;
 ```
 ```
 named  : jl_var
-unnamed: <unnamed function proxy #123>
+unnamed: <unnamed function proxy #104>
 ```
 
-We see that the named proxy indeed manages `Main.jl_var`, while the unnamed proxy only has a simple internal id.
+We see that the named proxy indeed manages `Main.jl_var`. The unnamed proxy does not manage any variable, its name is an internal id.
 
-If we just want to know whether a proxy is mutating (named) or not, we use `is_mutating()`:
+If we just want to know whether a proxy is mutating, we ca use `is_mutating()` which returns a `bool`:
 
 ```cpp
 std::cout << "named  : " << named_proxy.is_mutating() << std::endl;
@@ -687,7 +764,7 @@ unnamed: 0
 
 ### Implications
 
-With our newly acquired knowledge about named and unnamed proxy, we can investigate previous sections, where we learned how to mutate Julia-side values:
+With our newly acquired knowledge about named and unnamed proxies, we can investigate code from the previous sections more closely:
 
 ```cpp
 Main.safe_eval(R"(
@@ -700,32 +777,37 @@ Main.safe_eval(R"(
 
 Main["jl_instance"]["_field"] = 666;
 ```
-This code snippet from [a previous section](#mutating-julia-side-values) uses named proxy to update the field of `jl_instance`. Because we ware using `operator[]`, `Main["jl_instance"]` returns a named proxy to `Main.jl_instance`. Then, chaining `["_field"]` creates another named proxy, managing `Main.jl_instance._field`. Mutating a named proxies mutates its corresponding variable, thus, assigning this expression the value C++-side value `666` boxes that value and assigns it the corresponding Julia-side Variable.
+This code snippet from [the section on mutating Julia-side values](#mutating-julia-side-values) uses a named proxy to update the field of `jl_instance`. 
 
-In this example, the actual proxies were temporary - the only stayed in scope for the duration of one line. This syntax is highly convenient and we have used it frequently already:
+Because we are using `operator[]`, `Main["jl_instance"]` returns a named proxy managing the Julia-side variable `Main.jl_instance`. Calling `["_field"]` on this result creates another named proxy, this time managing `Main.jl_instance._field`. We know that mutating a named proxy mutates its corresponding variable, thus, assigning the resulting proxy the C++-side value `666`, boxes that value and assigns it to `Main.jl_instance._field`.
+
+In this example, the actual proxies were temporary - they only stayed in scope for the duration of one line. 
+
+This syntax is highly convenient and we have used it frequently already:
 
 ```cpp
 Base["println"]("hello julia");
 ```
 
-In this expression, we get a named proxy to the Julia-side variable `Base.println`, then using the proxy call operator `operator()` to call the proxy as a function with the argument `"hello julia"`. This argument is a C++-side string, so jluna implicitly boxes this string, then uses it as the argument for the variable the named proxy is managing: `Base.println`.
+In this expression, we create a named proxy to the Julia-side variable `Base.println`. When then use the proxies call operator `operator()` to call the proxy as a function, using the argument `"hello julia"`. This argument is a C++-side string, so jluna implicitly boxes it to a Julia-side string, then uses it as the argument for the variable the named proxy is managing: `Base.println`.
 
 ### Proxy Inheritance
 
-Many of jlunas classes are actually proxy, that is, they inherit from `jluna::Proxy`.
+Many of jlunas classes are actually proxies, because they **inherit** from `jluna::Proxy`.
 
-> **C++ Hint**: Inheritance is not the same as subtyping in Julia. If class A inherits from class B, then A has access to all non-private member and member functions of B, A can be `static_cast` to B, and any pointer to A can be directly treated as if it was a pointer to B.
+> **C++ Hint**: Inheritance is not the same as subtyping in Julia. If class A inherits from class B, then A has access to all non-private member and member functions of B. A can furthermore be `static_cast` to B, and any pointer to A can be directly treated as if it was a pointer to B.
 
-Therefore, any of these classes provide all of the same functionalities of proxies, along with a some additional ones. While next few sections will introduce `jluna::Proxies` "children", it is important to keep in mind that both the concepts of named and unnamed proxies, as well as the implied behavior implies also to any class inheriting from them.
+Therefore, any of these classes provide all of the same functionalities of proxies, along with a some additional ones. The next few sections will introduce `jluna::Proxies` "children", which all have a more specialized purpose. It is important to keep in mind that both the concepts of named and unnamed proxies, as well as the implied behavior also applies to any of these classes.
 
 ---
 
 ## Specialized Proxies: Arrays
 
-One of the nicest features of Julia is its array interface, so it is only natural a Julia wrapper should extend all that functionality to a C++ canvas. While we learned before that we can actually use a `jluna::Proxy` like an array using `operator[]`:
+One of the nicest features of Julia is its array interface. Therefor, it is only natural a Julia wrapper should extend all that functionality to a C++ canvas. While we learned before that we can use a `jluna::Proxy` like an array using `operator[](size_t)`:
 
 ```cpp
 auto array_proxy = Main.safe_eval("return [1, 2, 3, 4]");
+
 Int64 third = array_proxy[2];
 std::cout << third << std::endl;
 ```
@@ -733,7 +815,9 @@ std::cout << third << std::endl;
 3
 ```
 
-This does not even come close to all the options available to a proper `Base.Array`. To tranform a `jluna::Proxy` to a `jluna::Array`, use `.as`:
+This is as far at it goes for array-related functionalities.
+
+To tranform a `jluna::Proxy` to a `jluna::Array`, we use `.as`:
 
 ```cpp
 Proxy array_proxy = Main.safe_eval("return Int64[1, 2, 3, 4]");
@@ -749,7 +833,7 @@ Array<Int64, 1> array = Main.safe_eval("return Int64[1, 2, 3, 4]");
 We see that `jluna::Array<T, N>` has two template parameters:
 
 + `T` is the **value type** of the array, all elements are assumed to be of this type
-+ `N` is the **dimensionality** of the array, sometimes called the *rank*. A 1d array is a vector, a 2d array is a matrix, etc.
++ `N` is the **dimensionality** of the array, sometimes called the **rank**. A 1d array is a vector, a 2d array is a matrix, etc.
 
 Both these template arguments directly correspond to the Julia-side parameters of `Base.Array`.
 
@@ -757,7 +841,7 @@ Note that we have declared the Julia-side vector `[1, 2, 3, 4]` to be of value-t
 
 Because the match does not have to be exact (see the section on [type ordering](#type-order)), we can simply declare the value type to be `Any`, which then lets us move any assortment of objects into the same array. jluna actually provides a typedef for this:
 
-> **C++ Hint**: A `typedef` or `using` is a way to declare a type alias. It is giving a type a new name while keeping the old name valid, most commonly used to simplify syntax
+> **C++ Hint**: A `typedef` or "`using` declaration" is a way to declare a type alias. It is giving a type a new name while, keeping the old name valid. This is most commonly used to simplify syntax for the convenience of the programmer
 
 ```cpp
 using Array1d = // equivalent to Base.Array<Any, 1>
@@ -767,7 +851,7 @@ using Array3d = // equivalent to Base.Array<Any, 1>
 
 ## Accessing Array Indices
 
-First, we set up our two arrays for this section:
+Firstly, we need to setup our two arrays that we will use for this section:
 
 ```cpp
 Array<Int64, 1> array_1d = jluna::safe_eval("return Int64[1, 2, 3, 4, 5]");
@@ -781,7 +865,9 @@ array_1d: [1, 2, 3, 4, 5]
 array_2d: [1 4 7; 2 5 8; 3 6 9]
 ```
 
-To get a specific element of an array, we use `.at`:
+We created two arrays, a `Base.Array{Int64, 1}` bound to the C++-side array proxy `array_1d`, as well as a `Base.Array{Int64, 2}`, bound to `array_2d`.
+
+To get a specific element of any array, we use `.at`:
 
 ```cpp
 Int64 one_d_at_3 = array_1d.at(2);
@@ -794,10 +880,9 @@ std::cout << one_d_at_2_2 << std::endl;
 3
 5
 ```
+For a 1d array, `at` takes a single argument, its **linear index** (see below). For a 2d array, `at` takes two arguments, one for each dimension. This extends to any dimensionality, for a 5d array, we would call `at` with 5 integers.
 
-For a 1d array, `at` takes a single argument, it's linear index. For a 2d array, `at` takes two arguments, one index for each dimension. This extends to any dimensionality, for a 5d array, we would call `at` with 5 integers.
-
-For syntactic consistency, `jluna::Array` also sports `operator[]`, which is called in the exact same way as `at` would be, the difference is that for `at` only, the indices are bounds-checked. This adheres to the functionality of `std::vector<T>::at` and `std::vector<T>::operator[]`.
+For syntactic consistency, `jluna::Array` also offers `operator[]`, which is called in the exact same way as `at` would be. The difference is that for `at` only, the indices are bounds-checked. This adheres to the convention set forth by `std::vector<T>::at` and `std::vector<T>::operator[]`.
 
 ### Linear Indexing
 
@@ -810,11 +895,11 @@ std::cout << (Int64) array_3d[3] << std::endl;
 ```
 4
 ```
-Linear indexing accesses the n-th element in column-first order.
+Linear indexing accesses the n-th element in column-first order, just like it would in Julia (except that the index in C++ is 0-based).
 
 ### List Indexing
 
-jluna also supports Julia-style list indexing when using `operator[]`:
+jluna also supports Julia-style list indexing for `operator[]`:
 
 ```cpp
 Array<Int64, 1> vector = jluna::safe_eval("return [i for i in 1:10]");
@@ -825,7 +910,8 @@ Base["printlnt"](sub_vector);
 ```
 [2, 6, 3, 8]
 ```
-> **C++ Hint**: Here, the sytnax used for `{1, 5, 2, 7}` is called a "brace-enclosed initializer list", which is a form of [aggregate initialization](https://en.cppreference.com/w/cpp/language/aggregate_initialization) in C++. It can be best though of as a proto-vector, the compiler will infer the vectors type and construct it for us. In our case, because `Array::operator[]` expects a list of integer, it will interpret `{1, 5, 2, 7}` as an constructor for `std::vector<size_t>`.<br>
+> **C++ Hint**: Here, the sytnax used, `{1, 5, 2, 7}`, is called a "brace-enclosed initializer list", which is a form of [aggregate initialization](https://en.cppreference.com/w/cpp/language/aggregate_initialization) in C++. It can be best though of as a proto-vector, the compiler will infer the vectors type and construct it for us. In our case, because `Array::operator[]` expects a list of integer, it will interpret `{1, 5, 2, 7}` as the argument for an implicitly called constructor, creating a `std::vector<size_t>`.<br>
+> 
 > see also: [list initialization](https://en.cppreference.com/w/cpp/language/list_initialization)
 
 ### 0-base vs. 1-base
@@ -843,7 +929,7 @@ cpp: 4
 jl : 3
 ```
 
-C++ indices are 0-based, this means `at(3)` will give use the (3 - 0)th element, which for our vector is `4`. In Julia, indices are 1-based, meaning `getindex(array, 3)` will gives us the (3 - 1)th element, which is `3`.
+C++ indices are 0-based, this means `at(3)` will give use the `(3 - 0)`th element, which for our vector is `4`. In Julia, indices are 1-based, meaning `getindex(array, 3)` will gives us the `(3 - 1)`th element, which is `3`.
 
 The following table illustrates how to translate C++-side indexing into Julia-side indexing:
 
@@ -857,9 +943,11 @@ The following table illustrates how to translate C++-side indexing into Julia-si
 |      |        |     |
 | *    | `M[:]` | not available |
 
+Where `_gen` is a string-literal operator that  constructs a generator expression from the code it was called with. 
+
 ### Iterating
 
-The main advantage `jluna::Array` has over the C-APIs `jl_array_t` is that it is *iterable*:
+The main advantage `jluna::Array` has over the C-APIs `jl_array_t` is that it is **iterable**:
 
 ```cpp
 Array<Int64, 1> array = jluna::safe_eval("return Int64[1, 2, 3, 4, 5, 6]");
@@ -874,7 +962,7 @@ std::cout << std::endl;
 ```
 > **C++ Hint**: `std::endl` adds a `\n` to the stream, then flushes it
 
-If we declared the iterator type as `auto`, it is even assignable:
+If we declare the iterator type as `auto`, each iterator is assignable:
 
 ```cpp
 for (auto iterator : array)
@@ -886,11 +974,11 @@ Base["println"](array);
 [2, 3, 4, 5, 6, 7]
 ```
 
-This modifies the underlying Julia-array with minimal overhead. If the array is also a named proxy, it will also modify the corresponding Julia-side variable.
+This modifies the underlying Julia-array with minimal overhead.
 
-### Additional Member Functions
+If the array is also a named proxy, it will also modify that element of whatever variable the proxy is managing.
 
-#### Size of Array
+### Accessing the Size of an Array
 
 To get the size of an array, we use `get_n_elements`:
 
@@ -902,9 +990,9 @@ std::cout << vec.get_n_elements() << std::endl;
 333
 ```
 
-#### jluna::Vector
+### jluna::Vector
 
-For arrays of dimensionality 1, a special proxy called `jluna::Vector` is provided. It directly inherits from `jluna::Array` so all of `Array`s functionalities are also available to `Vector`. In addition, the following member functions are only available for `jluna::Vector`:
+For arrays of dimensionality 1, a special proxy called `jluna::Vector<T>` is provided. It directly inherits from `jluna::Array<T, 1>` so all of `Array`s functionalities are also available to `Vector`. In addition, the following member functions are only available for `jluna::Vector`:
 
 + `insert(size_t pos, T value)`
   - insert element `value` at position `pos` (0-based)
@@ -914,12 +1002,14 @@ For arrays of dimensionality 1, a special proxy called `jluna::Vector` is provid
   - push element to the front, such that it is now at position 0
 + `push_back(T)`
   - push element to the back of the vector
+  
+When boxing a `jluna::Vector<T>`, the resulting Julia-side value will be of type `Base.Vector{T}`. When boxing a `jluna::Array<T, 1>`, the result will be a value of type `Base.Array{T, 1}`.
 
 ---
 
 ## Specialized Proxies: Symbols
 
-Another specialized type of proxy is the symbol proxy. It holds a Julia-side `Base.Symbol`.
+Another specialized type of proxy is the **symbol proxy**. It manages a Julia-side `Base.Symbol`.
 
 We can create a symbol proxy in the following ways:
 
@@ -929,18 +1019,21 @@ auto unnamed_symbol = Symbol("symbol_value");
 
 // new named proxy
 auto named_symbol = Main.new_symbol("symbol_var", "symbol_value")
-// generates variable `symbol_var` in main scope, then assigns it :symbol_value
+
+// from already existing proxy
+auto non_symbol_proxy = Main.safe_eval("return :symbol_value");
+auto symbol_proxy = non_symbol_proxy.as<Symbol>();
 ```
 
-Where, unlike with general proxy, the value the proxy is pointing to is asserted to be of type `Base.Symbol`. 
+Where, unlike with `jluna::Proxy`, the value the proxy is pointing to is asserted to be of type `Base.Symbol`. 
 
 ### Symbol Hashing
 
-The main additional functionality `jluna::Symbol` brings, is that of *constant time hashing*.
+The main additional functionality `jluna::Symbol` brings is that of *constant time hashing*.
 
 A hash is essentially a `UInt64` we assign to things as a label. In Julia, hashes are unique and there a no hash collisions. This means if `A != B` then `hash(A) != hash(B)` and, furthermore, if `hash(A) == hash(B)` then `A === B`.
 
-Unlike with many other classes, `Base.Symbol` can be hashed in constant time. This is because the hash is precomputed at the time of construction. 
+Unlike with other classes, `Base.Symbol` can be hashed in constant time. This is because the hash is precomputed at the time of construction. 
 
 We can access the hash of a symbol proxy using `.hash()`
 
@@ -1003,14 +1096,14 @@ We see that, lexicographically, the symbols are out of order. They are, however,
 
 ## Specialized Proxies: Modules
 
-We have already seen `jluna::Module` in the introductory sections, it's time to get to know it more closely. `jluna::Module` (`Module`, henceforth) inherits publicly from `jluna::Proxy`, meaning it sports all the same functions and functionalities we discussed previously, along with a few additional ones.
+We have already used `jluna::Module` before, now it is time to learn about all of its additional features. `jluna::Module` (`Module`, henceforth) inherits publicly from `jluna::Proxy`, meaning it has all the same functions and functionalities we discussed previously, along with a few additional ones.
 
-#### Assign in Module
+### Assign in Module
 
 Let's say we have a module `M` in main scope that has a single variable `var`:
 
 ```cpp
-jluna::safe_eval(R"(
+Main.safe_eval(R"(
     module M
         var = []
     end
@@ -1019,9 +1112,9 @@ jluna::safe_eval(R"(
 Module M = Main.safe_eval("return M");
 ```
 
-We've already seen that we can modify this variable using `M.safe_eval`, however this is a fairly badly performing option, because we have to go to the `Meta.parse` and `eval` all over.
+We've already seen that we can modify this variable using `M.safe_eval`, however, this is a fairly badly performing option, because we force Julia to `Meta.parse`, then `eval`.
 
-Much faster is using `Module::assign`:
+Much faster is `Module::assign`:
 
 ```cpp
 // works but slow:
@@ -1043,11 +1136,11 @@ Base["println"](M["new_var"]);
 777
 ```
 
-As the name suggest, if the variable does not yet exist, it is created. If the variable does already exist, `create_or_assign` acts identical to `assign`.
+As the name suggest, if the variable does not exist, it is created. If the variable does exist, `create_or_assign` acts identical to `assign`. If we call `assign` for a variable that does not yet exist, an exception is raised.
 
-#### Creating a new Variable
+### Creating a new Variable
 
-A convenient and highly useful function is `Module::new_*`, for example `Module::new_undef("var_name")` creates a new variable named `var_name` in the module and assigns it `undef`. The return value of this function is a named proxy pointing to that variable, making the following syntax possible:
+A convenient and well-performing function is `Module::new_*`. `Module::new_undef("var_name")` creates a new variable named `var_name` in the module and assigns it `undef`. The return value of this function is a named proxy pointing to that variable, making the following syntax possible:
 
 ```cpp
 Main.new_undef("variable") = // any value here
@@ -1055,7 +1148,7 @@ Main.new_undef("variable") = // any value here
 
 The following `new_*` functions are available:
 
-| jluna Name | argument type(s) | Julia-side Type of Result |
+| jluna Name | C++ Argument Type(s) | Julia-side Type of Result |
 |------------|-----------|---------------------------|
 | `new_undef`  | `void`  | `UndefInitializer` |
 | `new_bool`   | `bool`  |  `Bool`
@@ -1077,14 +1170,14 @@ The following `new_*` functions are available:
 | `new_dict` | `std::unordered_map<T, U>` | `Dict{T, U}` |
 | `new_set` | `std::set<T>` | `Set{T}` |
 | `new_pair` | `T`, `T` | `Pair{T, T}` |
-| `new_tuple` | `T1` , `T2`, `T3`, ... | `Tuple{T1, T2, T3, ...}` |
-| `new_array<T>` | `D1`, `D2`, ..., `Dn` | `Array{T, n}` of size `D1 * D2 * ... * Dn` |
+| `new_tuple` | `T1` , `T2`, `...`, `Tn` | `Tuple{T1, T2, ..., Tn}` |
+| `new_array<T>` | `D1`, `D2`, `...`, `Dn` | `Array{T, n}` of size `D1 * D2 * ... * Dn` |
 
 This is the most performant way to create variables new variables module scope. 
 
-#### `import` / `using`
+### Importing & Using
 
-Additionally, `jluna::Module` provides the following two functions wrapping the `using` and `import` functionality of modules:
+Additionally, `jluna::Module` provides the following two functions wrapping the `using` and `import` functions of modules:
 
 + `M.import("PackageName")`
   - equivalent to calling `import PackageName` inside `M`
@@ -1095,9 +1188,9 @@ Additionally, `jluna::Module` provides the following two functions wrapping the 
 
 ## Calling C++ Functions from Julia
 
-We've seen how to call Julia functions from C++, but jluna offers users the other way around as well.
+We've seen how to call Julia functions from C++, but in jluna, the other way around works just as well.
 
-To call a C++ function, we need to assign a named or unnamed proxy a lambda that wraps the C++ function.
+To call a C++ function, we need to assign a named or unnamed proxy a **lambda that wraps the C++ function**.
 
 > **C++ Hint**: Lambdas are C++s anonymous function objects. Before continuing with this section, it is recommend to read up on the basics of lambdas [here](https://docs.microsoft.com/en-us/cpp/cpp/lambda-expressions-in-cpp). Users are expected to know about basic syntax, trailing return types and capture clauses from this point onward.
 
@@ -1112,11 +1205,19 @@ auto add = [](Int64 a, Int64 b) -> Int64
 };
 ```
 
-This function has the signature `(Int64, Int64) -> Int64`. Always manually specify the trailing return type of lambdas using `->`, do not use `auto` for either the lambdas return- or any of the argument-types.
+This function has the signature `(Int64, Int64) -> Int64`. 
 
-To make this function available to Julia, we use `as_julia_function`. This expression takes a function-object (be it a lambda or a static function) as it's argument. It takes the functions signature as the template argument. We need to manually specify the signature, so jluna knows what types to forward for both ther arguments and return types.
+Always manually specify the trailing return type of a lambda using `->`, never use `auto` for either the lambdas return- or any of the argument-types when interfacing with jluna.
 
-Because `add` has the signature `(Int64, Int64) -> Int64`, we use `as_julia_function<Int64(Int64, Int64)>`. We can then assign the returned object to a Julia variable like so:
+To make this function available to Julia, we use `as_julia_function`. 
++ the argument of `as_julia_function` is a lambda or `std::function` object
++ the template argument of `as_julia_function` is the functions signature
+
+Because `add` has the signature `(Int64, Int64) -> Int64`, we use `as_julia_function<Int64(Int64, Int64)>`. 
+
+> **C++ Hint**: `std::function` and thus `as_julia_function` uses the C-style syntax for a functions signature. A function with return-type `R` and argument types `T1, T2, ..., Tn` has the signature `(T1, T2, ..., Tn) -> R`, or `R(T1, T2, ..., Tn)` in C-style.
+
+We can then assign the result of `as_julia_function` to a Julia variable like so:
 
 ```cpp
 Main.create_or_assign("add", as_julia_function<Int64(Int64, Int64)>(add));
@@ -1133,9 +1234,11 @@ Main.safe_eval("println(add(1, 3))");
 
 The return value of `as_julia_function` is a Julia-side object. This means we can assign it to already existing proxies, or use it as an argument for a Julia-side function.
 
+The Julia function can be called with Julia- or C++-side arguments, and its return value can be directly accessed from both Julia and C++.
+
 ### Allowed Signatures
 
-Not all function signatures are supported when using `as_julia_function`. Its argument can only have the following signatures:
+Not all function signatures are supported for `as_julia_function`. Its argument (the C++ function) can only have one of the following signatures:
 
 ```cpp
 () -> T_r
@@ -1145,14 +1248,14 @@ Not all function signatures are supported when using `as_julia_function`. Its ar
 ```
 
 Where 
-+ `T_r` is `void` or a [(Un)Boxable type]((Un)Boxable)
-+ `T1`, `T2`, `T3` are a [(Un)Boxable type]((Un)Boxable)
++ `T_r` is `void` or an [(Un)Boxable]((Un)Boxable)
++ `T1`, `T2`, `T3` are an [(Un)Boxable]((Un)Boxable)
 
-This may seem limiting at first, how could we execute arbitrary C++ code when we are only allowed to use functions with this signature and only (Un)Boxable types? 
+This may seem limiting at first, how could we execute arbitrary C++ code when we are only allowed to use functions with this signature , and only (Un)Boxable types? 
 
 ### Taking Any Number of Arguments
 
-Let's say we want to write a function that takes any number of `String`s and concatenates them. Obviously, just 3 arguments are not enough, so we have to find a workaround. One way is to use a 1-argument function that takes a vector of strings:
+Let's say we want to write a function that takes any number of `String`s and concatenates them. Obviously, just 3 arguments are not enough for this. Luckily, there is a workaround. Instead of using a n-argument function, we can use a 1-argument function where the argument is a n-element vector:
 
 ```cpp
 auto concat_all = [](jluna::Array<std::string, 1> arg) -> std::string
@@ -1165,25 +1268,35 @@ auto concat_all = [](jluna::Array<std::string, 1> arg) -> std::string
     return str.str();
 };
 ```
-> **C++ Hint**: `std::stringstream` is a stream that we can write strings into using `operator<<`. We then flush it using `std::endl` and convert it's contents to a single `std::string` using the member function `str`. More info can be found [here](https://en.cppreference.com/w/cpp/io/basic_stringstream)
+> **C++ Hint**: `std::stringstream` is a stream that we can write strings into, using `operator<<`. We then flush it using `std::endl` and convert it's contents to a single `std::string` using the member function `str`. More info can be found [here](https://en.cppreference.com/w/cpp/io/basic_stringstream)
 
-This lambda has the signatue `(jluna::Array<std::string, 1>) -> std::string`.
-
-We can then call `concat_all` with any number of arguments by first wrapping them in a Julia-side vector:
+This lambda has the signatue `(jluna::Array<std::string, 1>) -> std::string`. We move it Julia-side using `as_julia_function`:
 
 ```cpp
-Main.create_or_assign("concat_all", as_julia_function<std::string(jluna::Array<std::string, 1>)>(concat_all));
-Main.safe_eval(R"(println(concat_all(["GA", "TT", "AC", "A"])))");
+Main.create_or_assign(
+    "concat_all",
+    as_julia_function<
+        std::string(jluna::Array<std::string, 1>) // signature
+    >(concat_all)
+);
+```
+
+We can then call `concat_all` with any number of arguments by wrapping them in a Julia-side vector:
+
+```cpp
+Main.safe_eval(R"(
+    println(concat_all(["GA", "TT", "AC", "A"]))
+)");
 ```
 ```
 GATTACA
 ```
 
-If we want our lambda to take any number of differently-typed arguments, we can either wrap them in a `jluna::Array1d` (which has the value type `Any` and thus any collection of differently type elements can be contained within) or we can use a `std::tuple`.
+If we want our lambda to take any number of *differently-typed* arguments, we can either wrap them in a `jluna::Array1d` (which has the value type `Any` and thus can contain elements of any type), or we can use a `std::tuple`, both of which are (Un)Boxable.
 
-### Using non-C++ Objects
+### Using Non-C++ Objects
 
-We've learned how to workaround the restriction on the number of arguments, but what about the types? Not all types are [(Un)Boxable](), however we can still use arbitrary C++ types by cleverly employing captures:
+We've learned how to workaround the restriction on the number of arguments, but what about the types? Not all types are [(Un)Boxable](), however we can still use arbitrary C++ types. How? By using **captures**:
 
 Let's say we have the following C++ class:
 
@@ -1202,34 +1315,51 @@ struct NonJuliaObject
             _value = 2 * _value;
     }
 };
+
+auto instance = NonJuliaObject(13);
 ```
 
-This object is obviously not (Un)Boxable. Furthermore, we can't call it through our signatures because we would need to hand the lambda an instance as an argument, so it knows what to modify. While we may not be able to give the instance as an *argument*, we are able to give the instance through a **capture**, as captures do not affect a lambdas signature:
+This object is obviously not (Un)Boxable.
+
+The naive approach to modifying `instance` from Julia would be the following lambda:
 
 ```cpp
-auto instance = NonJuliaObject(13);
+auto modify_instance = [](NonJuliaObject& instance, size_t n) -> void
+{
+    instance.double_value(n);
+};
+```
 
+This lambda has the signature `(NonJuliaObject&, size_t) -> void`, which is a dissallowed signature because `NonJuliaObject&` is not (Un)Boxable.
+
+Instead of handing `instance` to the lambdas function body through an argument, we can instead forward it through its capture:
+
+```cpp
 auto modify_instance = [instance_ref = std::ref(instance)] (size_t n) -> void
 {
     instance_ref.get().double_value(n);
     return;
 };
-
-Main.create_or_assign("modify_instance", as_julia_function<void(size_t)>(modify_instance));
 ```
+
 > **C++ Hint**: `std::ref` is used to create a [reference wrapper](https://en.cppreference.com/w/cpp/utility/functional/reference_wrapper) around any instanced object. It is very similar to Julias `Base.Ref` in functionality. To "unwrap" it, we use `.get()` in C++, where we would use `[]` in Julia
     
-Lambda syntax can get quite complicated, so let's talk through this step by step. Firstly, we create a lambda with signature `(size_t) -> void` which operators on an instance of type `NonJuliaObject`, calling `.double_value(n)` where `n` is the argument of the lambda.
+Lambda syntax can get quite complicated, so let's talk through this step-by-step. 
 
-Rather than handing the lambda the instance it needs to modify as an argument, we have *captured* it using `[instance_ref = std::ref(instance)]`. Here, we create a new, named capture variable `instance_ref` and assigned it a reference wrapper around the out-of-lambda `instance`. This makes the wrapper available inside the lambda function body without changing it's signature.
+Firstly, this second lambda with signature `(size_t) -> void`. Capture variables do not affects a lambdas signature.
 
-Lastly, we created a new variable called `Main.modify_instance` and assigned it the result of `as_julia_function<void(size_t)>`, which takes the signature of the C++-side `modify_instance` lambda as the template argument.
+Inside the capture `[]`, we have the expression `instance_ref = std::ref(instance)`. This expression creates a new variable `instance_ref` that will be available inside the lambdas body. We initialize `instance_ref` with `std::ref(instance)`, which creates a reference wrapper around our desired instance. A reference wrapper acts the same as a plain reference in terms of memory ownership, as long as the reference wrapper stays in scope, `instance` will too. 
 
-Note that, as long as the lambda stays in scope, the C++-side `instance` will too. This is because the lambda capture the reference wrapper `instance_ref` by value. Just like a normal reference, a reference wrapper will keep whatever it is wrapped from going out of scope as long as the wrapper exists.
+Having capture `instance` through the reference wrapper, we can modify it inside our body by first unwrapping it using `.get()`, then applying whatever mutation we intend to, in our case we are calling `double_value` with the `size_t` argument of the lambda.
 
-After all this, we can call the function:
+After all this wrapping, we can simply:
 
 ```cpp
+Main.create_or_assign(
+    "modify_instance", 
+    as_julia_function<void(size_t)>(modify_instance)
+)
+
 Main.safe_eval("modify_instance(3)");
 std::cout << instance._value << std::endl;
 ```
@@ -1237,7 +1367,9 @@ std::cout << instance._value << std::endl;
 104
 ```
 
-And it modified the out-of-Julia instance!
+The now-Julia-function modified our C++-side instance, despite its type being uninterpretable to Julia.
+
+By cleverly employing captures and collections / tuples, the restriction on the functions used for `as_julia_function` are lifted, any arbitrary C++ function (and thus any arbitrary C++ code) can now be executed Julia-side.
 
 ---
 
@@ -1245,7 +1377,7 @@ And it modified the out-of-Julia instance!
 
 We've seen specialized module-, symbol- and array-proxies. jluna has a fourth kind of proxy, `jluna::Type`, which wraps all of Julias very powerful introspection functionalities in one class.
 
-While some overlap is present, `jluna::Type` is not a direct equivalent of `Base.Type{T}`. 
+While some overlap is present, `jluna::Type` is not a direct equivalent of `Base.Type{T}`. It is asserted to manage an object of type `T` such that `T isa Type`, though. It just provides more functions than are a available using only Julias `Base`.
 
 ### Constructing a Type
 
@@ -1253,20 +1385,25 @@ There are multiple ways to construct a type proxy:
 
 ```cpp
 // get type of proxy
-auto general_proxy = Main.safe_eval("return " + /* ... */);
-auto type = general_proxy.get_type();
+auto proxy = Main.safe_eval("return " + /* ... */);
+auto type_proy = general_proxy.get_type();
 
 // implicit cast
-Type type = Main.safe_eval("return Base.Vector");
+Type type_proxy = Main.safe_eval("return Base.Vector");
+
+// using as<T>
+auto type_proxy = Main["Base.Vector"].as<Type>();
 ```
+
+Most often, we will want to know the type of a variable, for which we can either use `Base.typeof`, or `jluna::Proxy::get_type`.
 
 ### Base Types
 
-This is only necessary for user-defined types. For most types in `Base`, jluna offers a pre-defined type proxy in the global namespace, similar to the `Main` and `Base` module proxies.
+For most types in `Base`, jluna offers a pre-defined type proxy in `jluna::` namespace, similar to the `Main` and `Base` module proxies.
 
 The following types are available this way:
 
-| jluna constant name | Julia-side name|
+| jluna Constant Name | Julia-side Name|
 |-------------------|---------|
 | `AbstractArray_t` | `AbstractArray{T, N}` |
 | `AbstractChar_t` | `AbstractChar` |
@@ -1327,7 +1464,7 @@ Where `T`, `U` are arbitrary types, `N` is an Integer
 
 ### Type Order
 
-Julia types can be ordered. To conceptualize this, the relation of types is best thought of as a directed graph. Each node of the graph is a type, each edge is directed, where, if the edge goes from type A to type B, then `B <: A`. That is, B is a subtype of A, or equivalently `A >: B`, A is a supertype of B.
+Julia types can be ordered. To conceptualize this, the relation of types is best thought of as a directed graph. Each node of the graph is a type, each edge is directed, where, if the edge goes from type `A` to type `B`, then `B <: A`. That is, `B` is a subtype of `A`, or, equivalently, `A >: B`: `A` is a supertype of `B`.
 
 This relational nature is heavily used in Julias multiple dispatch and type inference, for now, however, it gives us a way to put types in relation to each other. `jluna::Type` offers multiple functions for this:
 
@@ -1360,7 +1497,7 @@ bool operator!=(const Type& other) const;
 
 This ordering becomes relevant when talking about `TypeVar`s. 
 
-> **Julia Hint**: `Base.TypeVar` is a class that represents a not yet defined type, such as a parameter for a struct. It has a lower bound `lb` and upper bound `ub`, where for all types `t` represented by the TypeVar, it holds that `lb <: t <: ub`
+> **Julia Hint**: `Base.TypeVar` is a class that represents a not-yet-defined type, such as a parameter for a struct. It has a lower bound `lb` and upper bound `ub`, where, for all types `t` represented by the `TypeVar`, it holds that `lb <: t <: ub`
 
 
 TypeVars can be thought of as a sub-graph of the type-graph. An unrestricted types upper bound is `Any`, while its lower bound is `Union{}`. A declaration like `T where {T <: Integer}` restricts the upper bound to `Integer`, though any type that is "lower" along the sub-graph originating at `Integer` can still bind to `T`. This is useful to keep in mind.
@@ -1394,6 +1531,7 @@ The type has 1 **method**, `MyType(::T, ::U)`, which is its constructor.
 This type furthermore has the following properties:
 
 ```julia
+# in Julia
 println(propertynames(MyType.body.body))
 ```
 ```
@@ -1466,6 +1604,8 @@ _field3 => Any
 ```
 We, again, get a vector of pairs where `.first` is the name, `.second` is the upper type bound of the corresponding field.
 
+If we actually want the value of a field, we need use `operator[]` on a `jluna::Proxy` that is an instance of that type, not the type itself.
+
 ### Methods
 
 (this feature is not yet implemented, until then, use `Base.methods(::Type)`)
@@ -1476,7 +1616,7 @@ We, again, get a vector of pairs where `.first` is the name, `.second` is the up
 
 ### Type Classification
 
-To classify a type means to evaluate a condition based on a types attributes, in order to get information about how similiar or different clusters of types are. jluna offers a number of convenient classifications, some of which are available as part of the Julia core library, some of which are not. This section will list all, along with their meaning:
+To classify a type means to evaluate a condition based on a types attributes, in order to get information about how similiar or different clusters of types are. jluna offers a number of convenient classifications, some of which are available as part of the Julia standard library, some of which are not. This section will list all, along with their meaning:
 
 + `is_primitive`: was the type declared using the keyword `primitive`
     ```cpp
@@ -1541,14 +1681,16 @@ Some may expect this to print `true`, however, this is not the case. It actually
 This is because `Base.Array` is a parametric type. `typeof(Array)` is actually `UnionAll`, which does not have a property `:name`:
 
 ```julia
+# in Julia
 println(propertynames(Array))
 ```
 ```
 (:var, :body)
 ```
-To access the property `:name` we need to first *unroll* the type. This means we need to specialize all parameters of a type. Once we do so, it seizes to be a `UnionAll`.
+To access the property `:name`, we need to first **unroll** the type, meaning we need to specialize all parameters of the type. Once we do so, it seizes to be a `UnionAll`:
 
 ```julia
+# in Julia
 type = Array
 while (hasproperty(type, :body))
     type = type.body
@@ -1564,13 +1706,15 @@ Array{T, N}
 
 Once fully unrolled, we have access to the properties necessary for introspection. jluna does this unrolling automatically for all types initialized by `jluna::initialize` (see the [previous sections list](#base-types)).
 
-If desired, we can fully specialize a user-intialized type manually using the member function `.unroll()`. Without this, many of the introspection features will be unavaiable.
+If desired, we can fully specialize a user-intialized type manually, using the member function `.unroll()`. Without this, many of the introspection features will be unavaiable.
 
 ---
 
 ## Usertypes
 
-So far, we were only able to move (Un)Boxable types to Julia. In some applications, this can be quite limiting. To address this, jluna provides a user-interface for making any C++ type a (Un)Boxable type. 
+So far, we were only able to move (Un)Boxables to and from Julia. In some applications, this can be quite limiting. To address this, jluna provides a user-interface for making **any C++ type (Un)Boxable**. 
+
+> **Hint**: A usertype is any type not defined by the standard library or jluna itself
 
 ### Usertype Interface
 
@@ -1590,11 +1734,13 @@ struct RGBA
 };
 ```
 
-While it may be possible to manually translate this class into a Julia-side `NamedTuple`, this is rarely the best option. For more complex classes, this is often not possible at all. To make classes like this a (Un)Boxable type, we use `jluna::Usertype<T>`, the usertype interface.
+While it may be possible to manually translate this class into a Julia-side `NamedTuple`, this is rarely the best option. For more complex classes, this is often not possible at all. To make classes like this (Un)Boxable, we use `jluna::Usertype<T>`, the **usertype interface**.
 
 ### Step 1: Making the Type compliant
 
 For a type `T` to be manageable by `Usertype<T>`, it needs to be *default constructable*. `RGBA` currently has no default constructor, so we need to add it:
+
+> **C++ Hint**: The default constructor of type T is `T()`. It can sometimes be declared as `T() = default`, see [here](https://en.cppreference.com/w/cpp/language/default_constructor).
 
 ```cpp
 struct RGBA
@@ -1631,13 +1777,13 @@ struct RGBA
 set_usertype_enabled(RGBA); 
 ```
 
-This sets up `Usertype<T>` for us. Among other things, it declares the Julia-side name of `RGBA`. By default, this name is that same as the C++ side name, `"RGBA"` in our case.
+This sets up `Usertype<T>` for us. Among other things, it declares the Julia-side name of `RGBA`. This name is that same as the C++ side name, `"RGBA"` in our case.
 
 ### Step 3: Adding Property Routines
 
 To add a property for `RGBA`s `_red`, we use the following function (at runtime):
 
-> **C++ Hint**: A *property* of a struct type is what would be called a "field" in Julia or a "member" in C++. It is any named variable of any type (including functions) that is namespaced within a struct. All three terms will be used interchangeably here
+> **C++ Hint**: A property of a structtype is what would be called a "field" in Julia or a "member" in C++. It is any named variable of any type (including functions) that is namespaced within a struct or class. All three terms will be used interchangeably here
 
 ```cpp
 Usertype<RGBA>::add_property<Float32>(
@@ -1645,27 +1791,27 @@ Usertype<RGBA>::add_property<Float32>(
     [](RGBA& in) -> Float32 {
         return in._red;
     },
-    [](RGBA& out Float32 in) -> void {
-        out._red;
+    [](RGBA& out Float32 red_jl) -> void {
+        out._red = red_jl;
     }
 );
 ```
 
 This call has a lot going on so it's best to investigate it closely.
 
-Firstly, we have the template argument, `Float32` in our case. This decides the Julia-side type of the Julia-side instances field. 
+Firstly, we have the template argument, `Float32` here. This decides the Julia-side type of the Julia-side instances field. 
 
-The first argument is the Julia-side instances' fields name. Usually we want this name to be the same as C++-side, `_red`, but to avoid confusing, for the sake of this section only the C++-side field is called `_red` while the corresponding Julia-side field is `_red_jl`.
+The first argument is the Julia-side instances' fields name. Usually we want this name to be the same as C++-side, `_red`, but to avoid confusion for this section only, the C++-side field is called `_red` while the corresponding Julia-side field is `_red_jl`.
 
 The second argument of `add_property` is called the **boxing routine**. This function always has the signature `(T&) -> Property_t`, where `T` is the usertype-manage type (`RGBA` for us) and `Property_t` is the type of the field (`Float32`).
-The boxing routine governs what value to assign the Julia-side field. It takes the C++-side instance, accesses the value `_red`, then returns that value which will then be assigned to the Julia-side instances `_red_jl`.
+The boxing routine governs what value to assign the Julia-side field. It takes the C++-side instance, accesses the value of `_red`, then returns that value which will then be assigned to the Julia-side instances `_red_jl`.
 
-The third argument is optional, it is called the **unboxing routine**. It always has the signature `(T&, Property_t) -> void`. When a Julia-side instance of `RGBA` is moved back C++-side, the unboxing routine governs, what value the now C++-sides `RGBA` fields `_red` will be assigned. If left unspecified, the value will be the default value. If the unboxing routine is specified, the value of `_red` will be its result.
+The third argument is optional, it is called the **unboxing routine**. It always has the signature `(T&, Property_t) -> void`. When a Julia-side instance of `RGBA` is moved back C++-side, the unboxing routine governs, what value the now C++-sides `RGBA` fields `_red` will be assigned. If left unspecified, the value will be the default value. In our case, we assign `_red` the value of `_red_jl`, which is the second argument of the unboxing routine.
 
 In summary:
 
-+ template argument governs the Julia-side type of the field
-+ first argument is the name of the Julia-side field
++ the template argument governs the Julia-side type of the field
++ the first argument is the name of the Julia-side field
 + the boxing routine decides what value the Julia-side field will be assigned when moving the object C++ -> Julia
 + the unboxing routine decides what value the C++-side field will be assigned when moving the object Julia -> C++
 
@@ -1685,7 +1831,7 @@ struct RGBA
     {}
     
     RGBA() 
-        : _red(0), _green(0), _blue(0), _alpha(1
+        : _red(0), _green(0), _blue(0), _alpha(1)
     {}
 };
 set_usertype_enabled(RGBA);
@@ -1696,28 +1842,28 @@ set_usertype_enabled(RGBA);
 Usertype<RGBA>::add_property<float>(
     "_red",
     [](RGBA& in) -> float {return in._red;},
-    [](RGBA& out, float in) -> void {out._red;}
+    [](RGBA& out, float in) -> void {out._red = in;}
 );
 Usertype<RGBA>::add_property<float>(
     "_green",
     [](RGBA& in) -> float {return in._green;},
-    [](RGBA& out, float in) -> void {out._green;}
+    [](RGBA& out, float in) -> void {out._green = in;}
 );
 Usertype<RGBA>::add_property<float>(
     "_blue",
     [](RGBA& in) -> float {return in._blue;},
-    [](RGBA& out, float in) -> void {out._blue;}
+    [](RGBA& out, float in) -> void {out._blue = in;}
 );
 Usertype<RGBA>::add_property<float>(
     "_alpha",
     [](RGBA& in) -> float {return in._alpha;},
-    [](RGBA& out, float in) -> void {out._alpha;}
+    [](RGBA& out, float in) -> void {out._alpha = in;}
 );
 ```
 
 Note that now, the Julia-side field is actually called `_red`, which is better style than the `_red_jl` we used only for clarity.
 
-To illustrate that properties do not have to directly correspond with members of the C++ class, we'll add another Julia-side-only field that represents the `value` component from the HSV color system (sometimes also called "lightness"). It is defined as the maximum of red, green and blue, given a color in RGBA:
+To illustrate that properties do not have to directly correspond with members of the C++ class, we'll add another Julia-side-only field that represents the `value` component from the HSV color system (sometimes also called "lightness"). It is defined as the maximum of red, green and blue:
 
 ```cpp
 Usertype<RGBA>::add_property<float>(
@@ -1731,7 +1877,7 @@ Usertype<RGBA>::add_property<float>(
 );
 ```
 
-We leave the unboxing routine for `_value` unspecified, because there is no field called `_value` to assign to for C++-side instances.
+We leave the unboxing routine for `_value` unspecified, because the C++-side instance does not have any corresponding field to assign to.
 
 ### Step 4: Implementing the Type
 
@@ -1742,7 +1888,9 @@ Having added all properties to the usertype interface, we make the Julia state a
 Usertype<RGBA>::implement();
 ```
 
-This creates a new type Julia-side type that has the architecture we just gave it. For end-users, this happens behind the scene, however, internally, the following expression is assembled and evaluated:
+This creates a new Julia-side type that has the architecture we just gave it. For end-users, this happens automatically. 
+
+Internally, the following expression is assembled and evaluated:
 
 ```julia
 mutable struct RGBA
@@ -1757,14 +1905,33 @@ end
 
 We see that jluna assembled a mutable struct type, whose field names and types are as specified. Even the order in which we called `add_field` for specific names is preserved. This becomes important for the default constructor (a constructor that takes no arguments). The default values for each of the types fields are those of an unmodified, default-initialized instance of `T` (`RGBA()` in our case). This is why the type needs to be default constructable.
 
-> **C++ Hint**: "default initialization" or "default construction" refers to the state of an object of type `T` that was instanced using the expression `T()`
+If we want the type to be implemented in a different module, we can give that module as a `jluna::Module` as an argument to `Usertype<T>::implement`.
+
+If we desire additional constructors, we can simply add them as external constructors in the same scope the usertype was `implement`ed in:
+
+```cpp
+Main.safe_eval(R"(
+    function RGBA(r::Float32, g::Float32, b::Float32, a::Float32) ::RGBA
+        out = RGBA()
+        out._red = r
+        out._green = g
+        out._blue = b
+        out._alpha = a
+        out._value = max(r, g, b, a)
+
+        return out
+    end
+)");
+```
 
 ### Step 5: Usage
 
 After `Usertype<RGBAB>::implement()`, we can use `RGBA` just like any other (Un)Boxable type:
 
 ```cpp
-Main.new_undef("jl_rgba") = RGBA(1, 0, 1);
+// create new variable and assign it a RGBA
+Main.create_or_assign("jl_rgba", RGBA(1, 0, 1));
+
 Main.safe_eval("println(jl_rgba);");
 Main.safe_eval("println(fieldnames(RGBA))");
 ```
@@ -1775,6 +1942,18 @@ RGBA(1.0f0, 0.0f0, 1.0f0, 1.0f0)
 > **Julia Hint**: `Base.fieldnames` takes a type (not an instance of a type) and returns the symbols of a types fields, in order.
 
 We see that now, `Main.RGBA` is a proper Julia type and `jl_rgba` got the correct values according to each fields boxing / unboxing routine.
+
+The same applies when moving `Main.RGBA` to C++:
+
+```cpp
+RGBA cpp_rgba = Main.safe_eval("return RGBA(0.5, 0.5, 0.3, 1.0)");
+std::cout << cpp_rgba._red << " ";
+std::cout << cpp_rgba._green << " ";
+std::cout << cpp_rgba._blue << " ";
+```
+```
+0.5 0.5 0.3
+```
 
 
 ## Multi Threading
