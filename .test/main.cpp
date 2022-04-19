@@ -7,6 +7,7 @@
 #include <thread>
 #include <include/multi_threading.hpp>
 #include <include/box.hpp>
+#include <chrono>
 #include <.src/cppcall.inl>
 
 using namespace jluna;
@@ -22,6 +23,23 @@ set_usertype_enabled(NonJuliaType);
 int main()
 {
     jluna::initialize(8);
+
+    {
+        std::function<void()> print_numbers = []() -> void
+        {
+            for (size_t i = 0; i < 10000; ++i)
+                std::cout << i << std::endl;
+        };
+
+        auto& task = ThreadPool::create(print_numbers);
+        task.schedule();
+
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(1ms);
+    }
+
+    return 0;
+
 
     auto all = []() {
 

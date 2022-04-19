@@ -28,7 +28,7 @@ set_usertype_enabled(RGBA);
 
 int main()
 {
-    jluna::initialize(8);
+    jluna::initialize();
 
     // add fields
     Usertype<RGBA>::add_property<float>(
@@ -91,7 +91,7 @@ int main()
 
     // output:
     //
-    // [JULIA][LOG] initialization successful (8 threads).
+    // [JULIA][LOG] initialization successful.
     // RGBA(0.75f0, 0.5f0, 0.1f0, 1.0f0, 0.75f0)
     // unboxed: 0.5 0.5 0.3
     // Process finished with exit code 0

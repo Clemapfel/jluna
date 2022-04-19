@@ -1955,10 +1955,12 @@ std::cout << cpp_rgba._blue << " ";
 0.5 0.5 0.3
 ```
 
+A fully working `main.cpp` replicating this `RGBA` example can be found [here](./rgba_example.cpp).
+
 
 ## Multi Threading
 
-Given Julias application in high-performance computing, and its native multi-threading support, it is only natural a Julia wrapper should also allow for asynchronous execution in a similarly convenient and performant manner. 
+Given Julias application in high-performance computing and its native multi-threading support, it is only natural a Julia wrapper should also allow for asynchronous execution in a similarly convenient and performant manner. 
 
 In relation to specifically a C++ <-> Julia environment, we run into a problem, however. Consider the following:
 
@@ -1981,7 +1983,7 @@ int main()
 }
 ```
 
-Here, we're doing a very simple operation. We created a C++ lambda that *does nothing*. It executes no julia-side code by handing `jl_eval_string` (the C-APIs way to execute strings as code) an empty string, after which is simply returns. We then create a C++-side thread using `std::thread`. In C++, once a thread is created it starts running immediately. We wait for it's executing to finish using `.join()`.
+Here, we're doing a very simple operation. We created a C++ lambda that *does nothing*. It executes no julia-side code by handing `jl_eval_string` (the C-APIs way to execute strings as code) an empty string, after which is simply returns. We then create a C++-side thread using `std::thread`. In C++, once a thread is created it starts running immediately. We wait for it's execution to finish using `.join()`.
 
 Running the above code, the following happens:
 ```
@@ -1994,15 +1996,17 @@ Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)
 
 It segfaults without an error. 
 
-This is, because the Julia C-API is seemingly hardcoded to prevent any call of C-API functions from anywhere but master scope (the scope of the thread, `main` is executed in). For obvious reasons, this makes things quite difficult, because, **we cannot access the Julia state from within a C++-side thread**. This has nothing to do with jluna, it is how the C-API was designed. 
+This is, because the Julia C-API is seemingly hardcoded to prevent any call of C-API functions from anywhere but master scope (the scope of the thread `main` is executed in). It is assumed that this is done so the garbage collector can safely keep track of allocations. 
 
-Given this, we can immediately throw out using any of the C++ `std::thread`-related multi-threading support, as well as libraries like libuv. It is important to keep this in mind, if our application already uses these frameworks, we have to take care to never execute code that interacts with Julia from within a thread. This includes any of jlunas functionalities, as it is, of course, build entirely on the Julia C-API.
+For obvious reasons, this makes things quite difficult, because, **we cannot access the Julia state from within a C++-side thread**. This has nothing to do with jluna, it is how the C-API was designed. 
+
+Given this, we can immediately throw out using any of the C++ `std::thread`-related multi-threading support, as well as libraries like [libuv](https://github.com/libuv/libuv). It is important to keep this in mind, if our application already uses these frameworks, we have to take care to **never execute code that interacts with Julia from within a thread**. This includes any of jlunas functionalities, as it is, of course, build entirely on the Julia C-API.
 
 All is not lost, however: jluna offers its own multi-threading framework, allowing for parallel execution of truly arbitrary C++ code - even if that code interacts with the Julia state.
 
 ### Initializing the Julia Threadpool
 
-In Julia, we have to decide the number of threads we want to use *before startup*. 
+In Julia, we have to decide the number of threads we want to use **before startup**. 
 In the Julia REPL, we would use the `-threads` (or `-t`) argument. In jluna, we instead give the desired threads as an argument to `jluna::initialize`:
 
 ```cpp
@@ -2026,15 +2030,17 @@ initialize(JULIA_NUM_THREADS_AUTO);
 // equivalent to `julia -t auto`
 ```
 
-This sets the number of threads to number of local CPU threads, just like setting environment variable `JULIA_NUM_THREADS` to `auto` would do.
+This sets the number of threads to number of local CPUs, just like setting environment variable `JULIA_NUM_THREADS` to `auto` would do.
 
-Note that any already existing `JULIA_NUM_THREAD` variable in the environment the jluna executable is run in, is ignored and overridden. We can only specify the number of threads through `jluna::initialize`.
+Note that any already existing `JULIA_NUM_THREAD` variable in the environment the jluna executable is run in is **ignored and overridden**. We can only specify the number of threads through `jluna::initialize`.
 
 ### Spawning a Task
 
-Owning to its status of being in-between two languages with differying vocabulary and design decisions, jlunas thread pool architecture borrows a bit from both C++ and Julia.
+Owning to its status of being in-between two languages with differing vocabulary and design, jlunas thread pool architecture borrows from both C++ and Julia.
 
-To execute a C++-side piece of code, we have to first wrap it into a C++ lambda, then wrap that lambda in a `jluna::Task`. We cannot initialize a task directly, rather, we use `jluna::ThreadPool::create`:
+To execute a C++-side piece of code, we have to first wrap it into a C++ lambda, then wrap that lambda in a `jluna::Task`.
+
+We cannot initialize a task directly, rather, we use `jluna::ThreadPool::create`:
 
 ```cpp
 using namespace jluna;
@@ -2046,19 +2052,16 @@ std::function<size_t(size_t)> forward_arg = [](size_t in) -> size_t {
 
 auto& task = ThreadPool::create(forward_arg, size_t(1234));
 ```
-> **C++ Hint**: `std::function` describes C++ function objects with a fully specified signature (i.e. not template functions or pure lambdas (of type `auto`)). If our function has a the signature `(T1, T2, T3, ...) -> TR`, it can be only be bound to `std::function<TR(T1, T2, T3, ...)>`
-
-> **C++ Hint**: Always specify the trailing return type of any C++ lambda using `->`. In this example, we manually specified `forward_arg` to return a value of type `size_t` by writing `[](size_t in) -> size_t { //...`.
 
 Here, `ThreadPool::create` takes multiple arguments:
 
-The first argument is a `std::function` object, which, in our case, was initialized by assigning a C++ lambda with the signature `(size_t) -> size_t` to the variable `forward_arg`. 
+The first argument is a `std::function` object, which, in our case, was initialized by assigning a C++ lambda with the signature `(size_t) -> size_t` to the variable `forward_arg`, which is of type `std::function<size_t(size_t)>`. 
 
-Any following objects given to `ThreadPool::create` will be used as the **arguments for the given function**. In our case, because we specified `size_t(1234)`, the thread pool will invoke our lambda `forward_arg` with that argument and only that argument.
+Any following arguments of `ThreadPool::create` will be used as the **arguments for the given function**. In our case, because we specified `size_t(1234)`, the thread pool will invoke our lambda `forward_arg` with that argument (and only that argument).
 
 Unlike C++-threads (but much like Julia tasks), `jluna::Task` does not immediately start execution once it is constructed. We need to manually "start" is using `.schedule()`. 
 
-We can wait for its execution to finish using `.join()`. This  stalls the thread `.join()` was called from until the task completes:
+We can wait for its execution to finish using `.join()`. This stalls the thread `.join()` was called from until the task completes:
 
 ```cpp
 std::function<size_t(size_t)> forward_arg = [](size_t in) -> size_t {
@@ -2085,7 +2088,46 @@ auto& task = ThreadPool::create(//...
 // wrong:
 auto task = ThreadPool::create(//...
 ```
-This is because any created task is owned and managed only by the thread pool. It cannot be moved or copied. All we are allowed to do, is keep a reference to it, and interact with it. If a task goes out of scope before 
+
+This is important, as the user is responsible for keeping the task in scope. If the variable the task is bound to goes out of scope, the task simply ends:
+
+```cpp
+/// in main.cpp
+jluna::initialize(8);
+
+{
+    std::function<void()> print_numbers = []() -> void
+    {
+        for (size_t i = 0; i < 9999; ++i)
+            std::cout << i << std::endl;
+    };
+
+    auto& task = ThreadPool::create(print_numbers);
+    task.schedule();
+
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(1ms);
+}
+// task is destructed here
+
+return 0;
+```
+```
+(...)
+2609
+2609
+2610
+2611
+
+Process finished with exit code 0
+```
+> **C++ Hint**: A *block* or *anonymous block scope* is created using `{` `}`. It acts similar to julias `begin` `end`, anything declared inside the block will go out of scope when the block ends. All variables declared inside the block are local to that block.
+
+> **C++ Hint**: `std::chrono` are C++s time-related functionalities. calling `std::this_thread::sleep_for(1ms)` will stall the master thread main is executed 1 millisecond.
+
+Here, our task is supposed to count all the way up to 9999, however, the task went out of scope before it could finish, only being able to count to 2611 before it was terminated.
+
+### Checking a Tasks Status
 
 We can check the status of any task using the following member functions:
 
