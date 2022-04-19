@@ -24,13 +24,16 @@ namespace jluna
 
     // ###########################################################
 
-
     /// @brief box identity
     template<is_julia_value_pointer T>
     unsafe::Value* box(T value);
 
     /// @brief box nullptr to nothing
     template<is<std::nullptr_t> T>
+    unsafe::Value* box(T value);
+
+    /// @brief box void* to Ptr{Cvoid}
+    template<is<void*> T>
     unsafe::Value* box(T value);
 
     /// @brief box identity

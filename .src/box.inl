@@ -21,6 +21,12 @@ namespace jluna
         return jl_nothing;
     }
 
+    template<is<void*> T>
+    unsafe::Value* box(T value)
+    {
+        return jl_box_voidpointer(value);
+    }
+
     template<is<void> T>
     unsafe::Value* box(T value)
     {
