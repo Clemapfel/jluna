@@ -24,6 +24,8 @@ int main()
 {
     jluna::initialize(8);
 
+    std::vector<TaskWrapper<void>> tasks;
+
     {
         std::function<void()> print_numbers = []() -> void
         {
@@ -31,8 +33,8 @@ int main()
                 std::cout << i << std::endl;
         };
 
-        auto& task = ThreadPool::create(print_numbers);
-        task.schedule();
+        tasks.push_back(ThreadPool::create(print_numbers));
+        tasks.back().get().schedule();
 
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(1ms);
@@ -56,7 +58,7 @@ int main()
 
     Test::test("Task", [](){
 
-        auto& task = ThreadPool::create<size_t>([]() -> size_t {
+        auto task = ThreadPool::create<size_t()>([]() -> size_t {
             return 4;
         });
 

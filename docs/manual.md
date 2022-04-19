@@ -2069,7 +2069,7 @@ std::function<size_t(size_t)> forward_arg = [](size_t in) -> size_t {
     return in;
 };
 
-auto& task = ThreadPool::create(forward_arg, size_t(1234));
+auto task = ThreadPool::create(forward_arg, size_t(1234));
 task.schedule();
 task.join();
 ```
@@ -2079,30 +2079,20 @@ lambda called with 1234
 
 Note how, even though we called the Julia function `println`, the task **did not segfault**. Using jlunas thread pool is the only way to call C++-side functions that access the Julia state concurrently.
 
-We declared `task` to be a reference:
-
-```cpp
-// correct:
-auto& task = ThreadPool::create(//...
-        
-// wrong:
-auto task = ThreadPool::create(//...
-```
-
-This is important, as the user is responsible for keeping the task in scope. If the variable the task is bound to goes out of scope, the task simply ends:
+The result of `ThreadPool::create` is a `std::reference_wrapper<Task<T>>`, where T is the return type of the C++ function scheduled. The user is responsible for keeping this wrapper and thus the task in scope. If the variable the wrapped task is bound to goes out of scope, the task simply ends:
 
 ```cpp
 /// in main.cpp
 jluna::initialize(8);
 
 {
-    std::function<void()> print_numbers = []() -> void
+    std::function<void()> count_to_9999 = []() -> void
     {
         for (size_t i = 0; i < 9999; ++i)
             std::cout << i << std::endl;
     };
 
-    auto& task = ThreadPool::create(print_numbers);
+    auto task = ThreadPool::create(count_to_9999);
     task.schedule();
 
     using namespace std::chrono_literals;
@@ -2121,11 +2111,34 @@ return 0;
 
 Process finished with exit code 0
 ```
-> **C++ Hint**: A *block* or *anonymous block scope* is created using `{` `}`. It acts similar to julias `begin` `end`, anything declared inside the block will go out of scope when the block ends. All variables declared inside the block are local to that block.
+> **C++ Hint**: A *block* or *anonymous block scope* is created using `{` `}`. It acts similar to julias `begin` `end`, anything declared inside the block will go out of scope when the block ends. In C++, all variables declared inside the block are local to only that block.
 
-> **C++ Hint**: `std::chrono` are C++s time-related functionalities. calling `std::this_thread::sleep_for(1ms)` will stall the master thread main is executed 1 millisecond.
+> **C++ Hint**: `std::chrono` are C++s time-related functionalities. calling `std::this_thread::sleep_for(1ms)` will stall the master thread main is executed in for 1 millisecond.
 
 Here, our task is supposed to count all the way up to 9999, however, the task went out of scope before it could finish, only being able to count to 2611 before it was terminated.
+
+A way to solve this is to store the result in a collection:
+
+```cpp
+std::vector<std::reference_wrapper<jluna::Task<unsafe::Value*>>> tasks;
+
+{
+    std::function<void()> print_numbers = []() -> void
+    {
+        for (size_t i = 0; i < 10000; ++i)
+            std::cout << i << std::endl;
+    };
+
+    tasks.push_back(ThreadPool::create(print_numbers));
+    tasks.back().schedule();
+
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(1ms);
+}
+```
+
+
+
 
 ### Checking a Tasks Status
 
