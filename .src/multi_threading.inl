@@ -157,7 +157,7 @@ namespace jluna
         Task<unsafe::Value*>* task = new Task<unsafe::Value*>(_current_id);
         _storage.emplace(_current_id,
             std::make_pair(
-            std::unique_ptr<TaskSuper>(task),
+            std::unique_ptr<detail::TaskSuper>(task),
             std::make_unique<std::function<unsafe::Value*()>>([lambda, future = std::ref(task->result()) ,args...]() -> unsafe::Value* {
                 lambda(args...);
                 detail::FutureHandler::update_future<unsafe::Value*>(future, jl_nothing);
@@ -179,7 +179,7 @@ namespace jluna
         Task<Return_t>* task = new Task<Return_t>(_current_id);
         _storage.emplace(_current_id,
             std::make_pair(
-            std::unique_ptr<TaskSuper>(task),
+            std::unique_ptr<detail::TaskSuper>(task),
             std::make_unique<std::function<unsafe::Value*()>>([lambda, future = std::ref(task->result()) ,args...]() -> unsafe::Value* {
                 auto res = lambda(args...);
                 detail::FutureHandler::update_future<Return_t>(future, res);

@@ -45,6 +45,7 @@ namespace jluna
 {
     namespace detail {
         class FutureHandler;
+        struct TaskSuper {};
     }
 
     /// @brief the result of a thread
@@ -80,15 +81,11 @@ namespace jluna
             std::unique_ptr<Value_t> _value;
     };
 
-    struct TaskSuper
-    {
-    };
-
     /// @brief equivalent of std::thread, is actually a Julia-side 'Task'
     template<typename Result_t>
-    class Task : public TaskSuper
+    class Task : public detail::TaskSuper
     {
-            friend class ThreadPool;
+        friend class ThreadPool;
 
         public:
             /// @brief dtor
@@ -186,7 +183,7 @@ namespace jluna
             static inline std::mutex _storage_lock = std::mutex();
             static inline std::map<size_t,
                 std::pair<
-                    std::unique_ptr<TaskSuper>,
+                    std::unique_ptr<detail::TaskSuper>,
                     std::unique_ptr<std::function<unsafe::Value*()>>
                 >> _storage = {};
     };

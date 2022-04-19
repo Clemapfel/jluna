@@ -58,16 +58,16 @@ int main()
 
     Test::test("Task", [](){
 
-        auto task = ThreadPool::create<size_t()>([]() -> size_t {
+        auto task = ThreadPool::create<size_t>([]() -> size_t {
             return 4;
         });
 
-        Test::assert_that(not task.is_running());
-        task.schedule();
-        task.join();
-        Test::assert_that(task.is_done());
+        Test::assert_that(not task.get().is_running());
+        task.get().schedule();
+        task.get().join();
+        Test::assert_that(task.get().is_done());
 
-        Test::assert_that(task.result().get().value() == 4);
+        Test::assert_that(task.get().result().get().value() == 4);
     });
 
     Test::conclude();
