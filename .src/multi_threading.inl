@@ -238,7 +238,7 @@ namespace jluna
     {
         _storage_lock.lock();
 
-        detail::TaskValue < unsafe::Value * > * task = new detail::TaskValue<unsafe::Value*>(_current_id);
+        detail::TaskValue<unsafe::Value*>* task = new detail::TaskValue<unsafe::Value*>(_current_id);
         _storage.emplace(_current_id,
             std::make_pair(
             std::unique_ptr<detail::TaskSuper>(task),
@@ -248,8 +248,9 @@ namespace jluna
                 return jl_nothing;
         })));
         auto& it = _storage.find(_current_id)->second;
-        auto* out = reinterpret_cast<detail::TaskValue < unsafe::Value * > * > (it.first.get());
+        auto* out = reinterpret_cast<detail::TaskValue<unsafe::Value*>*> (it.first.get());
         out->initialize(it.second.get());
+
         _current_id += 1;
         _storage_lock.unlock();
         return Task<void>(std::ref(*out));
@@ -272,6 +273,7 @@ namespace jluna
         auto& it = _storage.find(_current_id)->second;
         auto* out = reinterpret_cast<detail::TaskValue<Return_t>*>(it.first.get());
         out->initialize(it.second.get());
+
         _current_id += 1;
         _storage_lock.unlock();
         return Task<Return_t>(std::ref(*out));

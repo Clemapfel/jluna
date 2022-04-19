@@ -463,6 +463,8 @@ std::cout << static_cast<unsafe::Value*>(proxy) << std::endl;
 
 As long as `proxy` stays in scope, `1234` cannot be deallocated by the garbage collector. This is, despite the fact that there is no Julia-side reference to it.
 
+> **C++ Hint**: The term "going out of scope" or "staying in scope" is used to refer to whether a values destructor has yes been called. In C++ 
+
 > **Julia Hint**: In pure Julia, any value that is not the value of a named variable, inside a collection or reference by a `Base:Ref` is free to be garabge collected at any point. `jluna::Proxy` pevents this
 
 Not only does `proxy` point to Julia-side memory, it behaves exactly like it when used with Julia-side functions:
@@ -2050,7 +2052,7 @@ std::function<size_t(size_t)> forward_arg = [](size_t in) -> size_t {
     return in;
 };
 
-auto& task = ThreadPool::create(forward_arg, size_t(1234));
+auto task = ThreadPool::create(forward_arg, size_t(1234));
 ```
 
 Here, `ThreadPool::create` takes multiple arguments:
@@ -2079,7 +2081,7 @@ lambda called with 1234
 
 Note how, even though we called the Julia function `println`, the task **did not segfault**. Using jlunas thread pool is the only way to call C++-side functions that access the Julia state concurrently.
 
-The result of `ThreadPool::create` is a `std::reference_wrapper<Task<T>>`, where T is the return type of the C++ function scheduled. The user is responsible for keeping this wrapper and thus the task in scope. If the variable the wrapped task is bound to goes out of scope, the task simply ends:
+The result of `ThreadPool::create` is a `jluna::Task<T>`, where T is the return type of the C++ function scheduled or `void`. The user is responsible for keeping this task in scope. If the variable the task is bound to goes out of scope, the task simply ends:
 
 ```cpp
 /// in main.cpp
@@ -2117,10 +2119,10 @@ Process finished with exit code 0
 
 Here, our task is supposed to count all the way up to 9999, however, the task went out of scope before it could finish, only being able to count to 2611 before it was terminated.
 
-A way to solve this is to store the result in a collection:
+A way to solve this is to store task in a collection:
 
 ```cpp
-std::vector<std::reference_wrapper<jluna::Task<unsafe::Value*>>> tasks;
+std::vector<Task<void>> tasks;
 
 {
     std::function<void()> print_numbers = []() -> void
@@ -2131,14 +2133,23 @@ std::vector<std::reference_wrapper<jluna::Task<unsafe::Value*>>> tasks;
 
     tasks.push_back(ThreadPool::create(print_numbers));
     tasks.back().schedule();
-
-    using namespace std::chrono_literals;
+    
     std::this_thread::sleep_for(1ms);
 }
+std::this_thread::sleep_for(10ms);
+return 0;
+```
+```
+(...)
+9996
+9997
+9998
+9999
+
+Process finished with exit code 0
 ```
 
-
-
+This time, because the tasks stayed in scope outside of the block, it had 10 milliseconds more time to finish, which happened to be enough for it to reach its intended count.
 
 ### Checking a Tasks Status
 
@@ -2150,24 +2161,37 @@ We can check the status of any task using the following member functions:
 
 ### Accessing a Tasks Result
 
-Of course, `forward_arg` does more than just print to the command line, it also returns a value. To access the return value of a task, we use `.result()`, which returns an object of type `jluna::Future`.
-
-In C++, a future is a thread-safe container that may or may not (yet) contain a value. The future is available immediately on its corresponding task being created, however, until the task has succesfully completed, it will not contain a value. Once the task is done, the return value will be moved into the future, after which we can access it.
-
-We can get a tasks future using `.result()`:
+Returning to our example from before:
 
 ```cpp
-auto& task = ThreadPool::create(forward_arg, size_t(1234));
+std::function<size_t(size_t)> forward_arg = [](size_t in) -> size_t {
+    Base["println"]("lambda called with ", in);
+    return in;
+};
+
+auto task = ThreadPool::create(forward_arg, size_t(1234));
+task.schedule();
+task.join();
+```
+
+Here, `forward_arg` does more than just print to the command line, it also returns a value.
+
+To access this value of a task, we use the member function `.result()`, which returns an object of type `jluna::Future`.
+
+In C++, a future is a thread-safe container that may or may not (yet) contain a value. The future is available immediately when its corresponding task is created. Until the task has succesfully completed, however, the future will not contain a value. Once the task is done, the return value will be moved into the future, after which we can access it.
+
+```cpp
+auto task = ThreadPool::create(forward_arg, size_t(1234));
 auto future = task.result();
 ```
 
-To get the potential value of a future, we use `.get()` which returns a `std::optional`. If the futures task completed, we can access the value of the optional using `std::optional::value()`. We can check if the value is already available using `jluna::Future::is_available()`
+To get the potential value of a future, we use `.get()` which returns a `std::optional`. If the task has completed, we can access the value of the optional using `std::optional::value()`. To check if the value is already available, we can use `jluna::Future::is_available()`
 
 ```cpp
-auto& task = ThreadPool::create(forward_arg, size_t(1234));
+auto task = ThreadPool::create(forward_arg, size_t(1234));
 auto future = task.result();
 
-future.is_available(); // false since task has not start
+future.is_available(); // false since task has not started yet
 
 task.schedule();
 task.join();
@@ -2178,13 +2202,13 @@ std::cout << future.get().value() << std::endl;
 ```
 1234
 ```
-> **C++ Hint**: See the [standard libraries documentation](https://en.cppreference.com/w/cpp/utility/optional) on more ways to interact with an `std::optional<T>`
+> **C++ Hint**: See the [standard libraries documentation](https://en.cppreference.com/w/cpp/utility/optional) on more ways to interact with `std::optional<T>`
 
-We can wait for the value of a future to become available by calling `.wait()`. This will stall the thread `.wait()` is called from until the we can access the value. This way we don't necessarily need to keep track of the futures task, just having the future allows us to access to the tasks result.
+We can wait for the value of a future to become available by calling `.wait()`. This will stall the thread `.wait()` is called from until we can access the value. This way we don't necessarily need to keep track of the futures task, just having the future allows us to access to the tasks result. We do still need to make sure the corresponding task stays in scope.
 
 ### Data Race Freedom
 
-The user is responsible for any potential data races a `jluna::Task` may trigger. Potentially useful C++-side tools to assure include the following (where their Julia-side functional equivalent is listed for reference):
+The user is responsible for any potential data races a `jluna::Task` may trigger. Potentially useful C++-side tools in this application include the following (where their Julia-side functional equivalent is listed for reference):
 
 | C++ | Julia | C++ Documentation  |
 |------------|--------------|---------------------|

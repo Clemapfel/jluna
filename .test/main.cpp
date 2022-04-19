@@ -23,6 +23,7 @@ set_usertype_enabled(NonJuliaType);
 int main()
 {
     jluna::initialize(8);
+    using namespace std::chrono_literals;
 
     std::vector<Task<void>> tasks;
 
@@ -33,12 +34,22 @@ int main()
                 std::cout << i << std::endl;
         };
 
+        std::function<void()> print_numbers_rev = []() -> void
+        {
+            for (size_t i = 9999; i > 0; i--)
+                std::cout << i << std::endl;
+        };
+
         tasks.push_back(ThreadPool::create(print_numbers));
         tasks.back().schedule();
 
-        using namespace std::chrono_literals;
+        tasks.push_back(ThreadPool::create(print_numbers_rev));
+        tasks.back().schedule();
+
         std::this_thread::sleep_for(1ms);
     }
+
+    std::this_thread::sleep_for(10ms);
 
     return 0;
 

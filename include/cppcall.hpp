@@ -5,9 +5,46 @@
 
 #pragma once
 
+#include <include/typedefs.hpp>
+
+#include <functional>
+
 namespace jluna
 {
+    /// @brief make lambda available to Julia
+    /// @tparam Function_t: signature of lambda
+    /// @tparam Lambda_t: automatically deduced
+    /// @returns unsafe pointer to Julia-side function object
+    template<typename Function_t, typename Lambda_t>
+    unsafe::Value* as_julia_function(Lambda_t lambda);
 
+    /// @brief make function with signature () -> Return_t available to julia
+    /// @tparam Return_t
+    /// @param function
+    /// @returns unsafe pointer to Julia-side function object
+    template<typename Return_t>
+    unsafe::Value* register_function(std::function<Return_t()>);
+
+    /// @brief make function with signature (T1) -> Return_t available to julia
+    /// @tparam Return_t
+    /// @param function
+    /// @returns unsafe pointer to Julia-side function object
+    template<typename Return_t, typename Arg1_t>
+    unsafe::Value* register_function(std::function<Return_t(Arg1_t)> f);
+
+    /// @brief make function with signature (T1, T2) -> Return_t available to julia
+    /// @tparam Return_t
+    /// @param function
+    /// @returns unsafe pointer to Julia-side function object
+    template<typename Return_t, typename Arg1_t, typename Arg2_t>
+    unsafe::Value* register_function(std::function<Return_t(Arg1_t, Arg2_t)> f);
+
+    /// @brief make function with signature (T1, T2, T3) -> Return_t available to julia
+    /// @tparam Return_t
+    /// @param function
+    /// @returns unsafe pointer to Julia-side function object
+    template<typename Return_t, typename Arg1_t, typename Arg2_t, typename Arg3_t>
+    unsafe::Value* register_function(std::function<Return_t(Arg1_t, Arg2_t, Arg3_t)> f);
 }
 
 #include <.src/cppcall.inl>
