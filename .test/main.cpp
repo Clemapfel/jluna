@@ -28,22 +28,22 @@ int main()
     std::vector<Task<void>> tasks;
 
     {
-        std::function<void()> print_numbers = []() -> void
+        auto print_numbers = []() -> void
         {
             for (size_t i = 0; i < 10000; ++i)
                 std::cout << i << std::endl;
         };
 
-        std::function<void()> print_numbers_rev = []() -> void
+        auto print_numbers_rev = []() -> void
         {
             for (size_t i = 9999; i > 0; i--)
                 std::cout << i << std::endl;
         };
 
-        tasks.push_back(ThreadPool::create(print_numbers));
+        tasks.push_back(ThreadPool::create<void()>(print_numbers));
         tasks.back().schedule();
 
-        tasks.push_back(ThreadPool::create(print_numbers_rev));
+        tasks.push_back(ThreadPool::create<void()>(print_numbers_rev));
         tasks.back().schedule();
 
         std::this_thread::sleep_for(1ms);
@@ -69,7 +69,7 @@ int main()
 
     Test::test("Task", [](){
 
-        auto task = ThreadPool::create<size_t>([]() -> size_t {
+        auto task = ThreadPool::create<size_t()>([]() -> size_t {
             return 4;
         });
 

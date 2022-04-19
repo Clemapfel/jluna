@@ -12,10 +12,10 @@
 namespace jluna
 {
     /// @brief make lambda available to Julia
-    /// @tparam Function_t: signature of lambda
+    /// @tparam Signature: signature of lambda, C-style
     /// @tparam Lambda_t: automatically deduced
     /// @returns unsafe pointer to Julia-side function object
-    template<typename Function_t, typename Lambda_t>
+    template<typename Signature, typename Lambda_t>
     unsafe::Value* as_julia_function(Lambda_t lambda);
 
     /// @brief make function with signature () -> Return_t available to julia

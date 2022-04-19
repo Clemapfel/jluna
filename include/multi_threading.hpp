@@ -149,20 +149,13 @@ namespace jluna
         template<is_not<void> Return_t, typename... Args_t>
         static Task<Return_t> create(const std::function<Return_t(Args_t...)>& f, Args_t... args);
 
-        /// @brief create a task from a lambda returning void
-        /// @param f: lambda returning void
-        /// @param args: arguments
-        /// @returns Task, not yet scheduled
-        /// @note once the task is done, .result() will return a future with value of type jluna::Nothing_t
-        template<is<void> Return_t, typename Lambda_t, typename... Args_t>
-        static Task<void> create(Lambda_t lambda, Args_t... args);
 
-        /// @brief create a task from a lambda returning non-void
-        /// @param f: lambda returning void
-        /// @param args: arguments
-        /// @returns Task, not yet scheduled
-        template<is_not<void> Return_t, typename Lambda_t, typename... Args_t>
-        static Task<Return_t> create(Lambda_t lambda, Args_t... args);
+        template<typename Signature,
+            typename Lambda_t,
+            typename... Args_t,
+            typename T = std::invoke_result_t<std::function<Signature>, Args_t...>
+        >
+        static Task<T> create(Lambda_t f, Args_t... args);
 
         private:
             static inline size_t _current_id = 0;

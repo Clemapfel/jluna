@@ -221,16 +221,10 @@ namespace jluna
 
     // ###
 
-    template<is_not<void> Return_t, typename Lambda_t, typename... Args_t>
-    Task<Return_t> ThreadPool::create(Lambda_t lambda, Args_t... args)
+    template<typename Signature, typename Lambda_t, typename... Args_t, typename T>
+    Task<T> ThreadPool::create(Lambda_t f, Args_t... args)
     {
-        return create(static_cast<std::function<Return_t(Args_t...)>>(lambda), args...);
-    }
-
-    template<is<void> Return_t, typename Lambda_t, typename... Args_t>
-    Task<void> ThreadPool::create(Lambda_t lambda, Args_t... args)
-    {
-        return create(static_cast<std::function<Return_t(Args_t...)>>(lambda), args...);
+        return ThreadPool::create(std::function<Signature>(f), args...);
     }
 
     template<typename... Args_t>
