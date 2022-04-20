@@ -14,11 +14,11 @@ using namespace jluna;
 constexpr size_t n_reps = 20000;
 std::vector<Proxy> _proxies;
 
-/*
 int main()
 {
-    initialize(8);
+    initialize();
     Benchmark::initialize();
+
 
     std::vector<std::thread> threads;
     std::mutex mutex;

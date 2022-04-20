@@ -11,6 +11,11 @@
 
 namespace jluna
 {
+    namespace detail
+    {
+        static inline std::mutex initialize_lock = std::mutex();
+    }
+
     void set_c_adapter_path(const std::string& path)
     {
         jluna::detail::c_adapter_path_override = path;
@@ -24,6 +29,8 @@ namespace jluna
     void initialize(const std::string& path, size_t n_threads)
     {
         static bool is_initialized = false;
+
+        detail::initialize_lock.lock();
 
         if (is_initialized)
             return;
@@ -78,6 +85,8 @@ namespace jluna
         std::atexit(&jluna::detail::on_exit);
 
         is_initialized = true;
+
+        detail::initialize_lock.unlock();
     }
 
     unsafe::Value* safe_eval(const std::string& code, unsafe::Module* module)
