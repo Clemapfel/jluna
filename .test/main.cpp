@@ -23,19 +23,17 @@ set_usertype_enabled(NonJuliaType);
 int main()
 {
     jluna::initialize(8);
-    using namespace std::chrono_literals;
 
-    gc_pause;
-
-auto* int64_memory = "return 1234"_eval;
-
-std::cout << unsafe::unsafe_unbox<Int64>(int64_memory) << std::endl;
-// exactly as fast as:
-std::cout << *((Int64*) int64_memory) << std::endl;
-
-gc_unpause;
+std::cout << as_julia_type<
+    std::pair<
+        std::complex<Float32>,
+        std::string
+    >
+>::type_name << std::endl;
 
 return 0;
+
+        using namespace std::chrono_literals;
 
     std::vector<Task<void>> tasks;
 
@@ -866,7 +864,7 @@ return 0;
 
         vec = Vector<int>();
 
-        Test::assert_that(vec.size() == 0);
+        Test::assert_that(vec.get_n_elements() == 0);
     });
 
     Test::test("array: range index", []() {
@@ -1056,7 +1054,7 @@ return 0;
         Vector<size_t> vec = Main["vector"];
 
         vec.erase(0);
-        Test::assert_that((int) vec.at(0) == 99 and vec.size() == 3);
+        Test::assert_that((int) vec.at(0) == 99 and vec.get_n_elements() == 3);
     });
 
     Test::test("vector: append", []() {
@@ -1065,7 +1063,7 @@ return 0;
 
         vec.push_front(999);
         vec.push_back(666);
-        Test::assert_that(vec.size() == 6 and vec.front<int>() == 999 and vec.back<int>() == 666);
+        Test::assert_that(vec.get_n_elements() == 6 and vec.front<int>() == 999 and vec.back<int>() == 666);
     });
 
     Test::test("C: initialize adapter", []() {
@@ -1147,7 +1145,7 @@ return 0;
         auto type = Type(jl_nothing_type);
         Test::assert_that(type.operator _jl_datatype_t*() == jl_nothing_type);
 
-        type = to_julia_type<std::vector<size_t>>::type();
+        type = as_julia_type<std::vector<size_t>>::type();
     });
 
     auto test_type = []<typename T>(Type& a, T b) {

@@ -46,7 +46,7 @@ namespace jluna
                 if (not first_attempt)
                     return 0;
 
-                in = detail::convert(to_julia_type<T>::type(), in);
+                in = detail::convert(as_julia_type<T>::type(), in);
                 first_attempt = false;
                 goto retry;
             }
@@ -180,7 +180,7 @@ namespace jluna
     T unbox(unsafe::Value* value)
     {
         gc_pause;
-        static jl_datatype_t* type = (jl_datatype_t*) jl_eval_string(("return " + to_julia_type<std::complex<Value_t>>::type_name).c_str());
+        static jl_datatype_t* type = (jl_datatype_t*) jl_eval_string(("return " + as_julia_type<std::complex<Value_t>>::type_name).c_str());
         auto* res = detail::convert(type, value);
 
         auto* re = jl_get_nth_field(value, 0);

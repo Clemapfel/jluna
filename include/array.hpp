@@ -97,7 +97,11 @@ namespace jluna
             /// @brief get number of elements, equal to Base.length
             /// @returns length
             size_t get_n_elements() const;
-            inline size_t size() { return get_n_elements(); };
+
+            /// @brief get size in specific dimension
+            /// @param dimension_index: 0-based
+            /// @returns result of Base.size(array, dimension_index)
+            size_t size(size_t dimension_index) const;
 
             /// @brief get iterator to 0-indexed element
             /// @returns assignable iterator

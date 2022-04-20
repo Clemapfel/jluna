@@ -23,7 +23,7 @@ namespace jluna
 
     /// @brief type deduction
     template<>
-    struct detail::to_julia_type_aux<Type>
+    struct detail::as_julia_type_aux<Type>
     {
         static inline const std::string type_name = "Type";
     };

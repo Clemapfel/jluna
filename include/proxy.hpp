@@ -140,7 +140,7 @@ namespace jluna
             /// @param T: value
             /// @returns reference to self
             template<is_boxable T>
-            Proxy& operator=(T);jluna: Manual & Tut
+            Proxy& operator=(T);
 
             /// @brief create a new unnamed proxy that holds the same value
             /// @returns new proxy by valuejluna: Manual & Tut

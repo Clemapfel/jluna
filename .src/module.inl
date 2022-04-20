@@ -166,7 +166,7 @@ namespace jluna
         static_assert(sizeof...(Dims) == N, "wrong number of dimension initializers");
 
         std::stringstream str;
-        str << name << " = " << to_julia_type<Array<T, N>>::type_name << "(undef,";
+        str << name << " = " << as_julia_type<Array<T, N>>::type_name << "(undef,";
 
         auto add = [&](size_t dim, size_t i){
             str << dim << (i != sizeof...(Dims) ? ", " : ")");

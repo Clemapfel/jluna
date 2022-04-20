@@ -76,18 +76,19 @@ namespace jluna
     /// @tparam C++ type
     /// @returns type_name, accessible via member if type can be deduced, has no member otherwise
     template<typename T>
-    struct to_julia_type
+    struct as_julia_type
     {
-        static inline const std::string type_name = detail::to_julia_type_aux<T>::type_name;
+        static inline const std::string type_name = detail::as_julia_type_aux<T>::type_name;
         static unsafe::DataType* type()
         {
             static jl_datatype_t* out = (jl_datatype_t*) jl_eval_string(("return " + type_name).c_str());return out;
         }
     };
 
+    // @concept: can be converted to Julia type
     template<typename T>
-    concept ToJuliaTypeConvertable = requires
+    concept to_julia_type_convertable = requires(T)
     {
-        to_julia_type<T>::type_name;
+        as_julia_type<T>::type_name;
     };
 }

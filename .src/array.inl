@@ -50,9 +50,9 @@ namespace jluna
     namespace detail
     {
         template<typename Value_t, size_t N>
-        struct to_julia_type_aux<Array<Value_t, N>>
+        struct as_julia_type_aux<Array<Value_t, N>>
         {
-            static inline const std::string type_name = "Array{" + to_julia_type_aux<Value_t>::type_name + ", " + std::to_string(N) + "}";
+            static inline const std::string type_name = "Array{" + as_julia_type_aux<Value_t>::type_name + ", " + std::to_string(N) + "}";
         };
     }
 
@@ -61,7 +61,7 @@ namespace jluna
         : Proxy(value, symbol)
     {
         detail::assert_type((unsafe::DataType*) jl_typeof(value), (unsafe::DataType*) jl_array_type);
-        detail::assert_type((unsafe::DataType*) detail::array_value_type((unsafe::Array*) value), (unsafe::DataType*) to_julia_type<V>::type());
+        detail::assert_type((unsafe::DataType*) detail::array_value_type((unsafe::Array*) value), (unsafe::DataType*) as_julia_type<V>::type());
     }
 
     template<is_boxable V, size_t R>
@@ -70,13 +70,13 @@ namespace jluna
     {
         auto* value = proxy->operator unsafe::Value*();
         detail::assert_type((unsafe::DataType*) jl_typeof(value), (unsafe::DataType*) jl_array_type);
-        detail::assert_type((unsafe::DataType*) detail::array_value_type((unsafe::Array*) value), (unsafe::DataType*) to_julia_type<V>::type());
+        detail::assert_type((unsafe::DataType*) detail::array_value_type((unsafe::Array*) value), (unsafe::DataType*) as_julia_type<V>::type());
     }
 
     template<is_boxable V, size_t R>
     template<typename... Dims>
     Array<V, R>::Array(V* data, Dims... size_per_dimension)
-        : Proxy((unsafe::Value*) unsafe::new_array_from_data((unsafe::Value*) to_julia_type<V>::type(),(void*) data, size_per_dimension...))
+        : Proxy((unsafe::Value*) unsafe::new_array_from_data((unsafe::Value*) as_julia_type<V>::type(),(void*) data, size_per_dimension...))
     {}
 
     template<is_boxable T, size_t Rank>
@@ -141,7 +141,7 @@ namespace jluna
     Vector<V> Array<V, R>::operator[](const std::vector<size_t>& range) const
     {
         gc_pause;
-        auto* out = unsafe::new_array((unsafe::Value*) to_julia_type<V>::type(), range.size());
+        auto* out = unsafe::new_array((unsafe::Value*) as_julia_type<V>::type(), range.size());
         auto* me = operator jl_array_t*();
 
         for (size_t i = 0; i < range.size(); ++i)
@@ -301,6 +301,13 @@ namespace jluna
     }
 
     template<is_boxable V, size_t R>
+    size_t Array<V, R>::size(size_t dimension_index) const
+    {
+        auto* as = reinterpret_cast<const jl_array_t*>(this->operator const unsafe::Value*());
+        return jl_array_dim(as, dimension_index);
+    }
+
+    template<is_boxable V, size_t R>
     bool Array<V, R>::empty() const
     {
         return reinterpret_cast<const jl_array_t*>(this->operator const unsafe::Value*())->length == 0;
@@ -316,12 +323,12 @@ namespace jluna
 
     template<is_boxable V>
     Vector<V>::Vector()
-        : Array<V, 1>((unsafe::Value*) unsafe::new_array((unsafe::Value*) to_julia_type<V>::type(), 0), nullptr)
+        : Array<V, 1>((unsafe::Value*) unsafe::new_array((unsafe::Value*) as_julia_type<V>::type(), 0), nullptr)
     {}
 
     template<is_boxable V>
     Vector<V>::Vector(const std::vector<V>& vec)
-        : Array<V, 1>((unsafe::Value*) unsafe::new_array((unsafe::Value*) to_julia_type<V>::type(), vec.size()), nullptr)
+        : Array<V, 1>((unsafe::Value*) unsafe::new_array((unsafe::Value*) as_julia_type<V>::type(), vec.size()), nullptr)
     {
         for (size_t i = 0; i < vec.size(); ++i)
             jl_arrayset(reinterpret_cast<jl_array_t*>(this->operator unsafe::Value*()), box(vec.at(i)), i);

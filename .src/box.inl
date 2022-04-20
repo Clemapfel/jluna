@@ -121,7 +121,7 @@ namespace jluna
     unsafe::Value* box(T value)
     {
         gc_pause;
-        auto* array = unsafe::new_array_from_data((unsafe::Value*) to_julia_type<char>::type(), value.data(), value.size());
+        auto* array = unsafe::new_array_from_data((unsafe::Value*) as_julia_type<char>::type(), value.data(), value.size());
         auto* out = jl_array_to_string(array);
         gc_unpause;
         return out;
@@ -132,7 +132,7 @@ namespace jluna
     {
         gc_pause;
         std::string as_string = value;
-        auto* array = unsafe::new_array_from_data((unsafe::Value*) to_julia_type<char>::type(), as_string.data(), as_string.size());
+        auto* array = unsafe::new_array_from_data((unsafe::Value*) as_julia_type<char>::type(), as_string.data(), as_string.size());
         auto* out = jl_array_to_string(array);
         gc_unpause;
         return out;
@@ -149,7 +149,7 @@ namespace jluna
     unsafe::Value* box(const T& value)
     {
         gc_pause;
-        auto* out = unsafe::new_array((unsafe::Value*) to_julia_type<Value_t>::type(), value.size());
+        auto* out = unsafe::new_array((unsafe::Value*) as_julia_type<Value_t>::type(), value.size());
         for (size_t i = 0; i < value.size(); ++i)
         {
             auto* topush = box<Value_t>(value.at(i));
@@ -171,7 +171,7 @@ namespace jluna
 
         gc_pause;
 
-        auto* out = unsafe::call(new_dict, to_julia_type<Key_t>::type(), to_julia_type<Value_t>::type(), box(value.size()));
+        auto* out = unsafe::call(new_dict, as_julia_type<Key_t>::type(), as_julia_type<Value_t>::type(), box(value.size()));
         for (auto& pair : value)
             safe_call(setindex, out, box<Value_t>(pair.second), box<Key_t>(pair.first));
 
@@ -187,7 +187,7 @@ namespace jluna
 
         gc_pause;
 
-        auto* out = unsafe::call(new_set, to_julia_type<Value_t>::type(), box(value.size()));
+        auto* out = unsafe::call(new_set, as_julia_type<Value_t>::type(), box(value.size()));
 
         for (auto& e : value)
             unsafe::call(push, out, box<Value_t>(e));

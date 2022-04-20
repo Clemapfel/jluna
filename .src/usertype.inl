@@ -8,7 +8,7 @@
 namespace jluna
 {
     template<typename T>
-    struct to_julia_type<Usertype<T>>
+    struct as_julia_type<Usertype<T>>
     {
         static inline const std::string type_name = usertype_enabled<T>::name;
     };
@@ -42,7 +42,7 @@ namespace jluna
             [unbox_set](T& instance, unsafe::Value* value) -> void {
                 unbox_set(instance, jluna::unbox<Field_t>(value));
             },
-            Type((jl_datatype_t*) jl_eval_string(to_julia_type<Field_t>::type_name.c_str()))
+            Type((jl_datatype_t*) jl_eval_string(as_julia_type<Field_t>::type_name.c_str()))
         }});
     }
 
