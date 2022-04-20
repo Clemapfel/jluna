@@ -1,14 +1,14 @@
 # jluna: Manual & Tutorial
 
-This manual will cover most of jlunas features, how to use them and what to use them for. It is structured in a way that ramps up in complexity, starting with how to accomplish basic things like calling functions, basic interaction between the C++ and Julia state, more specialized applications like the array and module interface, how to deal with usertypes, then ending with multi-threaded applications and performance optimization.
+This manual will cover most of jlunas features, how to use them and what to use them for. It is structured in a way that ramps up in complexity, starting with how to accomplish basic things like calling functions and basic interaction between the C++ and Julia state, moving on to more specialized applications like the array and module interface, how to deal with usertypes, ending with multi-threaded applications and performance optimization.
 
-It is recommend that you read this manual in order, an interactive table of contents is provided for easy access.
+It is recommended that you read this manual in order, an interactive table of contents is provided for easy access.
 
 This manual assumes that all users are familiar with the basics of Julia. If this is not the case, it may be necessary to first work through the excellent [official manual](https://docs.julialang.org/en/v1/) to at least get an overview of Julias syntax and structure.
 
 jluna makes extensive use of newer C++20 features and high-level techniques such as [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) and template meta functions. This may provide a barrier of entry to users less familiar with the intricacies of the language. To address this, hints in the form of quotation blocks are provided where necessary:
 
-> **Hint**: Quotation blocks like these are reserved for additional information or explanations of C++ and/or Julia features. Users who consider themself very familiar with both, can safely skip them. 
+> **Hint**: Quotation blocks like these are reserved for additional information or explanations of C++ and/or Julia features. Users who consider themself familiar with both, can safely skip them. 
 
 ---
 
@@ -24,7 +24,7 @@ This manual does not go over how download and build jluna. Instead, a step-by-st
 
 ### Initializating the Julia State
 
-Before any Julia or jluna functionality can be accessed, we need to initialize the Julia state. This sets up the Julia environment and loads most of jlunas functionalities. 
+Before any Julia or jluna functionality can be accessed, we need to initialize the Julia state. This sets up the Julia environment and initialized many global jluna variables. 
 
 A basic `main.cpp` will have the following structure:
 
@@ -45,7 +45,7 @@ int main()
 ```
 > **C++ Hint**: `using namespace jluna` makes it, such that, in the scope the statement was declared, we do not have to prefix jluna functions/object with their namespace `jluna::`. This is why we can write `initialize()`, instead of `jluna::initialize()`.
 
-Where `#include <jluna.hpp>` makes all of jlunas functionality available to the user. 
+Where `#include <jluna.hpp>` automatically includes all headers intended for end-users.
 
 Note that you should never call the C-APIs `jl_atexit_hook`. At the end of runtime, jluna safely closes the Julia state automatically.
 
@@ -53,7 +53,7 @@ Note that you should never call the C-APIs `jl_atexit_hook`. At the end of runti
 
 ### Executing Julia Code
 
-#### Executing a single Line of Code
+#### Executing a Single Line of Code
 
 Similarly to using the REPL, we can execute an arbitrary string as code using `safe_eval`:
 
@@ -64,9 +64,11 @@ Main.safe_eval("println(\"hello jluna\")");
 hello jluna
 ```
 
-Where `Main` is a pre-defined jluna object representing the `Main` module. 
+Where `Main` is a pre-defined jluna object representing the Julia-side `Main` module. 
 
-The function is called **safe**_eval, because it forwards any exceptions that may have occurred during execution of the string as a `jluna::JuliaException`:
+> **Julia Hint**: `Main` is a module that serves as the global scope of the Julia state, no module contains `Main`.
+
+This function is called **safe**_eval, because it forwards any exceptions that may have occurred during parsing or execution of the string to the C++ state as a `jluna::JuliaException`:
 
 ```cpp
 Main.safe_eval("sqrt(-1)");
@@ -111,6 +113,8 @@ Process finished with exit code 134 (interrupted by signal 6: SIGABRT)
 
 Along with the exception, we also get the full Julia- and C++-side stacktrace. 
 
+> **C++ Hint**: In C++, an exception can be caught using a `try`-`catch` block. An error, on the other hand, cannot be caught.
+
 #### Executing a File
 
 We can execute an entire file using `safe_eval_file`. This function calls the Julia-side function `Main.include`, using the path we provided:
@@ -121,7 +125,7 @@ Main.safe_eval_file("path/to/julia_file.jl");
 
 #### Executing Multiple Lines of Code
 
-If we want to execute more than just a single line, or, if we want any special characters to be escaped automatically, C++s **raw string literal** conveniently accomplished this:
+If we want to execute more than just a single line, or, if we want any special characters to be escaped automatically, C++s **raw string literal** conveniently accomplishes both:
 
 ```cpp
 Main.safe_eval_file(R"(
@@ -138,7 +142,7 @@ second line
 
 ### Getting the Result of Julia Code
 
-Often, we want to access whatever result a piece of code returns. To do this in jluna, we capture the C++-side return value of `safe_eval` using a C++-side variable:
+Often, we want to access whatever result a piece of code returns. To do this using jluna, we capture the C++-side return value of `safe_eval`:
 
 ```cpp
 Int64 result = Main.safe_eval("return 1234");
@@ -147,7 +151,7 @@ std::cout << result << std::endl;
 ```
 1234
 ```
-> **C++ Hint**: `std::cout << x << std::endl` is C++s version to Julias `println(x)`
+> **C++ Hint**: `std::cout << x << std::endl` is C++s version to Julias `println(x)`.
 
 Where `Int64` is a type alias of `long int`. Most of the C++ primitive types have been aliased in jluna, such that their name corresponds to the Julia-side name. `Float64` instead of `double`, `UInt32` instead of `unsigned int`, etc.
 
@@ -169,53 +173,68 @@ In general, if the Julia-side value can be `Base.convert`ed to the declared C++-
 
 ### Executing Julia Code in Module Scope
 
-So far, we have used `Main.safe_eval`, which evaluates its argument in `Main` scope, similarly to how any code entered into the REPL would be evaluated. Sometimes, this may not be desired. Consider the following example:
+So far, we have used `Main.safe_eval`, which evaluates its argument in `Main` scope. Sometimes, this may not be desired. Consider the following example:
 
 ```cpp
+// declare module
 Main.safe_eval(R"(
     module MyModule
         var = 1234
     end
 )");
+
+// assign `var`
 Main.safe_eval("var = 9999;");
+
+// print `MyModule.var`s value
 Main.safe_eval("println(MyModule.var)");
 ```
 ```
 1234
 ```
 
-What happened here? Instead of assigning the variable `MyModule.var`, we actually created a new variable `Main.var` and assigned it instead. This is because the line `var = 9999` was executed **in Main scope**, that is, the function `Main.eval` was used Julia-side to evaluated the expression. 
+What happened here? In the statement `var = 9999`, instead of assigning the variable `MyModule.var`, we actually created a new variable `Main.var` and assigned it, instead. This is because the line `var = 9999` was executed **in Main scope**, that is, the function `Main.eval` was used Julia-side to evaluated the expression. 
+
+> **Julia Hint**: Every module has thei own `eval` function, which evaluates an expression in that modules scope.
 
 To avoid this, we can instead do:
 
 ```cpp
-// access MyModule as jluna::Module
+// access `MyModule` as jluna::Module
 Module my_module = Main.safe_eval("return MyModule");
 
 // use its safe_eval instead of Mains
 my_module.safe_eval("var = 777");
 
+// print `MyModule.var`s value
 Main.safe_eval("println(MyModule.var)");
 ```
 ```
 777
 ```
 
-Where we have explicitly declared the C++-side variable `my_module` to be of type `jluna::Module`.
+Where we have explicitly declared the C++-side variable `my_module` to be of type `jluna::Module`, because the member function `.safe_eval` is only available to variables of that type.
 
 ### Calling Julia Functions
 
 While executing code using `safe_eval` is convenient, it has a significant performance impact. This is, because Julia needs to first `Meta.parse` the string we hand it, then evaluate the resulting expression.
 
 
-> **Julia Hint**: `Meta.parse` takes a string and treats it as a line of code. It returns an object of type `Expr`, which can then be `eval`ed and compiled. To learn more about expressions, see the [official manual page on metaprogramming](https://docs.julialang.org/en/v1/manual/metaprogramming/)
+> **Julia Hint**: `Meta.parse` takes a string and treats it as a line of code. It returns an object of type `Expr`, which can then be `eval`ed and compiled. To learn more about expressions, see the [official manual page on metaprogramming](https://docs.julialang.org/en/v1/manual/metaprogramming/).
 
 Instead, users are encouraged to execute any given piece of Julia code by using a **function**. We are able to access a function (once) by using `save_eval("return function_name")`, then use that function over and over, at no performance cost compared to using only Julia:
 
 ```cpp
+/// declare function
 Main.safe_eval("f(x) = x^x");
+
+// bind function to C++-side variable
 auto f = Main.safe_eval("return f");
+
+// call function
 Int64 result = f(12);
+
+// print result
 std::cout << result << std::endl;
 ```
 ```
@@ -256,15 +275,15 @@ Main
 [1, 2, 3]
 ```
 
-Where `"cpp side string"` is a string on the C++-side, while `Main` and `[1, 2, 3]` are memory allocated only Julia-side. 
+Where `"cpp side string"` is a string on the C++-side, while `Main` and `[1, 2, 3]` are entirely allocated Julia-side. 
 
 #### Accessing Named Variables in a Module
 
 The above example illustrates how using `safe_eval("return x")` can be quite clumsy syntactically. To address this, jluna offers the much more elegant `operator[](std::string)`. 
 
-> **C++ Hint**: `operator[](std::string)` is a function that is called by using `x["<string here>"]`, where x is a value that supports the operator.
+> **C++ Hint**: `operator[](std::string)` is a function that is called by using `x["<string here>"]`, where `x` is of a type that supports the operator.
 
-Rewriting the above using it, we get:
+Rewriting the above, we get:
 
 ```cpp
 auto println = Main["println"];
@@ -277,7 +296,7 @@ println(
 );
 ```
 
-Note how we could not replace `Main.safe_eval("return [1, 2, 3]")` with `Main["[1, 2, 3]"]`. This is because the latter is **invalid**. We can only access named, Julia-side variables using `operator[](std::string)`. There is no variable named `[1, 2, 3]` in Main scope, therefore `operator[]` would fail.
+Note how we could not replace `Main.safe_eval("return [1, 2, 3]")` with `Main["[1, 2, 3]"]`. This is because the latter is **invalid**. We can only access named, Julia-side variables using `operator[](std::string)`. There is no variable named `[1, 2, 3]` in Main scope, therefore `operator[]` would fail and raise an exception.
 
 In summary:
   + `Module.safe_eval` executes a string. Use `return` to return the value of that expression
@@ -285,13 +304,14 @@ In summary:
 
 ### Accessing Julia Struct Fields
 
-We learned how to access a named variable in a module by using `jluna::Module::operator[](std::string)`. This is convenient, however modules are not the only jluna type that supports `operator[]`. 
+We learned how to access a named variable in a module by using `jluna::Module::operator[](std::string)`. This is convenient, however, modules are not the only jluna type that supports `operator[]`. 
 
 Let's say we have the following structtype:
 
-> **Julia Hint**: A structtype is any type declared using `struct` or `mutable struct`
+> **Julia Hint**: A structtype is any type declared using `struct` or `mutable struct`.
 
 ```cpp
+// declare struct and instance
 Main.safe_eval(R"(
     mutable struct MyStruct
        _field::Int64
@@ -299,31 +319,37 @@ Main.safe_eval(R"(
     
     jl_instance = MyStruct(9876);
 )");
+
+// access instance C++-side
 auto cpp_instance = Main["jl_instance"];
 ```
 
 Here, we defined a new structtype `MyStruct`, which has a single field `_field`. We then created a Julia-side variable, `jl_instance`, to which we bound a newly constructed `MyStruct`. 
-To access the Julia-side `jl_instance`, we used `Main["jl_instance"]`, which we were allowed to use, since `jl_instance` is a proper named variable.
+To access the Julia-side `jl_instance`, we used `Main["jl_instance"]`, which we are allowed to do, since `jl_instance` is a proper named variable.
 
-We can access the field of `cpp_instance` like so:
+We can then access the Julia-side field of `cpp_instance` like so:
 
 ```cpp
+// access field named `_field`
 Int64 field_value = cpp_instance["_field"];
+
+// print its value
 std::cout << field_value << std::endl;
 ```
 ```
 9876
 ```
 
-Note again, how we manually declared the type of the C++-side variable `field_value` to be `Int64`. We did not use `auto`.
+Note, again, how we manually declared the type of the C++-side variable `field_value` to be `Int64`. We did not use `auto`.
 
 ### Mutating Julia-side Values
 
-We can use `operator[]` to access Julia-side values, be it variables in a module or fields of a structtype. However, we can actually also **mutate** the variable itself:
+We can use `operator[]` to access Julia-side values that are variables in a module or fields of a structtype. However, we can actually also **mutate** the variable itself:
 
 > **Hint**: To mutate a variable means to change its value without changing its name
 
 ```cpp
+// declare struct and instance
 Main.safe_eval(R"(
     mutable struct MyStruct
        _field::Int64
@@ -332,8 +358,10 @@ Main.safe_eval(R"(
     jl_instance = MyStruct(9876);
 )");
 
+// mutate field
 Main["jl_instance"]["_field"] = 666;
 
+// print value after mutation
 Main.safe_eval("println(jl_instance._field)");
 ```
 ```
@@ -369,17 +397,23 @@ std::cout << static_cast<Int64>(instance_field) << std::endl;
 > ```cpp
 > Int64 value = instance_field;
 > ```
-> In the latter example, `static_cast` (and thus the conversion operator) was implicitely called. This means we have already been using `static_cast` in the previous sections, just implicitly.
+> In the latter example, `static_cast` (and thus the conversion operator) was implicitly called. This means we have already been using `static_cast` in the previous sections.
 > 
 > See the [C++ manual](https://en.cppreference.com/w/cpp/language/static_cast) for more information.
 
 The C++-variable `instance_field` directly refers to the Julia-side variable `Main.jl_instance._field` (recall that `MyStruct` is mutable). Because of this, **if we mutate the C++-side variable, we will also mutate the corresponding Julia-side variable**:
 
 ```cpp
+// access instance
 auto instance = Main["jl_instance"];
+
+// access instance._field
 auto instance_field = instance["_field"];
+
+// mutate instance._field
 instance_field = 1234;
 
+// print value after mutation
 Main.safe_eval("println(jl_instance._field)");
 ```
 ```
@@ -394,13 +428,18 @@ Main["jl_instance"]["_field"] = 1234;
 
 Which is highly convenient.
 
-#### Mutating Variables using `operator[](size_t)`
+### Mutating Variables using `operator[](size_t)`
 
 Accessing and assigning the result of `operator[]` like this works for variables in Modules, fields of structs and even elements of collections:
 
 ```cpp
+// declare Julia-side vector
 Main.safe_eval("vec_var = [1, 2, 3, 4]");
+
+// mutate vector[1]
 Main["vec_var"][0] = 9999;
+
+// print value
 Main.safe_eval("println(vec_var)");
 ```
 ```
@@ -409,7 +448,7 @@ Main.safe_eval("println(vec_var)");
 
 Where the Julia-side `vec_var` is a `Base.Array`.
 
-> **Hint**: In C++, indices are 0-based. In Julia, they are 1-based. This can be quite confusing considering we are operating in both languages at the same time. For now, using `operator[]` on a C++-side object requires indices to be 0-based. 
+> **Hint**: In C++, indices are 0-based. In Julia, they are 1-based. This can be quite confusing, considering we are operating in both languages at the same time. For now, using `operator[]` on a C++-side object requires indices to be 0-based. 
 >
 > See the [section on arrays]() for more information
 
@@ -420,7 +459,10 @@ Where the Julia-side `vec_var` is a `Base.Array`.
 So far, this manual has intentionally obfuscated what type `auto` resolves to in a statement like this:
 
 ```cpp
+// declare variable
 jluna::safe_eval("new_var = 1234");
+
+// access variable (not variables value)
 auto new_var = Main["new_var"];
 ```
 
@@ -428,11 +470,11 @@ Indeed, `new_var` is not an integer, it is deduced to be a `jluna::Proxy`. To fu
 
 ### Shared & Separate Memory
 
-By default, most memory allocated C++-side is incompatible with Julia. For example, a C++-side variable of type `char` is an 8-bit number, while a Julia-side `Char` has 32 bits. If we were to directly exchange memory between states, the value of the char would be corrupted. For more complex classes, for example comparing `std::set` to `Base.set`, the memory layout is even more different and directly sharing memoy is impossible.
+By default, most memory allocated C++-side is incompatible with Julia. For example, a C++-side variable of type `char` is an 8-bit number, while a Julia-side `Char` has 32 bits. If we were to directly exchange memory between states, the value of the char would be corrupted. For more complex classes, for example comparing `std::set` to `Base.set`, the memory layout is even more different, making directly sharing memory impossible.
 
-Because of this, it is best to assume that we have to first **reformat** any C++-side memory before moving it Julia-side. 
+Because of this, it is best to assume that we have to **reformat** any C++-side memory before moving it Julia-side. 
 
-In jluna, the **inverse is not true**. We do not have to reformat Julia-side memory to interact with it C++-side, which is the entire purpose of the library. This is made possible through `jluna::Proxy`.
+In jluna, the **inverse is not true**. We do not have to reformat Julia-side memory to interact with it C++-side. This is the entire purpose of the library, it is made possible through `jluna::Proxy`.
 
 `jluna::Proxy` is a proxy, or stand-in, of arbitrary Julia-side memory. Internally, it simply holds a pointer to whatever memory it is managing. Copying the proxy copies this pointer, not the Julia-side memory. Moving the proxy does not affect the Julia-side memory. If we want to actually change the Julia-side memory being managed, we use the proxies member functions.
 
@@ -440,7 +482,7 @@ In jluna, the **inverse is not true**. We do not have to reformat Julia-side mem
 
 We rarely construct proxies from raw pointers (see the [section on `unsafe` usage](#unsafe)), instead, a proxy will be the return value of a member function of another proxy.
 
-How can we make a proxy if we need a proxy to do so? As we've seen before, jluna offers pre-initialized proxies for `Main`, `Base` and `Core`. We will limit ourself to `Main` for this section. We can use these proxies to generate new proxies for us.
+How can we make a proxy if we need a proxy to do so? We've done so already, jluna offers pre-initialized proxies for `Main`, `Base` and `Core`. We will limit ourself to `Main` for this section. We can use these proxies of modules to generate new proxies of anything for us.
 
 To create a proxy from a value, we use `Main.safe_eval("return x")`, where x is a value or a variable (though only the value of that variable will be returned):
 
@@ -448,7 +490,7 @@ To create a proxy from a value, we use `Main.safe_eval("return x")`, where x is 
 auto proxy = Main.safe_eval("return 1234");
 ```
 
-To reiterate, the resulting proxy, `proxy`, **does not contain the Julia-side value `1234`**. It only keeps a pointer to wherever `1234` is allocated.
+To reiterate, the resulting proxy, `proxy`, **does not contain the Julia-side value `1234`**. It only keeps a pointer to wherever `1234` is located.
 
 We can actually check the the pointer using `static_cast<unsafe::Value*>`, where `unsafe::Value*` is a raw pointer to arbitrary Julia-side memory:
 
@@ -463,13 +505,14 @@ std::cout << static_cast<unsafe::Value*>(proxy) << std::endl;
 
 As long as `proxy` stays in scope, `1234` cannot be deallocated by the garbage collector. This is, despite the fact that there is no Julia-side reference to it.
 
-> **C++ Hint**: The term "going out of scope" or "staying in scope" is used to refer to whether a values destructor has yes been called. In C++ 
+> **C++ Hint**: The term "going out of scope" or "staying in scope" is used to refer to whether a values destructor has yet been called.
 
-> **Julia Hint**: In pure Julia, any value that is not the value of a named variable, inside a collection or reference by a `Base:Ref` is free to be garabge collected at any point. `jluna::Proxy` pevents this
+> **Julia Hint**: In pure Julia, any value that is not the value of a named variable, inside a collection, or referenced by a `Base:Ref`, is free to be garbage collected at any point. `jluna::Proxy` prevents this
 
-Not only does `proxy` point to Julia-side memory, it behaves exactly like it when used with Julia-side functions:
-
+When using `proxy` with Julia-functions, it behaves exactly like whatever memory it is pointing to:
+  
 ```cpp
+// call 
 Base["println"](Base["^"](proxy, 2));
 ```
 ```
