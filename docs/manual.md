@@ -4,7 +4,7 @@ This manual will cover most of jlunas features, how to use them and what to use 
 
 It is recommended that you read this manual in order, an interactive table of contents is provided for easy access.
 
-This manual assumes that all users are familiar with the basics of Julia. If this is not the case, it may be necessary to first work through the excellent [official manual](https://docs.julialang.org/en/v1/) to at least get an overview of Julias syntax and structure.
+This manual assumes that all users are familiar with the basics of Julia. If this is not the case, it may be necessary to first work through the excellent [official manual](https://docs.julialang.org/en/v1/) to at least get an overview of Julia's syntax and structure.
 
 jluna makes extensive use of newer C++20 features and high-level techniques such as [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) and template meta functions. This may provide a barrier of entry to users less familiar with the intricacies of the language. To address this, hints in the form of quotation blocks are provided where necessary:
 
@@ -22,7 +22,7 @@ This manual does not go over how download and build jluna. Instead, a step-by-st
 
 ---
 
-### Initializating the Julia State
+### Initializing the Julia State
 
 Before any Julia or jluna functionality can be accessed, we need to initialize the Julia state. This sets up the Julia environment and initialized many global jluna variables. 
 
@@ -151,7 +151,7 @@ std::cout << result << std::endl;
 ```
 1234
 ```
-> **C++ Hint**: `std::cout << x << std::endl` is C++s version to Julias `println(x)`.
+> **C++ Hint**: `std::cout << x << std::endl` is C++s version to Julia's `println(x)`.
 
 Where `Int64` is a type alias of `long int`. Most of the C++ primitive types have been aliased in jluna, such that their name corresponds to the Julia-side name. `Float64` instead of `double`, `UInt32` instead of `unsigned int`, etc.
 
@@ -193,9 +193,9 @@ Main.safe_eval("println(MyModule.var)");
 1234
 ```
 
-What happened here? In the statement `var = 9999`, instead of assigning the variable `MyModule.var`, we actually created a new variable `Main.var` and assigned it, instead. This is because the line `var = 9999` was executed **in Main scope**, that is, the function `Main.eval` was used Julia-side to evaluated the expression. 
+What happened here? In the statement `var = 9999`, instead of assigning the variable `MyModule.var`, we actually created a new variable `Main.var` and assigned it, instead. This is because the line `var = 9999` was executed **in Main scope**, that is, the function `Main.eval` was used Julia-side to evaluate the expression. 
 
-> **Julia Hint**: Every module has thei own `eval` function, which evaluates an expression in that modules scope.
+> **Julia Hint**: Every module has their own `eval` function, which evaluates an expression in that modules scope.
 
 To avoid this, we can instead do:
 
@@ -702,7 +702,7 @@ Most relevant `std::` types are supported out-of-the-box. All jluna types that r
 
 If we are unsure of what a particular C++ type will be boxed to, we can use `to_julia_type<T>::value`. This template meta function has two points of interaction.
 
-> **C++ Hint**: A template meta function is an advanced technique, where a structs template arguments, [partial specialization](https://en.cppreference.com/w/cpp/language/partial_specialization), [concepts](https://en.cppreference.com/w/cpp/language/constraints) and [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) are used to add functionality. For end-users, all that is needed is to know how to access any particular eturn value, as most template meta functions are not actual `std::function`s.
+> **C++ Hint**: A template meta function is an advanced technique, where a structs template arguments, [partial specialization](https://en.cppreference.com/w/cpp/language/partial_specialization), [concepts](https://en.cppreference.com/w/cpp/language/constraints) and [SFINAE](https://en.cppreference.com/w/cpp/language/sfinae) are used to add functionality. For end-users, all that is needed is to know how to access any particular return value, as most template meta functions are not actual `std::function`s.
 
 We can access the name of the Julia type any particular type `T` will be boxed to using `as_julia_function<T>::type_name`:
 
@@ -730,7 +730,7 @@ We've seen before that we can mutate Julia-side variable with proxies. To unders
 + A **unnamed proxy** manages a Julia-side **value**
 + A **named proxy** manages a Julia-side **variable**
 
-Here, "manage" means that, whatever the proxy points to is safe from the garabge collector. Furthermore, when the proxy is mutated, the object being managed is mutated at the same time.
+Here, "manage" means that, whatever the proxy points to is safe from the garbage collector. Furthermore, when the proxy is mutated, the object being managed is mutated at the same time.
 
 #### Unnamed Proxies
 
@@ -761,7 +761,7 @@ auto unnamed_proxy = Main.safe_eval("return jl_var");
 Then using `Main.safe_eval("return` will **only forward its value** to the unnamed proxy. If we modify the unnamed proxy again, the variable will not be modified:
 
 ```cpp
-// delcare variable
+// declare variable
 Main.safe_eval("jl_var = [7, 7, 7]");
 
 // forward value to proxy
@@ -936,7 +936,7 @@ We see that `jluna::Array<T, N>` has two template parameters:
 
 Both these template arguments directly correspond to the Julia-side parameters of `Base.Array{T, N}`.
 
-Note that we have declared the Julia-side vector `[1, 2, 3, 4]` to be of value-type `Int64`. This is important, because we specified the C++-side array to also have that value-type. On construction, `jluna::Array` will check if the value types match (that is, wether for all elements `e_n` in the Julia-side array, it holds that `e_n <: T`). If they do not, an exception is thrown.
+Note that we have declared the Julia-side vector `[1, 2, 3, 4]` to be of value-type `Int64`. This is important, because we specified the C++-side array to also have that value-type. On construction, `jluna::Array` will check if the value types match (that is, whether for all elements `e_n` in the Julia-side array, it holds that `e_n <: T`). If they do not, an exception is thrown.
 
 Because the match does not have to be exact (see the section on [type ordering](#type-order)), we can simply declare the value type to be `Any`. This lets us move any assortment of objects into the same array. jluna provides a typedef for this:
 
@@ -950,7 +950,7 @@ using Array3d = // equivalent to Base.Array<Any, 3>
 
 ## Accessing Array Indices
 
-Before contiuing, we need to setup our example arrays for this section:
+Before continuing, we need to set up our example arrays for this section:
 
 ```cpp
 // create arrays
@@ -1008,12 +1008,12 @@ jluna also supports Julia-style list indexing for `operator[]`:
 Array<Int64, 1> vector = jluna::safe_eval("return [i for i in 1:10]");
 auto sub_vector = vector.at({1, 5, 2, 7});
 
-Base["printlnt"](sub_vector);
+Base["println"](sub_vector);
 ```
 ```
 [2, 6, 3, 8]
 ```
-> **C++ Hint**: Here, the sytnax used, `{1, 5, 2, 7}`, is called a "brace-enclosed initializer list", which is a form of [aggregate initialization](https://en.cppreference.com/w/cpp/language/aggregate_initialization) in C++. It can be best though of as a proto-vector, the compiler will infer the vectors type and construct it for us. In our case, because `Array::operator[]` expects a list of integer, it will interpret `{1, 5, 2, 7}` as the argument for an implicitly called constructor for that type, creating a `std::vector<size_t>`.<br>
+> **C++ Hint**: Here, the syntax used, `{1, 5, 2, 7}`, is called a "brace-enclosed initializer list", which is a form of [aggregate initialization](https://en.cppreference.com/w/cpp/language/aggregate_initialization) in C++. It can be best though of as a proto-vector, the compiler will infer the vectors type and construct it for us. In our case, because `Array::operator[]` expects a list of integer, it will interpret `{1, 5, 2, 7}` as the argument for an implicitly called constructor for that type, creating a `std::vector<size_t>`.<br>
 > 
 > see also: [list initialization](https://en.cppreference.com/w/cpp/language/list_initialization)
 
@@ -1118,7 +1118,7 @@ When boxing a `jluna::Vector<T>`, the resulting Julia-side value will be of type
 
 ## Generator Expressions
 
-One of Julias most convenient features are [**generator expressions**](https://docs.julialang.org/en/v1/manual/arrays/#man-comprehensions) (also called list- or array-comprehensions). These are is a special kind of syntax that creates an iterable, in-line, lazy-eval range. 
+One of Julia's most convenient features are [**generator expressions**](https://docs.julialang.org/en/v1/manual/arrays/#man-comprehensions) (also called list- or array-comprehensions). These are is a special kind of syntax that creates an iterable, in-line, lazy-eval range. 
 
 > **Hint**: A lazy-eval range is a collection that only allocates and/or computes its actual elements when that specific element is queried. After construction, no allocation is performed until requested by the user.
 
@@ -1155,7 +1155,7 @@ In jluna, we can create a generator expression using the postfix string-literal 
 // in cpp:
 "(i for i in 1:10 if i % 2 == 0)"_gen
 ```
-Note that when using `_gen`, **only round brackets are allowed**. Every generator expression has to be in round brackets, they cannot be ommitted or replaced with another form of brackets. Otherwise, an exception will be raised.
+Note that when using `_gen`, **only round brackets are allowed**. Every generator expression has to be in round brackets, they cannot be omitted or replaced with another form of brackets. Otherwise, an exception will be raised.
 
 We can iterate through a generator expression like so:
 
@@ -1457,7 +1457,7 @@ This may seem limiting at first, how could we execute arbitrary C++ code when we
 Let's say we want to write a function that takes any number of `String`s and concatenates them. Obviously, just 3 arguments are not enough for this. Luckily, there is a workaround. Instead of using a n-argument function, we can use a 1-argument function where the argument is a n-element vector:
 
 ```cpp
-// declare lambda, taks jluna::Array (aka. Base.Array) as argument
+// declare lambda, tasks jluna::Array (aka. Base.Array) as argument
 auto concat_all = [](jluna::Array<std::string, 1> arg) -> std::string
 {
     // append through stringstream
@@ -1471,7 +1471,7 @@ auto concat_all = [](jluna::Array<std::string, 1> arg) -> std::string
 ```
 > **C++ Hint**: `std::stringstream` is a stream that we can write strings into using `operator<<`. We then flush it using `std::endl` and convert its contents to a single `std::string` using the member function `str`. More info about `std::stringstream` can be found [here](https://en.cppreference.com/w/cpp/io/basic_stringstream).
 
-This lambda has the signatue `(jluna::Array<std::string, 1>) -> std::string`. We move it Julia-side using `as_julia_function`:
+This lambda has the signature `(jluna::Array<std::string, 1>) -> std::string`. We move it Julia-side using `as_julia_function`:
 
 ```cpp
 // create new variable
@@ -1537,7 +1537,7 @@ auto modify_instance = [](NonJuliaObject& instance, size_t n) -> void
 };
 ```
 
-This lambda has the signature `(NonJuliaObject&, size_t) -> void`, which is a dissallowed signature because `NonJuliaObject&` is not (Un)Boxable.
+This lambda has the signature `(NonJuliaObject&, size_t) -> void`, which is a disallowed signature because `NonJuliaObject&` is not (Un)Boxable.
 
 Instead of handing `instance` to the lambdas function body through an argument, we can instead forward it through its capture:
 
@@ -1549,11 +1549,11 @@ auto modify_instance = [instance_ref = std::ref(instance)] (size_t n) -> void
 };
 ```
 
-> **C++ Hint**: `std::ref` is used to create a [reference wrapper](https://en.cppreference.com/w/cpp/utility/functional/reference_wrapper) around any instanced object. It is very similar to Julias `Base.Ref` in functionality. To "unwrap" it, we use `.get()` in C++, where we would use `[]` in Julia.
+> **C++ Hint**: `std::ref` is used to create a [reference wrapper](https://en.cppreference.com/w/cpp/utility/functional/reference_wrapper) around any instanced object. It is very similar to Julia's `Base.Ref` in functionality. To "unwrap" it, we use `.get()` in C++, where we would use `[]` in Julia.
     
 Lambda syntax can get quite complicated, so let's talk through this step-by-step. 
 
-Firstly, this second lambda has the signature `(size_t) -> void`. Capture variables do not affects a lambdas signature.
+Firstly, this second lambda has the signature `(size_t) -> void`. Capture variables do not affect a lambdas signature.
 
 Inside the capture `[]`, we have the expression `instance_ref = std::ref(instance)`. This expression creates a new variable, `instance_ref`, that will be available inside the lambdas body. We initialize `instance_ref` with `std::ref(instance)`, which creates a reference wrapper around our desired C++-side instance. A reference wrapper acts the same as a plain reference in terms of memory ownership, as long as the reference wrapper stays in scope, `instance` will too. 
 
@@ -1575,7 +1575,7 @@ Main.create_or_assign(
 // used function Julia-side
 Main.safe_eval("modify_instance(3)");
 
-// print memer value of C++-side instance
+// print value of C++-side instance
 std::cout << instance._value << std::endl;
 ```
 ```
@@ -1590,9 +1590,9 @@ By cleverly employing captures and collections / tuples, the restriction on what
 
 ## Specialized Proxies: Types
 
-We've seen specialized module-, symbol- and array-proxies. jluna has a fourth kind of proxy, `jluna::Type`, which wraps all of Julias very introspection functionalities in one class.
+We've seen specialized module-, symbol- and array-proxies. jluna has a fourth kind of proxy, `jluna::Type`, which wraps all of Julia's very introspection functionalities in one class.
 
-While some overlap is present, `jluna::Type` is not a direct equivalent of `Base.Type{T}`. It is asserted to manage an object of type `T` such that `T isa Type`, though. It just provides more functions than are a available using only Julias `Base`.
+While some overlap is present, `jluna::Type` is not a direct equivalent of `Base.Type{T}`. It is asserted to manage an object of type `T` such that `T isa Type`, though. It just provides more functions than are available using only Julia's `Base`.
 
 ### Constructing a Type
 
@@ -1681,7 +1681,7 @@ Where `T`, `U` are arbitrary types, `N` is an Integer
 
 Julia types can be ordered. To conceptualize this, the relation of types is best thought of as a directed graph. Each node of the graph is a type, each edge is directed, where, if the edge goes from type `A` to type `B`, then `B <: A`. That is, `B` is a subtype of `A`, or, equivalently, `A >: B`: `A` is a supertype of `B`.
 
-This relational nature is heavily used in Julias multiple dispatch and type inference, for now, it gives us a way to put types in relation to each other. `jluna::Type` offers multiple functions for this:
+This relational nature is heavily used in Julia's multiple dispatch and type inference, for now, it gives us a way to put types in relation to each other. `jluna::Type` offers multiple functions for this:
 
 ```cpp
 // (*this) <: other
@@ -1837,7 +1837,7 @@ While less useful, we can access a types methods using the Julia-side `Base.meth
 
 ### Type Classification
 
-To classify a type means to evaluate a condition based on a types attributes, in order to get information about how similiar or different clusters of types are, jluna offers a number of convenient classifications, Some of these are available as part of the Julia standard library, some are not. This section will list all offered by jluna, along with their meaning:
+To classify a type means to evaluate a condition based on a types attributes, in order to get information about how similar or different clusters of types are, jluna offers a number of convenient classifications, Some of these are available as part of the Julia standard library, some are not. This section will list all offered by jluna, along with their meaning:
 
 + `is_primitive`: was the type declared using the keyword `primitive`
     ```cpp
@@ -2036,9 +2036,9 @@ Firstly, we have the template argument, `Float32`. This decides the Julia-side t
 The first argument is the Julia-side instances' fields name. Usually we want this name to be the same as C++-side, `_red`, but to avoid confusion for this section only, the C++-side field is called `_red` while the corresponding Julia-side field is `_red_jl`.
 
 The second argument of `add_property` is called the **boxing routine**. This function always has the signature `(T&) -> Property_t`, where `T` is the usertype-manage type (`RGBA` for us) and `Property_t` is the type of the field (`Float32`).
-The boxing routine governs what value to assign the Julia-side field. It takes the C++-side instance, accesses the value of `_red`, then returns that value which will then be assigned to the Julia-side instances `_red_jl`.
+The boxing routine governs what value to assign the corresponding Julia-side field. In our case, it takes a C++-side instance of `RGBA`, accesses the value that instances `_red`, and assigns it to the Julia-side instances `_red_jl`.
 
-The third argument is optional, it is called the **unboxing routine**. It always has the signature `(T&, Property_t) -> void`. When a Julia-side instance of `RGBA` is moved back C++-side, the unboxing routine governs, what value the now C++-sides `RGBA` fields `_red` will be assigned. If left unspecified, the value will be the default value. In our case, we assign `_red` the value of `_red_jl`, which is the second argument of the unboxing routine.
+The third argument is optional, it is called the **unboxing routine**. It always has the signature `(T&, Property_t) -> void`. When a Julia-side instance of `RGBA` is moved back C++-side, the unboxing routine governs what value the now C++-sides `RGBA` fields `_red` will be assigned. If left unspecified, the value will be the default value. In our case, we assign `_red` the value of `_red_jl`, which is the second argument of the unboxing routine.
 
 In summary:
 
@@ -2047,7 +2047,7 @@ In summary:
 + the boxing routine decides what value the Julia-side field will be assigned when moving the object C++ -> Julia
 + the unboxing routine decides what value the C++-side field will be assigned when moving the object Julia -> C++
 
-Now that we know how to add fields, we can do so for the `_green`, `_blue` and `_alpha`:
+Now that we know how to add fields, we can do so for `_green`, `_blue` and `_alpha`:
 
 ```cpp
 // in namespace scope
@@ -2135,7 +2135,7 @@ mutable struct RGBA
 end
 ```
 
-We see that jluna assembled a mutable struct type, whose field names and types are as specified. Even the order in which we called `add_field` for specific names is preserved. This becomes important for the default constructor (a constructor that takes no arguments). The default values for each of the types fields are those of an unmodified, default-initialized instance of `T` (`RGBA()` in our case). This is why the type needs to be default constructable.
+We see that jluna assembled a mutable structtype, whose field names and types are as specified. Even the order in which we called `add_field` for specific names is preserved. This becomes important for the default constructor (a constructor that takes no arguments). The default values for each of the types fields are those of an unmodified, default-initialized instance of `T` (`RGBA()` in our case). This is why the type needs to be default constructable.
 
 If we want the type to be implemented in a different module, we can give that module as a `jluna::Module` as an argument to `Usertype<T>::implement`.
 
@@ -2164,7 +2164,10 @@ After `Usertype<RGBAB>::implement()`, we can use `RGBA` just like any other (Un)
 // create new variable and assign it a RGBA
 Main.create_or_assign("jl_rgba", RGBA(1, 0, 1));
 
+// print value of that variable
 Main.safe_eval("println(jl_rgba);");
+
+// print fieldnames of the Julia-side type
 Main.safe_eval("println(fieldnames(RGBA))");
 ```
 ```
@@ -2178,7 +2181,10 @@ We see that now, `Main.RGBA` is a proper Julia type and `jl_rgba` got the correc
 The same applies when moving `Main.RGBA` to C++:
 
 ```cpp
+// create a Julia-side RGBA and assign it to a C++-side RGBA
 RGBA cpp_rgba = Main.safe_eval("return RGBA(0.5, 0.5, 0.3, 1.0)");
+
+// print member values
 std::cout << cpp_rgba._red << " ";
 std::cout << cpp_rgba._green << " ";
 std::cout << cpp_rgba._blue << " ";
@@ -2187,14 +2193,14 @@ std::cout << cpp_rgba._blue << " ";
 0.5 0.5 0.3
 ```
 
-A fully working `main.cpp` replicating this `RGBA` example can be found [here](./rgba_example.cpp).
+This section was quite complicated, a fully working `main.cpp` replicating this `RGBA` example can be found [here](./rgba_example.cpp). Users are encouraged to play with it, to further their understanding of the usertype interface.
 
 
 ## Multi Threading
 
-Given Julias application in high-performance computing and its native multi-threading support, it is only natural a Julia wrapper should also allow for asynchronous execution in a similarly convenient and performant manner. 
+Given Julia's application in high-performance computing and its native multi-threading support, it is only natural a Julia wrapper should also allow for asynchronous execution in a similarly convenient and performant manner. 
 
-In relation to specifically a C++ <-> Julia environment, we run into a problem, however. Consider the following:
+In relation to specifically a C++ <-> Julia environment, we run into a problem, however:
 
 ```cpp
 #include <jluna.hpp>
@@ -2204,18 +2210,24 @@ int main()
 {
     jluna::initialize();
     
+    // create a lambda that does nothing
     auto noop =[]() -> void {
         jl_eval_string("");
         return;
     };
     
+    // execute it in a std::thread
     auto thread = std::thread(noop);
+    
+    // wait fo thread to finish
     thread.join();
+    
+    // exit main
     return 0;
 }
 ```
 
-Here, we're doing a very simple operation. We created a C++ lambda that *does nothing*. It executes no julia-side code by handing `jl_eval_string` (the C-APIs way to execute strings as code) an empty string, after which is simply returns. We then create a C++-side thread using `std::thread`. In C++, once a thread is created it starts running immediately. We wait for it's execution to finish using `.join()`.
+Here, we're doing a very simple operation. We created a C++ lambda that *does nothing*. It executes no julia-side code by handing `jl_eval_string` (the C-APIs way to execute strings as code) an empty string, after which is simply returns. We then create a C++-side thread using `std::thread`. In C++, once a thread is created, it starts running immediately. We wait for its execution to finish using `.join()`.
 
 Running the above code, the following happens:
 ```
@@ -2246,7 +2258,7 @@ int main()
 {
     jluna::initialize(8); 
     // equivalent to `julia -t 8`
-    (...)
+    // (...)
 }
 ```
 ```
@@ -2262,7 +2274,7 @@ initialize(JULIA_NUM_THREADS_AUTO);
 // equivalent to `julia -t auto`
 ```
 
-This sets the number of threads to number of local CPUs, just like setting environment variable `JULIA_NUM_THREADS` to `auto` would do.
+This sets the number of threads to number of local CPUs, just like setting environment variable `JULIA_NUM_THREADS` to `auto` would do for pure Julia.
 
 Note that any already existing `JULIA_NUM_THREAD` variable in the environment the jluna executable is run in is **ignored and overridden**. We can only specify the number of threads through `jluna::initialize`.
 
@@ -2277,12 +2289,17 @@ We cannot initialize a task directly, rather, we use `jluna::ThreadPool::create`
 ```cpp
 using namespace jluna;
 
+// declare lambda that prints to console and returns its argument
 auto forward_arg = [](size_t in) -> size_t {
     Base["println"]("lambda called with ", in);
     return in;
 };
 
-auto task = ThreadPool::create<size_t(size_t)>(forward_arg, size_t(1234));
+// create task
+auto task = ThreadPool::create<size_t(size_t)>( // signature
+    forward_arg,    // function
+    size_t(1234)    // function arguments
+);
 ```
 
 Here, `ThreadPool::create` takes multiple arguments:
@@ -2302,13 +2319,19 @@ Unlike C++-threads (but much like Julia tasks), `jluna::Task` does not immediate
 We can wait for its execution to finish using `.join()`. This stalls the thread `.join()` was called from (usually the master thread in which `main` is executed) until the task completes:
 
 ```cpp
+// declare lambda
 std::function<size_t(size_t)> forward_arg = [](size_t in) -> size_t {
     Base["println"]("lambda called with ", in);
     return in;
 };
 
+// create task
 auto task = ThreadPool::create(forward_arg, size_t(1234));
+
+// start task
 task.schedule();
+
+// wait for task to finish
 task.join();
 ```
 ```
@@ -2323,22 +2346,29 @@ The result of `ThreadPool::create` is a `jluna::Task<T>`, where `T` is the retur
 /// in main.cpp
 jluna::initialize(8);
 
+// open block scope
 {
+    // declare function that counts to 9999
     std::function<void()> count_to_9999 = []() -> void
     {
         for (size_t i = 0; i < 9999; ++i)
             std::cout << i << std::endl;
     };
 
+    // create task
     auto task = ThreadPool::create(count_to_9999);
+    
+    // start task
     task.schedule();
 
+    // wait for 1 millisecond
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(1ms);
 }
 // task is destructed here
 
-return 0;
+std::this_thread::sleep_for(10ms); // wait for another 10ms
+return 0; // exit main
 ```
 ```
 (...)
@@ -2349,15 +2379,16 @@ return 0;
 
 Process finished with exit code 0
 ```
-> **C++ Hint**: A *block* or *anonymous block scope* is created using `{` `}`. It acts similar to julias `begin` `end`, anything declared inside the block will go out of scope when the block ends. In C++, all variables declared inside the block are local to only that block.
+> **C++ Hint**: A *block* or *anonymous block scope* is created using `{` `}`. It acts similar to Julia's `begin` `end`, anything declared inside the block will go out of scope when the block ends. In C++, all variables declared inside the block are local to only that block.
 
 > **C++ Hint**: `std::chrono` are C++s time-related functionalities. calling `std::this_thread::sleep_for(1ms)` will stall the master thread main is executed in for 1 millisecond.
 
 Here, our task is supposed to count all the way up to 9999. Instead, the task went out of scope before it could finish, only being able to count to 2611 before it was terminated.
 
-A way to solve this is to store the task in a collection that itself is in master scope:
+A way to solve this is to store the task in a collection that is itself in master scope:
 
 ```cpp
+// task storage
 std::vector<Task<void>> tasks;
 
 {
@@ -2367,11 +2398,17 @@ std::vector<Task<void>> tasks;
             std::cout << i << std::endl;
     };
 
+    // add task to storage
     tasks.push_back(ThreadPool::create(print_numbers));
+    
+    // start just pushed task
     tasks.back().schedule();
     
+    // wait for 1ms
     std::this_thread::sleep_for(1ms);
 }
+
+// wait for another 10ms
 std::this_thread::sleep_for(10ms);
 return 0;
 ```
@@ -2387,6 +2424,10 @@ Process finished with exit code 0
 
 This time, because the tasks was not destructed prematurely, it had 10 milliseconds more time to finish. This happened to be enough for it to reach its intended count.
 
+To force users to keep track of their tasks, there is no equivalent to Julia's `@spawn`, the user needs to cache the task to start it, hopefully avoiding situations where tasks end unexpectedly.
+
+### Accessing a Tasks State
+
 We can check the status of any task using the following member functions:
 
 + `is_done`: is the task finished or failed, c.f. `Base.istaskdone`
@@ -2399,7 +2440,11 @@ Returning to our example from before:
 
 ```cpp
 std::function<size_t(size_t)> forward_arg = [](size_t in) -> size_t {
+    
+    // print
     Base["println"]("lambda called with ", in);
+    
+    // return argument
     return in;
 };
 
@@ -2419,18 +2464,28 @@ auto task = ThreadPool::create(forward_arg, size_t(1234));
 auto future = task.result();
 ```
 
-To get the potential value of a future, we use `.get()` which returns a `std::optional`. If the task has completed, we can access the value of the optional using `std::optional::value()`. To check if the value is already available, we can use `jluna::Future::is_available()`
+To get the potential value of a future, we use `.get()`, which returns a `std::optional`. If the task has completed, we can access the value of the optional using `std::optional::value()`. To check if the value is already available, we can use `jluna::Future::is_available()`:
 
 ```cpp
+// create task
 auto task = ThreadPool::create(forward_arg, size_t(1234));
+
+// get future of task (currently empty)
 auto future = task.result();
 
-std::cout << future.is_available() << std::endl; // false since task has not started yet
+std::cout << future.is_available() << std::endl; 
+// false since task has not started yet
 
+// start task
 task.schedule();
+
+// wait fot task to finish
 task.join();
 
-std::cout << future.is_available() << std::endl; // true
+std::cout << future.is_available() << std::endl;
+// true now;
+
+// print value of future
 std::cout << future.get().value() << std::endl;
 ```
 ```
@@ -2438,13 +2493,13 @@ std::cout << future.get().value() << std::endl;
 1
 1234
 ```
-> **C++ Hint**: Trying to access the value of a std::optional before it is available will raise an exception. See the [standard libraries documentation](https://en.cppreference.com/w/cpp/utility/optional) on more ways to interact with `std::optional<T>`
+> **C++ Hint**: Trying to access the value of a std::optional before it is available will raise an exception. See the [standard libraries documentation](https://en.cppreference.com/w/cpp/utility/optional) on more ways to interact with `std::optional<T>`.
 
-We can wait for the value of a future to become available by calling `.wait()`. This will stall the thread `.wait()` is called from until the value becomes accessible, after which the function will return that value. This way we don't necessarily need to keep track of the futures task, just having the future allows us to access to the tasks result. We do still need to make sure the corresponding task stays in scope, though.
+We can wait for the value of a future to become available by calling `.wait()`. This will stall the thread `.wait()` is called from until the value becomes accessible, after which the function will return that value. This way, we don't necessarily need to keep track of the futures task, just having the future allows us to access to the tasks result. We do still need to make sure the corresponding task stays in scope, though.
 
 ### Data Race Freedom
 
-The user is responsible for any potential data races a `jluna::Task` may trigger. Useful C++-side tools in this application include the following (where their Julia-side functional equivalent is listed for reference):
+The user is responsible for any potential data races a `jluna::Task` may trigger. Useful C++-side tools for this application include the following (where their Julia-side functional equivalent is listed for reference):
 
 | C++ | Julia | C++ Documentation  |
 |------------|--------------|---------------------|
@@ -2459,13 +2514,13 @@ Furthermore, jluna provides its own lock-like object `jluna::Mutex`, which is a 
 
 As a general rule, any particular part of jluna is thread-safe, as long as two threads are not *modifying* the same object at the same time.
 
-For example, `jluna::safe_call` can be called from multiple threads, and `safe_call` itself will work. If both `safe_call` modify the same value, however, non-concurrency artifacts may occur.
+For example, `jluna::safe_call` can be called from multiple threads, and `safe_call` itself will work. If both `safe_call` modify the same value, however, concurrency artifacts may occur.
 
-Similarly, we can freely create unrelated proxies and modify them individually. If we create two proxies that reference the same Julia-side variable, mutating both proxies (if they are named) will possibly trigger an error.
+Similarly, we can freely create unrelated proxies and modify them individually. If we create two proxies that reference the same Julia-side variable, mutating both proxies (if they are named) at the same time will possibly trigger an error or data corruption.
 
-The user is required to ensure thread-safety in these conditions, just like they would have to in Julia. jluna has no hidden pitfalls or behind-the-scene machinery that multi-threading may throw a wrench into. Any user-created object is outside of jlunas responsibility, however.
+The user is required to ensure thread-safety in these conditions, just like they would have to in Julia. jluna has no hidden pitfalls or behind-the-scene machinery that multi-threading may throw a wrench into, all its internals that are not accessible to the user are thread-safe as of version 0.9.0. Any user-created object is outside of jlunas responsibility, however.
 
-Notably, `Module::new_*`, `Module::create` and `Module::create_or_assign` are thread-safe. Each `jluna::Module` carries exactly one lock, which allows these calls to happen safely in a multi-threaded environment. All other functions of `jluna::Module` do not make use of this lock.  Instead, users will be required to manually "lock" and object and manage concurrent interaction.
+Notably, `Module::new_*`, `Module::create` and `Module::create_or_assign` are thread-safe. Each `jluna::Module` carries exactly one lock, which allows these calls to happen safely in a multi-threaded environment. All other functions of `jluna::Module` do not make use of this lock.  Instead, users will be required to manually "lock" an object and manage concurrent interaction themself.
 
 ### Thread-Safety in Julia
 
@@ -2484,22 +2539,31 @@ to_be_modified = []
 to_be_modified_lock = Base.ReentrantLock()
 ```
 
-Now, when a thread wants to modify `to_be_modified`, they first need to acquire this lock:
+Now, when a thread wants to modify `to_be_modified`, it first need to acquire this lock:
 
 ```cpp
 // in cpp
+
+// thread function
 auto push_to_modify = [](size_t) -> void
 {
-  static auto* lock = unsafe::get_function(jl_base_module, "lock"_sym);
-  static auto* unlock = unsafe::get_function(jl_base_module, "unlock"_sym);
+    // access Base.lock
+    static auto lock = Base["lock"];
+    
+    // access Base.unlock
+    static auto unlock = Base["unlock"];
   
-  auto* lock = Main["to_be_modified_lock"]; // safe
-  jluna::safe_call(lock);
+    // access Julia-side lock
+    auto* mutex = Main["to_be_modified_lock"];
+    
+    // lock 
+    lock(mutex);
   
-  // modify here
+    // modify vector here
   
-  jluna::safe_call(unlock);
-  return;
+    // unlock
+    unlock(mutex);
+    return;
 }
 ```
 
@@ -2507,10 +2571,13 @@ Since `push_to_modify` will be executed through `jluna::ThreadPool`, the Julia f
 
 ### Thread-Safety in C++
 
-A similar approach can be taken when trying to safely modify C++-side objects. Instead of a Julia-side lock, we use a C++-side `jluna::Mutex`, which is a simple wrapper around a Julia-side `ReentrantLock`:
+A similar approach can be taken when trying to safely modify C++-side objects. Instead of a Julia-side lock, we use a C++-side `jluna::Mutex`:
 
 ```cpp
+// C++-side variable we want to thread-safely access
 jluna::Vector<size_t> to_be_modified;
+
+// C++-side mutex
 auto to_be_modified_lock = jluna::Mutex();
 
 auto push_to_modify = [](size_t)
@@ -2526,40 +2593,47 @@ auto push_to_modify = [](size_t)
 
 Similarly, `std::mutex` or `std::unique_lock` can be used for the same purpose.
 
-### Closing Notes
+### Multi-Threading: Closing Notes
 
 #### Interacting with `jluna::Task` from Julia
 
-Internally, jluna makes accessing the Julia-state from a C++-sided, asynchronously executed function possible by wrapping it in a Julia-side `Task`. jluna can then use Julias native threadpool, allowing for C-API functions to be safely executed. This has a useful side-effect:
+Internally, jluna makes accessing the Julia-state from a C++-sided, asynchronously executed function possible, by wrapping it in a Julia-side `Task`. jluna can then use Julia's native threadpool, allowing for C-API functions to be safely executed. This has some side-effects, most of them useful.
 
 For example, `yield`, called from C++ like so:
 
 ```cpp
-static auto* yield = unsafe::get_function(jl_base_module, "yield"_sym);
-jluna::safe_call(yield);
+static auto yield = Main.safe_eval("return Base.yield");
+yield();
 ```
 
 Will actually yield the thread this C++ code is executed in, letting another Julia thread take over. This applies to all Julia-side functions. Calling them from within a `jluna::Task` has exactly the same effect as calling them from within a `Base.Task`. 
 
-We can access the Julia-side object of a `jluna::Task` using `.operator unsafe::Value*()`. This allows us to create a `jluna::Proxy` of a `jluna::Task`:
+We can access the Julia-side object `jluna::Task` is managing using `.operator unsafe::Value*()`, which returns a raw C-pointer to the Julia-side taks. This allows us to create a `jluna::Proxy` of a `jluna::Task` like so:
 
 ```cpp
+// declare lambda
 auto lambda = [](){ //...
+    
+// create task
 auto task = ThreadPool::create<void>(lambda);
+
+// create proxy to task
 auto task_proxy = Proxy(static_cast<unsafe::Value*>(task));
 
 // all Julia-only attributes can now be accessed:
-std::cout << (bool) task_proxy["stick"] << std::endl;
+std::cout << (bool) task_proxy["sticky"] << std::endl;
 ```
 ```
 true
 ```
 
-We can then use this proxy as we would use a Julia-side variable, allowing for maximum freedom on how to manage and schedule tasks.
+> **Julia Hint**: `Threads.Tasks.sticky` is a property that governs wether a task can be executed concurrently. By default, `sticky` is set to `false`, making it "stick" to the main thread, instead of "detaching" and being run on its own.
+
+We can then use this proxy as we would use a Julia-side variable, allowing for full freedom on how to manage and schedule tasks.
 
 #### Do **NOT** use `@threadcall`
 
-Lastly, a warning: Julia has a macro called `@threadcall`, which purports to simply execute a `ccall` in a new thread. Internally, it actually uses the libuv thread pool for this, not the native Julia thread pool. Because the C-API is seemingly hardcoded to segfault any attempt at accessing the Julia state through any non-master C-side thread, using `@threadcall` to call arbitrary code will also trigger this segfaults. Because of this, it is not recommended to use `@threadcall` in any circumstances. Instead, we can `ccall` from within a proper `Base.Task`, or use jlunas thread pool to execute C-side in the first place.
+Lastly, a warning: Julia has a macro called `@threadcall`, which purports to simply execute a `ccall` in a new thread. Internally, it actually uses the libuv thread pool for this, not the native Julia thread pool. Because the C-API is seemingly hardcoded to segfault any attempt at accessing the Julia state through any non-master C-side thread, using `@threadcall` to call arbitrary code will also trigger this segfault. Because of this, it is not recommended to use `@threadcall` in any circumstances. Instead, we can `ccall` from within a proper `Base.Task`, or use jlunas thread pool to execute C-side code in the first place.
 
 ---
 
@@ -2914,6 +2988,6 @@ gc_unpause;
 
 ## Performance Optimization
 
-In this section, we will investigate jlunas performance, analyzing benchmark results and explaining why certain things are faster than others. Hopefully, this will educate users on how they can achieve the best performance themself.
+In this section, we will investigate jlunas performance, analyzing benchmark results and explaining why certain things are faster than others. Hopefully, this will educate users on how they can achieve the best performance themselves.
 
 (this section is not yet complete.)
