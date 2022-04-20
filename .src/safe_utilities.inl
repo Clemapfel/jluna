@@ -9,7 +9,7 @@ namespace jluna::detail
 {
     void initialize_modules();
     void initialize_types();
-    static void on_exit();
+    void on_exit();
 
     constexpr char _id_marker = '#';
 

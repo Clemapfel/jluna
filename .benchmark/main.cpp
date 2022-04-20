@@ -14,6 +14,7 @@ using namespace jluna;
 constexpr size_t n_reps = 20000;
 std::vector<Proxy> _proxies;
 
+/*
 int main()
 {
     initialize(8);
@@ -75,7 +76,7 @@ int main()
         std::vector<unsafe::Value*> threads;
         for (size_t i = 0; i < 8; ++i)
         {
-            threads.push_back(unsafe::call(new_thread, box(cpp_lambda)));
+            threads.push_back(unsafe::call(new_thread, cpp_lambda)));
         }
 
         for (auto* t : threads)
@@ -767,3 +768,4 @@ int main()
     Benchmark::conclude();
     Benchmark::save();
 }
+*/

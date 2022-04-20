@@ -103,7 +103,15 @@ namespace jluna::unsafe
     void gc_release(size_t id)
     {
         gc_pause;
-        static auto _ = detail::gc_init();
+
+        static bool initialized = false;
+
+        if (not initialized)
+        {
+            detail::gc_init();
+            initialized = true;
+        }
+
         static unsafe::Value* delete_from_heap = get_value(jl_main_module, "__jluna_delete_from_heap"_sym);
         call(delete_from_heap, jl_box_uint64(id));
         gc_unpause;

@@ -161,6 +161,14 @@ elseif(NOT PROJECT_IS_TOP_LEVEL)
     )
 endif()
 
+### Enable Warnings ###
+
+if(MSVC)
+  target_compile_options(jluna PRIVATE /W4 /WX)
+else()
+  target_compile_options(jluna PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+
 include(CTest)
 ### Declare Test ###
 

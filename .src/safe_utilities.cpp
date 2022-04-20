@@ -167,7 +167,6 @@ namespace jluna::detail
         size_t res = -1;
 
         gc_pause;
-        unsafe::Value* value;
         res = jl_unbox_uint64(jluna::safe_call(create_reference, in));
         gc_unpause;
         return res;

@@ -64,8 +64,15 @@ namespace jluna::unsafe
         auto* value = (unsafe::Value*) in;
         bool before = jl_gc_is_enabled();
         jl_gc_enable(false);
-        
-        static auto _ = detail::gc_init();
+
+        static bool initialized = false;
+
+        if (not initialized)
+        {
+            detail::gc_init();
+            initialized = true;
+        }
+
         static unsafe::Function* jluna_add_to_heap = get_function(jl_main_module, "__jluna_add_to_heap"_sym);
 
         auto res = jl_unbox_uint64(call(jluna_add_to_heap, jl_box_uint64((UInt64) value)));

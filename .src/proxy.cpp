@@ -43,7 +43,6 @@ namespace jluna
     Proxy::ProxyValue::ProxyValue(unsafe::Value* value, std::shared_ptr<ProxyValue>& owner, unsafe::Value* id)
     {
         gc_pause;
-        static jl_function_t* make_unnamed_proxy_id = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "make_unnamed_proxy_id"_sym);
         static jl_function_t* make_named_proxy_id = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "make_named_proxy_id"_sym);
 
         _owner = owner;
