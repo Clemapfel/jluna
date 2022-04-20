@@ -3025,4 +3025,66 @@ gc_unpause;
 
 In this section, we will investigate jlunas performance, analyzing benchmark results and explaining why certain things are faster than others. Hopefully, this will educate users on how they can achieve the best performance themselves.
 
-(this section is not yet complete.)
+In general, when optimizing a program using jluna, the following is appropriate:
+
++ speed, safety, convenience - you can only pick two
+
+The first part of this manual dealt with functions that offer safety and convenience. Proxies and the more abstracted parts of jluna are easy to use and forward any exception to the user, preventing any of the C-style errors like segfaults and data corruption from occurring. The `unsafe` library drops safety from this pick-two scenario. We can be very fast and the functions are much more convenient than handling raw memory or dealing with C-API, but in return we have no safety net. If we want speed and safety, we need to use the `unsafe` library or C-API and do all the exception catching and GC-safety ourselves, which drops convenience from the equation.
+
+The obvious question is: how much slower is the "safe way"? This section will answer this question by giving an exact percentage of incurred overhead, compared to doing things the optimal way performance-wise.
+
+### The Setup
+
+> **Hint**: This section explains the methodology for the purpose of the scientific method. It can be safely skipped for users just interested in the results. 
+
+All benchmarks were done on a machine with the following CPU (output of unix' `lshw`)
+
+```
+*-memory
+    description: System memory
+    physical id: 0
+    size: 8064MiB
+
+*-cpu
+    product: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+    vendor: Intel Corp.
+    physical id: 1
+    bus info: cpu@0
+    size: 3040MHz
+    capacity: 3400MHz
+    width: 64 bits
+    capabilities: fpu fpu_exception wp vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp x86-64 constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb invpcid_single pti ssbd ibrs ibpb stibp fsgsbase tsc_adjust sgx bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp md_clear flush_l1d cpufreq
+```
+
+Benchmarks were limited to run only in a single thread, unless otherwise specified. The machine was kept clean of other processes during benchmarking. The benchmarks were run long enough (>30s per benchmark) for noise to not affect the results. Care was taken to never fill up the RAM, as to not run into swap-space related artifacts. Potential cache-effects were not accounted for.
+
+A [custom benchmark library](../.benchmark/benchmark.hpp) was used, which timed each benchmark using a `std::chrono::steady_clock`. The full sourcecode of all benchmarks used for this section and general testing can be found [here](../.benchmark/main.cpp).
+
+Relative overhead was measured using the following function:
+
+```cpp
+using Duration_t = std::chrono::duration<double>;
+double overhead(Duration_t a, Duration_t b) 
+{
+    return (a < b ? 1 : -1) * (abs(a - b) / a); 
+};
+```
+
+This function was deemed to represent the intuitive notion of speedup and overhead. 
+
++ `A` is 10% faster than `B`, when `B` is 110% of the runtime of `A`. 
+  - `A` exhibits a -10% overhead compared to B
++ `C` is 25% slower than `D` if `C` is 125% of `D`s runtime.
+  - `C` exhibits a +25% overhead compared to D
+ 
+
+
+For the durations, the median of all results of a particular benchmark run was used, somewhat mitigating potential spikes due to noise or one-time-allocations, which a simple mean would have exhibited.
+
+## Results
+
+### 
+
+
+
+
