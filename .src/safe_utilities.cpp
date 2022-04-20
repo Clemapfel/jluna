@@ -33,7 +33,10 @@ namespace jluna
         detail::initialize_lock.lock();
 
         if (is_initialized)
+        {
+            detail::initialize_lock.unlock();
             return;
+        }
 
         setenv("JULIA_NUM_THREADS", n_threads == 0 ? "auto" : std::to_string(n_threads).c_str(), 1);
 
