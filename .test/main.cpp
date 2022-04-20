@@ -25,6 +25,18 @@ int main()
     jluna::initialize(8);
     using namespace std::chrono_literals;
 
+    gc_pause;
+
+auto* int64_memory = "return 1234"_eval;
+
+std::cout << unsafe::unsafe_unbox<Int64>(int64_memory) << std::endl;
+// exactly as fast as:
+std::cout << *((Int64*) int64_memory) << std::endl;
+
+gc_unpause;
+
+return 0;
+
     std::vector<Task<void>> tasks;
 
     {

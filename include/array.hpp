@@ -144,11 +144,13 @@ namespace jluna
             /// @brief cast to unsafe::Value*
             using Proxy::operator unsafe::Value*;
 
+            /// @brief cast to unsafe::Array*
+            operator unsafe::Array*() const;
+
         protected:
             using Proxy::_content;
 
         private:
-            operator unsafe::Array*() const;
             void throw_if_index_out_of_range(int index, size_t dimension) const;
             size_t get_dimension(int) const;
 
