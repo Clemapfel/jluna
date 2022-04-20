@@ -2047,23 +2047,29 @@ We cannot initialize a task directly, rather, we use `jluna::ThreadPool::create`
 ```cpp
 using namespace jluna;
 
-std::function<size_t(size_t)> forward_arg = [](size_t in) -> size_t {
+auto forward_arg = [](size_t in) -> size_t {
     Base["println"]("lambda called with ", in);
     return in;
 };
 
-auto task = ThreadPool::create(forward_arg, size_t(1234));
+auto task = ThreadPool::create<size_t(size_t)>(forward_arg, size_t(1234));
 ```
 
 Here, `ThreadPool::create` takes multiple arguments:
 
-The first argument is a `std::function` object, which, in our case, was initialized by assigning a C++ lambda with the signature `(size_t) -> size_t` to the variable `forward_arg`, which is of type `std::function<size_t(size_t)>`. 
+Its template argument is the signature of the lambda we want the task to execute. Just like with `as_julia_function`, it expects a C-style signature. `forward_arg` has the signature `(size_t) -> size_t`, making `size_t(size_t)` the appropriate template argument.
+
+The first argument is the function object itself. This can be a lambda, like `forward_arg`, or a `std::function` object.
 
 Any following arguments of `ThreadPool::create` will be used as the **arguments for the given function**. In our case, because we specified `size_t(1234)`, the thread pool will invoke our lambda `forward_arg` with that argument (and only that argument).
 
+Note that `create` invokes the copy constructor on all its argument. If this behavior is not desired, we can wrap the argument in a `std::reference_wrapper` using `std::ref`, meaning only the reference itself will be copied, not the actual object.
+
+### Running a Task
+
 Unlike C++-threads (but much like Julia tasks), `jluna::Task` does not immediately start execution once it is constructed. We need to manually "start" is using `.schedule()`. 
 
-We can wait for its execution to finish using `.join()`. This stalls the thread `.join()` was called from until the task completes:
+We can wait for its execution to finish using `.join()`. This stalls the thread `.join()` was called from (usually the master thread in which `main` is executed) until the task completes:
 
 ```cpp
 std::function<size_t(size_t)> forward_arg = [](size_t in) -> size_t {
@@ -2079,9 +2085,9 @@ task.join();
 lambda called with 1234
 ```
 
-Note how, even though we called the Julia function `println`, the task **did not segfault**. Using jlunas thread pool is the only way to call C++-side functions that access the Julia state concurrently.
+Note how, even though we called the Julia function `println`, the task **did not segfault**. Using jlunas thread pool is the only way to call C++-side functions that also access the Julia state concurrently like this.
 
-The result of `ThreadPool::create` is a `jluna::Task<T>`, where T is the return type of the C++ function scheduled or `void`. The user is responsible for keeping this task in scope. If the variable the task is bound to goes out of scope, the task simply ends:
+The result of `ThreadPool::create` is a `jluna::Task<T>`, where `T` is the return type of the C++ function, or `void`. The user is responsible for keeping the task in memory. If the variable the task is bound to goes out of scope, the task simply ends:
 
 ```cpp
 /// in main.cpp
@@ -2117,9 +2123,9 @@ Process finished with exit code 0
 
 > **C++ Hint**: `std::chrono` are C++s time-related functionalities. calling `std::this_thread::sleep_for(1ms)` will stall the master thread main is executed in for 1 millisecond.
 
-Here, our task is supposed to count all the way up to 9999, however, the task went out of scope before it could finish, only being able to count to 2611 before it was terminated.
+Here, our task is supposed to count all the way up to 9999. Instead, the task went out of scope before it could finish, only being able to count to 2611 before it was terminated.
 
-A way to solve this is to store task in a collection:
+A way to solve this is to store the task in a collection that itself is in master scope:
 
 ```cpp
 std::vector<Task<void>> tasks;
@@ -2149,9 +2155,7 @@ return 0;
 Process finished with exit code 0
 ```
 
-This time, because the tasks stayed in scope outside of the block, it had 10 milliseconds more time to finish, which happened to be enough for it to reach its intended count.
-
-### Checking a Tasks Status
+This time, because the tasks was not destructed prematurely, it had 10 milliseconds more time to finish. This happened to be enough for it to reach its intended count.
 
 We can check the status of any task using the following member functions:
 
@@ -2176,9 +2180,9 @@ task.join();
 
 Here, `forward_arg` does more than just print to the command line, it also returns a value.
 
-To access this value of a task, we use the member function `.result()`, which returns an object of type `jluna::Future`.
+To access the return value of a task, we use the member function `.result()`. This function returns an object of type `jluna::Future`.
 
-In C++, a future is a thread-safe container that may or may not (yet) contain a value. The future is available immediately when its corresponding task is created. Until the task has succesfully completed, however, the future will not contain a value. Once the task is done, the return value will be moved into the future, after which we can access it.
+A future is a thread-safe container that may or may not (yet) contain a value. The future itself is available immediately when its corresponding task is created. Until the task has successfully completed, however, the future will not contain a value. Once the task is done, the return value will be moved into the future, after which we can access it.
 
 ```cpp
 auto task = ThreadPool::create(forward_arg, size_t(1234));
@@ -2191,24 +2195,26 @@ To get the potential value of a future, we use `.get()` which returns a `std::op
 auto task = ThreadPool::create(forward_arg, size_t(1234));
 auto future = task.result();
 
-future.is_available(); // false since task has not started yet
+std::cout << future.is_available() << std::endl; // false since task has not started yet
 
 task.schedule();
 task.join();
 
-future.is_available(); // true
+std::cout << future.is_available() << std::endl; // true
 std::cout << future.get().value() << std::endl;
 ```
 ```
+0
+1
 1234
 ```
-> **C++ Hint**: See the [standard libraries documentation](https://en.cppreference.com/w/cpp/utility/optional) on more ways to interact with `std::optional<T>`
+> **C++ Hint**: Trying to access the value of a std::optional before it is available will raise an exception. See the [standard libraries documentation](https://en.cppreference.com/w/cpp/utility/optional) on more ways to interact with `std::optional<T>`
 
-We can wait for the value of a future to become available by calling `.wait()`. This will stall the thread `.wait()` is called from until we can access the value. This way we don't necessarily need to keep track of the futures task, just having the future allows us to access to the tasks result. We do still need to make sure the corresponding task stays in scope.
+We can wait for the value of a future to become available by calling `.wait()`. This will stall the thread `.wait()` is called from until the value becomes accessible, after which the function will return that value. This way we don't necessarily need to keep track of the futures task, just having the future allows us to access to the tasks result. We do still need to make sure the corresponding task stays in scope, though.
 
 ### Data Race Freedom
 
-The user is responsible for any potential data races a `jluna::Task` may trigger. Potentially useful C++-side tools in this application include the following (where their Julia-side functional equivalent is listed for reference):
+The user is responsible for any potential data races a `jluna::Task` may trigger. Useful C++-side tools in this application include the following (where their Julia-side functional equivalent is listed for reference):
 
 | C++ | Julia | C++ Documentation  |
 |------------|--------------|---------------------|
@@ -2217,33 +2223,19 @@ The user is responsible for any potential data races a `jluna::Task` may trigger
 | `std::condition_variable` | `Threads.Condition` | [[here]](https://en.cppreference.com/w/cpp/thread/condition_variable)
 | `std::unique_lock` | `n/a` | [[here]](https://en.cppreference.com/w/cpp/thread/unique_lock)
 
+Furthermore, jluna provides its own lock-like object `jluna::Mutex`, which is a simple wrapper around a Julia-side `Base.ReentrantLock`. It has the same usage and interface as `std::mutex`.
+
 ### Thread Safety
 
-As a general rule, any of jlunas functionality is thread-safe, as long as two threads are not modifying the same object at the same time.
+As a general rule, any particular part of jluna is thread-safe, as long as two threads are not *modifying* the same object at the same time.
 
-For example, `jluna::safe_call` can be called from multiple threads, as the code executed within that `safe_call` is unrelated. Similarly, we can freely create unrelated proxies and modify them individually, but if we create two proxies that reference the same julia-variable and mutate both of them at the same time, we run into the data-race problems.
+For example, `jluna::safe_call` can be called from multiple threads, and `safe_call` itself will work. If both `safe_call` modify the same value, however, non-concurrency artifacts may occur.
 
-The user is required to ensure thread-safety in these conditions, just like the would in Julia. jluna has no hidden pitfalls or behind-the-scene machinery that multi-threading may throw a wrench into, however any user-created object is outside of jlunas responsibility.
+Similarly, we can freely create unrelated proxies and modify them individually. If we create two proxies that reference the same Julia-side variable, mutating both proxies (if they are named) will possibly trigger an error.
 
-A function-by-function run-down of thread-safety would be too expansive, so this is a list that aims to be a rule-of-thumb:
+The user is required to ensure thread-safety in these conditions, just like they would have to in Julia. jluna has no hidden pitfalls or behind-the-scene machinery that multi-threading may throw a wrench into. Any user-created object is outside of jlunas responsibility, however.
 
-+ all functions in `include/safe_utilities.hpp` are thread-safe:
-  - `safe_call`
-  - `safe_eval`
-  - `initialize`
-  - `println`
-+ creating a proxy through any method is thread-safe
-  - modifying a proxy is not
-+ allocating a `jluna::Array` is thread-safe
-  - modifying the same array is not
-+ `Module::new_*`, `Module::create`, `Module::create_or_assign` are thread-safe
-  - all other interaction with modules is not, including `Module::safe_eval`
-+ modifying a `Usertype` and implementing it is thread-safe
-+ creating a generator expression is thread-safe
-  - modifying the same generator expression is not
-+ `unsafe::gc_preserve` and `unsafe::gc_release` are thread-safe
-  
-Any other functionality should be assumed to **not** be thread-safe. Instead, users will be required to manually "lock" and object and manage concurrent interaction. The following sections will give an example on how to achieve this using `jluna::Mutex` or `Base.ReentrantLock`.
+Notably, `Module::new_*`, `Module::create` and `Module::create_or_assign` are thread-safe. Each `jluna::Module` carries exactly one lock, which allows these calls to happen safely in a multi-threaded environment. All other functions of `jluna::Module` do not make use of this lock.  Instead, users will be required to manually "lock" and object and manage concurrent interaction.
 
 ### Thread-Safety in Julia
 
@@ -2266,7 +2258,7 @@ Now, when a thread wants to modify `to_be_modified`, they first need to acquire 
 
 ```cpp
 // in cpp
-auto push_to_modify = [](size_t)
+auto push_to_modify = [](size_t) -> void
 {
   static auto* lock = unsafe::get_function(jl_base_module, "lock"_sym);
   static auto* unlock = unsafe::get_function(jl_base_module, "unlock"_sym);
@@ -2285,7 +2277,7 @@ Since `push_to_modify` will be executed through `jluna::ThreadPool`, the Julia f
 
 ### Thread-Safety in C++
 
-A similar approach can be taken when trying to safely modify  C++-side objects. Instead of a Julia-side lock, we use a C++-side `jluna::Mutex`, which is a simple wrapper around a Julia-side `ReentrantLock`:
+A similar approach can be taken when trying to safely modify C++-side objects. Instead of a Julia-side lock, we use a C++-side `jluna::Mutex`, which is a simple wrapper around a Julia-side `ReentrantLock`:
 
 ```cpp
 jluna::Vector<size_t> to_be_modified;
@@ -2302,21 +2294,24 @@ auto push_to_modify = [](size_t)
 }
 ```
 
+Similarly, `std::mutex` or `std::unique_lock` can be used for the same purpose.
+
 ### Closing Notes
 
 #### Interacting with `jluna::Task` from Julia
 
-Internally, jluna makes accessing the Julia-state from a C++-sided, asynchronously executed function possible, by wrapping it in an actual Julia-side `Task`, then using Julias native thread pool to execute it. This has some beneficial side-effects.
+Internally, jluna makes accessing the Julia-state from a C++-sided, asynchronously executed function possible by wrapping it in a Julia-side `Task`. jluna can then use Julias native threadpool, allowing for C-API functions to be safely executed. This has a useful side-effect:
 
-`yield`, called from C++ like so:
+For example, `yield`, called from C++ like so:
 
 ```cpp
 static auto* yield = unsafe::get_function(jl_base_module, "yield"_sym);
 jluna::safe_call(yield);
 ```
+
 Will actually yield the thread this C++ code is executed in, letting another Julia thread take over. This applies to all Julia-side functions. Calling them from within a `jluna::Task` has exactly the same effect as calling them from within a `Base.Task`. 
 
-We can access the `Julia-side` object of a `jluna::Task` using `.operator unsafe::Value*()`. Because of this, we can manage a `jluna::Task` through an unnamed `jluna::Proxy` like so:
+We can access the Julia-side object of a `jluna::Task` using `.operator unsafe::Value*()`. This allows us to create a `jluna::Proxy` of a `jluna::Task`:
 
 ```cpp
 auto lambda = [](){ //...
@@ -2330,50 +2325,11 @@ std::cout << (bool) task_proxy["stick"] << std::endl;
 true
 ```
 
-This allows advanced users to have more flexibility on how to handle a large set of tasks. Anything that woudl work in Julia also works on `jluna::Task`.
-
-#### Using a lambda not bound to an std::function object
-
-So far, we have created a `jluna::Task` using the following pattern:
-
-```cpp
-std::function<void()> lambda = []() -> void {
-  return;
-};
-
-auto& task = ThreadPool::create(lambda);
-```
-
-This will of course work, however if we do not manually bind the lambda to an object of type `std::function<void()>`:
-
-```cpp
-auto lambda = []() -> void {    // auto this time
-  return;
-};
-
-auto& task = ThreadPool::create(lambda);
-```
-```
-/home/clem/Workspace/jluna/.test/main.cpp: In function ‘int main()’:
-/home/clem/Workspace/jluna/.test/main.cpp:41:32: error: no matching function for call to ‘jluna::ThreadPool::create(main()::<lambda()>&)’
-   41 | auto& task = ThreadPool::create(lambda);
-      |              ~~~~~~~~~~~~~~~~~~^~~~~~~~
-```
-We get a compiler error. This is, because in C++, non-specialized lambdas do not yet have a specific return-type. This allows for the users to specify `auto` for both the return and argument types of a lambda, however for jluna, things need to have a clear type in order to know how to allocate both the task and its futures. To still allow any lambda to be used for `ThreadPool::create`, jluna offers a templated version of `create` that takes a single, user-specified template argument: the return type of the lamdba:
-
-```cpp
-auto lambda = []() -> void {    // still auto
-  return;
-};
-
-auto& task = ThreadPool::create<void>(lambda); // <void> specified manually
-```
-
-jluna now knows to implicitely bind the lambda to a `std::function<void()>` and the above code will compile and work just as expected.
+We can then use this proxy as we would use a Julia-side variable, allowing for maximum freedom on how to manage and schedule tasks.
 
 #### Do **NOT** use `@threadcall`
 
-Lastly, a warning: Julia has a macro called `@threadcall`, which purports to simply execute a `ccall` in a new thread. Internally, it actually uses the libuv thread pool for this, not the native Julia thread pool. Because the C-API is seemingly hardcoded to segfault any attempt at accessing the Julia state through any non-master C-side thread, using `@threadcall` to call arbitrary code also segfaults. Because of this, it is not recommended to use `@threadcall` in any circumstances. Instead, call `ccall` from within a proper `Base.Task`, or use jlunas thread pool to execute C-side code.
+Lastly, a warning: Julia has a macro called `@threadcall`, which purports to simply execute a `ccall` in a new thread. Internally, it actually uses the libuv thread pool for this, not the native Julia thread pool. Because the C-API is seemingly hardcoded to segfault any attempt at accessing the Julia state through any non-master C-side thread, using `@threadcall` to call arbitrary code will also trigger this segfaults. Because of this, it is not recommended to use `@threadcall` in any circumstances. Instead, we can `ccall` from within a proper `Base.Task`, or use jlunas thread pool to execute C-side in the first place.
 
 ---
 

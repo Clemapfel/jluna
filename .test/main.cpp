@@ -40,11 +40,14 @@ int main()
                 std::cout << i << std::endl;
         };
 
-        tasks.push_back(ThreadPool::create<void()>(print_numbers));
-        tasks.back().schedule();
+        auto task = ThreadPool::create<void()>(print_numbers);
+        task.schedule();
 
-        tasks.push_back(ThreadPool::create<void()>(print_numbers_rev));
-        tasks.back().schedule();
+        //tasks.push_back(ThreadPool::create<void()>(print_numbers));
+        //tasks.back().schedule();
+
+        //tasks.push_back(ThreadPool::create<void()>(print_numbers_rev));
+        //tasks.back().schedule();
 
         std::this_thread::sleep_for(1ms);
     }
