@@ -24,48 +24,18 @@ int main()
 {
     jluna::initialize(8);
 
-std::cout << as_julia_type<
-    std::pair<
-        std::complex<Float32>,
-        std::string
-    >
->::type_name << std::endl;
+    // declare variable
+Main.safe_eval("jl_var = [7, 7, 7]");
+
+// construct named & unnamed proxy
+auto named_proxy = Main["jl_var"];
+auto unnamed_proxy = Main.safe_eval("return jl_var");
+
+// print name
+std::cout << "named  : " << named_proxy.get_name() << std::endl;
+std::cout << "unnamed: " << unnamed_proxy.get_name() << std::endl;
 
 return 0;
-
-        using namespace std::chrono_literals;
-
-    std::vector<Task<void>> tasks;
-
-    {
-        auto print_numbers = []() -> void
-        {
-            for (size_t i = 0; i < 10000; ++i)
-                std::cout << i << std::endl;
-        };
-
-        auto print_numbers_rev = []() -> void
-        {
-            for (size_t i = 9999; i > 0; i--)
-                std::cout << i << std::endl;
-        };
-
-        auto task = ThreadPool::create<void()>(print_numbers);
-        task.schedule();
-
-        //tasks.push_back(ThreadPool::create<void()>(print_numbers));
-        //tasks.back().schedule();
-
-        //tasks.push_back(ThreadPool::create<void()>(print_numbers_rev));
-        //tasks.back().schedule();
-
-        std::this_thread::sleep_for(1ms);
-    }
-
-    std::this_thread::sleep_for(10ms);
-
-    return 0;
-
 
     auto all = []() {
 
@@ -890,20 +860,20 @@ return 0;
 
     Test::test("array: front/back", []() {
         Main.safe_eval("vector = [999, 2, 3, 4, 666]");
-        Array1d vec = Main["vector"];
+        ArrayAny1d vec = Main["vector"];
         Test::assert_that(vec.front().operator int() == 999 and vec.back().operator int() == 666);
     });
 
     Test::test("array: empty", []() {
         Main.safe_eval("vector = []");
-        Array1d vec = Main["vector"];
+        ArrayAny1d vec = Main["vector"];
         Test::assert_that(vec.empty());
     });
 
     Test::test("array: Nd at", []() {
 
         Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
-        Array3d vec = Main["array"];
+        ArrayAny3d vec = Main["array"];
 
         static auto getindex = [&](size_t a, size_t b, size_t c) -> size_t {
             jl_function_t* _getindex = jl_get_function(jl_base_module, "getindex");
@@ -922,7 +892,7 @@ return 0;
 
     Test::test("array: out of range", []() {
         Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
-        Array3d arr = Main["array"];
+        ArrayAny3d arr = Main["array"];
 
         static auto test = [&](size_t a, size_t b, size_t c) -> bool {
             try
@@ -946,7 +916,7 @@ return 0;
     Test::test("array_iterator: +/-", []() {
 
         Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
-        Array3d arr = Main["array"];
+        ArrayAny3d arr = Main["array"];
 
         auto it = arr.begin();
         it++;
@@ -963,7 +933,7 @@ return 0;
         // unlike proxy, should segfault
 
         Main.safe_eval("vec = collect(1:20)");
-        Array1d arr = Main["vec"];
+        ArrayAny1d arr = Main["vec"];
         auto it = arr.begin();
         while (it++ != arr.end());
 
@@ -984,7 +954,7 @@ return 0;
 
     Test::test("array_iterator: comparison", []() {
         Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
-        Array3d arr = Main["array"];
+        ArrayAny3d arr = Main["array"];
 
         auto a = arr.begin();
         auto b = arr.begin();
@@ -998,7 +968,7 @@ return 0;
     Test::test("array_iterator: cast to value", []() {
 
         Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
-        Array3d arr = Main["array"];
+        ArrayAny3d arr = Main["array"];
 
         bool thrown = false;
         try
@@ -1017,7 +987,7 @@ return 0;
     Test::test("array_iterator: cast to proxy", []() {
 
         Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
-        Array3d arr = Main["array"];
+        ArrayAny3d arr = Main["array"];
 
         auto it = arr.at(0, 0, 0);
         Proxy as_proxy = it;

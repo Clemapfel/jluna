@@ -1292,9 +1292,9 @@ auto array = State::eval("return array").as<Array<Int64, 3>();
 We can use the generic value type `unsafe::Value*` to make it possible for the array proxy to attach any Julia-side array, regardless of value type. jluna provides 3 convenient typedefs for this:
 
 ```cpp
-using Array1d = Array<unsafe::Value*, 1>;
-using Array2d = Array<unsafe::Value*, 2>;
-using Array3d = Array<unsafe::Value*, 3>;
+using ArrayAny1d = Array<unsafe::Value*, 1>;
+using ArrayAny2d = Array<unsafe::Value*, 2>;
+using ArrayAny3d = Array<unsafe::Value*, 3>;
 ```
 
 This is useful when the value type of the array is not know at the point of proxy declaration or if the actual value type of each element is non-homogenous, as this is a feature of Julias array but not possible using `std::vector` or similar classes. 
@@ -1302,7 +1302,7 @@ This is useful when the value type of the array is not know at the point of prox
 ```cpp
 State::eval("heterogenous_array = [Int64(1), Float32(2), Char(3)]")
 Array<UInt64, 1> as_uint64 = Main["heterogenous_array"]; // triggers cast to UInt64 (aka. size_t)
-Array1d as_any = Main["heterogenous_array"]; // triggers no cast
+ArrayAny1d as_any = Main["heterogenous_array"]; // triggers no cast
 ```
 
 ### Indexing
@@ -3770,9 +3770,9 @@ auto array = State::eval("return array").as<Array<Int64, 3>();
 We can use the generic value type `unsafe::Value*` to make it possible for the array proxy to attach any Julia-side array, regardless of value type. jluna provides 3 convenient typedefs for this:
 
 ```cpp
-using Array1d = Array<unsafe::Value*, 1>;
-using Array2d = Array<unsafe::Value*, 2>;
-using Array3d = Array<unsafe::Value*, 3>;
+using ArrayAny1d = Array<unsafe::Value*, 1>;
+using ArrayAny2d = Array<unsafe::Value*, 2>;
+using ArrayAny3d = Array<unsafe::Value*, 3>;
 ```
 
 This is useful when the value type of the array is not know at the point of proxy declaration or if the actual value type of each element is non-homogenous, as this is a feature of Julias array but not possible using `std::vector` or similar classes. 
@@ -3780,7 +3780,7 @@ This is useful when the value type of the array is not know at the point of prox
 ```cpp
 State::eval("heterogenous_array = [Int64(1), Float32(2), Char(3)]")
 Array<UInt64, 1> as_uint64 = Main["heterogenous_array"]; // triggers cast to UInt64 (aka. size_t)
-Array1d as_any = Main["heterogenous_array"]; // triggers no cast
+ArrayAny1d as_any = Main["heterogenous_array"]; // triggers no cast
 ```
 
 ### Indexing

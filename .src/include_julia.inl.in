@@ -9,7 +9,6 @@
 
 namespace jluna::detail
 {
-    static inline const char* julia_num_threads = "@JULIA_NUM_THREADS@";
     static inline const char* c_adapter_path = "@C_ADAPTER_NAME@";
     static inline std::string c_adapter_path_override = "";
 
