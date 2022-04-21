@@ -276,6 +276,9 @@ namespace jluna
             /// @brief import names
             void add_using(const std::string& package_name);
 
+            /// @brief include file in module scope
+            void include(const std::string& file_path);
+
         private:
             jl_module_t* value() const;
 

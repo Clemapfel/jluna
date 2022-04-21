@@ -23,8 +23,7 @@ namespace jluna
 
     Module::~Module()
     {
-        if (_lock != nullptr)
-            delete _lock;
+        delete _lock;
     }
 
     jl_module_t * Module::value() const
@@ -35,6 +34,16 @@ namespace jluna
     Module::operator jl_module_t*()
     {
         return value();
+    }
+
+    Module Module::get_parent_module() const
+    {
+        return Module(value()->parent);
+    }
+
+    bool Module::is_top_module() const
+    {
+        return bool(value()->istopmod);
     }
 
     bool Module::is_defined(const std::string& name) const
@@ -61,6 +70,11 @@ namespace jluna
     Proxy Module::safe_eval_file(const std::string& path)
     {
         return jluna::safe_eval_file(path, value());
+    }
+
+    void Module::include(const std::string& file_path)
+    {
+        jluna::safe_eval_file(file_path, value());
     }
 
     Symbol Module::get_symbol() const
