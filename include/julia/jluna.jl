@@ -438,7 +438,7 @@ module jluna
             captures = match(reg, out)
 
             if captures != nothing
-                out = replace(out, reg => "<unnamed function proxy #" * string(tryparse(Int64, captures.captures[1])) * ">")
+                out = replace(out, reg => "<unnamed proxy #" * string(tryparse(Int64, captures.captures[1])) * ">")
             end
 
             return out;
@@ -775,3 +775,5 @@ module jluna
         return out
     end
 end
+
+return true # used for testing
