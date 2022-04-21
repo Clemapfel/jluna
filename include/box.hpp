@@ -169,6 +169,11 @@ namespace jluna
     template<is_usertype T>
     unsafe::Value* box(T);
 
+    /// @brief box mutex to Base.ReentrantLock
+    class Mutex;
+    template<is<Mutex> T>
+    unsafe::Value* box(T);
+
     /// @concept requires a value to be boxable into a julia-side value
     template<typename T>
     concept is_boxable = requires(T t)

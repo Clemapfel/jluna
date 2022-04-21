@@ -5,11 +5,16 @@
 
 #pragma once
 
+#include <include/concepts.hpp>
+
 namespace jluna
 {
     /// @brief thread-safe proxy for Base.ReentrantLock
     class Mutex
     {
+        template<is<Mutex> T>
+        friend T unbox(unsafe::Value*);
+
         public:
             /// @brief ctor
             Mutex();
@@ -34,7 +39,12 @@ namespace jluna
             operator unsafe::Value*();
 
         private:
+            Mutex(unsafe::Value*);
+
             unsafe::Value* _value;
             size_t _value_id;
     };
 }
+
+#include <.src/mutex.inl>
+

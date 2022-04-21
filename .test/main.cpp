@@ -24,18 +24,8 @@ int main()
 {
     jluna::initialize(8);
 
-    // declare variable
-Main.safe_eval("jl_var = [7, 7, 7]");
-
-// construct named & unnamed proxy
-auto named_proxy = Main["jl_var"];
-auto unnamed_proxy = Main.safe_eval("return jl_var");
-
-// print name
-std::cout << "named  : " << named_proxy.get_name() << std::endl;
-std::cout << "unnamed: " << unnamed_proxy.get_name() << std::endl;
-
-return 0;
+    std::cout << (is_boxable<jluna::Mutex> && is_unboxable<jluna::Mutex>) << std::endl;
+    return 0;
 
     auto all = []() {
 
@@ -389,6 +379,7 @@ return 0;
     test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(12, "abc", 0.01));
     test_box_unbox("Proxy", Proxy((unsafe::Value*) jl_main_module, nullptr));
     test_box_unbox("Symbol", Symbol("abc"));
+    test_box_unbox("Mutex", jluna::Mutex());
 
     auto test_box_unbox_iterable = []<typename T>(const std::string& name, T&& value) {
 

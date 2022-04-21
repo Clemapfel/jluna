@@ -16,6 +16,12 @@ namespace jluna
         _value_id = unsafe::gc_preserve(_value);
     }
 
+    Mutex::Mutex(unsafe::Value* lock)
+    {
+        _value = lock;
+        _value_id = unsafe::gc_preserve(_value);
+    }
+
     Mutex::~Mutex()
     {
         unsafe::gc_release(_value_id);

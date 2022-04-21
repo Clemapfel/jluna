@@ -146,6 +146,11 @@ namespace jluna
     template<is_usertype T>
     T unbox(unsafe::Value* value);
 
+    /// @brief unbox Base.ReentrantLock to jluna::Mutex
+    class Mutex;
+    template<is<Mutex> T>
+    T unbox(unsafe::Value* value);
+
     /// @concept requires a value to be unboxed from a julia-side value
     template<typename T>
     concept is_unboxable = requires(T t, jl_value_t* v)
