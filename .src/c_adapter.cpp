@@ -38,7 +38,6 @@ extern "C"
 
         unsafe::Value* invoke_lambda_0(void* function_ptr)
         {
-            std::cout << function_ptr << std::endl;
             return (*reinterpret_cast<lambda_0_arg*>(function_ptr))();
         }
 
