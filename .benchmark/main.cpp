@@ -60,6 +60,18 @@ void benchmark_cppcall()
 int main()
 {
     initialize(1);
+
+    jl_eval_string("test = 1234");
+    for (;true;)
+    {
+
+
+        gc_pause;
+        jl_eval_string("test = rand()");
+        gc_unpause;
+    }
+
+    return 0;
     Benchmark::initialize();
 
     Main.safe_eval(R"(
@@ -71,6 +83,7 @@ int main()
         end
     )");
 
+    /*
     Benchmark::run_as_base("C-API: get", n_reps, [](){
 
         for (size_t i = 0; i < 10; ++i)
@@ -88,12 +101,17 @@ int main()
         for (size_t i = 0; i < 10; ++i)
             volatile auto* f = unsafe::get_value(jl_main_module, "f"_sym);
     });
+     */
 
-    Benchmark::run("named proxy: get", n_reps, [](){
+    jluna::unsafe::detail::gc_init();
 
-        for (size_t i = 0; i < 10; ++i)
+    //Benchmark::run("named proxy: get", n_reps, []() {
+
+        for (size_t i = 0; i < 10 * n_reps; ++i)
+        {
             volatile auto* f = (unsafe::Function*) Main["f"];
-    });
+        }
+    //});
 
     /*
     Benchmark::run("eval: get", n_reps, [](){

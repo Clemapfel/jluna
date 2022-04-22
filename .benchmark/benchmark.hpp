@@ -83,7 +83,7 @@ namespace jluna
 
             std::cout << "[C++][LOG] Running \"" << name << "\"" << std::endl;
             std::vector<Duration> runs;
-            runs.reserve(count);
+            //runs.reserve(count);
 
             // pre-initialize to avoid allocation
             auto before = Benchmark::_clock.now();
@@ -94,13 +94,14 @@ namespace jluna
 
             try
             {
+                lambda(); // for potential static allocation
                 for (; n < count; ++n)
                 {
                     before = Benchmark::_clock.now();
                     lambda();
                     after = Benchmark::_clock.now();
 
-                    runs.push_back(after - before);
+                    //runs.push_back(after - before);
                 }
             }
             catch (std::exception& e)
@@ -139,6 +140,7 @@ namespace jluna
             if (log)
                 _results.push_back(res);
 
+            std::cout << _results.size() << std::endl;
             std::cout << "[C++][LOG] done." << std::endl;
             return _results.back();
         }
