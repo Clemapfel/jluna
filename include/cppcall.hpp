@@ -6,7 +6,6 @@
 #pragma once
 
 #include <include/typedefs.hpp>
-
 #include <functional>
 
 namespace jluna

@@ -15,6 +15,8 @@
 #include <unordered_map>
 #include <functional>
 
+#pragma once
+
 namespace jluna
 {
     template<typename Return_t>
@@ -24,7 +26,6 @@ namespace jluna
         {
             return box_function_result(f);
         });
-        std::cout << out << std::endl;
 
         return c_adapter::make(out, 0);
     }
