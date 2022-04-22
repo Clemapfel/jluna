@@ -11,15 +11,118 @@
 
 using namespace jluna;
 
-constexpr size_t n_reps = 20000;
+constexpr size_t n_reps = 5000000;
 std::vector<Proxy> _proxies;
+
+void benchmark_threading()
+{
+    static auto task_f = [](){
+        for (volatile size_t i = 0; i < 10000; i = i+1);
+    };
+
+    Benchmark::run_as_base("threading: no task", n_reps, [](){
+
+        task_f();
+    });
+
+    Benchmark::run("threading: std::thread", n_reps, [](){
+
+        auto t = std::thread(task_f);
+        t.join();
+    });
+
+    Benchmark::run("threading: jluna::Task", n_reps, [](){
+
+        auto t = ThreadPool::create<void()>(task_f);
+        t.schedule();
+        t.join();
+    });
+}
+
+void benchmark_cppcall()
+{
+        static auto task_f = [](){
+        for (volatile size_t i = 0; i < 10000; i = i+1);
+    };
+
+    Benchmark::run_as_base("base", n_reps, []() {
+        task_f();
+    });
+
+    Main.create_or_assign("task_f", as_julia_function<void()>(task_f));
+    static auto* run_julia_side = unsafe::get_function(jl_main_module, "task_f"_sym);
+
+    Benchmark::run("jluna", n_reps, []() {
+       volatile auto* _ = unsafe::call(run_julia_side);
+    });
+}
 
 int main()
 {
-    initialize();
+    initialize(1);
     Benchmark::initialize();
 
+    Main.safe_eval(R"(
+        function f()
+            sum = 0;
+            for i in 1:100
+                sum += rand();
+            end
+        end
+    )");
 
+    Benchmark::run_as_base("C-API: get", n_reps, [](){
+
+        for (size_t i = 0; i < 10; ++i)
+            volatile auto* f = jl_get_function(jl_main_module, "f");
+    });
+
+    Benchmark::run("unsafe: get_function", n_reps, [](){
+
+        for (size_t i = 0; i < 10; ++i)
+            volatile auto* f = unsafe::get_function(jl_main_module, "f"_sym);
+    });
+
+    Benchmark::run("unsafe: get_value", n_reps, [](){
+
+        for (size_t i = 0; i < 10; ++i)
+            volatile auto* f = unsafe::get_value(jl_main_module, "f"_sym);
+    });
+
+    Benchmark::run("named proxy: get", n_reps, [](){
+
+        for (size_t i = 0; i < 10; ++i)
+            volatile auto* f = (unsafe::Function*) Main["f"];
+    });
+
+    /*
+    Benchmark::run("eval: get", n_reps, [](){
+        volatile auto* f = (unsafe::Function*) jl_eval_string("return f");
+    });
+
+    Benchmark::run("jluna::safe_eval: get", n_reps, [](){
+       volatile auto* f = (unsafe::Function*) jluna::safe_eval("return f");
+    });
+
+    Benchmark::run("Module::safe_eval: get", n_reps, [](){
+       volatile auto* f = (unsafe::Function*) Main.safe_eval("return f");
+    });
+     */
+
+    Benchmark::conclude();
+    return 0;
+
+
+
+
+
+
+
+
+    Benchmark::conclude();
+    return 0;
+
+    /*
     std::vector<std::thread> threads;
     std::mutex mutex;
     gc_pause;
@@ -85,7 +188,7 @@ int main()
         gc_unpause;
     });
 
-    /*
+
     Benchmark::run_as_base("julia lambda cpp side", n_reps, [&](){
 
         std::vector<std::thread> threads;
@@ -104,7 +207,7 @@ int main()
             t.join();
         gc_unpause;
     });
-     */
+
 
     Benchmark::run("julia lambda julia side", n_reps, [&](){
 
@@ -764,8 +867,8 @@ int main()
         res = lambda;
         res();
     });
+     */
 
     Benchmark::conclude();
     Benchmark::save();
 }
-*/

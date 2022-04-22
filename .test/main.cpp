@@ -24,7 +24,16 @@ int main()
 {
     jluna::initialize(8);
 
-    std::cout << (is_boxable<jluna::Mutex> && is_unboxable<jluna::Mutex>) << std::endl;
+    Main.safe_eval(R"(
+        mutable struct Test
+            _var
+        end
+
+        test = Test(1234);
+    )");
+
+    auto* test_t = unsafe::get_value(Main, "test"_sym);
+
     return 0;
 
     auto all = []() {
@@ -379,7 +388,6 @@ int main()
     test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(12, "abc", 0.01));
     test_box_unbox("Proxy", Proxy((unsafe::Value*) jl_main_module, nullptr));
     test_box_unbox("Symbol", Symbol("abc"));
-    test_box_unbox("Mutex", jluna::Mutex());
 
     auto test_box_unbox_iterable = []<typename T>(const std::string& name, T&& value) {
 

@@ -3268,7 +3268,159 @@ For the durations, the median of all results of a particular benchmark run was u
 
 ## Results
 
-### 
+When measuring performance, absolute number are rarely very informative. Results are only comparable if they are run on the same machine, in the same environment, for the same time. Furthermore, the benchmarks need to be designed in a way that makes them a fair comparison.
+
+While absolute numbers (in milliseconds) will be given, the most important statistic is that of **relative speedup**. For each benchmark, there will be a `base` run. This run establishes the minimum amount of overhead possible, al further runs (for that specific feature) will be compared to this base. 
+
+### Calling Julia Functions
+
+### Accessing Julia Value
+
+One of the most basic tasks in jluna is getting the value of something Julia-side so the results of this benchmark are very important:
+
+```cpp
+// allocate function object Julia-side
+Main.safe_eval(R"(
+    function f()
+        sum = 0;
+        for i in 1:100
+            sum += rand();
+        end
+    end
+)");
+
+// C-API
+Benchmark::run_as_base("C-API: get", n_reps, [](){
+    volatile auto* f = jl_get_function(jl_main_module, "f");
+});
+
+// unsafe::get_function
+Benchmark::run("unsafe: get_function", n_reps, [](){
+    volatile auto* f = unsafe::get_function(jl_main_module, "f"_sym);
+});
+
+// unsafe::get_value
+Benchmark::run("unsafe: get_value", n_reps, [](){
+   volatile auto* f = unsafe::get_value(jl_main_module, "f"_sym);
+});
+
+// Proxy.operator[](std::string)
+Benchmark::run("named proxy: get", n_reps, [](){
+    volatile auto* f = (unsafe::Function*) Main["f"];
+});
+
+// C-API: eval
+Benchmark::run("eval: get", n_reps, [](){
+    volatile auto* f = (unsafe::Function*) jl_eval_string("return f");
+});
+
+// jluna::safe_eval
+Benchmark::run("jluna::safe_eval: get", n_reps, [](){
+   volatile auto* f = (unsafe::Function*) jluna::safe_eval("return f");
+});
+
+// Module::safe_eval
+Benchmark::run("Module::safe_eval: get", n_reps, [](){
+   volatile auto* f = (unsafe::Function*) Main.safe_eval("return f");
+});
+```
+
+Here, we created a Julia-side function `f`. We used various functions to access its value. The C-API only has a getter for functions specifically, which is why we choose the object to `get` to be a function.
+
+#### Results
+
+(number of cycles: 5000000)
+
+| name | median duration (ms) | overhead|
+|------|----------------------|-------------|
+| `base` | `0` | '0` | `0%` |
+| `unsafe::get_function` | `0` | '0` | `0%` |
+| `unsafe::get_value`| `0` | '0` | `0%` |
+| `Main["f"]` | `0` | '0` | `0%` |
+| `jl_eval_string`| `0` | '0` | `0%` |
+
+
+
+### `as_julia_function` call
+
+Calling C++ functions from Julia require an staggering amount of behind-the-scene things to properly work. This doesn't matter to the user however, all that matters is whether it is safe to use, which unit tests confirm, and how fast it is, which this benchmark will confirm.
+
+```cpp
+// C++-side task
+static auto task_f = [](){
+    for (volatile size_t i = 0; i < 10000; i = i+1);
+};
+
+// base: just run through C++
+Benchmark::run_as_base("base", n_reps, []() {
+    task_f();
+});
+
+// assign to julia variable outside of benchmark
+Main.create_or_assign("task_f", as_julia_function<void()>(task_f));
+static auto* run_julia_side = unsafe::get_function(jl_main_module, "task_f"_sym);
+
+// jluna: run through Julia
+Benchmark::run("jluna", n_reps, []() {
+   volatile auto* _ = unsafe::call(run_julia_side);
+});
+```
+
+This benchmark is fairly straight-forward, first we run `task_f` in only C++, this gives us the amount of time `task_f` actually takes to finish. After moving it Julia-side, we call that Julia function, which takes the same time to finish - plus the actual overhead we're measuring
+
+#### Result: 2% slowdown
+
+(number of cycles: 10000000)
+
+| name | median duration (ms) | overhead|
+|------|----------------------|-------------|
+| `base` | `0.015282ms`    | `0%`       |
+| `jluna` | `0.015587ms`   | `1.99581%`  |
+
+We see that calling through Julia exhibits a 2% slowdown. This result is unrelated to the actual function being executing, the 2% are a fixed overhead applied to any call. 2% is far below the target 5%, making it comfortably "fast enough".
+
+### Constructing `jluna::Task`
+
+With all the wrapping going on to make `jluna::Task` be able to execute C-API functions, you may expect there to be a significant overhead to creating a task. This is not, true however:
+
+```cpp
+// actual function
+static auto task_f = [](){
+    for (volatile size_t i = 0; i < 10000; i = i+1);
+};
+
+// base comparison: just call function
+Benchmark::run_as_base("threading: no task", n_reps, [](){
+    task_f();
+});
+
+// run task using std::thread
+Benchmark::run("threading: std::thread", n_reps, [](){
+    auto t = std::thread(task_f);
+    t.join();
+});
+
+// run task using jluna::Task
+Benchmark::run("threading: jluna::Task", n_reps, [](){
+    auto t = ThreadPool::create<void()>(task_f);
+    t.schedule();
+    t.join();
+});
+```
+
+Here, we are executing a function that simply iterator to 10000, where `volatile` assures the loop is actually executed. Just executing this lambda is our base, next we have executing this task using `std::thread`, then `jluna::Task`. None of these functions interact with the C-library, this is just to measure how costly creating a `jluna::Task` is.
+
+#### Result: 30% speedup
+
+(number of cycles: `2000000`)
+
+| name | median duration (ms) | overhead|
+|------|----------------------|-------------|
+| `base` | `0.01491ms`           | `0%`  |
+| `std::thread` | `0.03202ms`   | `114.746%`  |
+| `jluna::Task` | `0.02702ms`   | `81.1842%`  |
+
+`jluna::Task` turned out to have about 30% less overhead on thread construction than `std::thread`, this is despite having to go through all the wrapping. Now, this doesn't mean the jluna threadpool is a better option than `std::thread` for C-side only computations, all it means is that users do not have to worry about potential overhead when using `jluna::ThreadPool`.
 
 
 
