@@ -105,14 +105,14 @@ namespace jluna::unsafe
     /// @param name: variable name
     /// @param value: new value
     /// @returns pointer variable after assignment, null if failed
-    unsafe::Value* set_value(unsafe::Module* module, unsafe::Symbol* name, unsafe::Value* value);
+    void set_value(unsafe::Module* module, unsafe::Symbol* name, unsafe::Value* value);
 
     /// @brief set julia-side value by variable name
     /// @param module_name
     /// @param variable_name
     /// @param value: new value
     /// @returns pointer variable after assignment, null if failed
-    unsafe::Value* set_value(unsafe::Symbol* module_name, unsafe::Symbol* variable_name);
+    void set_value(unsafe::Symbol* module_name, unsafe::Symbol* variable_name);
 
     /// @brief get field of value by name
     /// @param value

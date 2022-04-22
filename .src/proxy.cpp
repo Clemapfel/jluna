@@ -84,7 +84,12 @@ namespace jluna
     unsafe::Value* Proxy::ProxyValue::get_field(jl_sym_t* symbol)
     {
         static jl_function_t* dot = unsafe::get_function("jluna"_sym, "dot"_sym);
-        return jluna::safe_call(dot, value(), (unsafe::Value*) symbol);
+
+        auto* v = value();
+        if (jl_isa(value(), (unsafe::Value*) jl_module_type) && jl_defines_or_exports_p((unsafe::Module*) v, symbol))
+                return jl_get_global((unsafe::Module*) v, symbol);
+        else
+            return jluna::safe_call(dot, value(), (unsafe::Value*) symbol);
     }
 
     /// ####################################################################
@@ -114,11 +119,16 @@ namespace jluna
     Proxy Proxy::operator[](size_t i)
     {
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        return Proxy(
-                jluna::safe_call(getindex, _content->value(), box(i + 1)),
-                _content,
-                jl_box_uint64(i+1)
-        );
+
+        unsafe::Value* out;
+
+        auto* v = _content->value();
+        if (jl_is_array(v) && jl_array_len(v) < i)
+            out = jl_arrayref((unsafe::Array*) v, i);
+        else
+            out = jluna::safe_call(getindex, v, box(i + 1));
+
+        return Proxy(out, _content, jl_box_uint64(i+1));
     }
 
     Proxy::operator unsafe::Value*()

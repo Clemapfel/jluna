@@ -22,20 +22,12 @@ namespace jluna::unsafe
 {
     unsafe::Function* get_function(unsafe::Module* module, unsafe::Symbol* name)
     {
-        gc_pause;
-        static jl_function_t* eval = jl_get_function(jl_base_module, "eval");
-        auto* res = unsafe::call(eval, (unsafe::Value*) module, name);
-        gc_unpause;
-        return res;
+        return jl_get_global(module, name);
     }
 
     unsafe::Function* get_function(unsafe::Symbol* module_name, unsafe::Symbol* function_name)
     {
-        gc_pause;
-        static jl_function_t* eval = jl_get_function(jl_base_module, "eval");
-        auto* res = unsafe::call(eval, unsafe::call(eval, jl_main_module, (unsafe::Value*) module_name), function_name);
-        gc_unpause;
-        return res;
+        return unsafe::get_function((unsafe::Module*) jl_get_global(jl_main_module, module_name), function_name);
     }
 
     unsafe::Value* eval(unsafe::Expression* expr, unsafe::Module* module)
@@ -49,38 +41,22 @@ namespace jluna::unsafe
 
     unsafe::Value* get_value(unsafe::Module* module, unsafe::Symbol* name)
     {
-        gc_pause;
-        static auto* eval = unsafe::get_function(jl_base_module, "eval"_sym);
-        auto* res = call(eval, (unsafe::Value*) module, name);
-        gc_unpause;
-        return res;
+        return jl_get_global(module, name);
     }
 
-    unsafe::Value* get_value(unsafe::Symbol* module, unsafe::Symbol* name)
+    unsafe::Value* get_value(unsafe::Symbol* module_name, unsafe::Symbol* name)
     {
-        gc_pause;
-        static unsafe::Function* eval = get_function(jl_base_module, "eval"_sym);
-        auto* res = call(eval, call(eval, jl_main_module, module), name);
-        gc_unpause;
-        return res;
+        return unsafe::get_function((unsafe::Module*) jl_get_global(jl_main_module, module_name), name);
     }
 
-    unsafe::Value* set_value(unsafe::Module* module, unsafe::Symbol* name, unsafe::Value* value)
+    void set_value(unsafe::Module* module, unsafe::Symbol* name, unsafe::Value* value)
     {
-        gc_pause;
-        static unsafe::Function* eval = get_function(jl_base_module, "eval"_sym);
-        auto* res = call(eval, module, Expr("="_sym, name, value));
-        gc_unpause;
-        return res;
+        jl_set_global(module, name, value);
     }
 
-    unsafe::Value* set_value(unsafe::Symbol* module, unsafe::Symbol* name, unsafe::Value* value)
+    void set_value(unsafe::Symbol* module_name, unsafe::Symbol* name, unsafe::Value* value)
     {
-        gc_pause;
-        static unsafe::Function* eval = get_function(jl_base_module, "eval"_sym);
-        auto* res = call(eval, call(eval, jl_main_module, module), Expr("="_sym, name, value));
-        gc_unpause;
-        return res;
+        unsafe::set_value((unsafe::Module*) jl_get_global(jl_main_module, module_name), name, value);
     }
 
     unsafe::Value* get_field(unsafe::Value* x, unsafe::Symbol* field)
