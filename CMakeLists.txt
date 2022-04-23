@@ -150,17 +150,6 @@ if(NOT CMAKE_SKIP_INSTALL_RULES)
     include(cmake/install-rules.cmake)
 endif()
 
-### Developer mode ###
-
-if(NOT jluna_DEVELOPER_MODE)
-    return()
-elseif(NOT PROJECT_IS_TOP_LEVEL)
-    message(
-        AUTHOR_WARNING
-        "Developer mode is intended for developers of jluna"
-    )
-endif()
-
 include(CTest)
 ### Declare Test ###
 
@@ -173,6 +162,17 @@ if (BUILD_TESTING)
     )
     target_link_libraries(jluna_test PRIVATE jluna)
     add_test(NAME jluna_test COMMAND jluna_test)
+endif()
+
+### Developer mode ###
+
+if(NOT jluna_DEVELOPER_MODE)
+    return()
+elseif(NOT PROJECT_IS_TOP_LEVEL)
+    message(
+        AUTHOR_WARNING
+        "Developer mode is intended for developers of jluna"
+    )
 endif()
 
 ### Declare Benchmark ###

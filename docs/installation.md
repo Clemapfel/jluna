@@ -236,12 +236,14 @@ Where
 + `<path to jluna>` is the install path of the jluna shared libary, usually equal to `CMAKE_INSTALL_PREFIX`
 + `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
 
+See [here](https://cmake.org/cmake/help/latest/command/target_include_directories.html) for more information.
+
 ### Cannot find libjluna_c_adapter
 
 When calling
 
 ```cpp
-State::initialize()
+jluna::initialize()
 ```
 
 The following error may appear:
@@ -263,18 +265,17 @@ signal (6): Aborted
 To allow the local julia state to interface with jluna, it needs the shared C-adapter-library to be available. During `make install`, jluna modifies its own code to keep track of the location of the C-adapter. If it was moved, jluna may no longer be able to find it.
 To fix this, recompile jluna, as detailed [above](#make-install). 
 
-
 The C-adapter library is always installed into the directory specified by `CMAKE_INSTALL_PREFIX`, regardless of cmake presets used. Be aware of this.
 
-> **HACK**: Some IDEs and modern versions of cmake may override `CMAKE_INSTALL_PREFIX` between the time of configuration and build. As a hacky fix (March, 2022), you can override the C-adapter shared library location manually, **before calling `State::initialize`**, using `State::set_c_adapter_path`:
+> **HACK**: Some IDEs and modern versions of cmake may override `CMAKE_INSTALL_PREFIX` between the time of configuration and build. As a hacky fix (March, 2022), you can override the C-adapter shared library location manually, **before calling `jluna::initialize`**, using `jluna::set_c_adapter_path`:
 > ```cpp
 > int main()
 > {
->   State::set_c_adapter_path("C:/actual/path/to/jluna_c_adapter.dll")
->   State::initialize();
+>   jluna::set_c_adapter_path("C:/actual/path/to/jluna_c_adapter.dll")
+>   jluna::initialize();
 >   (...)
 > ```
-> A future release of jluna will provide a proper solution for this.
+> Where `jluna_c_adapter.dll` may have a differing pre- or suffix, depending on your system.
 
 ### error: `concept` does not name a type
 

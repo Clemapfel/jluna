@@ -60,7 +60,25 @@ int main()
 {
     initialize(1);
 
+    // call Julia functions
+Main.safe_eval("f(x) = x^x^x");
 
+auto f = Main["f"];
+std::cout << (size_t) f(3) << std::endl;
+
+// mutate Julia values
+Main.safe_eval("vec = [1, 2, 3, 4]");
+Main["vec"][2] = 999;
+Main.safe_eval("println(vec)");
+
+// assign Julia values with `std::` objects
+auto p = Main["vec"];
+
+p = std::vector<Float32>{8, 7, 6, 5};
+Main.safe_eval(R"(print(vec, " is now a "); println(typeof(vec));)");
+
+
+return 0;
 
     Benchmark::initialize();
 

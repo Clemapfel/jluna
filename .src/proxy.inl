@@ -56,7 +56,9 @@ namespace jluna
     template<is_boxable T>
     Proxy & Proxy::operator=(T value)
     {
+        gc_pause;
         return this->operator=(box(value));
+        gc_unpause;
     }
 
     template<is_unboxable T>

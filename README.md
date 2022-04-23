@@ -30,7 +30,23 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 
 (If you are looking for examples showing basic usage, please instead consult the [manual](./docs/manual.md).)
 
-# TODO
+#### Executing Julia Code
+
+```cpp
+// call Julia functions
+Main.safe_eval("f(x) = x^x^x");
+
+auto f = Main["f"];
+std::cout << f(12) << std::endl;
+
+// mutate Julia values
+Main.safe_eval("vec = [1, 2, 3, 4]");
+Main["vec"][2] = 999;
+
+// assign Julia values with `std::` objects
+Main["vec"] = std::vector<size_t>{8, 7, 6, 5};
+Main.safe_eval("println(vec); println(typeof(vec));");
+```
 
 ---
 

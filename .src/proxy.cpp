@@ -185,10 +185,10 @@ namespace jluna
 
     Proxy & Proxy::operator=(unsafe::Value* new_value)
     {
+        gc_pause;
         static jl_function_t* assign = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "assign"_sym);
         static jl_function_t* set_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "set_reference"_sym);
 
-        gc_pause;
         _content->_value_ref = jluna::safe_call(set_reference, jl_box_uint64(_content->_value_key), new_value);
 
         if (_content->_is_mutating)
