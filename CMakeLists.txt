@@ -130,7 +130,7 @@ add_library(jluna SHARED
     .src/mutex.cpp
 )
 
-target_compile_features(jluna PUBLIC cxx_std_20)
+#target_compile_features(jluna PUBLIC cxx_std_20)
 target_link_libraries(jluna PUBLIC jluna_c_adapter)
 target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 
@@ -159,14 +159,6 @@ elseif(NOT PROJECT_IS_TOP_LEVEL)
         AUTHOR_WARNING
         "Developer mode is intended for developers of jluna"
     )
-endif()
-
-### Enable Warnings ###
-
-if(MSVC)
-  target_compile_options(jluna PRIVATE /W4 /WX)
-else()
-  target_compile_options(jluna PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
 
 include(CTest)

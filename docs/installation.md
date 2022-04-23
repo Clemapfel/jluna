@@ -48,7 +48,6 @@ Where `<compiler>` is one of:
 
 And `<path>` is the desired install path. `-DCMAKE_INSTALL_PREFIX=<path>` is optional, if it is specified manually (not recommended), keep note of this path as we will need it later.
 
-
 > Window supports is experimental. This means using MSVC may work, however this is currently untested. The [cpp compiler support]() page seems to imply that MSVC 19.30 or newer is required to compile jluna.
 
 Some errors may appear here, if this is the case, head to [troubleshooting](#troubleshooting).
@@ -77,7 +76,7 @@ Now that jluna is installed on our system, we can access it using:
 find_library(jluna REQUIRED)
 ```
 
-If a custom install directory was specified, we need to make cmake aware of this:
+If the above fails, a custom install directory may have been specified. We can make cmake aware of this:
 
 ```cmake
 # in users own CMakeLists.txt
@@ -121,7 +120,7 @@ while the julia include directory is usually
 + `${JULIA_BINDIR}/../include/` or 
 + `${JULIA_BINDIR}/../include/julia/`
 
-If building your library triggers linker or compiler errors, head to [troubleshoot](#troubleshooting).
+If building your library triggers linker or compiler errors, head to [troubleshooting](#troubleshooting).
 
 ---
 
@@ -182,7 +181,7 @@ Where X can be any of :
 + `JULIA_BINDIR` 
 + `JULIA_INCLUDE_DIR`
 
-This means that either `JULIA_BINDIR` was not set correctly or the directory it is pointing to is not the julia binary directory. Verify that the value of `JULIA_BINDIR` starts at root (`/` on unix and `C:/` on windows), ends in `/bin`, and that your julia image folder is uncompressed. 
+This means that either `JULIA_BINDIR` was not set correctly, or the directory it is pointing to is not the julia binary directory. Verify that the value of `JULIA_BINDIR` starts at root (`/` on unix and `C:/` on windows), ends in `/bin`, and that your julia image folder is uncompressed. 
 
 Make sure the folder `JULIA_BINDIR` points to, has the following layout:
 
@@ -233,8 +232,8 @@ target_include_directories(<your target> PRIVATE
 ``` 
 Where 
 
-+ <your target> is the build target, a library or executable
-+ `<path to jluna>` is the install path of the jluna shared libary, possibly specified during cmake configuration using `-DCMAKE_INSTALL_PREFIX`
++ `<your target>` is the build target, a library or executable
++ `<path to jluna>` is the install path of the jluna shared libary, usually equal to `CMAKE_INSTALL_PREFIX`
 + `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
 
 ### Cannot find libjluna_c_adapter
@@ -276,6 +275,24 @@ The C-adapter library is always installed into the directory specified by `CMAKE
 >   (...)
 > ```
 > A future release of jluna will provide a proper solution for this.
+
+### error: `concept` does not name a type
+
+When compiling a target that includes jluna, the following compiler error may occur:
+
+```
+/home/clem/Workspace/jluna/include/typedefs.hpp:90:5: error: ‘concept’ does not name a type
+   90 |     concept to_julia_type_convertable = requires(T)
+      |     ^~~~~~~
+```
+
+This indicates that you have not configured your compiler to utilize C++20, or your compilers is out of date. After verifying you are using `g++-10`, `g++-11`, `clang++-12` or `MSVC 19.30`, make sure the following line is present in your `CMakeLists.txt`:
+
+```cmake
+target_compile_features(<your target> PRIVATE cxx_std_20)
+```
+
+Where `<your target>` is the name of your compile target, such as an executable or library. See [here](https://cmake.org/cmake/help/latest/command/target_compile_features.html), for more information.
 
 ---
 

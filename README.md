@@ -2,8 +2,8 @@
 
 ![](./header.png)
 
-Julia is a beautiful language, it is well-designed, and well-documented. Julias C-API is also well-designed, less beautiful, and much less... documented.
-Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua ⭤ C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), jluna aims to fully wrap the official julia C-API, replacing it in usage in projects with C++ as the host language, by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
+Julia is a beautiful language, it is well-designed, and well-documented. Julias C-API is also well-designed, less beautiful, and much less... documented.<br>
+Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua ⭤ C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), jluna aims to fully wrap the official julia C-API, replacing it in projects with C++ as the host language, by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
 
 ---
 
@@ -30,149 +30,33 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 
 (If you are looking for examples showing basic usage, please instead consult the [manual](./docs/manual.md).)
 
-#### Access Julia-Side Values/Functions
-```cpp
-// execute arbitrary strings with exception forwarding
-State::safe_script(R"(
-    f(x) = x*x*x
-    
-    mutable struct MyStruct
-        _field
-        MyStruct() = new(123)
-    end
+# TODO
 
-    instance = MyStruct();
-)");
-
-// access and modify variables
-Main["instance"]["_field"] = 456;
-State::script(R"(println("instance._field is now: ", instance._field))");
-
-// call julia-side functions with C++-side values
-int result = Main["f"](12);
-Base["println"](result);
-```
-```
-instance._field is now: 456
-1728
-```
----
-#### Multi-Dimensional Array Interface
-```cpp
-State::script("array = collect(1:9)");
-Array<size_t, 1> cpp_array = Main["array"];
-
-// iterable and assignable
-for (auto e : cpp_array)
-    e = e.operator size_t() + 10;
-
-State::script("println(array)");
-
-// julia style list indexing
-auto sub_array = cpp_array[{6, 5, 4, 3, 2}];
-Base["println"]((unsafe::Value*) sub_array);
-
-// even supports comprehension
-auto comprehended_vec = Vector<Int64>("(i for i in 1:10 if i % 2 == 0)"_gen);
-    Base["println"](comprehended_vec);
-```
-```
-[11, 12, 13, 14, 15, 16, 17, 18, 19]
-[17, 16, 15, 14, 13]
-[2, 4, 6, 8, 10]
-```
----
-#### Call C++ Functions from julia
-
-```cpp
-/// register lambda and bind to julia-side variable
-State::new_named_undef("lambda") = [](unsafe::Value* x, unsafe::Value* y) -> unsafe::Value*
-{
-    auto as_string = unbox<std::string>(x);
-    std::cout << "cpp prints " << as_string << " and returns: " << std::endl;
-    auto as_set = unbox<std::set<size_t>>(y);
-
-    size_t out = 0;
-    for (size_t x : as_set)
-        out += x;
-
-    return box(out);
-};
-
-// now callable from julia
-State::safe_script(R"(
-    println(Main.lambda("what julia handed it", Set([1, 2, 3, 3, 4])))  # non-c-types work!
-)");
-```
-```
-cpp prints what julia handed it and returns: 
-10
-```
----
-#### Exchange Arbitrary Types between States
-
-```cpp
-struct NonJuliaType
-{
-    std::vector<std::string> _field;
-};
-set_usertype_enabled(NonJuliaType);
-
-// setup usertype interface
-Usertype<NonJuliaType>::add_property<Int64>(
-    // fieldname
-    "_field",
-    // getter
-    [](NonJuliaType& in) -> Int64 {return in._field01;},
-    // setter
-    [](NonJuliaType& out, Int64 value) {out._field01 = value;}
-);
-
-// create julia-side equivalent type
-Usertype<NonJuliaType>::implement();
-
-// can now be moved between Julia and C++
-auto cpp_instance = NonJuliaType();
-State::new_named_undef("julia_instance") = box<NonJuliaType>(cpp_instance);
-
-jluna::safe_eval(R"(
-    push!(julia_instance._field, "new")
-    println(julia_instance)
-)");
-```
-```
-NonJuliaType(["new"])
-```
 ---
 
 ### Features
-Some of the many advantages jluna has over the C-API include:
-
 + expressive, generic syntax
-+ automatically detects and links Julia during cmake
-+ assigning C++-side proxies also mutates the corresponding variable julia-side
-+ any Julia or C++ type can be freely moved between the two
-+ multi-dimensional, iterable array interface with julia-style indexing
-+ fast! All code is considered performance-critical and was optimized to achieve an overhead no larger than ~5%
-+ julia-side values, including temporaries, are kept safe from the garbage collector
-+ verbose exception forwarding, compile-time assertions
-+ inline documentation for IDEs, for both C++ and Julia code 
-+ verbose manual & documentation, written by a human
-+ freely mix jluna and the C-API
-+ And more!
++ create / call / mutate Julia-side values from C++
++ thread-safe, provides a custom threadpool that, [unlike the C-API](./docs/manual.md/#multi-threading), allows safe interfacing with Julia
++ `std::` types & usertypes can be moved freely between Julia and C++
++ call arbitrary C++ functions from Julia
++ multi-dimensional, iterable, 0-overhead array interface
++ **fast**: target overheads of ~5%, compared to the C-API
++ **safe**: full exception forwarding and verbose error messages
++ **well-documented**: extensive manual, installation guide, written by a human
++ and more!
 
 ### Planned (but not yet implemented):
 
-(in order of priority, highest first)
+jluna is feature complete as of 0.9.0. The library will continue to be supported. If no major issues appear, 0.9 will be upgraded to 1.0 in Winter 2022.
 
-+ thread-safety, parallelization
-
-That's it, we're very close to version 1.0 already.
 ---
 
 ## Documentation
 
-A verbose, step-by-step introduction and manual is available [here](./docs/manual.md). Furthermore, all user-facing code has in-line documentation available through most IDEs (or the julia `help?` command). 
+A verbose, step-by-step introduction and manual is available [here](./docs/manual.md). This manual is written for people less familiar with C++ and/or Julia, providing non-jluna related guidance where necessary.
+
+Furthermore, all user-facing code has in-line documentation, available through most IDEs (or the julia `help?` command). 
 
 Advanced users are encouraged to check the headers (available in `jluna/include/`) for implementation details. They are formatted specifically to be easily understood by 3rd parties. 
 
@@ -180,14 +64,14 @@ Advanced users are encouraged to check the headers (available in `jluna/include/
 
 ## Dependencies
 
-jluna aims to be as modern as is practical. It uses C++20 features extensively and aims to support the newest julia version, rather than focusing on backwards compatibility. If you are looking for a C++ library that supports julia 1.5 or lower, consider checking out [CxxWrap](https://github.com/JuliaInterop/CxxWrap.jl) instead.
+jluna aims to be as modern as is practical. It uses C++20 features extensively and aims to support the newest julia version, rather than focusing on backwards compatibility. 
 
 For jluna you'll need:
 + [**Julia 1.7.0**](https://julialang.org/downloads/#current_stable_release) (or higher)
 + [**cmake 3.12**](https://cmake.org/download/) (or higher)
 + C++ Compiler (see below)
 
-Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang++-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are fully supported. g++-11 is the primary compiler used for development of jluna and is thus recommended. MSVC 19.32 seems to work, however stability remains untested.
+Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang++-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are fully supported. `g++-11` is the primary compiler used for development of jluna and is thus recommended. `MSVC 19.32` seems to work, however stability remains untested.
 
 ---
 
@@ -226,26 +110,6 @@ Where
 If errors appear at any point, head to [troubleshooting](./docs/installation.md#troubleshooting).
 
 ---
-
-### Creating a Project from Scratch
-
-jluna offers a one-line wizard for installing it and creating a new project. This option is only recommended for novice users, more experienced users should create the project themself and link it as detailed above.
-
-> this feature is only available on unix systems
-
-Download `init.sh` [here](https://raw.githubusercontent.com/Clemapfel/jluna/cmake_rework/install/init.sh). Then, execute (in the same folder you downloaded `init.sh` to):
-
-```cpp
-/bin/bash init.sh <Project Name> <Projects Path> <C++ Compiler>
-```
-Where
-+ `<Project Name>` is the name of your desired project folder, for example `MyProject`
-+ `<Projects Path>` is the root path to your new project folder, for example `/home/user/Desktop`
-+ `<C++ Compiler>` is one of `g++-10`, `g++-11`, `clang++-12`
-
-The bash script will create a folder in `<Project Path>/<Project Name>`, install jluna in that folder and setup a working hello_world executable for you.
-
-If errors appear at any point, head to [troubleshooting](./docs/installation.md#troubleshooting).
 
 ## License
 
