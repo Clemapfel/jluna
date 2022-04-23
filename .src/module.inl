@@ -187,13 +187,24 @@ namespace jluna
     template<is_unboxable T>
     T Module::get(const std::string& variable_name)
     {
-        static auto* eval = unsafe::get_function(jl_base_module, "eval"_sym);
-        return unbox<T>(jluna::safe_call(eval, jl_new_struct(jl_expr_type, "return"_sym, jl_symbol(variable_name.c_str()))));
+        static jl_function_t* dot = unsafe::get_function("jluna"_sym, "dot"_sym);
+
+        auto* v = value();
+        gc_pause;
+        auto* sym = jl_symbol(variable_name.c_str());
+        unsafe::Value* out;
+
+        if (jl_defines_or_exports_p((unsafe::Module*) v, sym))
+            out = jl_get_global((unsafe::Module*) v, sym);
+        else
+            out = jluna::safe_call(dot, value(), sym);
+
+        gc_unpause;
+        return unbox<T>(out);
     }
 
     inline Proxy Module::get(const std::string& variable_name)
     {
-        static auto* eval = unsafe::get_function(jl_base_module, "eval"_sym);
-        return Proxy(jluna::safe_call(eval, jl_new_struct(jl_expr_type, "return"_sym, jl_symbol(variable_name.c_str()))));
+        return Proxy(get<unsafe::Value*>(variable_name), jl_symbol(variable_name.c_str()));
     }
 }

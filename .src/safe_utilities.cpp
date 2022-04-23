@@ -126,14 +126,7 @@ namespace jluna
 
     void collect_garbage()
     {
-        throw_if_uninitialized();
-
-        static jl_function_t* gc = jl_get_function((jl_module_t*) jl_eval_string("return Base.GC"), "gc");
-
-        bool before = jl_gc_is_enabled();
-        jl_gc_enable(true);
-        jl_call0(gc);
-        jl_gc_enable(before);
+        jl_gc_collect(JL_GC_FULL);
     }
 
     unsafe::Value* undef()

@@ -83,7 +83,7 @@ namespace jluna
 
             std::cout << "[C++][LOG] Running \"" << name << "\"" << std::endl;
             std::vector<Duration> runs;
-            //runs.reserve(count);
+            runs.reserve(count);
 
             // pre-initialize to avoid allocation
             auto before = Benchmark::_clock.now();
@@ -101,7 +101,7 @@ namespace jluna
                     lambda();
                     after = Benchmark::_clock.now();
 
-                    //runs.push_back(after - before);
+                    runs.push_back(after - before);
                 }
             }
             catch (std::exception& e)
@@ -131,7 +131,7 @@ namespace jluna
                 if (a.count() == 0)
                     return 0;
 
-                return (a < b ? 1 : -1) * (abs(a - b) / a); //(a < b ? (b - a) / (a + b) : -1 *((a - b) / a));
+                return (a < b ? 1 : -1) * (abs(a - b) / a);
             };
             res._overhead = overhead(_base._median, res._median);
             if (res._overhead != 0)
@@ -140,7 +140,6 @@ namespace jluna
             if (log)
                 _results.push_back(res);
 
-            std::cout << _results.size() << std::endl;
             std::cout << "[C++][LOG] done." << std::endl;
             return _results.back();
         }
