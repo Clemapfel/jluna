@@ -7,10 +7,11 @@
 #include <.benchmark/benchmark.hpp>
 #include <.benchmark/benchmark_aux.hpp>
 #include <thread>
+#include <.src/gc_sentinel.hpp>
 
 using namespace jluna;
 
-constexpr size_t n_reps = 10000;
+constexpr size_t n_reps = 100000;
 std::vector<Proxy> _proxies;
 
 void benchmark_threading()
@@ -59,27 +60,6 @@ void benchmark_cppcall()
 int main()
 {
     initialize(1);
-
-    // call Julia functions
-Main.safe_eval("f(x) = x^x^x");
-
-auto f = Main["f"];
-std::cout << (size_t) f(3) << std::endl;
-
-// mutate Julia values
-Main.safe_eval("vec = [1, 2, 3, 4]");
-Main["vec"][2] = 999;
-Main.safe_eval("println(vec)");
-
-// assign Julia values with `std::` objects
-auto p = Main["vec"];
-
-p = std::vector<Float32>{8, 7, 6, 5};
-Main.safe_eval(R"(print(vec, " is now a "); println(typeof(vec));)");
-
-
-return 0;
-
     Benchmark::initialize();
 
     Main.safe_eval(R"(
@@ -91,21 +71,83 @@ return 0;
         end
     )");
 
+    static size_t count = 0;
+
+    Benchmark::run_as_base("gc base", n_reps, [](){
+
+        auto before = jl_gc_is_enabled();
+        jl_gc_enable(false);
+        for (size_t i = 0; i < 3; ++i)
+            auto* _ = box(generate_number<Int64>());
+        jl_gc_enable(true);
+
+        count++;
+        if (count % 10000 == 0)
+            jl_gc_collect(JL_GC_AUTO);
+    });
+
+    Benchmark::run("gc collect", n_reps, [](){
+
+        auto before = jl_gc_is_enabled();
+        jl_gc_enable(false);
+        for (size_t i = 0; i < 3; ++i)
+            auto* _ = box(generate_number<Int64>());
+        jl_gc_enable(true);
+        jl_gc_collect(JL_GC_AUTO);
+
+        count++;
+        if (count % 10000 == 0)
+            jl_gc_collect(JL_GC_AUTO);
+    });
+    
+    Benchmark::run("gc unsafe preserve", n_reps, [](){
+
+        for (size_t i = 0; i < 3; ++i)
+        {
+            auto* _ = box(generate_number<Int64>());
+            auto id = unsafe::gc_preserve(_);
+            unsafe::gc_release(id);
+        }
+
+        count++;
+        if (count % 10000 == 0)
+            jl_gc_collect(JL_GC_AUTO);
+    });
+
+
+    Benchmark::run("gc sentinel", n_reps, [](){
+
+        auto gc = GCSentinel(3);
+        for (size_t i = 0; i < 3; ++i)
+        {
+            auto* _ = box(generate_number<Int64>());
+            gc.add(_);
+        }
+
+        count++;
+        if (count % 10000 == 0)
+            jl_gc_collect(JL_GC_AUTO);
+    });
+
+
+    Benchmark::conclude();
+    return 0;
+
     Benchmark::run_as_base("C-API: get", n_reps, [](){
 
-        for (size_t i = 0; i < 10; ++i)
+        for (size_t i = 0; i < 3; ++i)
             volatile auto* f = jl_get_function(jl_main_module, "f");
     });
 
     Benchmark::run("unsafe: get_function", n_reps, [](){
 
-        for (size_t i = 0; i < 10; ++i)
+        for (size_t i = 0; i < 3; ++i)
             volatile auto* f = unsafe::get_function(jl_main_module, "f"_sym);
     });
 
     Benchmark::run("unsafe: get_value", n_reps, [](){
 
-        for (size_t i = 0; i < 10; ++i)
+        for (size_t i = 0; i < 3; ++i)
             volatile auto* f = unsafe::get_value(jl_main_module, "f"_sym);
     });
 
