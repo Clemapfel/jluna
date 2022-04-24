@@ -6,28 +6,33 @@
 #pragma once
 
 #include <include/concepts.hpp>
-#include <include/unsafe_utilities.hpp>
 
 namespace jluna
 {
-    /// @brief convenient object that preserves one or more pointer
+    /// @brief object that preserves arbitrary julia pointer
     class GCSentinel
     {
         public:
+            /// @brief initialize
+            /// @param n: maximum number of preserved values
             GCSentinel(size_t n)
             {
                 initialize();
-                jluna::safe_call(new_sentinel, jl_box_int64(n));
+                jl_call1(new_sentinel, jl_box_int64(n));
             }
 
+            /// @brief destroy, releases all preserved values
             ~GCSentinel()
             {
-                jluna::safe_call(release);
+                jl_call0(release);
+                jl_gc_safepoint();
             }
 
+            /// @brief preserve value
+            /// @param julia pointer
             void add(unsafe::Value* ptr)
             {
-                jluna::safe_call(preserve, jl_box_voidpointer((void*) ptr));
+                jl_call1(preserve, jl_box_voidpointer((void*) ptr));
             }
 
         private:
@@ -40,10 +45,19 @@ namespace jluna
                 if (new_sentinel == nullptr)
                 {
                     unsafe::Module* module = (unsafe::Module*) jl_eval_string("return jluna.memory_handler");
-                    new_sentinel = unsafe::get_function(module, "new_sentinel"_sym);
-                    preserve = unsafe::get_function(module, "preserve"_sym);
-                    release = unsafe::get_function(module, "release"_sym);
+                    new_sentinel = jl_get_function(module, "new_sentinel");
+                    preserve = jl_get_function(module, "new_sentinel");
+                    release = jl_get_function(module, "new_sentinel");
                 }
             }
     };
+
+    /// @brief setup a gc sentinel, ready to preseve N values
+    #define gc_save_pool_start(N) auto* __gc__ = new jluna::GCSentinel(N);
+
+    /// @brief add value to gc sentinel
+    #define gc_save(x) __gc__->add((unsafe::Value*) x);
+
+    /// @brief destroy gc sentinel
+    #define gc_save_pool_end delete __gc__;
 }

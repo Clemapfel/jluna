@@ -4,6 +4,7 @@
 //
 
 #include <include/exceptions.hpp>
+#include <include/unsafe_utilities.hpp>
 
 namespace jluna::detail
 {

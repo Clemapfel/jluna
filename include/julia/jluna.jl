@@ -604,7 +604,7 @@ module jluna
             return nothing
         end
 
-        # release all values in sentinel
+        # release sentinel, all held values can be collected
         function release()
             _sentinels[Threads.threadid()][] = nothing
         end

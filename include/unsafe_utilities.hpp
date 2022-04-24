@@ -7,6 +7,7 @@
 
 #include <include/typedefs.hpp>
 #include <include/concepts.hpp>
+#include <.src/gc_sentinel.hpp>
 
 namespace jluna
 {
@@ -244,10 +245,7 @@ namespace jluna::unsafe
     T unsafe_unbox(unsafe::Value*);
 }
 
-/// @brief pause the garbage collector. This prevents values from being deallocated until gc_unpause was called
-#define gc_pause bool __before__ = jl_gc_is_enabled(); jl_gc_enable(false);
-
-/// @brief unpause the garbage collector, values allocated while it was paused my be collector
-#define gc_unpause if(__before__) {jl_gc_enable(true), jl_gc_collect(JL_GC_AUTO);}
+#define gc_pause
+#define gc_unpause
 
 #include <.src/unsafe_utilities.inl>
