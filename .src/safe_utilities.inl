@@ -40,7 +40,8 @@ namespace jluna
         if (jl_unbox_bool(jl_get_nth_field(tuple_res, 1)))
             throw JuliaException(jl_get_nth_field(tuple_res, 2), jl_string_ptr(jl_get_nth_field(tuple_res, 3)));
 
-        return jl_get_nth_field(tuple_res, 0);
+        auto* res = jl_get_nth_field(tuple_res, 0);
+        return res;
     }
 
     template<is_julia_value_pointer... Ts>

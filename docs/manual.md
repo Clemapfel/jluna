@@ -964,6 +964,56 @@ unnamed: 0
 
 ### Detached Proxies
 
+Consider the following:
+
+```cpp
+// create proxy to variable in main
+Main.safe_eval("x = [1, 2, 3]");
+auto x_proxy = Main["x"];
+
+// print current value
+Base["println"]("before: ", x_proxy);
+
+// update x without the proxy
+Main.safe_eval("x = -15");
+
+// print again
+Base["println"]("after : ", x_proxy);
+```
+```
+before: [1, 2, 3]
+after : [1, 2, 3]
+```
+
+Here, we created a vector with the value `[1, 2, 3]`, bound to `Main.x`. We created a proxy, `x_proxy`, managing that variable. When then updated the value of `Main.x` to `-15`, **without the proxy**. Printing the value of the proxy again, we see that it still points to `[1, 2, 3]`.
+
+This proxy is now in a **detached state**. Despite being a named proxy, its value does not correspond to the value of its variable.
+
+This is an artifact of how the proxy manages the memory it is pointing to. For performance reasons, the pointer only gets updated when mutation happens through the proxy. Because of this, if we modify the value of a variable a named proxy manages completely Julia-side, **we need to update that proxy** to tell it that the value changed. For this, jluna provides `Proxy::upate()`:
+
+```cpp
+Main.safe_eval("x = [1, 2, 3]");
+auto x_proxy = Main["x"];
+
+// print current value
+Base["println"]("before: ", x_proxy);
+
+// update x
+Main.safe_eval("x = -15");
+
+// update proxy
+x_proxy.update();
+
+// print again
+Base["println"]("after : ", x_proxy);
+```
+```
+before: [1, 2, 3]
+after : -15
+```
+
+A simple `.update()` makes a named proxy query the current state of its variable, updating its value pointer and releasing whatever other value it managed before, such that it can now be collected by the garbage collector.
+
 ### Implications
 
 With our newly acquired knowledge of named and unnamed proxies, we can investigate code from the previous sections more closely:

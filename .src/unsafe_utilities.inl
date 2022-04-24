@@ -37,7 +37,7 @@ namespace jluna::unsafe
             jl_eval_string(R"(
                 __jluna_heap = Dict{UInt64, Base.RefValue{Any}}();
                 __jluna_heap_index = Base.RefValue(UInt64(0));
-                __jluna_heap_lock = Base.ReentrantLock()
+                const __jluna_heap_lock = Base.ReentrantLock()
 
                 function __jluna_add_to_heap(ptr::UInt64)
                     lock(__jluna_heap_lock)

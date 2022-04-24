@@ -90,7 +90,10 @@ namespace jluna
         static jl_module_t* jluna_module = (jl_module_t*) jl_eval_string("return jluna");
         static jl_function_t* invoke = jl_get_function(jluna_module, "invoke");
 
-        return Proxy(jluna::safe_call(invoke, _content->value(), box(args)...), nullptr);
+        gc_pause;
+        auto out = Proxy(jluna::safe_call(invoke, _content->value(), box(args)...), nullptr);
+        gc_unpause;
+        return out;
     }
 
     template<is_boxable... Args_t>

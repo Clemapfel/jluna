@@ -22,6 +22,10 @@ namespace jluna
     /// @brief unbox to unsafe::Value*
     template<is<unsafe::Value*> T>
     T unbox(unsafe::Value* value);
+
+    /// @brief forward void* as unsafe::Value*
+    template<is<void*> T>
+    T unbox(unsafe::Value* value);
     
     /// @brief unbox to bool
     template<is<bool> T>

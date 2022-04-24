@@ -71,6 +71,12 @@ namespace jluna
         return out;
     }
 
+    template<is<void*> T>
+    T unbox(unsafe::Value* value)
+    {
+        return jl_unbox_voidpointer(value);
+    }
+
     template<is<char> T>
     T unbox(unsafe::Value* value)
     {
