@@ -570,6 +570,44 @@ module jluna
             unlock(_refs_counter_lock)
             return nothing;
         end
+
+        ### GC Sentinel: protects values from being collected
+
+        # declare abstract type
+        abstract type AbstractGCSentinel end
+
+        # global storage, one sentinel per thread
+        const _sentinels = NTuple{Threads.nthreads(), Base.Ref{Union{AbstractGCSentinel, Nothing}}}([nothing for _ in 1:(Threads.nthreads())])
+
+        # sentinel, holds N values
+        mutable struct GCSentinel{N} <: AbstractGCSentinel
+            _values::NTuple{N, Base.RefValue{Any}}
+            _n_preserved::Int64
+
+            function GCSentinel{N}() where N
+                return new{N}(NTuple{N, Base.Ref{Any}}([undef for _ in 1:N]), 1)
+            end
+        end
+
+        # update sentinel
+        function new_sentinel(n::Integer) ::Nothing
+            _sentinels[Threads.threadid()].x = GCSentinel{n}()
+            return nothing
+        end
+
+        # add value to sentinel
+        function preserve(ptr::Ptr{Cvoid}) where N
+
+            sentinel_ref = _sentinels[Threads.threadid()]
+            sentinel_ref[]._values[sentinel_ref[]._n_preserved][] = Ref{Any}(unsafe_pointer_to_objref(ptr))
+            sentinel_ref[]._n_preserved += 1
+            return nothing
+        end
+
+        # release all values in sentinel
+        function release()
+            _sentinels[Threads.threadid()][] = nothing
+        end
     end
 
     module cppcall
