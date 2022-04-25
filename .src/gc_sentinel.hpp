@@ -7,7 +7,7 @@
 
 #include <include/concepts.hpp>
 
-namespace jluna
+namespace jluna::detail
 {
     template<is_julia_value_pointer... Ts>
     inline void gc_push(Ts... ts)

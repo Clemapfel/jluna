@@ -65,9 +65,9 @@ namespace jluna
     template<is<bool> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
@@ -80,99 +80,99 @@ namespace jluna
     template<is<char> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
     template<is<uint8_t> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
     template<is<uint16_t> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
     template<is<uint32_t> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
     template<is<uint64_t> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
     template<is<int8_t> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
     template<is<int16_t> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
     template<is<int32_t> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
     template<is<int64_t> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
     template<is<float> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
     template<is<double> T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::smart_unbox_primitive<T>(value);
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 
@@ -265,7 +265,6 @@ namespace jluna
     T unbox(unsafe::Value* value)
     {
         gc_pause;
-
         static jl_function_t* serialize = unsafe::get_function("jluna"_sym, "serialize"_sym);
         jl_array_t* as_array = (jl_array_t*) jl_call1(serialize, value);
 
@@ -334,9 +333,9 @@ namespace jluna
     template<is_tuple T>
     T unbox(unsafe::Value* value)
     {
-        gc_pause;
+        detail::gc_push(value);
         auto out = detail::unbox_tuple_pre(value, T());
-        gc_unpause;
+        detail::gc_pop(1);
         return out;
     }
 }
