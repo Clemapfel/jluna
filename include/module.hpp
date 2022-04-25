@@ -50,7 +50,7 @@ namespace jluna
             /// @returns jluna::Proxy to value after assignment
             /// @note this function is thread-safe
             template<is_boxable T>
-            Proxy assign(const std::string& variable_name, T value);
+            void assign(const std::string& variable_name, T value);
 
             /// @brief assign variable with given name in module, if variable does not exist, create it
             /// @param name: variable name, should not contain "."
@@ -58,7 +58,7 @@ namespace jluna
             /// @returns jluna::Proxy to value after assignment
             /// @note this function is thread-safe
             template<is_boxable T>
-            Proxy create_or_assign(const std::string& variable_name, T value);
+            void create_or_assign(const std::string& variable_name, T value);
 
             /// @brief get variable value as named proxy
             /// @param variable name

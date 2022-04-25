@@ -8,156 +8,232 @@
 namespace jluna
 {
     template<is_boxable T>
-    Proxy Module::assign(const std::string& variable_name, T new_value)
+    void Module::assign(const std::string& variable_name, T new_value)
     {
         static jl_function_t* assign_in_module = unsafe::get_function("jluna"_sym, "assign_in_module"_sym);
 
-        initialize_lock();
-        _lock->lock();
-        gc_pause;
-        jluna::safe_call(assign_in_module, value(), jl_symbol(variable_name.c_str()), box(new_value));
-        auto out = this->operator[](variable_name);
-        gc_unpause;
-        _lock->unlock();
-        return out;
+        if (detail::_num_threads != 1)
+        {
+            initialize_lock();
+            _lock->lock();
+        }
+
+        unsafe::Module* me = value();
+        auto* sym = jl_symbol(variable_name.c_str());
+
+        if (jl_defines_or_exports_p(me, sym))
+            jl_set_global(value(), jl_symbol(variable_name.c_str()), box<T>(new_value));
+        else
+        {
+            JL_TRY
+                jl_undefined_var_error(sym);
+            JL_CATCH
+                throw JuliaException((unsafe::Value*) jl_exception_occurred(), "in jluna::Module::assign: UndefVarError: " + variable_name + " not defined");
+        }
+
+        if (detail::_num_threads != 1)
+            _lock->unlock();
     }
 
     template<is_boxable T>
-    Proxy Module::create_or_assign(const std::string& variable_name, T new_value)
+    void Module::create_or_assign(const std::string& variable_name, T new_value)
     {
         static jl_function_t* assign_in_module = unsafe::get_function("jluna"_sym, "create_or_assign_in_module"_sym);
 
-        initialize_lock();
-        _lock->lock();
-        gc_pause;
-        jluna::safe_call(assign_in_module, this->value(), jl_symbol(variable_name.c_str()), box<T>(new_value));
-        auto out = this->operator[](variable_name);
-        gc_unpause;
-        _lock->unlock();
-        return out;
+        if (detail::_num_threads != 1)
+        {
+            initialize_lock();
+            _lock->lock();
+        }
+
+        jl_set_global(value(), jl_symbol(variable_name.c_str()), box<T>(new_value));
+
+        if (detail::_num_threads != 1)
+            _lock->unlock();
     }
-    
+
     inline Proxy Module::new_undef(const std::string& name)
     {
         static auto* undef_t = (unsafe::DataType*) jl_eval_string("return UndefInitializer");
+        create_or_assign(name, jl_new_struct(undef_t));
 
-        initialize_lock();
-        _lock->lock();
-        auto out = create_or_assign(name, jl_new_struct(undef_t));
-        _lock->unlock();
-        return out;
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_bool(const std::string& name, bool value)
+    inline Proxy Module::new_bool(const std::string& name, bool v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_char(const std::string& name, char value)
+    inline Proxy Module::new_char(const std::string& name, char v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_uint8(const std::string& name, uint8_t value)
+    inline Proxy Module::new_uint8(const std::string& name, uint8_t v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_uint16(const std::string& name, uint16_t value)
+    inline Proxy Module::new_uint16(const std::string& name, uint16_t v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_uint32(const std::string& name, uint32_t value)
+    inline Proxy Module::new_uint32(const std::string& name, uint32_t v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_uint64(const std::string& name, uint64_t value)
+    inline Proxy Module::new_uint64(const std::string& name, uint64_t v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_int8(const std::string& name, int8_t value)
+    inline Proxy Module::new_int8(const std::string& name, int8_t v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_int16(const std::string& name, int16_t value)
+    inline Proxy Module::new_int16(const std::string& name, int16_t v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_int32(const std::string& name, int32_t value)
+    inline Proxy Module::new_int32(const std::string& name, int32_t v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_int64(const std::string& name, int64_t value)
+    inline Proxy Module::new_int64(const std::string& name, int64_t v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_float32(const std::string& name, float value)
+    inline Proxy Module::new_float32(const std::string& name, float v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_float64(const std::string& name, double value)
+    inline Proxy Module::new_float64(const std::string& name, double v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_string(const std::string& name, const std::string& value)
+    inline Proxy Module::new_string(const std::string& name, const std::string& v)
     {
-        return create_or_assign(name, value);
+        create_or_assign(name, v);
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    inline Proxy Module::new_symbol(const std::string& name, const std::string& value)
+    inline Proxy Module::new_symbol(const std::string& name, const std::string& v)
     {
-        return create_or_assign(name, (unsafe::Value*) jl_symbol(value.c_str()));
+        create_or_assign(name, (unsafe::Value*) jl_symbol(v.c_str()));
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
     template<is_primitive T>
     Proxy Module::new_complex(const std::string& name, T real, T imag)
     {
-        return create_or_assign(name, box<std::complex<T>>(std::complex<T>(real, imag)));
+        create_or_assign(name, box<std::complex<T>>(std::complex<T>(real, imag)));
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
     template<is_boxable T>
-    Proxy Module::new_vector(const std::string& name, const std::vector<T>& value)
+    Proxy Module::new_vector(const std::string& name, const std::vector<T>& v)
     {
-        return create_or_assign(name, box<std::vector<T>>(value));
+        create_or_assign(name, box<std::vector<T>>(v));
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
     template<is_boxable Key_t, is_boxable Value_t>
-    Proxy Module::new_dict(const std::string& name, const std::map<Key_t, Value_t>& value)
+    Proxy Module::new_dict(const std::string& name, const std::map<Key_t, Value_t>& v)
     {
-        return create_or_assign(name, box<std::map<Key_t, Value_t>>(value));
+        create_or_assign(name, box<std::map<Key_t, Value_t>>(v));
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
     template<is_boxable Key_t, is_boxable Value_t>
-    Proxy Module::new_dict(const std::string& name, const std::unordered_map<Key_t, Value_t>& value)
+    Proxy Module::new_dict(const std::string& name, const std::unordered_map<Key_t, Value_t>& v)
     {
-        return create_or_assign(name, box<std::unordered_map<Key_t, Value_t>>(value));
+        create_or_assign(name, box<std::unordered_map<Key_t, Value_t>>(v));
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
     template<is_boxable T>
-    Proxy Module::new_set(const std::string& name, const std::set<T>& value)
+    Proxy Module::new_set(const std::string& name, const std::set<T>& v)
     {
-        return create_or_assign(name, box<std::set<T>>(value));
+        create_or_assign(name, box<std::set<T>>(v));
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
     template<is_boxable T1, is_boxable T2>
     Proxy Module::new_pair(const std::string& name, T1 first, T2 second)
     {
-        return create_or_assign(name, box<std::pair<T1, T2>>(std::pair<T1, T2>(first, second)));
+        create_or_assign(name, box<std::pair<T1, T2>>(std::pair<T1, T2>(first, second)));
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
     template<is_boxable... Ts>
     Proxy Module::new_tuple(const std::string& name, Ts... args)
     {
-        return create_or_assign(name, box<std::tuple<Ts...>>(std::make_tuple(args...)));
+        create_or_assign(name, box<std::tuple<Ts...>>(std::make_tuple(args...)));
+
+        auto* sym = jl_symbol(name.c_str());
+        return Proxy(jl_get_global(value(), sym), sym);
     }
 
     template<is_boxable T, size_t N, is<size_t>... Dims>
@@ -187,20 +263,20 @@ namespace jluna
     template<is_unboxable T>
     T Module::get(const std::string& variable_name)
     {
-        static jl_function_t* dot = unsafe::get_function("jluna"_sym, "dot"_sym);
-
-        auto* v = value();
-        gc_pause;
         auto* sym = jl_symbol(variable_name.c_str());
-        unsafe::Value* out;
+        auto* me = value();
 
-        if (jl_defines_or_exports_p((unsafe::Module*) v, sym))
-            out = jl_get_global((unsafe::Module*) v, sym);
+        if (jl_defines_or_exports_p(me, sym))
+            return unbox<T>(jl_get_binding(me, sym)->value);
         else
-            out = jluna::safe_call(dot, value(), sym);
+        {
+            JL_TRY
+                jl_undefined_var_error(sym);
+            JL_CATCH
+                throw JuliaException((unsafe::Value*) jl_exception_occurred(), "in jluna::Module::assign: UndefVarError: " + variable_name + " not defined");
 
-        gc_unpause;
-        return unbox<T>(out);
+            return jl_nothing;
+        }
     }
 
     inline Proxy Module::get(const std::string& variable_name)

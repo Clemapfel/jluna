@@ -11,103 +11,32 @@
 
 using namespace jluna;
 
-constexpr size_t n_reps = 10000000;
-std::vector<Proxy> _proxies;
-
-void benchmark_threading()
+int main()
 {
+    initialize(1);
+    Benchmark::initialize();
+
+    // ### Calling C++-side Functions
+
+    size_t n_reps = 1000000;
+
+
+    // actual function
     static auto task_f = [](){
         for (volatile size_t i = 0; i < 10000; i = i+1);
     };
 
-    Benchmark::run_as_base("threading: no task", n_reps, [](){
-
+    // base
+    Benchmark::run_as_base("Call C++-Function in C++", n_reps, [](){
         task_f();
     });
 
-    Benchmark::run("threading: std::thread", n_reps, [](){
-
-        auto t = std::thread(task_f);
-        t.join();
-    });
-
-    Benchmark::run("threading: jluna::Task", n_reps, [](){
-
-        auto t = ThreadPool::create<void()>(task_f);
-        t.schedule();
-        t.join();
-    });
-}
-
-void benchmark_cppcall()
-{
-        static auto task_f = [](){
-        for (volatile size_t i = 0; i < 10000; i = i+1);
-    };
-
-    Benchmark::run_as_base("base", n_reps, []() {
-        task_f();
-    });
-
+    // move to julia, then call
     Main.create_or_assign("task_f", as_julia_function<void()>(task_f));
-    static auto* run_julia_side = unsafe::get_function(jl_main_module, "task_f"_sym);
+    auto* jl_task_f = unsafe::get_function(jl_main_module, "task_f"_sym);
 
-    Benchmark::run("jluna", n_reps, []() {
-       volatile auto* _ = unsafe::call(run_julia_side);
-    });
-}
-
-
-int main()
-{
-    initialize(4);
-    Benchmark::initialize();
-
-    // ### CALLING JULIA FUNCTIONS ###
-
-    size_t n_reps = 10000000;
-
-    // function to test
-    Main.safe_eval(R"(
-        function f()
-            sum = 0;
-            for i in 1:100
-                sum += rand();
-            end
-        end
-    )");
-
-    auto* f_ptr = unsafe::get_function(jl_main_module, "f"_sym);
-
-    // C-API
-    Benchmark::run_as_base("C-API: jl_call", n_reps, [&](){
-
-        jl_call0(f_ptr);
-    });
-
-    // unsafe
-    Benchmark::run("unsafe: call", n_reps, [&](){
-
-        unsafe::call(f_ptr);
-    });
-
-    // jluna::safe_call
-    Benchmark::run("jluna::safe_call", n_reps, [&](){
-
-        jluna::safe_call(f_ptr);
-    });
-
-    // proxy::safe_call<T>
-    auto f_proxy = Proxy(f_ptr);
-    Benchmark::run("Proxy::safe_call<T>", n_reps, [&](){
-
-        f_proxy.safe_call<void>();
-    });
-
-    // proxy::operator()
-    Benchmark::run("Proxy::operator()", n_reps, [&](){
-
-        f_proxy();
+    Benchmark::run("Call C++-Function in Julia", n_reps, [&](){
+        jl_call0(jl_task_f);
     });
 
     Benchmark::conclude();
@@ -162,6 +91,96 @@ int main()
     // C-API: eval
     Benchmark::run("eval: get", n_reps / 4, [](){
         volatile auto* f = (unsafe::Function*) jl_eval_string("return f");
+    });
+
+    //Benchmark::conclude();
+    //Benchmark::save();
+    //return 0;
+
+    // ### MUTATING JULIA VALUES ###
+
+    n_reps = 10000000;
+
+    Main.safe_eval("x = 1234");
+
+    // C-API
+    Benchmark::run_as_base("C-API: set", n_reps, [](){
+
+        Int64 to_box = generate_number<Int64>();
+        jl_set_global(jl_main_module, "x"_sym, jl_box_int64(to_box));
+    });
+
+    // unsafe
+    Benchmark::run("unsafe: set", n_reps, [](){
+
+        Int64 to_box = generate_number<Int64>();
+        unsafe::set_value(jl_main_module, "x"_sym, unsafe::unsafe_box<Int64>(to_box));
+    });
+
+    // Module::assign
+    Benchmark::run("Module::assign", n_reps / 10, [](){
+
+        Int64 to_box = generate_number<Int64>();
+        Main.assign("x", to_box);
+    });
+
+    // Proxy::operator=
+    auto x_proxy = Main["x"];
+    Benchmark::run("Proxy::operator=", n_reps / 10, [&](){
+
+        Int64 to_box = generate_number<Int64>();
+        x_proxy = to_box;
+    });
+
+    Benchmark::conclude();
+    Benchmark::save();
+    return 0;
+
+    // ### CALLING JULIA FUNCTIONS ###
+
+    n_reps = 10000000;
+
+    // function to test
+    Main.safe_eval(R"(
+        function f()
+            sum = 0;
+            for i in 1:100
+                sum += rand();
+            end
+        end
+    )");
+
+    auto* f_ptr = unsafe::get_function(jl_main_module, "f"_sym);
+
+    // C-API
+    Benchmark::run_as_base("C-API: jl_call", n_reps, [&](){
+
+        jl_call0(f_ptr);
+    });
+
+    // unsafe
+    Benchmark::run("unsafe: call", n_reps, [&](){
+
+        unsafe::call(f_ptr);
+    });
+
+    // jluna::safe_call
+    Benchmark::run("jluna::safe_call", n_reps, [&](){
+
+        jluna::safe_call(f_ptr);
+    });
+
+    // proxy::safe_call<T>
+    auto f_proxy = Proxy(f_ptr);
+    Benchmark::run("Proxy::safe_call<T>", n_reps, [&](){
+
+        f_proxy.safe_call<void>();
+    });
+
+    // proxy::operator()
+    Benchmark::run("Proxy::operator()", n_reps, [&](){
+
+        f_proxy();
     });
 
     Benchmark::conclude();

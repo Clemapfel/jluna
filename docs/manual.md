@@ -3398,9 +3398,72 @@ We see vast runtime difference between the different ways. Firstly, `unsafe` fal
 
 `Module::get<T>` may not look like it would be much better than just using `Module::operator[]`, however, this is not the case. `Module::get<T>` is much faster because it **never has to construct a proxy**. Because we know the final result type, `T`, an `unsafe::Function*` in this benchmark, is not a proxy, `Module::get<T>` can simply unbox the value directly, as if done through the C-API.<br>
 
-We see how much constructing that proxy matters, if we really just want the value (or the pointer to a function, in this case), going through proxies just to discard them immediately introduces a 61x to 65x performance increase, making this option unacceptable in performance critical environments. This doesn't mean we should never use the proxy, however. If we only construct a proxy once and then use it over and over, the 60x increase may pay off. The next section will investigate if this is indeed the case.
+We see how much constructing that proxy matters, if we really just want the value (or the pointer to a function, in this case), going through proxies just to discard them immediately introduces a 61x to 65x performance increase, making this option unacceptable in performance critical environments. This doesn't mean we should never use the proxy, however. If we only construct a proxy once and then use it over and over, the 60x increase may pay off. We will investigate if this is indeed the case in a coming section.
 
 In summary, `unsafe` and the C-API are unmatched in performance, however, in applications where safety is preferred, `Module::get<T>` is the best way to access the **value of a variable** (not the variable itself).
+
+### Mutating Julia-side Variables
+
+We benchmarked **accessing** variables, now, we'll turn our attention to **mutating** them. Recall in the manual section on proxies, only named proxies mutate values. So far, we have seen that handling proxies tends to introduce a significant amount of overhead, we will see if this is still the case:
+
+```cpp
+// number of cycles
+size_t n_reps = 10000000;
+
+// initialize variable to be modified
+Main.safe_eval("x = 1234");
+
+// C-API
+Benchmark::run_as_base("C-API: set", n_reps, [](){
+
+    Int64 to_box = generate_number<Int64>();
+    jl_set_global(jl_main_module, "x"_sym, jl_box_int64(to_box));
+});
+
+// unsafe
+Benchmark::run("unsafe: set", n_reps, [](){
+
+    Int64 to_box = generate_number<Int64>();
+    unsafe::set_value(jl_main_module, "x"_sym, unsafe::unsafe_box<Int64>(to_box));
+});
+
+// Module::assign
+Benchmark::run("Module::assign", n_reps / 10, [](){
+
+    Int64 to_box = generate_number<Int64>();
+    Main.assign("x", to_box);
+});
+
+// Proxy::operator=
+auto x_proxy = Main["x"];
+Benchmark::run("Proxy::operator=", n_reps / 10, [&](){
+
+    Int64 to_box = generate_number<Int64>();
+    x_proxy = to_box;
+});
+```
+
+Here, we see 4 different methods to accomplish this task. The C-APIs `jl_set_globa` and the `unsafe` libraries `set_value` will most likely be the most performant options, much mor safe and convenient, however, are the familiar `Proxy::operator=` and `Module::assign`.
+
+During each cycle of each benchmark, we generate a random `Int64` using `generate_number`. This function introduces the same amount of overhead anytime it is called, meaning it will introduce the exact same amount of runtime to each of the benchmarks, making comparison between them still valid.
+
+### Mutating Julia-side Values: Results
+
+| name | median duration (ms) | overhead|
+|------|----------------------|-------------|
+| `base` | `0.000137ms`           | `0%`  |
+| `unsafe::set_value` | `0.000141ms` | `3%` |
+| `Module::assign` | `0.000379ms` | `176%` |
+| `named proxy` | `0.062295ms` | `45370.8%` | 
+
+This time, `unsafe` is almost identical in runtime compared to the C-API. The next best performain option is `Module::assign`, introducing a similar amount of overhead as `Module::get` in the ast section. Lastly we have named proxies. The overhead here is so massive due to multiple reasons. Internally, the named proxy has to:
++ update its pointer
++ add the new value to the GC safeguard
++ evaluate its name
++ update the variable of that name
+
+Only the latter of which has to be performed by any of the other functions. This explains the large amount of overhead, making named proxies a bad choice when trying to mutate variables in a performant manner. Once again, the specialized `jluna::Module` function gives the best compromise between performance and safety.
+
 
 ### Calling Julia-side Functions
 
@@ -3469,10 +3532,46 @@ Here we access a pointer to our simple Julia-side function, outside of the bench
 
 `jluna::safe_call` offers the best compromise between safety and speed, it still provides exception forwarding without constructing a proxy or having to deal with proxy-related overheads.
 
+### Calling C++ Functions from Julia
+
+We've seen how fast we can call a Julia-side function from C++. In jluna, we can of course do it the other way around, which is hopefully just as performant.
+
+```cpp
+size_t n_reps = 1000000;
+
+// actual function
+static auto task_f = [](){
+    for (volatile size_t i = 0; i < 10000; i = i+1);
+};
+
+// base
+Benchmark::run_as_base("Call C++-Function in C++", n_reps, [](){
+    task_f();
+});
+
+// move to julia, then call
+Main.create_or_assign("task_f", as_julia_function<void()>(task_f));
+auto* jl_task_f = unsafe::get_function(jl_main_module, "task_f"_sym);
+
+Benchmark::run_as_base("Call C++-Function in Julia", n_reps, [&](){
+    jl_call0(jl_task_f);
+});
+```
+
+Here, we are measuring the time it takes for `task_f` to finish when called from either language. `task_f` itself just counts to 10000, where `volatile` prevents the loop from being optimized away by the compiler. After having simply run this function in C++, we move it to Julia outside of the benchmarks measured time, then measure how much overhead is present if calling the same function from Julia.
+
+### Calling C++ Functions from Julia: Results
+
+| name | median duration (ms) | overhead|
+|------|----------------------|-------------|
+| `called C++-side` | `0.015963ms` | `0%` |
+| `called Julia-side` | `0.016145ms` | `1.14%` |
+
+Results suggest that there is very little overhead calling the C++ function, we are very comfortable below the 5% threshold, making calling C++ functions from Julia pretty much exactly as fast as calling them from C++.
 
 ### Constructing `jluna::Task`
 
-With all the wrapping going on to make `jluna::Task` be able to execute C-API functions, you may expect there to be a significant overhead to creating a task. This is not, true however:
+With all the wrapping going on to make `jluna::Task` be able to execute C-API functions, you may expect there to be a significant overhead to creating a task. This is not true, however:
 
 ```cpp
 // actual function
@@ -3499,9 +3598,9 @@ Benchmark::run("threading: jluna::Task", n_reps, [](){
 });
 ```
 
-Here, we are executing a function that simply iterator to 10000, where `volatile` assures the loop is actually executed. Just executing this lambda is our base, next we have executing this task using `std::thread`, then `jluna::Task`. None of these functions interact with the C-library, this is just to measure how costly creating a `jluna::Task` is.
+Here, we are executing a function that simply iterates to 10000, where `volatile` assures the loop cannot be optimized away by the compiler. As a base comparison, we simply execute this function. Next we created a `std::thread`, which is then immediately scheduled and executes the function. Lastly, we do the same using `jluna::Task`, which, internally, using a Julia `Base.Task` to do the same.
 
-#### Result: 30% speedup
+### Constructing `jluna::Task`: Results
 
 (number of cycles: `2000000`)
 

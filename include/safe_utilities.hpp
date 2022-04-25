@@ -64,4 +64,9 @@ namespace jluna
     void collect_garbage();
 }
 
+namespace jluna::detail
+{
+    static inline size_t _num_threads = 1;
+}
+
 #include <.src/safe_utilities.inl>

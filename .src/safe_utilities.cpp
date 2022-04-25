@@ -39,7 +39,7 @@ namespace jluna
         }
 
         setenv("JULIA_NUM_THREADS", n_threads == 0 ? "auto" : std::to_string(n_threads).c_str(), 1);
-
+        detail::_num_threads = n_threads;
         if (path.empty())
             jl_init();
         else
