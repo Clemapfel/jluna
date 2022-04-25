@@ -3258,19 +3258,21 @@ gc_unpause;
 
 ## Performance Optimization
 
-In this section, we will investigate jlunas performance, analyzing benchmark results and explaining why certain things are faster than others. Hopefully, this will educate users on how they can achieve the best performance themselves.
+In this section, we will investigate jlunas performance, analyzing benchmark results and explaining why certain things are faster than others. Hopefully, this will educate users on how they can achieve the best performance using jluna.
 
 In general, when optimizing a program using jluna, the following is appropriate:
 
 + speed, safety, convenience - you can only pick two
 
-The first part of this manual dealt with functions that offer safety and convenience. Proxies and the more abstracted parts of jluna are easy to use and forward any exception to the user, preventing any of the C-style errors like segfaults and data corruption from occurring. The `unsafe` library drops safety from this pick-two scenario. We can be very fast and the functions are much more convenient than handling raw memory or dealing with C-API, but in return we have no safety net. If we want speed and safety, we need to use the `unsafe` library or C-API and do all the exception catching and GC-safety ourselves, which drops convenience from the equation.
+The first part of this manual dealt with functions that offer **safety and convenience**. Proxies and the more abstracted parts of jluna are easy to use, and forward any exception to the user, preventing any of the C-style errors like segfaults and data corruption from occurring. <br>
+The `unsafe` library drops safety, leaving use with **speed and convenience**. We can be very fast, the `unsafe` functions are much more convenient than handling raw memory or dealing with C-API, but in return, we have no safety net. <br>
+If we want **speed and safety**, we need to use the `unsafe` library or C-API and do all the exception catching and GC-safety ourselves, which drops convenience from the equation.
 
 The obvious question is: how much slower is the "safe way"? This section will answer this question by giving an exact percentage of incurred overhead, compared to doing things the optimal way performance-wise.
 
 ### The Setup
 
-> **Hint**: This section explains the methodology for the purpose of the scientific method. It can be safely skipped for users just interested in the results. 
+> **Hint**: This section explains the benchmarks methodology for the sake of transparency and reproducibility. It can be safely skipped for users just interested in the results. 
 
 All benchmarks were done on a machine with the following CPU (output of unix' `lshw`)
 
@@ -3293,7 +3295,7 @@ All benchmarks were done on a machine with the following CPU (output of unix' `l
 
 Benchmarks were limited to run only in a single thread, unless otherwise specified. The machine was kept clean of other processes during benchmarking. The benchmarks were run long enough (>30s per benchmark) for noise to not affect the results. Care was taken to never fill up the RAM, as to not run into swap-space related artifacts. Potential cache-effects were not accounted for.
 
-A [custom benchmark library](../.benchmark/benchmark.hpp) was used, which timed each benchmark using a `std::chrono::steady_clock`. The full sourcecode of all benchmarks used for this section and general testing can be found [here](../.benchmark/main.cpp).
+A [custom benchmark library](../.benchmark/benchmark.hpp) was used, which timed each benchmark using a `std::chrono::steady_clock`. The full sourcecode of all benchmarks used for this section and general testing can be found [here](../.benchmark/main.cpp). The results of the benchmarks, as a `.csv` can be access [TODO](TODO).
 
 Relative overhead was measured using the following function:
 
@@ -3307,29 +3309,107 @@ double overhead(Duration_t a, Duration_t b)
 
 This function was deemed to represent the intuitive notion of speedup and overhead. 
 
-+ `A` is 10% faster than `B`, when `B` is 110% of the runtime of `A`. 
++ `A` is 10% faster than `B`, if `B`s run is 110% the runtime of `A`. 
   - `A` exhibits a -10% overhead compared to B
-+ `C` is 25% slower than `D` if `C` is 125% of `D`s runtime.
-  - `C` exhibits a +25% overhead compared to D
++ `C` is 25% slower than `D`, if `C`s run is 125% the runtime of `D`.
+  - `C` exhibits a +25% overhead compared to `D`
  
 
 
-For the durations, the median of all results of a particular benchmark run was used, somewhat mitigating potential spikes due to noise or one-time-allocations, which a simple mean would have exhibited.
+The median of all results of a particular benchmark run was used for this comparison, somewhat mitigating potential spikes due to noise or one-time-only allocations, which a simple mean would have exhibited.
 
 ## Results
 
-When measuring performance, absolute number are rarely very informative. Results are only comparable if they are run on the same machine, in the same environment, for the same time. Furthermore, the benchmarks need to be designed in a way that makes them a fair comparison.
+When measuring performance, absolute number are rarely very informative. We either need to normalize them relative to the machine it was run on, or, **compare two results**, both run during the same benchmarking session, on the same machine.
 
-While absolute numbers (in milliseconds) will be given, the most important statistic is that of **relative speedup**. For each benchmark, there will be a `base` run. This run establishes the minimum amount of overhead possible, al further runs (for that specific feature) will be compared to this base. 
+The latter approach was used for these results. We will start each benchmark with a "baseline", this is usually the fastest possible way to a certain task using only the Julia C-API. Then, jluna functionalities that accomplish the same task are run and compared against that baseline.
 
-### Calling Julia Functions
+Each following section will deal with a certain task, showing how to accomplish this task in different ways. Then, we will commenting on which way was the fastest - and why.
 
-### Accessing Julia Value
+### Accessing Julia-side Values
 
-One of the most basic tasks in jluna is getting the value of something Julia-side so the results of this benchmark are very important:
+One of the most basic tasks in jluna is getting the value of something Julia-side. This can be accomplished in many different ways:
 
 ```cpp
+// number of cycles
+size_t n_reps = 1000000;
+
 // allocate function object Julia-side
+Main.safe_eval(R"(
+function f()
+    sum = 0;
+    for i in 1:100
+        sum += rand();
+    end
+end
+)");
+
+// C-API
+Benchmark::run_as_base("C-API: get", n_reps, [](){
+volatile auto* f = jl_get_function(jl_main_module, "f");
+});
+
+// unsafe::get_function
+Benchmark::run("unsafe: get_function", n_reps, [](){
+volatile auto* f = unsafe::get_function(jl_main_module, "f"_sym);
+});
+
+// unsafe::get_value
+Benchmark::run("unsafe: get_value", n_reps, [](){
+volatile auto* f = unsafe::get_value(jl_main_module, "f"_sym);
+});
+
+// named Proxy from unsafe
+Benchmark::run("named proxy: from unsafe", n_reps, [](){
+volatile auto* f = (unsafe::Function*) Proxy(unsafe::get_value(jl_main_module, "f"_sym), "f"_sym);
+});
+
+// Proxy.operator[](std::string)
+Benchmark::run("named proxy: operator[]", n_reps, [](){
+volatile auto* f = (unsafe::Function*) Main["f"];
+});
+
+// Main.get
+Benchmark::run("module: get", n_reps, [](){
+volatile auto* f = Main.get<unsafe::Function*>("f");
+});
+
+// C-API: eval
+Benchmark::run("eval: get", n_reps / 4, [](){
+volatile auto* f = (unsafe::Function*) jl_eval_string("return f");
+});
+```
+
+Here, we created a Julia-side function `f`. We used various functions to access its value. The C-API only has a getter for functions specifically, which is why we choose the object, `get`, to be a function.
+
+### Accessing Julia-side Values: Results
+
+| name | median duration (ms) | overhead|
+|------|----------------------|-------------|
+| `jl_get_function` | `8.1e-05ms` | `0%` |
+| `unsafe::get_function` | `8.4e-05ms` | `4%` |
+| `unsafe::get_value` | `8.4e-05ms` | `4%` |
+| `Module::get<T>` | `0.000282ms` | `248%` |
+| `Proxy ctor` | `0.005378ms` | `6190%` |
+| `Proxy::operator[](std::string)` | `0.005378ms` | `6540%` |
+| `jl_eval_string("return x")` | `0.085889ms` | `105936%` |
+
+We see vast runtime difference between the different ways. Firstly, `unsafe` falls into the designed `< 5%` overhead range, which is good to see. Returning values by evaluating a string is, as stated many times in this manual, prohibitively slow and should never be used unless unavoidable. 
+
+`Module::get<T>` may not look like it would be much better than just using `Module::operator[]`, however, this is not the case. `Module::get<T>` is much faster because it **never has to construct a proxy**. Because we know the final result type, `T`, an `unsafe::Function*` in this benchmark, is not a proxy, `Module::get<T>` can simply unbox the value directly, as if done through the C-API.<br>
+
+We see how much constructing that proxy matters, if we really just want the value (or the pointer to a function, in this case), going through proxies just to discard them immediately introduces a 61x to 65x performance increase, making this option unacceptable in performance critical environments. This doesn't mean we should never use the proxy, however. If we only construct a proxy once and then use it over and over, the 60x increase may pay off. The next section will investigate if this is indeed the case.
+
+In summary, `unsafe` and the C-API are unmatched in performance, however, in applications where safety is preferred, `Module::get<T>` is the best way to access the **value of a variable** (not the variable itself).
+
+### Calling Julia-side Functions
+
+It is important that executing Julia-side code through functions have as little overhead as possible. This section will investigate if this is the case.
+
+```cpp
+size_t n_reps = 10000000;
+
+// function to test
 Main.safe_eval(R"(
     function f()
         sum = 0;
@@ -3339,95 +3419,56 @@ Main.safe_eval(R"(
     end
 )");
 
+auto* f_ptr = unsafe::get_function(jl_main_module, "f"_sym);
+
 // C-API
-Benchmark::run_as_base("C-API: get", n_reps, [](){
-    volatile auto* f = jl_get_function(jl_main_module, "f");
+Benchmark::run_as_base("C-API: jl_call", n_reps, [&](){
+
+    jl_call0(f_ptr);
 });
 
-// unsafe::get_function
-Benchmark::run("unsafe: get_function", n_reps, [](){
-    volatile auto* f = unsafe::get_function(jl_main_module, "f"_sym);
+// unsafe
+Benchmark::run("unsafe: call", n_reps, [&](){
+
+    unsafe::call(f_ptr);
 });
 
-// unsafe::get_value
-Benchmark::run("unsafe: get_value", n_reps, [](){
-   volatile auto* f = unsafe::get_value(jl_main_module, "f"_sym);
+// jluna::safe_call
+Benchmark::run("jluna::safe_call", n_reps, [&](){
+
+    jluna::safe_call(f_ptr);
 });
 
-// Proxy.operator[](std::string)
-Benchmark::run("named proxy: get", n_reps, [](){
-    volatile auto* f = (unsafe::Function*) Main["f"];
+// proxy::safe_call<T>
+auto f_proxy = Proxy(f_ptr);
+Benchmark::run("Proxy::safe_call<T>", n_reps, [&](){
+
+    f_proxy.safe_call<void>();
 });
 
-// C-API: eval
-Benchmark::run("eval: get", n_reps, [](){
-    volatile auto* f = (unsafe::Function*) jl_eval_string("return f");
+// proxy::operator()
+Benchmark::run("Proxy::operator()", n_reps, [&](){
+
+    f_proxy();
 });
+``` 
 
-// jluna::safe_eval
-Benchmark::run("jluna::safe_eval: get", n_reps, [](){
-   volatile auto* f = (unsafe::Function*) jluna::safe_eval("return f");
-});
+Here we access a pointer to our simple Julia-side function, outside of the benchmarks. We call that function with no arguments inside each benchmark. For the benchmarks using proxies, we construct that proxy outside of the measured runtime, to avoid proxy construction polluting the results.
 
-// Module::safe_eval
-Benchmark::run("Module::safe_eval: get", n_reps, [](){
-   volatile auto* f = (unsafe::Function*) Main.safe_eval("return f");
-});
-```
-
-Here, we created a Julia-side function `f`. We used various functions to access its value. The C-API only has a getter for functions specifically, which is why we choose the object to `get` to be a function.
-
-#### Results
-
-(number of cycles: 5000000)
+### Calling Julia-side Functions: Results
 
 | name | median duration (ms) | overhead|
 |------|----------------------|-------------|
-| `base` | `0` | '0` | `0%` |
-| `unsafe::get_function` | `0` | '0` | `0%` |
-| `unsafe::get_value`| `0` | '0` | `0%` |
-| `Main["f"]` | `0` | '0` | `0%` |
-| `jl_eval_string`| `0` | '0` | `0%` |
+| `jl_call` | `0.000243ms` | `0%` |
+| `unsafe::call` | `0.000256ms` | `5.34%` |
+| `jluna::safe_call` | `0.000513ms` | `111%` | 
+| `Proxy::safe_call<T>` | `0.000689ms` | `184%` |
+| `Proxy::operator()` | `0.006068ms` | `2397.12%` |
 
+`unsafe` barely hits misses its target of < 5% overhead. Next we have `jluna::safe_call`. This functions does full exception forwarding in the fastest way possible, so the `111%` overhead is basically the cost of safety. Compared to this, `Proxy::safe_call<T>` is relatively close. Unlike `Proxy::operator()`, `Proxy::safe_call<T>` does not construct a new proxy for the result value, it directly unboxes the result. This also explains the huge jump in overhead, just like with `Module::get<T>` vs `Module::operator[]`, constructing the proxy is what caused the overhead to become unacceptable.
 
+`jluna::safe_call` offers the best compromise between safety and speed, it still provides exception forwarding without constructing a proxy or having to deal with proxy-related overheads.
 
-### `as_julia_function` call
-
-Calling C++ functions from Julia require an staggering amount of behind-the-scene things to properly work. This doesn't matter to the user however, all that matters is whether it is safe to use, which unit tests confirm, and how fast it is, which this benchmark will confirm.
-
-```cpp
-// C++-side task
-static auto task_f = [](){
-    for (volatile size_t i = 0; i < 10000; i = i+1);
-};
-
-// base: just run through C++
-Benchmark::run_as_base("base", n_reps, []() {
-    task_f();
-});
-
-// assign to julia variable outside of benchmark
-Main.create_or_assign("task_f", as_julia_function<void()>(task_f));
-static auto* run_julia_side = unsafe::get_function(jl_main_module, "task_f"_sym);
-
-// jluna: run through Julia
-Benchmark::run("jluna", n_reps, []() {
-   volatile auto* _ = unsafe::call(run_julia_side);
-});
-```
-
-This benchmark is fairly straight-forward, first we run `task_f` in only C++, this gives us the amount of time `task_f` actually takes to finish. After moving it Julia-side, we call that Julia function, which takes the same time to finish - plus the actual overhead we're measuring
-
-#### Result: 2% slowdown
-
-(number of cycles: 10000000)
-
-| name | median duration (ms) | overhead|
-|------|----------------------|-------------|
-| `base` | `0.015282ms`    | `0%`       |
-| `jluna` | `0.015587ms`   | `1.99581%`  |
-
-We see that calling through Julia exhibits a 2% slowdown. This result is unrelated to the actual function being executing, the 2% are a fixed overhead applied to any call. 2% is far below the target 5%, making it comfortably "fast enough".
 
 ### Constructing `jluna::Task`
 

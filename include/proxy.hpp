@@ -119,11 +119,26 @@ namespace jluna
 
             /// @brief call with any arguments
             /// @tparams Args_t: types of arguments, need to be boxable
+            /// @returns proxy
             template<is_boxable... Args_t>
             Proxy safe_call(Args_t&&...);
 
-            /// call with arguments and exception forwarding, if proxy is a callable function
+            /// @brief call and return value, does not construct proxy
+            /// @tparams T: return value
+            /// @tparams Args_t: types of arguments
+            /// @returns value
+            template<typename T, is_boxable... Args_t, std::enable_if_t<not std::is_void_v<T> and not is<Proxy, T>, bool> = true>
+            T safe_call(Args_t&&... args);
+
+            /// @brief call and return value, does not construct proxy
+            /// @tparams Args_t: types of arguments
+            /// @returns nothing
+            template<typename T, is_boxable... Args_t, std::enable_if_t<std::is_void_v<T> and not is<Proxy, T>, bool> = true>
+            T safe_call(Args_t&&... args);
+
+            /// @brief call with arguments and exception forwarding, if proxy is a callable function
             /// @tparams Args_t: types of arguments, need to be boxable
+            /// @returns proxy
             template<is_boxable... Args_t>
             Proxy operator()(Args_t&&...);
 

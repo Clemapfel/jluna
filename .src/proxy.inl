@@ -87,13 +87,26 @@ namespace jluna
     template<is_boxable... Args_t>
     Proxy Proxy::safe_call(Args_t&&... args)
     {
-        static jl_module_t* jluna_module = (jl_module_t*) jl_eval_string("return jluna");
-        static jl_function_t* invoke = jl_get_function(jluna_module, "invoke");
+        static jl_function_t* invoke = unsafe::get_function("jluna"_sym, "invoke"_sym);
 
         gc_pause;
         auto out = Proxy(jluna::safe_call(invoke, _content->value(), box(args)...), nullptr);
         gc_unpause;
         return out;
+    }
+
+    template<typename T, is_boxable... Args_t, std::enable_if_t<not std::is_void_v<T> and not is<Proxy, T>, bool>>
+    T Proxy::safe_call(Args_t&&... args)
+    {
+        static jl_function_t* invoke = unsafe::get_function("jluna"_sym, "invoke"_sym);
+        return unbox<T>(jluna::safe_call(invoke, _content->value(), box(args)...));
+    }
+
+    template<typename T, is_boxable... Args_t, std::enable_if_t<std::is_void_v<T> and not is<Proxy, T>, bool>>
+    T Proxy::safe_call(Args_t&&... args)
+    {
+        static jl_function_t* invoke = unsafe::get_function("jluna"_sym, "invoke"_sym);
+        jluna::safe_call(invoke, _content->value(), box(args)...);
     }
 
     template<is_boxable... Args_t>
