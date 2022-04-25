@@ -3569,9 +3569,16 @@ Here, we are measuring the time it takes for `task_f` to finish when called from
 
 Results suggest that there is very little overhead calling the C++ function, we are very comfortable below the 5% threshold, making calling C++ functions from Julia pretty much exactly as fast as calling them from C++.
 
+### Using jluna::Array
+
+`jluna::Array` was mentioned as having very little overhead, making it much more performant than proxies for modifying Julia-side arrays. This section will see if this is true. The following code segment may be somewhat hard to follow for people unfamiliar with the C-API, however, be assured that each `run_as_base` function aims to implement whatever the corresponding `jluna::Array` function does as fast as possible using only the C-API
+
+
+
+
 ### Constructing `jluna::Task`
 
-With all the wrapping going on to make `jluna::Task` be able to execute C-API functions, you may expect there to be a significant overhead to creating a task. This is not true, however:
+With all the wrapping going on to make `jluna::Task` be able to execute C-API functions, you may expect there to be a significant overhead to creating a task. Let's find out if this is indeed true, we've already seen that calling the C++ function itself introduces a ~2% overhead, any additional overhead would be due to task construction (including its futures) itself.
 
 ```cpp
 // actual function

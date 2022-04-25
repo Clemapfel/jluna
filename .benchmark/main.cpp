@@ -16,27 +16,49 @@ int main()
     initialize(1);
     Benchmark::initialize();
 
-    // ### Calling C++-side Functions
+    // ### JLUNA ARRAY ###
+    size_t n_reps = 10000000;
 
-    size_t n_reps = 1000000;
+    auto* allocate_array_f = (unsafe::Function*) Main.safe_eval(R"(
+        function allocate_array()
+            return [i for i in 1:5000]
+        end
 
+        return allocate_array;
+    )");
 
-    // actual function
-    static auto task_f = [](){
-        for (volatile size_t i = 0; i < 10000; i = i+1);
-    };
-
-    // base
-    Benchmark::run_as_base("Call C++-Function in C++", n_reps, [](){
-        task_f();
+    Benchmark::run_as_base("Allocate Array: Julia", n_reps, [&](){
+        jl_call0(allocate_array_f);
     });
 
-    // move to julia, then call
-    Main.create_or_assign("task_f", as_julia_function<void()>(task_f));
-    auto* jl_task_f = unsafe::get_function(jl_main_module, "task_f"_sym);
+    Benchmark::run("Allocate Array: C-API", n_reps, [&](){
 
-    Benchmark::run("Call C++-Function in Julia", n_reps, [&](){
-        jl_call0(jl_task_f);
+        auto* arr = (jl_array_t*) jl_alloc_array_1d((jl_value_t*) jl_int64_type, 5000);
+        detail::gc_push(arr);
+
+        for (size_t i = 1; i <= 5000; ++i)
+            jl_arrayset(arr, jl_box_int64(i), i-1);
+
+        detail::gc_pop(1);
+    });
+
+    Benchmark::run("Allocate Array: unsafe", n_reps, [&](){
+
+        auto* arr = unsafe::new_array(Int64_t, 5000);
+        detail::gc_push(arr);
+
+        for (size_t i = 1; i <= 5000; ++i)
+            unsafe::set_index(arr, unsafe::unsafe_box<Int64>(i), i);
+
+        detail::gc_pop(1);
+    });
+
+    Benchmark::run("Allocate Array: jluna::Array", n_reps, [&](){
+
+        auto arr = jluna::Vector<Int64>();
+
+        for (size_t i = 1; i <= 5000; ++i)
+            arr.push_back(i);
     });
 
     Benchmark::conclude();
@@ -181,6 +203,32 @@ int main()
     Benchmark::run("Proxy::operator()", n_reps, [&](){
 
         f_proxy();
+    });
+
+    //Benchmark::conclude();
+    //Benchmark::save();
+    //return 0;
+
+    // ### Calling C++-side Functions
+
+    n_reps = 1000000;
+
+    // actual function
+    static auto task_f = [](){
+        for (volatile size_t i = 0; i < 10000; i = i+1);
+    };
+
+    // base
+    Benchmark::run_as_base("Call C++-Function in C++", n_reps, [](){
+        task_f();
+    });
+
+    // move to julia, then call
+    Main.create_or_assign("task_f", as_julia_function<void()>(task_f));
+    auto* jl_task_f = unsafe::get_function(jl_main_module, "task_f"_sym);
+
+    Benchmark::run("Call C++-Function in Julia", n_reps, [&](){
+        jl_call0(jl_task_f);
     });
 
     Benchmark::conclude();

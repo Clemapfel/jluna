@@ -38,6 +38,10 @@ namespace jluna
             /// @param proxy
             Array(unsafe::Value* value, jl_sym_t* = nullptr);
 
+            /// @brief ctor as undef of given size
+            /// @param size
+            Array(size_t);
+
             /// @brief ctor as thin wrapper data, does not invoke copy
             /// @warning user is responsible for data being properly formatted and for it staying in scope
             /// @param data
