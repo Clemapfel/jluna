@@ -165,7 +165,7 @@ namespace jluna::detail
         size_t res = -1;
 
         gc_pause;
-        res = jl_unbox_uint64(jluna::safe_call(create_reference, in));
+        res = jl_unbox_uint64(jluna::safe_call(create_reference, jl_box_voidpointer((void*) in)));
         gc_unpause;
         return res;
     }

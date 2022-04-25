@@ -532,11 +532,11 @@ module jluna
         end
 
         """
-        `create_reference(::UInt64, ::Any) -> UInt64`
+        `create_reference(::Ptr{Cvoid}, ::Any) -> UInt64`
 
         add reference to _refs
         """
-        function create_reference(to_wrap::Any) ::UInt64
+        function create_reference(to_wrap::Ptr{Cvoid}) ::UInt64
 
             lock(_refs_lock)
             lock(_refs_counter_lock)
@@ -547,7 +547,7 @@ module jluna
             if (haskey(_refs[], key))
                 _ref_counter[][key] += 1
             else
-                _refs[][key] = Base.RefValue{Any}(to_wrap)
+                _refs[][key] = Base.RefValue{Any}(unsafe_pointer_to_objref(to_wrap))
                 _ref_counter[][key] = 1
             end
 

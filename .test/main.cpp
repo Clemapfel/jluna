@@ -24,20 +24,6 @@ int main()
 {
     jluna::initialize(8);
 
-    Main.safe_eval(R"(
-        mutable struct Test
-            _var
-        end
-
-        test = Test(1234);
-    )");
-
-    auto* test_t = unsafe::get_value(Main, "test"_sym);
-
-    return 0;
-
-    auto all = []() {
-
     Test::test("jluna::Mutex", [](){
 
         auto mutex = jluna::Mutex();
@@ -62,10 +48,6 @@ int main()
 
         Test::assert_that(task.result().get().value() == 4);
     });
-
-    Test::conclude();
-    return 0;
-
 
     Test::test("unsafe: gc", []() {
 
@@ -94,7 +76,7 @@ int main()
 
         using namespace unsafe;
 
-        jl_eval_string(R"(
+        Main.safe_eval(R"(
             module __M1
                 function f()
                     return 1234;
@@ -130,7 +112,7 @@ int main()
     Test::test("unsafe: get/set value", []() {
 
         using namespace unsafe;
-        auto* res = jl_eval_string(R"(
+        auto* res = (unsafe::Value*) Main.safe_eval(R"(
             module __M2
                 value = 1234
             end
@@ -139,7 +121,7 @@ int main()
 
         auto* m = (unsafe::Module*) unsafe::get_value(jl_main_module, "__M2"_sym);
         auto* get = unsafe::get_value(m, "value"_sym);
-        Test::assert_that(get == res);
+        Test::assert_that(unbox<Int64>(get) == unbox<Int64>(res));
 
         unsafe::set_value(m, "value"_sym, jl_box_int64(4567));
         Test::assert_that(jl_unbox_bool(jl_eval_string("return __M2.value == 4567")));
@@ -148,7 +130,7 @@ int main()
     Test::test("unsafe: get_field", []() {
 
         using namespace unsafe;
-        auto* instance = jl_eval_string(R"(
+        auto* instance = (unsafe::Value*) Main.safe_eval(R"(
             struct get_field_inner
                 _member::Int64
                 get_field_inner() = new(1234)
@@ -174,7 +156,7 @@ int main()
     Test::test("unsafe: set_field", []() {
 
         using namespace unsafe;
-        auto* instance = jl_eval_string(R"(
+        auto* instance = (unsafe::Value*) Main.safe_eval(R"(
             mutable struct set_field_inner
                 _member::Int64
                 set_field_inner() = new(1234)
@@ -387,7 +369,7 @@ int main()
     test_box_unbox("Pair", std::pair<size_t, std::string>(12, "abc"));
     test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(12, "abc", 0.01));
     test_box_unbox("Proxy", Proxy((unsafe::Value*) jl_main_module, nullptr));
-    test_box_unbox("Symbol", Symbol("abc"));
+    test_box_unbox("Symbol", jluna::Symbol("abc"));
 
     auto test_box_unbox_iterable = []<typename T>(const std::string& name, T&& value) {
 
@@ -501,7 +483,7 @@ int main()
 
     Test::test("create_reference", []() {
 
-        jl_eval_string(R"(
+        Main.safe_eval(R"(
             struct StructType
                 any
             end
@@ -535,7 +517,7 @@ int main()
 
     Test::test("proxy inheritance dtor", []() {
 
-        jl_eval_string(R"(
+        Main.safe_eval(R"(
             struct Inner
                 _field
             end
@@ -560,7 +542,7 @@ int main()
 
     Test::test("proxy reject as non-vector", []() {
 
-        jl_eval_string(R"(
+        Main.safe_eval(R"(
             struct NonVec
                 _field
             end
@@ -590,7 +572,7 @@ int main()
 
     Test::test("proxy reject as non-function", []() {
 
-        jl_eval_string(R"(
+        Main.safe_eval(R"(
             struct NonVec
                 _field
                 NonVec() = new(1)
@@ -675,7 +657,7 @@ int main()
 
     Test::test("proxy mutation", []() {
 
-        jl_eval_string("variable = [1, 2, 3, 4]");
+        Main.safe_eval("variable = [1, 2, 3, 4]");
 
         auto mutating_proxy = Main["variable"];
 
@@ -816,7 +798,7 @@ int main()
         //Symbol s = Main["symbol"].as<Symbol>();
         //Test::assert_that(s.operator std::string() == "");
 
-        Array<Int64, 1> a = Main["array"].as<Array<Int64, 1>>();
+        jluna::Array<Int64, 1> a = Main["array"].as<jluna::Array<Int64, 1>>();
         Test::assert_that((int) a.at(0) == 1);
     });
 
@@ -838,7 +820,7 @@ int main()
 
     Test::test("array: range index", []() {
 
-        auto vec = Array<Int64, 1>(Main.safe_eval("return collect(Int64(1):100)"), nullptr);
+        auto vec = jluna::Array<Int64, 1>(Main.safe_eval("return collect(Int64(1):100)"), nullptr);
 
         const auto subvec = vec[{12, 19, 99, 2}];
 
@@ -849,7 +831,7 @@ int main()
         //Test::assert_that(false);
         try
         {
-            Array<size_t, 1> arr = jluna::safe_eval(R"(return ["abc", "def"])");
+            jluna::Array<size_t, 1> arr = jluna::safe_eval(R"(return ["abc", "def"])");
             arr.at(0) = "string";
         }
         catch (...)
@@ -996,7 +978,7 @@ int main()
 
     Test::test("array: comprehension", []() {
 
-        auto arr = Array<Int64, 1>(jl_eval_string("return collect(0:10)"));
+        auto arr = jluna::Array<Int64, 1>(jl_eval_string("return collect(0:10)"));
         auto vec = arr["(i for i in 0:9 if i % 2 == 0)"_gen];
 
         for (auto it : vec)
@@ -1097,7 +1079,7 @@ int main()
 
     Test::test("Symbol: CTOR", []() {
 
-        auto proxy = Symbol("abc");
+        auto proxy = jluna::Symbol("abc");
 
         Test::assert_that(proxy.get_type() == Symbol_t);
         Test::assert_that(proxy.operator std::string() == "abc");
@@ -1105,7 +1087,7 @@ int main()
 
     Test::test("Symbol: Hash", []() {
 
-        auto proxy = Symbol("abc");
+        auto proxy = jluna::Symbol("abc");
         proxy.hash() == (size_t) Base["hash"]((unsafe::Value*) proxy);
     });
 
@@ -1120,7 +1102,7 @@ int main()
     auto test_type = []<typename T>(Type& a, T b) {
 
         std::string name = "Type Constant: ";
-        name += detail::to_string((unsafe::Value*) a);
+        name += jluna::detail::to_string((unsafe::Value*) a);
 
         Test::test(name, [&]() {
             return a.operator jl_datatype_t*() == reinterpret_cast<jl_datatype_t*>(b);
@@ -1206,9 +1188,9 @@ int main()
 
         auto params = type.get_parameters();
 
-        Test::assert_that(params.at(0).first == Symbol("T"));
+        Test::assert_that(params.at(0).first == jluna::Symbol("T"));
         Test::assert_that(params.at(0).second == Integer_t);
-        Test::assert_that(params.at(1).first == Symbol("U"));
+        Test::assert_that(params.at(1).first == jluna::Symbol("U"));
         Test::assert_that(params.at(1).second == Any_t);
     });
 
@@ -1226,9 +1208,9 @@ int main()
 
         auto fields = type.get_fields();
 
-        Test::assert_that(fields.at(0).first == Symbol("_a"));
+        Test::assert_that(fields.at(0).first == jluna::Symbol("_a"));
         Test::assert_that(fields.at(0).second == Integer_t);
-        Test::assert_that(fields.at(1).first == Symbol("_b"));
+        Test::assert_that(fields.at(1).first == jluna::Symbol("_b"));
         Test::assert_that(fields.at(1).second == Any_t);
     });
 
@@ -1346,7 +1328,7 @@ int main()
         auto* res01 = Usertype<NonJuliaType>::box(instance);
         auto* res02 = box<NonJuliaType>(instance);
 
-        Test::assert_that(detail::is_equal(jl_get_nth_field(res01, 0), jl_get_nth_field(res02, 0)));
+        Test::assert_that(jluna::detail::is_equal(jl_get_nth_field(res01, 0), jl_get_nth_field(res02, 0)));
 
         auto backres01 = Usertype<NonJuliaType>::unbox(res01);
         auto backres02 = unbox<NonJuliaType>(res02);
@@ -1354,22 +1336,8 @@ int main()
         Test::assert_that(backres01._field.size() == backres02._field.size());
         gc_unpause;
     });
-    };
-
-    /*
-    std::vector<std::reference_wrapper<jluna::Task<void>>> tasks;
-
-    for (size_t i = 0; i < 8; ++i)
-        tasks.emplace_back(ThreadPool::create<void>(all));
-
-    for (auto& t : tasks)
-        t.get().schedule();
-
-    for (auto& t : tasks)
-        t.get().join();
 
     Test::conclude();
-     */
 }
 
 
