@@ -409,33 +409,25 @@ module jluna
 
         # ---
 
-        abstract type AbstractGCSentinel end
+        const _gc_stack = NTuple{Threads.nthreads(), List{Base.RefValue{Any}}}([List{Base.RefValue{Any}}() for i in 1:Threads.nthreads()])
 
-        struct GCSentinel{N}
+        function gc_push(ptr::Ptr{Cvoid}) ::Nothing
+            append!(_gc_stack[Threads.threadid()], Ref{Any}(unsafe_pointer_to_objref(ptr)))
+            return nothing
+        end
 
-            _values::NTuple{N, Base.RefValue{Any}}
-            _index::Int64
+        function gc_pop() ::Nothing
+            pop!(_gc_stack[Threads.threadid()])
+        end
 
-            function GCSentinel{N}() where N
-                new{N}(NTuple{N, Base.RefValue{Any}}([Ref{Any}(undef) for i in 1:N]), 1)
+        function shutdown() ::Nothing
+
+            for i in 1:Threads.nthreads()
+                while !isempty(_gc_stack[i])
+                    pop!(_gc_stack[i])
+                end
             end
-        end
-
-        const _sentinels = List{AbstractGCSentinel}() #TODO for all threads
-
-        function new_gc_sentinel(n::Integer)
-            append!(_sentinels, GCSentinel{n}())
-        end
-
-        function protect(ptr::Ptr{Cvoid})
-
-            sentinel_ref = _sentinels._front;
-            sentinel_ref[]._values[sentinel_ref[]._index] = Ref{Any}(unsafe_pointer_to_objref(ptr))
-            sentinel_ref[]._index += 1
-        end
-
-        function destroy()
-            pop!(_sentinels)
+            return nothing
         end
     end
 

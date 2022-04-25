@@ -11,7 +11,7 @@
 
 using namespace jluna;
 
-constexpr size_t n_reps = 100000;
+constexpr size_t n_reps = 10000000;
 std::vector<Proxy> _proxies;
 
 void benchmark_threading()
@@ -57,9 +57,10 @@ void benchmark_cppcall()
     });
 }
 
+
 int main()
 {
-    initialize(1);
+    initialize(4);
     Benchmark::initialize();
 
     Main.safe_eval(R"(
@@ -86,7 +87,7 @@ int main()
             jl_gc_collect(JL_GC_AUTO);
     });
 
-    Benchmark::run("gc collect", n_reps, [](){
+    Benchmark::run("gc collect", n_reps / 100, [](){
 
         auto before = jl_gc_is_enabled();
         jl_gc_enable(false);
@@ -100,7 +101,7 @@ int main()
             jl_gc_collect(JL_GC_AUTO);
     });
     
-    Benchmark::run("gc unsafe preserve", n_reps, [](){
+    Benchmark::run("gc unsafe preserve", n_reps / 10, [](){
 
         for (size_t i = 0; i < 3; ++i)
         {
@@ -117,11 +118,11 @@ int main()
 
     Benchmark::run("gc sentinel", n_reps, [](){
 
-        auto gc = GCSentinel(3);
         for (size_t i = 0; i < 3; ++i)
         {
             auto* _ = box(generate_number<Int64>());
-            gc.add(_);
+            gc_push(_);
+            gc_pop();
         }
 
         count++;

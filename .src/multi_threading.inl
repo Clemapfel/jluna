@@ -273,6 +273,12 @@ namespace jluna
         return Task<Return_t>(std::ref(*out));
     }
 
+    inline size_t ThreadPool::nthreads()
+    {
+        static auto* n_threads = unsafe::get_function("Threads"_sym, "nthreads"_sym);
+        return unbox<Int64>(jl_call0(n_threads));
+    }
+
     // ###
 
     inline void yield()

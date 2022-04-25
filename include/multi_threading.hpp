@@ -149,13 +149,20 @@ namespace jluna
         template<is_not<void> Return_t, typename... Args_t>
         static Task<Return_t> create(const std::function<Return_t(Args_t...)>& f, Args_t... args);
 
-
+        /// @brief create a task from a lambda
+        /// @param f: lambda
+        /// @param args: arguments
+        /// @returns Task, not yet scheduled
         template<typename Signature,
             typename Lambda_t,
             typename... Args_t,
             typename T = std::invoke_result_t<std::function<Signature>, Args_t...>
         >
         static Task<T> create(Lambda_t f, Args_t... args);
+
+        /// @brief get number of threads
+        /// @returns number
+        static size_t nthreads();
 
         private:
             static inline size_t _current_id = 0;

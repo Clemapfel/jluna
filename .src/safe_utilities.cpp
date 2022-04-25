@@ -153,6 +153,7 @@ namespace jluna::detail
     {
         jl_eval_string(R"([JULIA][LOG] Shutting down...)");
         jl_eval_string("jluna.memory_handler.force_free()");
+        jl_eval_string("jluna.gc_sentinel.shutdown()");
         jl_atexit_hook(0);
     }
 
