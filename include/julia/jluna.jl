@@ -361,51 +361,82 @@ module jluna
         return Base.ReentrantLock();
     end
 
-    """
-    simple linked list implementation (avoids dependency DataStructures.jl)
-    """
-    struct ListNode{T}
-        _previous::Union{Base.RefValue{ListNode{T}}, Nothing}
-        _value::Union{T, Nothing}
-        _is_root::Bool
+    module gc_sentinel
 
-        function ListNode{T}() where T
-            new(nothing, nothing, true)
+        struct ListNode{T}
+            _previous::Union{Base.RefValue{ListNode{T}}, Nothing}
+            _value::Union{T, Nothing}
+            _is_root::Bool
+
+            function ListNode{T}() where T
+                new(nothing, nothing, true)
+            end
+
+            function ListNode{T}(previous::Base.RefValue{ListNode{T}}, value) where T
+                return new(Ref{ListNode{T}}(previous.x), value, false)
+            end
         end
 
-        function ListNode{T}(previous::Base.RefValue{ListNode{T}}, value) where T
-            return new(Ref{ListNode{T}}(previous.x), value, false)
-        end
-    end
+        mutable struct List{T}
 
-    mutable struct List{T}
+            _front::Base.RefValue{ListNode{T}}
 
-        _front::Base.RefValue{ListNode{T}}
-
-        function List{T}() where T
-            return new(Ref{ListNode{T}}(ListNode{T}()))
-        end
-    end
-
-    function append!(list::List{T}, value::T) where T
-       list._front = Ref{ListNode{T}}(ListNode{T}(list._front, value))
-    end
-
-    function front(list::List{T}) ::T where T
-        return list._front[]._value
-    end
-
-    function pop!(list::List{T}) ::Nothing where T
-
-        if !list._front[]._is_root
-            list._front = list._front[]._previous
+            function List{T}() where T
+                return new(Ref{ListNode{T}}(ListNode{T}()))
+            end
         end
 
-        return nothing
-    end
+        function append!(list::List{T}, value::T) where T
+           list._front = Ref{ListNode{T}}(ListNode{T}(list._front, value))
+        end
 
-    function isempty(list::List{T}) ::Bool where T
-        return list._front[]._is_root
+        function front(list::List{T}) ::T where T
+            return list._front[]._value
+        end
+
+        function pop!(list::List{T}) ::Nothing where T
+
+            if !list._front[]._is_root
+                list._front = list._front[]._previous
+            end
+
+            return nothing
+        end
+
+        function isempty(list::List{T}) ::Bool where T
+            return list._front[]._is_root
+        end
+
+        # ---
+
+        abstract type AbstractGCSentinel end
+
+        struct GCSentinel{N}
+
+            _values::NTuple{N, Base.RefValue{Any}}
+            _index::Int64
+
+            function GCSentinel{N}() where N
+                new{N}(NTuple{N, Base.RefValue{Any}}([Ref{Any}(undef) for i in 1:N]), 1)
+            end
+        end
+
+        const _sentinels = List{AbstractGCSentinel}() #TODO for all threads
+
+        function new_gc_sentinel(n::Integer)
+            append!(_sentinels, GCSentinel{n}())
+        end
+
+        function protect(ptr::Ptr{Cvoid})
+
+            sentinel_ref = _sentinels._front;
+            sentinel_ref[]._values[sentinel_ref[]._index] = Ref{Any}(unsafe_pointer_to_objref(ptr))
+            sentinel_ref[]._index += 1
+        end
+
+        function destroy()
+            pop!(_sentinels)
+        end
     end
 
     """
@@ -865,16 +896,6 @@ module jluna
         end
         return out
     end
-end
-
-list = jluna.List{Int64}()
-jluna.append!(list, 1234)
-jluna.append!(list, 4567)
-jluna.append!(list, 8910)
-
-while !jluna.isempty(list)
-println(jluna.front(list))
-jluna.pop!(list)
 end
 
 return true # used for testing
