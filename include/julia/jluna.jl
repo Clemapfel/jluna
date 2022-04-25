@@ -362,6 +362,53 @@ module jluna
     end
 
     """
+    simple linked list implementation (avoids dependency DataStructures.jl)
+    """
+    struct ListNode{T}
+        _previous::Union{Base.RefValue{ListNode{T}}, Nothing}
+        _value::Union{T, Nothing}
+        _is_root::Bool
+
+        function ListNode{T}() where T
+            new(nothing, nothing, true)
+        end
+
+        function ListNode{T}(previous::Base.RefValue{ListNode{T}}, value) where T
+            return new(Ref{ListNode{T}}(previous.x), value, false)
+        end
+    end
+
+    mutable struct List{T}
+
+        _front::Base.RefValue{ListNode{T}}
+
+        function List{T}() where T
+            return new(Ref{ListNode{T}}(ListNode{T}()))
+        end
+    end
+
+    function append!(list::List{T}, value::T) where T
+       list._front = Ref{ListNode{T}}(ListNode{T}(list._front, value))
+    end
+
+    function front(list::List{T}) ::T where T
+        return list._front[]._value
+    end
+
+    function pop!(list::List{T}) ::Nothing where T
+
+        if !list._front[]._is_root
+            list._front = list._front[]._previous
+        end
+
+        return nothing
+    end
+
+    function isempty(list::List{T}) ::Bool where T
+        return list._front[]._is_root
+    end
+
+    """
     offers julia-side memory management for C++ jluna
     """
     module memory_handler
@@ -573,25 +620,29 @@ module jluna
 
         ### GC Sentinel: protects values from being collected
 
+    """
         # declare abstract type
         abstract type AbstractGCSentinel end
 
         # global storage, one sentinel per thread
-        const _sentinels = NTuple{Threads.nthreads(), Base.Ref{Union{AbstractGCSentinel, Nothing}}}([nothing for _ in 1:(Threads.nthreads())])
+        const _sentinels = NTuple{Threads.nthreads(), Vector{Base.Ref{Union{AbstractGCSentinel, Nothing}}}}([[] for _ in 1:(Threads.nthreads())])
 
         # sentinel, holds N values
         mutable struct GCSentinel{N} <: AbstractGCSentinel
             _values::NTuple{N, Base.RefValue{Any}}
             _n_preserved::Int64
-
-            function GCSentinel{N}() where N
-                return new{N}(NTuple{N, Base.Ref{Any}}([undef for _ in 1:N]), 1)
-            end
+            _index::Int64
         end
 
         # update sentinel
         function new_sentinel(n::Integer) ::Nothing
-            _sentinels[Threads.threadid()].x = GCSentinel{n}()
+
+            index = length(_sentinels[Threads.threadid()]);
+            push!(_sentinels[Threads.threadid()], GCSentinel{n}(NTuple{N, Base.Ref{Any}}([undef for _ in 1:n]), 1, length))
+
+            finalizer(last(_sentinels[Threads.threadid()]), function (x::GCSentinel{n})
+                deleteat!(_sentinels[Threads.threadid()], x._index)
+            end)
             return nothing
         end
 
@@ -608,6 +659,8 @@ module jluna
         function release()
             _sentinels[Threads.threadid()][] = nothing
         end
+
+        """
     end
 
     module cppcall
@@ -812,6 +865,16 @@ module jluna
         end
         return out
     end
+end
+
+list = jluna.List{Int64}()
+jluna.append!(list, 1234)
+jluna.append!(list, 4567)
+jluna.append!(list, 8910)
+
+while !jluna.isempty(list)
+println(jluna.front(list))
+jluna.pop!(list)
 end
 
 return true # used for testing
