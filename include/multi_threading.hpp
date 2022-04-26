@@ -45,6 +45,7 @@ namespace jluna
 {
     namespace detail
     {
+        // forward declarations
         class FutureHandler;
         struct TaskSuper {};
         template<typename>struct TaskValue;
@@ -128,7 +129,6 @@ namespace jluna
     /// @brief threadpool that allows scheduled C++-side tasks to safely access the Julia State from within a thread.
     /// Pool cannot be resized, it will use the native Julia threads to execute any C++-side tasks
     /// @note during task creation, the copy ctor will be invoked for all arguments `args` and the functions return value. To avoid this, wrap the type in an std::ref
-
     struct ThreadPool
     {
         template<typename>

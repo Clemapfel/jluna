@@ -9,7 +9,7 @@
 
 namespace jluna
 {
-    /// @brief thread-safe proxy for Base.ReentrantLock
+    /// @brief thread-safe wrapper for Base.ReentrantLock
     class Mutex
     {
         template<is<Mutex> T>
@@ -36,6 +36,7 @@ namespace jluna
             bool is_locked() const;
 
             /// @brief get julia-side Base.ReentrantLock
+            /// @returns value
             operator unsafe::Value*();
 
         private:

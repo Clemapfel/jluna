@@ -238,7 +238,7 @@ namespace jluna
             };
     };
 
-    /// typedefs of vectors that can attach to anything
+    /// typedefs for Array{Any}
     using ArrayAny1d = Array<unsafe::Value*, 1>;
     using ArrayAny2d = Array<unsafe::Value*, 2>;
     using ArrayAny3d = Array<unsafe::Value*, 3>;

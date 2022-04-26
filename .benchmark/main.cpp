@@ -16,68 +16,10 @@ int main()
     initialize(1);
     Benchmark::initialize();
 
-    // ### JLUNA ARRAY ###
-    size_t n_reps = 1000000;
-
-    // pre-run to avoid artifacting
-    Benchmark::run_as_base("Allocate Array: C-API", 1000, [&](){
-
-        auto* arr = (jl_array_t*) jl_alloc_array_1d(jl_apply_array_type((jl_value_t*) jl_int64_type, 1), 0);
-        jl_array_sizehint(arr, 100);
-
-        for (size_t i = 1; i <= 100; ++i)
-        {
-            jl_array_grow_end(arr, 1);
-            jl_arrayset(arr, jl_box_int64(generate_number<Int64>()), i);
-        }
-
-        jl_gc_collect(JL_GC_AUTO);
-    });
-
-    Benchmark::run_as_base("Allocate Array: C-API", n_reps, [&](){
-
-        auto* arr = (jl_array_t*) jl_alloc_array_1d(jl_apply_array_type((jl_value_t*) jl_int64_type, 1), 0);
-        jl_array_sizehint(arr, 100);
-
-        for (size_t i = 1; i <= 100; ++i)
-        {
-            jl_array_grow_end(arr, 1);
-            jl_arrayset(arr, jl_box_int64(generate_number<Int64>()), i);
-        }
-
-        jl_gc_collect(JL_GC_AUTO);
-    });
-
-    Benchmark::run("Allocate Array: unsafe", n_reps, [](){
-
-        auto* arr = unsafe::new_array(Int64_t, 0);
-        unsafe::sizehint(arr, 100);
-
-        for (size_t i = 1; i <= 100; ++i)
-            unsafe::push_back(arr, unsafe::unsafe_box<Int64>(generate_number<Int64>()));
-
-        jl_gc_collect(JL_GC_AUTO);
-    });
-
-    Benchmark::run("Allocate Array: jluna::Array", n_reps, [&](){
-
-        auto arr = jluna::Vector<Int64>();
-        arr.reserve(100);
-
-        for (size_t i = 1; i <= 100; ++i)
-            arr.push_back(generate_number<Int64>());
-
-        jl_gc_collect(JL_GC_AUTO);
-    });
-
-    Benchmark::conclude();
-    Benchmark::save();
-    return 0;
-
     // ### ACCESSING JULIA-SIDE VALUES ###
 
     // number of cycles
-    n_reps = 1000000;
+    size_t n_reps = 1000000;
 
     // allocate function object Julia-side
     Main.safe_eval(R"(
@@ -163,9 +105,9 @@ int main()
         x_proxy = to_box;
     });
 
-    Benchmark::conclude();
-    Benchmark::save();
-    return 0;
+    //Benchmark::conclude();
+    //Benchmark::save();
+    //return 0;
 
     // ### CALLING JULIA FUNCTIONS ###
 
@@ -238,6 +180,87 @@ int main()
 
     Benchmark::run("Call C++-Function in Julia", n_reps, [&](){
         jl_call0(jl_task_f);
+    });
+
+    //Benchmark::conclude();
+    //Benchmark::save();
+    //return 0;
+
+    // ### JLUNA TASK ###
+    // base comparison: just call function
+    Benchmark::run_as_base("threading: no task", n_reps, [](){
+        task_f();
+    });
+
+    // run task using std::thread
+    Benchmark::run("threading: std::thread", n_reps, [](){
+        auto t = std::thread(task_f);
+        t.join();
+    });
+
+    // run task using jluna::Task
+    Benchmark::run("threading: jluna::Task", n_reps, [](){
+        auto t = ThreadPool::create<void()>(task_f);
+        t.schedule();
+        t.join();
+    });
+
+    //Benchmark::conclude();
+    //Benchmark::save();
+    //return 0;
+
+    // ### JLUNA ARRAY ###
+    n_reps = 1000000;
+
+    // pre-run to avoid artifacting
+    Benchmark::run_as_base("Allocate Array: C-API", 1000, [&](){
+
+        auto* arr = (jl_array_t*) jl_alloc_array_1d(jl_apply_array_type((jl_value_t*) jl_int64_type, 1), 0);
+        jl_array_sizehint(arr, 100);
+
+        for (size_t i = 1; i <= 100; ++i)
+        {
+            jl_array_grow_end(arr, 1);
+            jl_arrayset(arr, jl_box_int64(generate_number<Int64>()), i);
+        }
+
+        jl_gc_collect(JL_GC_AUTO);
+    });
+
+    Benchmark::run_as_base("Allocate Array: C-API", n_reps, [&](){
+
+        auto* arr = (jl_array_t*) jl_alloc_array_1d(jl_apply_array_type((jl_value_t*) jl_int64_type, 1), 0);
+        jl_array_sizehint(arr, 100);
+
+        for (size_t i = 1; i <= 100; ++i)
+        {
+            jl_array_grow_end(arr, 1);
+            jl_arrayset(arr, jl_box_int64(generate_number<Int64>()), i);
+        }
+
+        jl_gc_collect(JL_GC_AUTO);
+    });
+
+    Benchmark::run("Allocate Array: unsafe", n_reps, [](){
+
+        auto* arr = unsafe::new_array(Int64_t, 0);
+        unsafe::sizehint(arr, 100);
+
+        for (size_t i = 1; i <= 100; ++i)
+            unsafe::push_back(arr, unsafe::unsafe_box<Int64>(generate_number<Int64>()));
+
+        jl_gc_collect(JL_GC_AUTO);
+    });
+
+    Benchmark::run("Allocate Array: jluna::Array", n_reps, [&](){
+
+        auto arr = jluna::Vector<Int64>();
+        arr.reserve(100);
+
+        for (size_t i = 1; i <= 100; ++i)
+            arr.push_back(generate_number<Int64>());
+
+        jl_gc_collect(JL_GC_AUTO);
     });
 
     Benchmark::conclude();

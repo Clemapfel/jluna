@@ -9,6 +9,19 @@
 
 namespace jluna
 {
+    template<typename Function_t, typename... Args_t, std::enable_if_t<std::is_void_v<std::invoke_result_t<Function_t, Args_t...>>, bool>>
+    static unsafe::Value* box_function_result(Function_t f, Args_t... args)
+    {
+        f(args...);
+        return jl_nothing;
+    }
+
+    template<typename Function_t, typename... Args_t, std::enable_if_t<not std::is_void_v<std::invoke_result_t<Function_t, Args_t...>>, bool>>
+    static unsafe::Value* box_function_result(Function_t f, Args_t... args)
+    {
+        return box(f(args...));
+    }
+
     template<is_julia_value_pointer T>
     unsafe::Value* box(T value)
     {

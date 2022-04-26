@@ -122,6 +122,27 @@ while the julia include directory is usually
 
 If building your library triggers linker or compiler errors, head to [troubleshooting](#troubleshooting).
 
+### Example: Hellow World
+
+A basic example main could be the following:
+
+```cpp
+#include <jluna.hpp>
+
+using namespace jluna;
+int main()
+{
+    initialize();
+    Base["println"]("hello julia");
+    
+    return 0;
+}
+```
+
+Where `jluna.hpp` already includes `julia.h`.
+
+To learn how to use more of jlunas features, please consult the [manual](./manual.md).
+
 ---
 
 ## Troubleshooting
@@ -287,7 +308,7 @@ When compiling a target that includes jluna, the following compiler error may oc
       |     ^~~~~~~
 ```
 
-This indicates that you have not configured your compiler to utilize C++20, or your compilers is out of date. After verifying you are using `g++-10`, `g++-11`, `clang++-12` or `MSVC 19.30`, make sure the following line is present in your `CMakeLists.txt`:
+This indicates that you have not configured your compiler to utilize C++20, or your compilers is out of date. After verifying you are using `g++-10`, `g++-11`, `clang++-12` or `MSVC 19.32`, make sure the following line is present in your `CMakeLists.txt`:
 
 ```cmake
 target_compile_features(<your target> PRIVATE cxx_std_20)

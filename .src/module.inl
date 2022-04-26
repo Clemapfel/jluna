@@ -7,6 +7,28 @@
 
 namespace jluna
 {
+    /// @brief unbox to module
+    template<is<Module> T>
+    inline T unbox(unsafe::Value* value)
+    {
+        detail::assert_type((unsafe::DataType*) jl_typeof(value), jl_module_type);
+        return Module((jl_module_t*) value);
+    }
+
+    /// @brief box jluna::Module to Base.Module
+    template<is<Module> T>
+    inline unsafe::Value* box(T value)
+    {
+        return value.operator unsafe::Value*();
+    }
+
+    /// @brief type deduction
+    template<>
+    struct detail::as_julia_type_aux<Module>
+    {
+        static inline const std::string type_name = "Module";
+    };
+
     template<is_boxable T>
     void Module::assign(const std::string& variable_name, T new_value)
     {

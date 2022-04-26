@@ -12,6 +12,7 @@
 namespace jluna
 {
     /// @brief string suffix operator to create a symbol from a string
+    /// @returns symbol
     unsafe::Symbol* operator""_sym(const char*, size_t);
 
     /// @brief literal operator for prettier syntax
@@ -261,7 +262,10 @@ namespace jluna::unsafe
     T unsafe_unbox(unsafe::Value*);
 }
 
+/// @brief pause GC, remembers current state
 #define gc_pause bool __before__ = jl_gc_is_enabled(); jl_gc_enable(false);
+
+/// @brief restore GC state
 #define gc_unpause if (__before__) {jl_gc_enable(true); jl_gc_safepoint();}
 
 #include <.src/unsafe_utilities.inl>

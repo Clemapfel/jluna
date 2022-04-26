@@ -184,18 +184,14 @@ namespace jluna
         (unsafe::Value*) t;
     };
 
+    /// @brief forward function result
+    /// @param function
+    /// @param args
+    /// @returns jl_nothing if return_type is void, boxed value otherwise
     template<typename Function_t, typename... Args_t, std::enable_if_t<std::is_void_v<std::invoke_result_t<Function_t, Args_t...>>, bool> = true>
-    static unsafe::Value* box_function_result(Function_t f, Args_t... args)
-    {
-        f(args...);
-        return jl_nothing;
-    }
-
+    static unsafe::Value* box_function_result(Function_t f, Args_t... args);
     template<typename Function_t, typename... Args_t, std::enable_if_t<not std::is_void_v<std::invoke_result_t<Function_t, Args_t...>>, bool> = true>
-    static unsafe::Value* box_function_result(Function_t f, Args_t... args)
-    {
-        return box(f(args...));
-    }
+    static unsafe::Value* box_function_result(Function_t f, Args_t... args);
 }
 
 #include <.src/box.inl>

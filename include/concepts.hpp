@@ -16,7 +16,7 @@
 
 namespace jluna
 {
-
+    /// @concept: wrapper for std::is_same_v
     template<class T, class U>
     struct is_same_or_const
     {
@@ -35,7 +35,6 @@ namespace jluna
         static constexpr bool value = true;
     };
 
-    /// @concept: wrapper for std::is_same_v
     template<typename T, typename U>
     concept is = std::conditional_t<
         std::is_void_v<T>,
@@ -134,7 +133,7 @@ namespace jluna
     template<typename T, size_t N>
     concept is_function_with_n_args = (function_traits<detail::as_c_function_v<T>>::n_args == N);
 
-    /// @concept: can be reinterpret-cast to jl_value_t*
+    /// @concept: can be cast to jl_value_t*
     template<typename T>
     concept is_julia_value_pointer =
         std::is_same_v<T, jl_value_t*> or
@@ -146,6 +145,7 @@ namespace jluna
         std::is_same_v<T, jl_expr_t*> or
         std::is_same_v<T, jl_unionall_t*>;
 
+    /// @concept: can be cast to jl_value_t* if it was pointer
     template<typename T>
     concept is_julia_value =
         std::is_same_v<T, jl_value_t> or

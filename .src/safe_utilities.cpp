@@ -21,12 +21,12 @@ namespace jluna
         jluna::detail::c_adapter_path_override = path;
     }
 
-    void initialize(size_t n_threads)
+    void initialize(size_t n_threads, bool suppress_log)
     {
-        initialize("", n_threads);
+        initialize("", n_threads, suppress_log);
     }
 
-    void initialize(const std::string& path, size_t n_threads)
+    void initialize(const std::string& path, size_t n_threads, bool suppress_log)
     {
         static bool is_initialized = false;
 
@@ -73,17 +73,29 @@ namespace jluna
         detail::initialize_modules();
         detail::initialize_types();
 
-        jl_eval_string(R"(
-            if isdefined(Main, :jluna) #& jluna.cppcall.verify_library()
-                print("[JULIA][LOG] ")
-                Base.printstyled("initialization successful (" * string(Threads.nthreads()) * " threads).\n"; color = :green)
-            else
-                print("[JULIA]")
-                Base.printstyled("[ERROR] initialization failed.\n"; color = :red)
-                throw(AssertionError(("[JULIA][ERROR] initialization failed.")))
-            end
-        )");
-        forward_last_exception();
+        if (suppress_log)
+        {
+            safe_eval(R"(
+                if !isdefined(Main, :jluna)
+                    print("[JULIA]")
+                    Base.printstyled("[ERROR] initialization failed.\n"; color = :red)
+                    throw(AssertionError(("[JULIA][ERROR] initialization failed.")))
+                end
+            )");
+        }
+        else
+        {
+            safe_eval(R"(
+                if isdefined(Main, :jluna) & false
+                    print("[JULIA][LOG] ")
+                    Base.printstyled("initialization successful (" * string(Threads.nthreads()) * " thread(s)).\n"; color = :green)
+                else
+                    print("[JULIA]")
+                    Base.printstyled("[ERROR] initialization failed.\n"; color = :red)
+                    throw(AssertionError(("[JULIA][ERROR] initialization failed.")))
+                end
+            )");
+        }
 
         std::atexit(&jluna::detail::on_exit);
 

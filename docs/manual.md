@@ -3723,23 +3723,7 @@ static auto task_f = [](){
     for (volatile size_t i = 0; i < 10000; i = i+1);
 };
 
-// base comparison: just call function
-Benchmark::run_as_base("threading: no task", n_reps, [](){
-    task_f();
-});
 
-// run task using std::thread
-Benchmark::run("threading: std::thread", n_reps, [](){
-    auto t = std::thread(task_f);
-    t.join();
-});
-
-// run task using jluna::Task
-Benchmark::run("threading: jluna::Task", n_reps, [](){
-    auto t = ThreadPool::create<void()>(task_f);
-    t.schedule();
-    t.join();
-});
 ```
 
 Our C++ function is the `task_f` from the last section, it simply counts to 1000, then exits. If a functions signature has `void` as the return-type, both `std::thread` and `jluna::Task` still update their future. For the latter, the Julia-side `nothing` is placed in the future. Therefore, forwarding a C++-functions result to its future is still measured here.

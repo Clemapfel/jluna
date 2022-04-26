@@ -1,6 +1,9 @@
-// 
+//
 // Copyright 2022 Clemens Cords
 // Created on 19.04.22 by clem (mail@clemens-cords.com)
+//
+// this file summarizes all code from the usertype section of the manual
+// see: https://github.com/Clemapfel/jluna/blob/master/docs/manual.md#usertypes
 //
 
 #include <jluna.hpp>

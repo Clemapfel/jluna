@@ -8,6 +8,8 @@
 
 namespace jluna::detail
 {
+    static inline size_t _num_threads = 1;
+
     void initialize_modules();
     void initialize_types();
     void on_exit();

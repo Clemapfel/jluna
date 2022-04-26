@@ -271,12 +271,15 @@ namespace jluna
             bool is_defined(const std::string& variable_name) const;
 
             /// @brief import a package
+            /// @param package_name
             void import(const std::string& package_name);
 
             /// @brief import names
+            /// @param package_name
             void add_using(const std::string& package_name);
 
             /// @brief include file in module scope
+            /// @param package_name
             void include(const std::string& file_path);
 
         private:
@@ -294,28 +297,6 @@ namespace jluna
 
     /// @brief Proxy of singleton Main.Base.Core, initialized by State::initialize
     inline Module Core;
-
-    /// @brief unbox to module
-    template<is<Module> T>
-    inline T unbox(unsafe::Value* value)
-    {
-        detail::assert_type((unsafe::DataType*) jl_typeof(value), jl_module_type);
-        return Module((jl_module_t*) value);
-    }
-
-    /// @brief box jluna::Module to Base.Module
-    template<is<Module> T>
-    inline unsafe::Value* box(T value)
-    {
-        return value.operator unsafe::Value*();
-    }
-
-    /// @brief type deduction
-    template<>
-    struct detail::as_julia_type_aux<Module>
-    {
-        static inline const std::string type_name = "Module";
-    };
 }
 
 #include <.src/module.inl>

@@ -31,12 +31,15 @@ namespace jluna
             operator jl_datatype_t*();
 
             /// @brief unroll type as much as possible
+            /// @returns unrolled type
             Type unroll() const;
 
             /// @brief get direct super type
+            /// @returns type
             Type get_super_type() const;
 
             /// @brief get name
+            /// @returns Julia-side name as symbol
             Symbol get_symbol() const;
 
             /// @brief get number of parameters
@@ -135,6 +138,8 @@ namespace jluna
         private:
             jl_datatype_t* get() const;
     };
+
+    /// @brief pre-initialized base types, already unrolled
 
     inline Type AbstractArray_t;
     inline Type AbstractChar_t;

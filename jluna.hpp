@@ -7,6 +7,7 @@
 
 // collects all end-user relevant headers from jluna/include
 
+#include <include/julia_wrapper.hpp>
 #include <include/exceptions.hpp>
 #include <include/concepts.hpp>
 #include <include/unsafe_utilities.hpp>
