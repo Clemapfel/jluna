@@ -107,24 +107,24 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
     11.10 [Shared Memory](#shared-memory)<br>
 12. [**Performance Optimization & Benchmarks**](#performance-optimization)<br>
 12.1 [Methodology](#methodology)<br>
-12.2 [Accessing Julia-side Values](#accessing-julia-side-values)<br>
+12.2 [Accessing Julia-side Values](#benchmark-accessing-julia-side-values)<br>
 12.2.1 [Results](#accessing-julia-side-values-results)<br>
-12.3 [Mutating Julia-side Values](#mutating-julia-side-variables)<br>
+12.3 [Mutating Julia-side Values](#benchmark-mutating-julia-side-variables)<br>
 12.3.1 [Results](#mutating-julia-side-variables-results)<br>
-12.4 [Calling Julia-side Functions from C++](#calling-julia-side-functions)<br>
+12.4 [Calling Julia-side Functions from C++](#benchmark-calling-julia-side-functions)<br>
 12.4.1 [Results](#calling-c-functions-from-julia-results)<br>
-12.5 [Calling C++-side Functions from Julia](#calling-c-functions-from-julia)<br>
+12.5 [Calling C++-side Functions from Julia](#benchmark-calling-c-functions-from-julia)<br>
 12.5.1 [Results](#calling-c-functions-from-julia-results)<br>
-12.6 [Using jluna::Array](#using-jlunaarray)<br>
+12.6 [Using jluna::Array](#benchmark-using-jlunaarray)<br>
 12.6.1 [Results](#using-jlunaarray-results)<br>
-12.7 [Construction a jluna::Task](#constructing-jlunatask)<br>
+12.7 [Construction a jluna::Task](#benchmark-constructing-jlunatask)<br>
 12.7.1 [Result](#constructing-jlunatask-results)<br>
 12.8 [Performance Optimization Tips](#performance-evaluation-summary)<br>
 12.8.1 [Accessing Julia Values](#accessing-julia-values)<br>
 12.8.2 [Changing a Julia Value](#changing-a-julia-value)<br>
 12.8.3 [Creating a Julia Variable](#creating-a-julia-variable)<br>
 12.8.4 [Calling a Julia Function](#calling-a-julia-function)<br>
-12.8.5 [Executing Julia Code](#executing-julia-code)<br>
+12.8.5 [Executing Strings as Julia Code](#executing-strings-as-julia-code)<br>
 12.8.6 [Handling Big Arrays](#handling-big-arrays)<br>
 12.8.7 [Multi-Threading](#multi-threading)<br>
 13. [**Closing Statement**](#closing-statement)<br>
@@ -3344,7 +3344,7 @@ Each following section will deal with a certain task, showing how to accomplish 
 
 ---
 
-### Accessing Julia-side Values
+### Benchmark: Accessing Julia-side Values
 
 One of the most basic tasks in jluna is getting the value of something Julia-side. This can be accomplished in many different ways:
 
@@ -3422,7 +3422,7 @@ In summary, `unsafe` and the C-API are unmatched in performance, however, in app
 
 ---
 
-### Mutating Julia-side Variables
+### Benchmark: Mutating Julia-side Variables
 
 We benchmarked **accessing** variables, now, we'll turn our attention to **mutating** them. Recall in the manual section on proxies, only named proxies mutate values. So far, we have seen that handling proxies tends to introduce a significant amount of overhead, we will see if this is still the case:
 
@@ -3486,7 +3486,7 @@ Only the latter of which has to be performed by any of the other functions. This
 
 ---
 
-### Calling Julia-side Functions
+### Benchmark: Calling Julia-side Functions
 
 It is important that executing Julia-side code through functions have as little overhead as possible. This section will investigate if this is the case.
 
@@ -3553,7 +3553,7 @@ Here we access a pointer to our simple Julia-side function, outside of the bench
 
 `jluna::safe_call` offers the best compromise between safety and speed, it still provides exception forwarding without constructing a proxy or having to deal with proxy-related overheads.
 
-### Calling C++ Functions from Julia
+### Benchmark: Calling C++ Functions from Julia
 
 We've seen how fast we can call a Julia-side function from C++. In jluna, we can of course do it the other way around, which is hopefully just as performant.
 
@@ -3592,7 +3592,7 @@ Results suggest that there is very little overhead calling the C++ function, we 
 
 ---
 
-### Using jluna::Array
+### Benchmark: Using jluna::Array
 
 `jluna::Array` was mentioned as having very little overhead, making it much more performant than proxies for modifying Julia-side arrays. This section will see if this is true. In the following code segment, we are creating a 1000-element vector each benchmark cycle, then filling it with `1:1000`:
 
@@ -3661,7 +3661,7 @@ Once again, `unsafe` is very close to the C-API, 1% being far below the target 5
 
 ---
 
-### Constructing `jluna::Task`
+### Benchmark: Constructing `jluna::Task`
 
 With all the wrapping going on to make `jluna::Task` be able to execute C-API functions, you may expect there to be a significant overhead to creating a task. Let's find out if this is indeed true, we've already seen that calling the C++ function itself introduces a ~2% overhead, any additional overhead would be due to task construction (including its futures) itself.
 
@@ -3728,7 +3728,7 @@ Unlike many values, Julia Functions usually do not have to be protected from the
 
 For unnamed function (functions not bound to any variable), an `jluna::Proxy` is the much superior option. That way, users do not have to manage the lifetime of the function themself.
 
-#### Executing Julia Code
+#### Executing Strings as Julia Code
 
 If all you want is to execute a line of code, `jluna::safe_eval` is the function of choice. It has all the bells and whistles `Module::safe_eval` has, except that it returns a raw C-pointer to the result of the code, rather then a proxy. This makes it ideal for code that does not return a value. If the code does return a value, the following is still safe:
 
