@@ -162,6 +162,12 @@ namespace jluna::unsafe
     /// @returns array
     unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d);
 
+    /// @brief pre-allocate array, may increase performance
+    /// @param array
+    /// @param n_elements
+    /// @returns array
+    void sizehint(unsafe::Array*, size_t n_elements);
+
     /// @brief reshape array along all dimensions
     /// @param array
     /// @param size_per_dimension: size along each dimension, number of dimension is denoted by the number of sizes
@@ -231,6 +237,16 @@ namespace jluna::unsafe
     /// @note if value types mismatch, the behavior is undefined
     template<typename T>
     void set_array_data(unsafe::Array* array, T* new_data, size_t new_size);
+
+    /// @brief push element to front of 1d array
+    /// @param array
+    /// @param value
+    void push_front(unsafe::Array*, unsafe::Value* value);
+
+    /// @brief push element to back of 1d array
+    /// @param array
+    /// @param value
+    void push_back(unsafe::Array*, unsafe::Value* value);
 
     /// @brief box without type checking
     /// @param value

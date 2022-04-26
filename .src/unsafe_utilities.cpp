@@ -138,6 +138,11 @@ namespace jluna::unsafe
         return jl_ptr_to_array_1d(jl_apply_array_type(value_type, 1), data, one_d, 0);
     }
 
+    void sizehint(unsafe::Array* arr, size_t n_elements)
+    {
+        jl_array_sizehint(arr, n_elements);
+    }
+
     void override_array(unsafe::Array* overridden, const unsafe::Array* constant)
     {
         //memcpy(overridden->data, constant->data, constant->length);

@@ -203,6 +203,18 @@ namespace jluna::unsafe
         array->length = new_size;
     }
 
+    inline void push_back(unsafe::Array* arr, unsafe::Value* value)
+    {
+        jl_array_grow_end(arr, 1);
+        jl_arrayset(arr, value, jl_array_len(arr) - 1);
+    }
+
+    inline void push_front(unsafe::Array* arr, unsafe::Value* value)
+    {
+        jl_array_grow_beg(arr, 1);
+        jl_arrayset(arr, value, 0);
+    }
+
     template<is_julia_value T>
     unsafe::Value* unsafe_box(T* in)
     {

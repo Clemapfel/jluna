@@ -69,7 +69,7 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
    8.4.2 [Fields](#fields)<br>
    8.5 [Type Classification](#type-classification)<br>
    8.6 [Unrolling Types](#unrolling-types)<br>
-9. [Usertypes](#usertypes)
+9. [Usertypes](#usertypes)<br>
   9.1 [The Usertype Interface](#usertype-interface)<br>
   9.2 [Step 1: Making the Type Compliant](#step-1-making-the-type-compliant)<br>
    9.3 [Step 2: Enabling the Interface](#step-2-enabling-the-interface)<br>
@@ -3326,6 +3326,8 @@ The latter approach was used for these results. We will start each benchmark wit
 
 Each following section will deal with a certain task, showing how to accomplish this task in different ways. Then, we will commenting on which way was the fastest - and why.
 
+---
+
 ### Accessing Julia-side Values
 
 One of the most basic tasks in jluna is getting the value of something Julia-side. This can be accomplished in many different ways:
@@ -3402,6 +3404,8 @@ We see how much constructing that proxy matters, if we really just want the valu
 
 In summary, `unsafe` and the C-API are unmatched in performance, however, in applications where safety is preferred, `Module::get<T>` is the best way to access the **value of a variable** (not the variable itself).
 
+---
+
 ### Mutating Julia-side Variables
 
 We benchmarked **accessing** variables, now, we'll turn our attention to **mutating** them. Recall in the manual section on proxies, only named proxies mutate values. So far, we have seen that handling proxies tends to introduce a significant amount of overhead, we will see if this is still the case:
@@ -3464,6 +3468,7 @@ This time, `unsafe` is almost identical in runtime compared to the C-API. The ne
 
 Only the latter of which has to be performed by any of the other functions. This explains the large amount of overhead, making named proxies a bad choice when trying to mutate variables in a performant manner. Once again, the specialized `jluna::Module` function gives the best compromise between performance and safety.
 
+---
 
 ### Calling Julia-side Functions
 
@@ -3569,12 +3574,76 @@ Here, we are measuring the time it takes for `task_f` to finish when called from
 
 Results suggest that there is very little overhead calling the C++ function, we are very comfortable below the 5% threshold, making calling C++ functions from Julia pretty much exactly as fast as calling them from C++.
 
+---
+
 ### Using jluna::Array
 
-`jluna::Array` was mentioned as having very little overhead, making it much more performant than proxies for modifying Julia-side arrays. This section will see if this is true. The following code segment may be somewhat hard to follow for people unfamiliar with the C-API, however, be assured that each `run_as_base` function aims to implement whatever the corresponding `jluna::Array` function does as fast as possible using only the C-API
+`jluna::Array` was mentioned as having very little overhead, making it much more performant than proxies for modifying Julia-side arrays. This section will see if this is true. In the following code segment, we are creating a 1000-element vector each benchmark cycle, then filling it with `1:1000`:
 
+```cpp
+// number of benchmark cycles
+size_t n_reps = 1000000;
 
+// construct with C-API
+Benchmark::run_as_base("Allocate Array: C-API", n_reps, [&](){
 
+    // initialize as empty Array{Int64, 1}
+    auto* arr = (jl_array_t*) jl_alloc_array_1d(jl_apply_array_type((jl_value_t*) jl_int64_type, 1), 0);
+    
+    // sizehint! to 1000
+    jl_array_sizehint(arr, 1000);
+    
+    // fill
+    for (size_t i = 1; i <= 1000; ++i)
+    {
+        jl_array_grow_end(arr, 1);
+        jl_arrayset(arr, jl_box_int64(i), i);
+        // equivalent to push!
+    }
+
+    jl_gc_collect(JL_GC_AUTO);
+});
+
+// construct with unsafe library
+Benchmark::run("Allocate Array: unsafe", n_reps, [](){
+
+    auto* arr = unsafe::new_array(Int64_t, 0);
+    unsafe::sizehint(arr, 1000);
+
+    for (size_t i = 1; i <= 1000; ++i)
+        unsafe::push_back(arr, unsafe::unsafe_box<Int64>(i));
+
+    jl_gc_collect(JL_GC_AUTO);
+});
+
+// construct with jluna::Array
+Benchmark::run("Allocate Array: jluna::Array", n_reps, [&](){
+
+    auto arr = jluna::Vector<Int64>();
+    arr.reserve(1000);
+
+    for (size_t i = 1; i <= 1000; ++i)
+        arr.push_back(i);
+
+    jl_gc_collect(JL_GC_AUTO);
+});
+```
+
+During each benchmark iteration, it was necessary to call `jl_gc_collect` during the C-API benchmark, as not enough RAM was available to sustain the number of allocated arrays without it. This `jl_gc_collect` call was added to all benchmarks, despite being unnecessary when using `jluna::Array`, such that its overhead does not invalidate comparison between the benchmarks results.
+
+Allocating a vector and filling it by appended to its end, offers a good compromise between the different features or arrays. It tests both allocation and modifying an element by index. 
+
+### Using jluna::Array: Results
+
+| name | median duration (ms) | overhead|
+|------|----------------------|-------------|
+| `C-API` | `0.049239ms`       | `0%`  |
+| `unsafe` | `0.049703ms` | `0.94%` |
+| `jluna::Array` | `0.074531ms` | `51.3658%` |
+
+Once again, `unsafe` is very close to the C-API, 1% being far below the target 5% overhead. `jluna::Array` is obviously slower, however, as we've seen before, dealing with proxy usually incurs a 10x to 60x overhead. With `jluna::Array`, this overhead is reduced to 0.5x, despite offering all the same features a regular proxies do. This makes them a good choice for regular users, users who are after optimal performance should stick the `unsafe` library instead.
+
+---
 
 ### Constructing `jluna::Task`
 
@@ -3619,6 +3688,62 @@ Here, we are executing a function that simply iterates to 10000, where `volatile
 
 `jluna::Task` turned out to have about 30% less overhead on thread construction than `std::thread`, this is despite having to go through all the wrapping. Now, this doesn't mean the jluna threadpool is a better option than `std::thread` for C-side only computations, all it means is that users do not have to worry about potential overhead when using `jluna::ThreadPool`.
 
+---
 
+### Performance Evaluation: Summary
 
+We have seen that using exclusively jluna to address a specific issue can bring overhead down to ~5% when compared to the C-API. This overhead is only achieved in the `unsafe` library, however. One of the most central implications of the benchmarking results are to avoid proxies in performance critical code. While they provide very pretty syntax and are super convenient, they are also much slower. Luckily, `jluna` often offers an in-between the all-performance-no-safety `unsafe` library and the all-safety-no-performance proxies. The following will be a list of recommendations on how to achieve a certain goal in jluna in a way that is both reasonably safe and reasonably fast.
 
+#### Accessing Julia Values
+
+To access the value of something Julias-side, be a function or the value of a variable, use `Module::get<T>`, where `T` is the C++-type of the value. This function automatically unboxes the Julia-side variable and forwards it without creating a proxy, achieving decent performance while not sacrificing safety whatsoever.
+
+#### Changing a Julia Value
+
+To mutate a variable, `Module::assign` should be preffered. It is much faster than `Proxy::operator=` because it does not have to create a proxy.
+
+#### Creating a Julia Variable 
+
+To create a new variable that you do not want to manage through a named proxy, use `Module::create_or_assign`. much like `Module::assign`, this function is both performant and safe. If you also want a proxy managing that variable, `Module::new_*` is the best option. It literally executes `create_or_assign`, then constructs a proxy to that new variable in the fastest way possible, returning it.
+
+#### Calling a Julia Function
+
+Unlike many values, Julia Functions usually do not have to be protected from the GC, as long as the are named (that is, as long as there exist a named variable in some module that function is bound to, such as `Base.println`). Calling these functions should be done via `jluna::safe_call`. The downside of this function is that users will be forced to manually `box` all arguments and manually `unbox` the result. If this is too inconvenient, an unnamed proxy pointing to the named function will be slightly faster than a named proxy pointing to the named function.
+
+For unnamed function (functions not bound to any variable), an `jluna::Proxy` is the much superior option. That way, users do not have to manage the lifetime of the function themself.
+
+#### Executing Julia Code
+
+If all you want is to execute a line of code, `jluna::safe_eval` is the function of choice. It has all the bells and whistles `Module::safe_eval` has, except that it returns a raw C-pointer to the result of the code, rather then a proxy. This makes it ideal for code that does not return a value. If the code does return a value, the following is still safe:
+
+```cpp
+Int64 variable_value = unbox<Int64>(jluna::safe_eval("length([i for i in 1:43 if i % 2 != 0]"))
+```
+
+Here we have a somewhat complex line of code, what it does exaclty isn't important. What is important is that it returns a value of tpye `Int64`. We want to access this value, which we do by manually calling `unbox<Int64>` on the result of `jluna::safe_eval`. There is no possible point for the GC to collected the result of `jluna::safe_eval` in this expression. If done in this specific way, it is always memory-safe. This makes it ideal for the purpose of executing code.
+
+Still, running Julia code as strings instead of using functions should only be done if it is the last possible option.
+
+#### Handling Big Arrays
+
+Much of engineering is handling large arrays. Julia is very adept at this, making it a natural choice for this purpose. When doing this not through pure Julia but jluna, the following guidelines should always be adhere to:
+
++ Use a C-Type as value type
+    The only way to share arrays losslessly and without performance overhead is if they have a value type that is both supported by Julia and C++. Any array that is going to be moved between states should have such a value type
++ Don't be scare of jluna::Array
+    If the task is to "handle large arrays", not to "handle large arrays in the performance-wise optimal manner", `jluna::Array` is perfectly fine. If you are worried about overhead, you can always simply access the raw data pointer using `.data()` and handle the underlying data like a C-Array.
+  
+#### Multi-Threading
+
+Admittedly, the fact C-side threads are inherently incompatible with Julia is a big problem, however this is unrelated to jluna. jluna tried to fix this problem as much as possible through `jluna::ThreadPool`. While C-side threads don't play nice with Julia, Julia-side threads do work just as well in C++. In fact, we can handle them like any other variables through jluna. Because of this, it may be necessary to either translate any multi-threading framework to `jluna::ThreadPool`, or move it completely Julia-side. While C++s multi-threading framework is workable, Julia was designed with it in mind form the ground up and many Julia devs can confidently state that Julia is just as good if not better able to handle any C++ multi-threading task.
+
+---
+
+## Closing Statement
+
+If you have read this manual from start to finish, thank you for your time. Hopefully, jluna will be worth the effort you have already put in. Version 0.9.0 was released in late April 2022 and jluna can be considered feature complete now. The library will still be supported and any potential issues will be fixed, even though development of new features has concluded. 
+
+I would like to personally thank the Julia community and in particular the Julia discord for the positive response. While I will never make any money from this, it is still worth it to me because jluna may lower that barrier of entry for C++-devs to consider using Julia in their projects. As far as I know, the only way to do this so far was the C-API (CxxWrap.jl and Cxx.jl both assume Julia as the host language). The C-API is very hard to use due to it being basically undocumented, which is why I have taken great care to put just as much effort into jlunas documentation as to its implementation.  Hopefully this effort shows in the result.
+
+Thank you,
+C. Cords

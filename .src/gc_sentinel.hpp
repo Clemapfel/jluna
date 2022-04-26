@@ -40,4 +40,10 @@ namespace jluna::detail
         for (size_t i = 0; i < n; ++i)
             jl_call0(gc_pop);
     }
+
+    inline unsafe::Value* gc_save(unsafe::Value* in)
+    {
+        gc_push(in);
+        return in;
+    }
 }
