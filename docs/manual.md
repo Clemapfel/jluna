@@ -14,9 +14,9 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
 
 ## Table of Contents
 
-0. [Installation](#installation)<br>
-1. [Initializing the Julia State](#initializing-the-julia-state)<br>
-2. [Modifying the Julia State](#executing-julia-code)<br>
+0. [**Installation**](#installation)<br>
+1. [**Initializing the Julia State**](#initializing-the-julia-state)<br>
+2. [**Modifying the Julia State**](#executing-julia-code)<br>
   2.1 [Executing a Single Line of Code](#executing-a-single-line-of-code)<br>
    2.2 [Executing a File](#executing-a-file)<br>
    2.3 [Executing Multiple Lines of Code](#executing-multiple-lines-of-code)<br>
@@ -27,7 +27,7 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
    2.8 [Accessing Julia Struct Fields](#accessing-julia-struct-fields)<br>
    2.9 [Mutating Julia-side Variables](#mutating-julia-side-variables)<br>
    2.10 [Mutating Array Elements](#mutating-variables-using-operatorsize_t)<br>
-3. [Proxies](#proxies)<br>
+3. [**Proxies**](#proxies)<br>
   3.1 [Memory Sharing](#shared--separate-memory)<br>
    3.2 [Constructing a Proxy](#constructing-a-proxy)<br>
    3.3 [Updating a Proxy](#updating-a-proxy)<br>
@@ -40,7 +40,7 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
    3.10 [Fixing Detached Proxies](#detached-proxies)<br>
    3.11 [Named & Unnamed: Implications](#implications)<br>
    3.12 [Proxy Inheritance](#proxy-inheritance)<br>
-4. [Arrays](#specialized-proxies-arrays)<br>
+4. [**Arrays**](#specialized-proxies-arrays)<br>
   4.1 [Accessing Array Indices](#accessing-array-indices)<br>
    4.2 [Linear Indexing](#linear-indexing)<br>
    4.3 [List Indexing](#list-indexing)<br>
@@ -49,18 +49,18 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
    4.6 [Array Size](#accessing-the-size-of-an-array)<br>
    4.7 [Vector](#jlunavector)<br>
    4.8 [Generator Expressions](#generator-expressions)<br>
-5. [Symbols](#specialized-proxies-symbols)<br>
+5. [**Symbols**](#specialized-proxies-symbols)<br>
   5.1 [Symbol Hashing](#symbol-hashing)<br>
-6. [Modules](#specialized-proxies-modules)<br>
+6. [**Modules**](#specialized-proxies-modules)<br>
   6.1 [Assign in Module](#assign-in-module)<br>
    6.2 [Creating a new Variable](#creating-a-new-variable)<br>
    6.3 [Import, Using, Include](#import-using-include)<br>
-7. [Calling C++ Functions from Julia](#calling-c-functions-from-julia)<br>
+7. [**Calling C++ Functions from Julia**](#calling-c-functions-from-julia)<br>
   7.1 [Creating a Function Object](#creating-a-function-object)<br>
    7.2 [Allowed Signatures](#allowed-signatures)<br>
    7.3 [Taking Any Number of Arguments](#taking-any-number-of-arguments)<br>
    7.4 [Using Non-Julia Objects](#using-non-julia-objects)<br>
-8. [Types](#specialized-proxies-types)<br>
+8. [**Types**](#specialized-proxies-types)<br>
   8.1 [Constructing a Type](#constructing-a-type)<br>
    8.2 [Base Types](#base-types)<br>
    8.3 [Type Order](#type-order)<br>
@@ -69,7 +69,7 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
    8.4.2 [Fields](#fields)<br>
    8.5 [Type Classification](#type-classification)<br>
    8.6 [Unrolling Types](#unrolling-types)<br>
-9. [Usertypes](#usertypes)<br>
+9. [**Usertypes**](#usertypes)<br>
   9.1 [The Usertype Interface](#usertype-interface)<br>
   9.2 [Step 1: Making the Type Compliant](#step-1-making-the-type-compliant)<br>
    9.3 [Step 2: Enabling the Interface](#step-2-enabling-the-interface)<br>
@@ -78,7 +78,7 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
    9.6 [Step 5: Usage](#step-5-usage)<br>
    9.7 [Code Examble](./rgba_example.cpp)<br>
    9.8 [Additional Member Functions](#additional-member-functions)<br>
-10. [Multi-Threading](#multi-threading)<br>
+10. [**Multi-Threading**](#multi-threading)<br>
   10.1 [Initializing the Julia Threadpool](#initializing-the-julia-threadpool)<br>
     10.2 [Creating a Task](#creating-a-task)<br>
     10.3 [Running a Task](#running-a-task)<br>
@@ -90,7 +90,7 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
     10.9.1 [In Julia](#thread-safety-in-julia)<br>
     10.9.2 [In C++](#thread-safety-in-c)<br>
     10.10 [Closing Notes](#multi-threading-closing-notes)<br>
-11. [The `unsafe` Library](#the-unsafe-library)<br>
+11. [**The unsafe Library**](#the-unsafe-library)<br>
   11.1 [Unsafe Types](#unsafe-types)<br>
   11.2 [Acquiring Raw Pointers](#acquiring-raw-pointers)<br>
   11.3 [Calling Julia Functions](#calling-julia-functions)<br>
@@ -105,11 +105,29 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
     11.9.3 [Resizing an Array](#resizing-an-array)<br>
     11.9.4 [Replacing an Arrays Data](#replacing-an-arrays-data)<br>
     11.10 [Shared Memory](#shared-memory)<br>
-12. [Performance Optimization](#performance-optimization)<br>
-12.1 [Benchmarks: The Setup](#the-setup)<br>
-12.2 [Benchmarks: Results](#results)<br>
-12.2.1 TODO
-   
+12. [**Performance Optimization & Benchmarks**](#performance-optimization)<br>
+12.1 [Methodology](#methodology)<br>
+12.2 [Accessing Julia-side Values](#accessing-julia-side-values)<br>
+12.2.1 [Results](#accessing-julia-side-values-results)<br>
+12.3 [Mutating Julia-side Values](#mutating-julia-side-variables)<br>
+12.3.1 [Results](#mutating-julia-side-variables-results)<br>
+12.4 [Calling Julia-side Functions from C++](#calling-julia-side-functions)<br>
+12.4.1 [Results](#calling-c-functions-from-julia-results)<br>
+12.5 [Calling C++-side Functions from Julia](#calling-c-functions-from-julia)<br>
+12.5.1 [Results](#calling-c-functions-from-julia-results)<br>
+12.6 [Using jluna::Array](#using-jlunaarray)<br>
+12.6.1 [Results](#using-jlunaarray-results)<br>
+12.7 [Construction a jluna::Task](#constructing-jlunatask)<br>
+12.7.1 [Result](#constructing-jlunatask-results)<br>
+12.8 [Performance Optimization Tips](#performance-evaluation-summary)<br>
+12.8.1 [Accessing Julia Values](#accessing-julia-values)<br>
+12.8.2 [Changing a Julia Value](#changing-a-julia-value)<br>
+12.8.3 [Creating a Julia Variable](#creating-a-julia-variable)<br>
+12.8.4 [Calling a Julia Function](#calling-a-julia-function)<br>
+12.8.5 [Executing Julia Code](#executing-julia-code)<br>
+12.8.6 [Handling Big Arrays](#handling-big-arrays)<br>
+12.8.7 [Multi-Threading](#multi-threading)<br>
+13. [**Closing Statement**](#closing-statement)<br>
 
 ---
 
@@ -3270,7 +3288,7 @@ If we want **speed and safety**, we need to use the `unsafe` library or C-API an
 
 The obvious question is: how much slower is the "safe way"? This section will answer this question by giving an exact percentage of incurred overhead, compared to doing things the optimal way performance-wise.
 
-### The Setup
+### Methodology
 
 > **Hint**: This section explains the benchmarks methodology for the sake of transparency and reproducibility. It can be safely skipped for users just interested in the results. 
 
@@ -3317,8 +3335,6 @@ This function was deemed to represent the intuitive notion of speedup and overhe
 
 
 The median of all results of a particular benchmark run was used for this comparison, somewhat mitigating potential spikes due to noise or one-time-only allocations, which a simple mean would have exhibited.
-
-## Results
 
 When measuring performance, absolute number are rarely very informative. We either need to normalize them relative to the machine it was run on, or, **compare two results**, both run during the same benchmarking session, on the same machine.
 
@@ -3451,7 +3467,7 @@ Here, we see 4 different methods to accomplish this task. The C-APIs `jl_set_glo
 
 During each cycle of each benchmark, we generate a random `Int64` using `generate_number`. This function introduces the same amount of overhead anytime it is called, meaning it will introduce the exact same amount of runtime to each of the benchmarks, making comparison between them still valid.
 
-### Mutating Julia-side Values: Results
+### Mutating Julia-side Variables: Results
 
 | name | median duration (ms) | overhead|
 |------|----------------------|-------------|
