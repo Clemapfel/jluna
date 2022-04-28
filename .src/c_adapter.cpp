@@ -67,6 +67,11 @@ extern "C"
                 (*reinterpret_cast<std::function<unsafe::Value*()>*>(function_ptr))()
             );
         }
+
+        bool verify()
+        {
+            return true;
+        }
     }
 }
 

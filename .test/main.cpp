@@ -23,30 +23,24 @@ set_usertype_enabled(NonJuliaType);
 int main()
 {
     initialize(1);
+    Test::initialize();
 
-    Test::test("jluna::Mutex", [](){
+    Test::test("c_adapter found", [](){
 
-        auto mutex = jluna::Mutex();
-
-        Test::assert_that(not mutex.is_locked());
-        mutex.lock();
-        Test::assert_that(mutex.is_locked());
-        mutex.unlock();
-        Test::assert_that(not mutex.is_locked());
+        Test::assert_that(jl_unbox_bool(jl_eval_string("return jluna.cppcall.verify_library()")));
     });
 
-    Test::test("Task", [](){
+    Test::test("unsafe: gc_push / gc_pop", [](){
 
-        auto task = ThreadPool::create<size_t()>([]() -> size_t {
-            return 4;
-        });
+        auto* value = jl_eval_string("return [123, 434, 342]");
+        gc_push(value);
 
-        Test::assert_that(not task.is_running());
-        task.schedule();
-        task.join();
-        Test::assert_that(task.is_done());
+        collect_garbage();
 
-        Test::assert_that(task.result().get().value() == 4);
+        auto after = unbox<std::vector<size_t>>(value);
+        Test::assert_that(after.at(2) == 342);
+
+        gc_pop(1);
     });
 
     Test::test("unsafe: gc", []() {
@@ -70,6 +64,14 @@ int main()
         size_t symbol_id = unsafe::gc_preserve(symbol);
         Test::assert_that("test"_sym == (jl_sym_t*) symbol);
         unsafe::gc_release(symbol_id);
+    });
+
+    Test::test("as_julia_pointer", [](){
+
+        auto* ptr = jl_eval_string("return 1234");
+        size_t true_value = (size_t) ptr;
+
+        Test::assert_that(true_value == unbox<UInt64>(detail::convert((unsafe::DataType*) UInt64_t, as_julia_pointer(ptr))));
     });
 
     Test::test("unsafe: get_function", []() {
@@ -1337,7 +1339,32 @@ int main()
         gc_unpause;
     });
 
-    Test::conclude();
+    Test::test("jluna::Mutex", [](){
+
+        auto mutex = jluna::Mutex();
+
+        Test::assert_that(not mutex.is_locked());
+        mutex.lock();
+        Test::assert_that(mutex.is_locked());
+        mutex.unlock();
+        Test::assert_that(not mutex.is_locked());
+    });
+
+    Test::test("Task", [](){
+
+        auto task = ThreadPool::create<size_t()>([]() -> size_t {
+            return 4;
+        });
+
+        Test::assert_that(not task.is_running());
+        task.schedule();
+        task.join();
+        Test::assert_that(task.is_done());
+
+        Test::assert_that(task.result().get().value() == 4);
+    });
+
+    return Test::conclude() ? 0 : 1;
 }
 
 

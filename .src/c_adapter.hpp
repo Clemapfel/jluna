@@ -47,6 +47,10 @@ extern "C"
         /// @param function_pointer
         /// @returns result pointer
         size_t invoke_from_task(size_t function_ptr);
+
+        /// @brief verify c_adapter is working, used for test
+        /// @returns true
+        bool verify();
     }
 }
 
@@ -58,5 +62,6 @@ jl_value_t* invoke_lambda_1(void*, jl_value_t*);
 jl_value_t* invoke_lambda_2(void*, jl_value_t*,  jl_value_t*);
 jl_value_t* invoke_lambda_3(void*, jl_value_t*,  jl_value_t*, jl_value_t*);
 void* to_pointer(jl_value_t*);
+bool verify();
 
 #endif
