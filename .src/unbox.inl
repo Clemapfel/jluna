@@ -189,8 +189,8 @@ namespace jluna
         static jl_datatype_t* type = (jl_datatype_t*) jl_eval_string(("return " + as_julia_type<std::complex<Value_t>>::type_name).c_str());
         auto* res = detail::convert(type, value);
 
-        auto* re = jl_get_nth_field(value, 0);
-        auto* im = jl_get_nth_field(value, 1);
+        auto* re = jl_get_nth_field(res, 0);
+        auto* im = jl_get_nth_field(res, 1);
 
         auto out = std::complex<Value_t>(unbox<Value_t>(re), unbox<Value_t>(im));
         gc_unpause;
