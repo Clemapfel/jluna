@@ -86,7 +86,7 @@ namespace jluna
         else
         {
             safe_eval(R"(
-                if isdefined(Main, :jluna) & false
+                if isdefined(Main, :jluna)
                     print("[JULIA][LOG] ")
                     Base.printstyled("initialization successful (" * string(Threads.nthreads()) * " thread(s)).\n"; color = :green)
                 else

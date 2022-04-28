@@ -22,7 +22,7 @@ set_usertype_enabled(NonJuliaType);
 
 int main()
 {
-    jluna::initialize(8);
+    initialize(1);
 
     Test::test("jluna::Mutex", [](){
 
@@ -1088,7 +1088,7 @@ int main()
     Test::test("Symbol: Hash", []() {
 
         auto proxy = jluna::Symbol("abc");
-        proxy.hash() == (size_t) Base["hash"]((unsafe::Value*) proxy);
+        Test::assert_that(proxy.hash() == (size_t) Base["hash"]((unsafe::Value*) proxy));
     });
 
     Test::test("Type: CTOR", []() {
