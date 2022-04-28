@@ -162,7 +162,11 @@ namespace jluna
 
         /// @brief get number of threads
         /// @returns number
-        static size_t nthreads();
+        static size_t n_threads();
+
+        /// @brief get id of current task
+        /// @returns number
+        static size_t thread_id();
 
         private:
             static inline size_t _current_id = 0;

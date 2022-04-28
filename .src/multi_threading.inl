@@ -262,7 +262,7 @@ namespace jluna
             std::make_unique<std::function<unsafe::Value*()>>([lambda, future = std::ref(*(task->_future.get())) ,args...]() -> unsafe::Value* {
                 auto res = lambda(args...);
                 detail::FutureHandler::update_future<Return_t>(future, res);
-                return box(res);
+                return box<Return_t>(res);
         })));
         auto& it = _storage.find(_current_id)->second;
         auto* out = reinterpret_cast<detail::TaskValue<Return_t>*>(it.first.get());
@@ -273,10 +273,16 @@ namespace jluna
         return Task<Return_t>(std::ref(*out));
     }
 
-    inline size_t ThreadPool::nthreads()
+    inline size_t ThreadPool::n_threads()
     {
-        static auto* n_threads = unsafe::get_function("Threads"_sym, "nthreads"_sym);
-        return unbox<Int64>(jl_call0(n_threads));
+        static auto* nthreads = unsafe::get_function("Threads"_sym, "nthreads"_sym);
+        return unbox<Int64>(jl_call0(nthreads));
+    }
+
+    inline size_t ThreadPool::thread_id()
+    {
+        static auto* threadid = unsafe::get_function("Threads"_sym, "threadid"_sym);
+        return unbox<Int64>(jl_call0(threadid));
     }
 
     // ###
