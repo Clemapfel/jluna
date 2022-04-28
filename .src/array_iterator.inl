@@ -88,7 +88,7 @@ namespace jluna
     Array<V, R>::ConstIterator::operator T() const
     {
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        return unbox<T>(jluna::safe_call(getindex, _owner->operator jl_value_t *(), box(_index + 1)));
+        return unbox<T>(jluna::safe_call(getindex, _owner->operator jl_value_t *(), box<size_t>(_index + 1)));
     }
 
     template<is_boxable V, size_t R>

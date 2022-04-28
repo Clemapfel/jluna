@@ -238,11 +238,6 @@ namespace jluna
             };
     };
 
-    /// typedefs for Array{Any}
-    using ArrayAny1d = Array<unsafe::Value*, 1>;
-    using ArrayAny2d = Array<unsafe::Value*, 2>;
-    using ArrayAny3d = Array<unsafe::Value*, 3>;
-
     /// @brief vector typedef
     template<is_boxable Value_t>
     class Vector : public Array<Value_t, 1>
@@ -301,6 +296,12 @@ namespace jluna
         protected:
             using Array<Value_t, 1>::_content;
     };
+
+    /// typedefs for Array{Any}
+    using ArrayAny1d = Array<unsafe::Value*, 1>;
+    using ArrayAny2d = Array<unsafe::Value*, 2>;
+    using ArrayAny3d = Array<unsafe::Value*, 3>;
+    using VectorAny = Vector<unsafe::Value*>;
 }
 
 #include <.src/array.inl>
