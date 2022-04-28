@@ -126,7 +126,7 @@ namespace jluna
         if (jl_is_array(v) && jl_array_len(v) < i)
             out = jl_arrayref((unsafe::Array*) v, i);
         else
-            out = jluna::safe_call(getindex, v, box(i + 1));
+            out = jluna::safe_call(getindex, v, box<size_t>(i + 1));
 
         return Proxy(out, _content, jl_box_uint64(i+1));
     }
