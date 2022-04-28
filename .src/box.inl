@@ -177,7 +177,7 @@ namespace jluna
             std::is_same_v<T, std::unordered_map<Key_t, Value_t>> or
             std::is_same_v<T, std::map<Key_t, Value_t>>,
             bool>>
-    unsafe::Value* box(T value)
+    unsafe::Value* box(const T& value)
     {
         static auto* new_dict = unsafe::get_function("jluna"_sym, "new_dict"_sym);
         static auto* setindex = unsafe::get_function(jl_base_module, "setindex!"_sym);
@@ -210,14 +210,14 @@ namespace jluna
     }
 
     template<typename T, typename T1, typename T2, std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool>>
-    unsafe::Value* box(T value)
+    unsafe::Value* box(const T& value)
     {
         static auto* pair = unsafe::get_function(jl_base_module, "Pair"_sym);
         return unsafe::call(pair, box<T1>(value.first), box<T2>(value.second));
     }
 
     template<is_tuple T>
-    unsafe::Value* box(T value)
+    unsafe::Value* box(const T& value)
     {
         gc_pause;
 
@@ -239,43 +239,4 @@ namespace jluna
         gc_unpause;
         return out;
     }
-
-    /*
-
-    template<LambdaType<> T>
-    unsafe::Value* box(T lambda)
-    {
-        return register_unnamed_function<T>(lambda);
-    }
-
-    template<LambdaType<unsafe::Value*> T>
-    unsafe::Value* box(T lambda)
-    {
-        return register_unnamed_function<T>(lambda);
-    }
-
-    template<LambdaType<unsafe::Value*, unsafe::Value*> T>
-    unsafe::Value* box(T lambda)
-    {
-        return register_unnamed_function<T>(lambda);
-    }
-
-    template<LambdaType<unsafe::Value*, unsafe::Value*, unsafe::Value*> T>
-    unsafe::Value* box(T lambda)
-    {
-        return register_unnamed_function<T>(lambda);
-    }
-
-    template<LambdaType<unsafe::Value*, unsafe::Value*, unsafe::Value*, unsafe::Value*> T>
-    unsafe::Value* box(T lambda)
-    {
-        return register_unnamed_function<T>(lambda);
-    }
-
-    template<LambdaType<std::vector<unsafe::Value*>> T>
-    unsafe::Value* box(T lambda)
-    {
-        return register_unnamed_function<T>(lambda);
-    }
-     */
 }

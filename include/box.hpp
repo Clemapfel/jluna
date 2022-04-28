@@ -117,7 +117,7 @@ namespace jluna
         typename Key_t = typename T::key_type,
         typename Value_t = typename T::mapped_type,
         std::enable_if_t<std::is_same_v<T, std::multimap<Key_t, Value_t>>, bool> = true>
-    unsafe::Value* box(T value);
+    unsafe::Value* box(const T& value);
 
     /// @brief box std::unordered_map<T, U> to Dict{T, U}
     template<typename T,
@@ -126,7 +126,7 @@ namespace jluna
         std::enable_if_t<
             std::is_same_v<T, std::unordered_map<Key_t, Value_t>> or
             std::is_same_v<T, std::map<Key_t, Value_t>>, bool> = true>
-    unsafe::Value* box(T value);
+    unsafe::Value* box(const T& value);
 
     /// @brief box std::set<T> to Set{T}
     template<typename T,
@@ -139,13 +139,13 @@ namespace jluna
         typename T1 = typename T::first_type,
         typename T2 = typename T::second_type,
         std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool> = true>
-    unsafe::Value* box(T value);
+    unsafe::Value* box(const T& value);
 
     /// @brief box std::tuple<Ts...> to Tuple{Ts...}
     template<is_tuple T>
-    unsafe::Value* box(T value);
+    unsafe::Value* box(const T& value);
 
-    /// @brief box jluna::Symbol to Symbol
+    /// @brief box jluna::Proxy to Value
     class Proxy;
     template<is<Proxy> T>
     unsafe::Value* box(T);
@@ -153,7 +153,7 @@ namespace jluna
     /// @brief box jluna::Symbol to Symbol
     class Symbol;
     template<is<Symbol> T>
-    unsafe::Value* box(T value);
+    unsafe::Value* box(T);
 
     /// @brief box jluna::Module to Module
     class Module;
