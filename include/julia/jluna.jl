@@ -355,10 +355,17 @@ module jluna
     end
 
     """
+    `forward_as_pointer(t::Type, ::Ptr{Cvoid}) -> Ptr{t}`
+    """
+    function forward_as_pointer(type::Type, ptr::Ptr{Cvoid}) ::Ptr{type}
+        return Ptr{type}(ptr)
+    end
+
+    """
     `new_lock() -> Base.ReentrantLock`
     """
     function new_lock()
-        return Base.ReentrantLock();
+        return Base.ReentrantLock()
     end
 
     module gc_sentinel
@@ -690,6 +697,10 @@ module jluna
 
         #const _c_adapter_path = "<call jluna::initialize to initialize this field>";
 
+        function verify_library() ::Bool
+            return ccall((:verify, _c_adapter_path), Bool, ());
+        end
+
         """
         object that is callable like a function, but executes C++-side code
         """
@@ -750,7 +761,7 @@ module jluna
         end
 
         """
-        `to_pointer(::Any) -> Ptr{Cvoid}`
+        `to_pointer(::Any) -> Ptr{Any}`
 
         get pointer to any object (including immutable ones)
         """
@@ -759,7 +770,7 @@ module jluna
         end
 
         """
-        `from_pointer(::Ptr{Cvoid}) -> Any`
+        `from_pointer(::Ptr{Any}) -> Any`
 
         wrap unsafe_pointer_to_objref
         """
