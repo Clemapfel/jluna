@@ -124,6 +124,12 @@ namespace jluna
             static inline const std::string type_name = "Type";
         };
 
+        template<>
+        struct as_julia_type_aux<jl_array_t*>
+        {
+            static inline const std::string type_name = "Array";
+        };
+
         template<typename Value_t>
         struct as_julia_type_aux<std::complex<Value_t>>
         {
@@ -167,7 +173,7 @@ namespace jluna
         template<typename... Ts>
         struct as_julia_type_aux<std::tuple<Ts...>>
         {
-            static inline const std::string type_name = []() {
+            static inline const std::string type_name = []() -> std::string {
 
                 std::stringstream str;
                 str << "Tuple{";

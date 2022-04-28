@@ -53,4 +53,10 @@ namespace jluna
         static auto* jl_println = unsafe::get_function(jl_base_module, "println"_sym);
         safe_call(jl_println, in...);
     }
+
+    inline unsafe::Value* as_julia_pointer(unsafe::Value* in)
+    {
+        static auto* forward_as_pointer = unsafe::get_function("jluna"_sym, "forward_as_pointer"_sym);
+        return safe_call(forward_as_pointer, jl_typeof(in), jl_box_voidpointer((void*) in));
+    }
 }

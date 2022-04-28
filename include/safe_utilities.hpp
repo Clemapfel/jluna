@@ -44,6 +44,12 @@ namespace jluna
     /// @returns proxy to result, if any
     unsafe::Value* safe_eval_file(const std::string& path, unsafe::Module* module = jl_main_module);
 
+    /// @brief forward value as Ptr{T}
+    /// @tparam any type castable to unsafe::Value*
+    /// @param value_pointer
+    /// @returns Julia-side pointer object
+    unsafe::Value* as_julia_pointer(unsafe::Value*);
+
     /// @brief call julia-side println on values
     /// @param values
     template<is_julia_value_pointer... Ts>
