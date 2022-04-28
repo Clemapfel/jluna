@@ -1,19 +1,23 @@
-# Creating a Project with jluna
+# Installation & Troubleshooting
 
-The following is a step-by-step guide on how to install jluna, and how to create your own C++ application using jluna from scratch.
+The following is a step-by-step guide on how to install jluna and link it to your application. The troubleshooting section addresses the most commorn errors experienced during installation.
 
 ### Table of Contents
 1. [Installing jluna](#installing-jluna)<br>
-   1.1 [Cloning from Git](#cloning-from-git)<br>
-   1.2 [Configuring CMake](#configure-cmake)<br>
-   1.3 [make install](#make-install)<br>
+    1.1 [Cloning from Git](#cloning-from-git)<br>
+    1.2 [Configuring CMake](#configure-cmake)<br>
+    1.3 [make install & test](#make-install--test)<br>
+    1.4 [Linking](#linking)<br>
+    1.5 [Example: Hello World](#example-hello-world)<br>
 2. [Troubleshooting](#troubleshooting)<br>
     2.1 [Permission Denied](#permission-denied)<br>
     2.2 [Unable to Detect Julia Executable](#unable-to-detect-the-julia-executable)<br>
-    2.3 [Found Unsuitable Version](#could-not-find-julia-found-unsuitable-version)<br>
+    2.3 [Found Unsuitable Version](#found-unsuitable-version)<br>
     2.4 [Could NOT find Julia: Missing X](#could-not-find-julia-missing-x)<br>
     2.5 [Could not find `julia.h` / `jluna.hpp`](#cannot-find-juliah--jlunahpp)<br>
-    2.6 [Could not find libjluna_c_adapter](#when-trying-to-initialize-jlunacppcall-cannot-find-libjluna_c_adapter)<br>
+    2.6 [Could not find libjluna_c_adapter](#cannot-find-libjluna_c_adapter)<br>
+    2.7 [error: `concept` does not name a type](#error-concept-does-not-name-a-type)<br>
+    2.8 [Segmentation fault in expression starting at none:0](#segmentation-fault-in-expression-starting-at-none0)<br>
    
 ## Installing jluna
 
@@ -46,7 +50,7 @@ Where `<compiler>` is one of:
 + `g++-11`
 + `clang++-12`
 
-And `<path>` is the desired install path, usually `/usr/local` on unix, `C:/Program Files/jluna` on windows. Keep track of this path, as you may need it later.
+and `<path>` is the desired install path, usually `/usr/local` on unix, `C:/Program Files/jluna` on Windows. Keep track of this path, as you may need it later.
 
 > Window supports is experimental. This means using MSVC may work, however this is currently untested. The [cpp compiler support]() page seems to imply that MSVC 19.30 or newer is required to compile jluna.
 
@@ -163,7 +167,7 @@ To learn how to use more of jlunas features, please consult the [manual](./manua
 
 ### Permission Denied
 
-During `make install`, or during execution of the bash script, your OS may notify you that it was unable to write to a folder due to missing permissions. To fix this, either run `make install` as `sudo` (or as administrator on windows), or specify a different folder using `-DCMAKE_INSTALL_PREFIX` for which jluna or cmake does have write/read permission.
+During `make install`, or during execution of the bash script, your OS may notify you that it was unable to write to a folder due to missing permissions. To fix this, either run `make install` as `sudo` (or as administrator on Windows), or specify a different folder using `-DCMAKE_INSTALL_PREFIX` for which jluna or cmake does have write/read permission.
 
 ### Unable to detect the Julia executable
 
@@ -219,7 +223,7 @@ Where X can be any of :
 + `JULIA_BINDIR` 
 + `JULIA_INCLUDE_DIR`
 
-This means that either `JULIA_BINDIR` was not set correctly, or the directory it is pointing to is not the julia binary directory. Verify that the value of `JULIA_BINDIR` starts at root (`/` on unix and `C:/` on windows), ends in `/bin`, and that your julia image folder is uncompressed. 
+This means that either `JULIA_BINDIR` was not set correctly, or the directory it is pointing to is not the julia binary directory. Verify that the value of `JULIA_BINDIR` starts at root (`/` on unix and `C:/` on Windows), ends in `/bin`, and that your julia image folder is uncompressed. 
 
 Make sure the folder `JULIA_BINDIR` points to, has the following layout:
 
@@ -273,7 +277,7 @@ target_include_directories(<your target> PRIVATE
 Where 
 
 + `<your target>` is the build target, a library or executable
-+ `<path to jluna>` is the install path of the jluna shared libary, as specified via `CMAKE_INSTALL_PREFIX` during [configuration](#configure-cmake)
++ `<path to jluna>` is the install path of the jluna shared library, as specified via `CMAKE_INSTALL_PREFIX` during [configuration](#configure-cmake)
 + `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
 
 See [here](https://cmake.org/cmake/help/latest/command/target_include_directories.html) for more information.
@@ -307,7 +311,7 @@ To fix this, recompile jluna, as detailed [above](#make-install).
 
 The C-adapter library is always installed into the directory specified by `CMAKE_INSTALL_PREFIX`, regardless of cmake presets used. Be aware of this.
 
-> **HACK**: Some IDEs and modern versions of cmake may override `CMAKE_INSTALL_PREFIX` between the time of configuration and build. As a hacky fix (March, 2022), you can override the C-adapter shared library location manually, **before calling `jluna::initialize`**, using `jluna::set_c_adapter_path`:
+> **HACK**: Some IDEs and modern versions of cmake may override `CMAKE_INSTALL_PREFIX` between the time of configuration and build. As a hacky fix (March 2022), you can override the C-adapter shared library location manually, **before calling `jluna::initialize`**, using `jluna::set_c_adapter_path`:
 > ```cpp
 > int main()
 > {
@@ -350,7 +354,7 @@ Allocations: 1619712 (Pool: 1618782; Big: 930); GC: 1
 Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)
 ``` 
 
-Where the above is the entirety of the console output. This error means that you tried to access a jluna or Julia C-API feature from inside a C-side thread, that was not master (the thread `main` is executed in). Unrelated to jluna, the C-API disallows this. It will always trigger a crash when accessed concurrently. Please read the [multi-threading section of the manual](./manual.md#multi-threading) for more information.
+Where the above is the entirety of the console output. This error means that you tried to access jluna or the Julia C-API from inside a C-side thread that was not master (the thread `main` is executed in). Unrelated to jluna, the C-API disallows this. It will always trigger a crash when accessed concurrently. Please read the [multi-threading section of the manual](./manual.md#multi-threading) for more information.
 
 ---
 

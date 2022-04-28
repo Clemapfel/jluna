@@ -19,15 +19,9 @@ struct NonJuliaType
 };
 set_usertype_enabled(NonJuliaType);
 
-
 int main()
 {
-    auto t = std::thread([](){
-        initialize(1);
-    });
-
-    t.join();
-
+    initialize();
     Test::initialize();
 
     Test::test("c_adapter found", [](){
