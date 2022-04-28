@@ -167,7 +167,7 @@ To learn how to use more of jlunas features, please consult the [manual](./manua
 
 ### Permission Denied
 
-During `make install`, or during execution of the bash script, your OS may notify you that it was unable to write to a folder due to missing permissions. To fix this, either run `make install` as `sudo` (or as administrator on Windows), or specify a different folder using `-DCMAKE_INSTALL_PREFIX` for which jluna or cmake does have write/read permission.
+During `make install`, your OS may notify you that it was unable to write to a folder due to missing permissions. To fix this, either run `make install` as `sudo` (or as administrator on Windows), or specify a different folder (using `-DCMAKE_INSTALL_PREFIX` )for which jluna or cmake does have write/read permission.
 
 ### Unable to detect the Julia executable
 
@@ -178,7 +178,7 @@ When calling:
 cmake .. #-DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
 ```
 
-Where the commented out arguments are set as detailed in the [section on configuring cmake](#configure-cmake).
+(Where the commented out arguments are set as detailed in the [section on configuring cmake](#configure-cmake).)
 
 You may encounter the following error:
 
@@ -280,7 +280,7 @@ Where
 + `<path to jluna>` is the install path of the jluna shared library, as specified via `CMAKE_INSTALL_PREFIX` during [configuration](#configure-cmake)
 + `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
 
-See [here](https://cmake.org/cmake/help/latest/command/target_include_directories.html) for more information.
+See the [official CMake documentation](https://cmake.org/cmake/help/latest/command/target_include_directories.html) for more information.
 
 ### Cannot find libjluna_c_adapter
 
@@ -331,13 +331,13 @@ When compiling a target that includes jluna, the following compiler error may oc
       |     ^~~~~~~
 ```
 
-This indicates that you have not configured your compiler to utilize C++20, or your compilers is out of date. After verifying you are using `g++-10`, `g++-11`, `clang++-12` or `MSVC 19.32`, make sure the following line is present in your `CMakeLists.txt`:
+This indicates that you have not configured your compiler to utilize C++20, or your compiler is out of date. After verifying you are using `g++-10`, `g++-11`, `clang++-12` or `MSVC 19.32`, make sure the following line is present in your `CMakeLists.txt`:
 
 ```cmake
 target_compile_features(<your target> PRIVATE cxx_std_20)
 ```
 
-Where `<your target>` is the name of your compile target, such as an executable or library. See [here](https://cmake.org/cmake/help/latest/command/target_compile_features.html), for more information.
+Where `<your target>` is the name of your compile target, such as an executable or library. See the [official cmake documentation](https://cmake.org/cmake/help/latest/command/target_compile_features.html), for more information.
 
 
 ### Segmentation fault in expression starting at none:0

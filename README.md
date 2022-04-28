@@ -259,7 +259,7 @@ C.
 ---
 
 ## Credits
-jluna was designed and implemented by [Clem Cords](https://github.com/Clemapfel).
+jluna was designed, written and documented by [Clem Cords](https://github.com/Clemapfel).
 
 #### March 2022:<br>
 + cmake improvements by [friendlyanon](https://github.com/friendlyanon)
