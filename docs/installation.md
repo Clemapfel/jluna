@@ -1,6 +1,6 @@
 # Creating a Project with jluna
 
-The following is a step-by-step guide on how to install jluna, and how to create our own C++ application using jluna from scratch.
+The following is a step-by-step guide on how to install jluna, and how to create your own C++ application using jluna from scratch.
 
 ### Table of Contents
 1. [Installing jluna](#installing-jluna)<br>
@@ -21,7 +21,7 @@ This section will guide users on how to install jluna, either globally or in a f
 
 ### Cloning from Git
 
-We first need to download jluna, to do this we navigate into any public folder (henceforth assumed to be `Desktop`) and execute:
+First, jluna needs to be downloaded. To do this, navigate into any public folder (henceforth assumed to be `Desktop`) and execute:
 
 ```bash
 git clone https://github.com/clemapfel/jluna.git
@@ -34,7 +34,7 @@ This will have cloned the jluna git repository into the folder `Desktop/jluna`.
 
 ### Configure CMake
 
-We now call:
+Before building, cmake needs to be configured. You can do so using:
 
 ```bash
 # in Desktop/jluna/build
@@ -46,21 +46,15 @@ Where `<compiler>` is one of:
 + `g++-11`
 + `clang++-12`
 
-And `<path>` is the desired install path. `-DCMAKE_INSTALL_PREFIX=<path>` is optional, if it is specified manually (not recommended), keep note of this path as we will need it later.
+And `<path>` is the desired install path, usually `/usr/local` on unix, `C:/Program Files/jluna` on windows. Keep track of this path, as you may need it later.
 
 > Window supports is experimental. This means using MSVC may work, however this is currently untested. The [cpp compiler support]() page seems to imply that MSVC 19.30 or newer is required to compile jluna.
 
 Some errors may appear here, if this is the case, head to [troubleshooting](#troubleshooting).
 
-If the command does not recognize the compiler, even though you are sure it is installed, it may be necessary to specify the full path to the compiler executable instead, like so:
+### Make Install & Test
 
-```
--DCMAKE_CXX_COMPILER=/usr/bin/g++-10
-```
-
-### Make Install
-
-Having successfully configured cmake, we now call:
+Having successfully configured cmake, call:
 
 ```bash
 # in Desktop/jluna/build
@@ -69,14 +63,32 @@ make install
 
 Which will create two shared libraries `libjluna.*`, and `libjluna_c_adapter.*`, where `*` is the platform-dependent library suffix.
 
-Now that jluna is installed on our system, we can access it using:
+You can then verify everything is working correctly by calling
+
+```bash
+ctest --verbose
+```
+
+This will print a number of lines to the console. Make sure that at the very end, it says:
+
+```
+1: 
+1: Number of tests unsuccessful: 0
+1/1 Test #1: jluna_test .......................   Passed    4.65 sec
+
+100% tests passed, 0 tests failed out of 1
+```
+
+### Linking
+
+Now that jluna is installed on your system, your application can access it using:
 
 ```cmake
 # in users own CMakeLists.txt
 find_library(jluna REQUIRED)
 ```
 
-If the above fails, a custom install directory may have been specified. We can make cmake aware of this:
+If the above fails, you may need to manually specify, which directory jluna was installed into, using:
 
 ```cmake
 # in users own CMakeLists.txt
@@ -88,29 +100,31 @@ find_library(jluna REQUIRED
 
 Where `<install path>` is the path specified as `-DCMAKE_INSTALL_PREFIX` during configuration before.
 
-Note that `jlunas` install rules also export is as a package, so it will be available through `find_package` on systems where it was installed globally like so:
+Note that `jlunas` install rules also export is as a package, so it will be available through `find_package` on systems where it was installed globally:
 
 ```cmake
 find_package(jluna REQUIRED)
 ```
 
-After `find_library` or `find_package`, we link our own library like so:
+After `find_library` or `find_package`, link your own library or executable to jluna like so:
 
 ```cmake
-# in users own CMakeLists.txt
-target_link_libraries(my_library PRIVATE 
+# in your own CMakeLists.txt
+target_link_libraries(<target> PRIVATE 
     "${jluna}" 
     "${<julia package>}"
 )
-target_include_directories(my_library PRIVATE 
+target_include_directories(<target> PRIVATE 
     "${<jluna include directory>}" 
     "${<julia include directory>}"
 )
+target_compile_features(<target> PRIVATE cxx_std_20)
 ```
 
 Where 
++ `<target>` is the identifier of your library / executable
 + `<jluna include directory>` is the folder containing `jluna.hpp`
-+ `<julia package>` is the library/package containing the julia C-API 
++ `<julia package>` is the library/package containing the julia C-API
 + `<julia include directory>` is the folder containing `julia.h`.
 
 The shared julia library location is usually 
@@ -122,7 +136,7 @@ while the julia include directory is usually
 
 If building your library triggers linker or compiler errors, head to [troubleshooting](#troubleshooting).
 
-### Example: Hellow World
+### Example: Hello World
 
 A basic example main could be the following:
 
@@ -157,8 +171,10 @@ When calling:
 
 ```bash
 # in ~/Desktop/jluna/build
-cmake .. -DCMAKE_COMPILER=g++-10 # or other compiler
+cmake .. #-DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
 ```
+
+Where the commented out arguments are set as detailed in the [section on configuring cmake](#configure-cmake).
 
 You may encounter the following error:
 
@@ -168,19 +184,20 @@ CMake Error at cmake/find/FindJulia.cmake:5 (message):
   correctly.
 ```
 
-This error appears, because jluna was unable to locate the julia package on your system. To make jluna aware of the location manually, we can pass the following variable to the cmake command:
+This error appears, because jluna was unable to locate the julia package on your system. To make jluna aware of the location manually, you can pass the following variable to the cmake command:
 
 ```bash
-cmake .. -DJULIA_BINDIR=path/to/your/julia/bin -DCMAKE_COMPILER=g++-10
+cmake .. -DJULIA_BINDIR=path/to/your/julia/bin #-DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
 ```
 
 Where `path/to/your/julia/bin` is the path of the binary directory of your julia image. If you are unsure of its location, you can execute
 
 ```julia
+# in julia
 println(Sys.BINDIR)
 ```
 
-From inside the julia REPL.
+From inside the julia REPL, which will print the correct directory to the console.
 
 ### Found unsuitable version
 
@@ -221,7 +238,9 @@ julia*/
     (...)
 ```
 
-Where `*` may be a version suffix, such as `julia-1.7.2`.
+Where 
++ `*` may be a version suffix, such as `julia-1.7.2`
++ `libjulia.so` may have a different file extension on windows
 
 ### Cannot find <julia.h> / <jluna.hpp>
 
@@ -254,7 +273,7 @@ target_include_directories(<your target> PRIVATE
 Where 
 
 + `<your target>` is the build target, a library or executable
-+ `<path to jluna>` is the install path of the jluna shared libary, usually equal to `CMAKE_INSTALL_PREFIX`
++ `<path to jluna>` is the install path of the jluna shared libary, as specified via `CMAKE_INSTALL_PREFIX` during [configuration](#configure-cmake)
 + `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
 
 See [here](https://cmake.org/cmake/help/latest/command/target_include_directories.html) for more information.

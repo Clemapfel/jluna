@@ -167,13 +167,13 @@ std::cout << std::endl;
 ### Features
 + expressive, generic syntax
 + create / call / mutate Julia-side values from C++
-+ thread-safe, provides a custom thread pool that, [unlike the C-API](./docs/manual.md/#multi-threading), allows safe interfacing with Julia
++ thread-safe, provides a custom thread pool that, [unlike the C-API](./docs/manual.md/#multi-threading), allows safe concurrent interfacing with Julia
 + `std::` types & usertypes can be moved freely between Julia and C++
 + call arbitrary C++ functions from Julia
 + multi-dimensional, iterable, low-overhead array interface
-+ provides < 5% overhead functions compared to the C-API
++ provides < 5% overhead functions for performance-critical environments
 + full exception forwarding and verbose error messages
-+ extensive manual, installation guide, all written by a human
++ extensive manual, installation guide, written by a human
 + and more!
 
 ### Planned (but not yet implemented):
@@ -186,7 +186,7 @@ jluna is feature complete as of 0.9.0. The library will continue to be supported
 
 A verbose, step-by-step introduction and manual is available [here](./docs/manual.md). This manual is written for people less familiar with C++ and/or Julia, providing non-jluna related guidance where necessary.
 
-Furthermore, all user-facing code has in-line documentation, available through most IDEs (or the Julia `help?` command). 
+Furthermore, all user-facing code has in-line documentation, available through most IDEs. 
 
 Advanced users are encouraged to check the headers (available in `jluna/include/`) for implementation details. They are formatted specifically to be easily understood by 3rd parties. 
 
@@ -207,37 +207,43 @@ Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-1
 
 ## [Installation & Troubleshooting](./docs/installation.md)
 
+> A step-by-step guide is available [here](./docs/installation.md)
 
-> A step-by-step guide intended for users unfamiliar with cmake is available [here](./docs/installation.md).
-
-Execute, in any public directory
+Execute, in your bash console, in any public directory:
 
 ```bash
 git clone https://github.com/Clemapfel/jluna
 cd jluna
 mkdir build
 cd build
-cmake .. -DCMAKE_CXX_COMPILER=<C++ Compiler>
+export 
+cmake .. -DJULIA_BINDIR=$(julia -e "println(Sys.BINDIR)") -DCMAKE_CXX_COMPILER=<C++ Compiler> -DCMAKE_INSTALL_PREFIX=<install directory>
 make install
+ctest --verbose
 ```
 
 Where 
 + `<C++ Compiler>` is one of `g++-10`, `g++-11`, `clang++-12`
++ `<install directory>` is the desired install directory, usually `/usr/local` on unix, `C:/Program Files/jluna` on windows
 
 Afterwards, you can make jluna available to your library using 
 
 ```cmake
 # inside your own CMakeLists.txt
-find_library(jluna REQUIRED)
-target_link_libraries(<Your Library> PRIVATE
+find_library(jluna REQUIRED 
+    NAMES jluna
+    PATHS <install directory>
+)
+target_link_libraries(<your library> PRIVATE
     "${jluna}" 
-    "${<Julia>}")
+    "${<julia>}")
 ```
 Where 
-+ `<Julia>` is the Julia Library (usually available in `"${JULIA_BINDIR}/../lib"`)
-+ `<Your Library>` is the name of your library or executable
++ `<install directory>` is the directory specified via `-DCMAKE_INSTALL_PREFIX=` before
++ `<julia>` is the Julia shared library (usually available in `"${JULIA_BINDIR}/../lib"`)
++ `<your library>` is the name of your library or executable
 
-If errors appear at any point, head to [troubleshooting](./docs/installation.md#troubleshooting).
+If any step of this does not work for you, please follow the [installation guide](./docs/installation.md) instead.
 
 ---
 
