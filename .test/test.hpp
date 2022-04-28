@@ -81,7 +81,7 @@ namespace jluna::detail
             _failed = std::map<std::string, std::string>();
         }
 
-        static void conclude()
+        static bool conclude()
         {
             std::cout << std::endl;
             std::cout << "Number of tests unsuccessful: " << _failed.size() << std::endl;
@@ -93,6 +93,8 @@ namespace jluna::detail
                 std::cout << "| " << pair.second << "\n";
                 std::cout << "|_________________________________\n\n" << std::endl;
             }
+
+            return _failed.size() == 0;
         }
 
         static void assert_that(bool b)
