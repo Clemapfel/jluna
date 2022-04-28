@@ -22,7 +22,12 @@ set_usertype_enabled(NonJuliaType);
 
 int main()
 {
-    initialize(1);
+    auto t = std::thread([](){
+        initialize(1);
+    });
+
+    t.join();
+
     Test::initialize();
 
     Test::test("c_adapter found", [](){

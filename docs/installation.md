@@ -335,6 +335,23 @@ target_compile_features(<your target> PRIVATE cxx_std_20)
 
 Where `<your target>` is the name of your compile target, such as an executable or library. See [here](https://cmake.org/cmake/help/latest/command/target_compile_features.html), for more information.
 
+
+### Segmentation fault in expression starting at none:0
+
+When calling `jluna::initialize`, or any other jluna function, the following error may occur:
+
+```cpp
+[JULIA][LOG] initialization successful (1 thread(s)).
+
+signal (11): Segmentation fault
+in expression starting at none:0
+Allocations: 1619712 (Pool: 1618782; Big: 930); GC: 1
+
+Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)
+``` 
+
+Where the above is the entirety of the console output. This error means that you tried to access a jluna or Julia C-API feature from inside a C-side thread, that was not master (the thread `main` is executed in). Unrelated to jluna, the C-API disallows this. It will always trigger a crash when accessed concurrently. Please read the [multi-threading section of the manual](./manual.md#multi-threading) for more information.
+
 ---
 
 If your particular problem was not addressed in this section, feel free to [open an issue on GitHub](https://github.com/Clemapfel/jluna/issues).
