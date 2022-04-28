@@ -22,7 +22,7 @@ Options
 ``BUILD_TESTING``
     build jluna_test, as CTest. On by default
 ``BUILD_BENCHMARK``
-    build jluna_benchmark. On by default
+    build jluna_benchmark. Off by default
 
 #]=======================================================================]
 
@@ -179,8 +179,8 @@ endif()
 
 ### Declare Benchmark ###
 
-option(BUILD_BENCHMARK "Enable jluna_benchmark" ON)
-if (BUILD_BENCHMARK AND NOT WIN32)
+option(BUILD_BENCHMARK "Enable jluna_benchmark" OFF)
+if (BUILD_BENCHMARK) # AND NOT WIN32)
     add_executable(
         jluna_benchmark
         .benchmark/main.cpp
