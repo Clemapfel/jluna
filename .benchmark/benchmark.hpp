@@ -79,7 +79,7 @@ namespace jluna
             if (count % 2 == 0)
                 count += 1;
 
-            State::collect_garbage();
+            collect_garbage();
 
             std::cout << "[C++][LOG] Running \"" << name << "\"" << std::endl;
             std::vector<Duration> runs;
@@ -94,6 +94,7 @@ namespace jluna
 
             try
             {
+                lambda(); // for potential static allocation
                 for (; n < count; ++n)
                 {
                     before = Benchmark::_clock.now();
@@ -130,7 +131,7 @@ namespace jluna
                 if (a.count() == 0)
                     return 0;
 
-                return (a < b ? 1 : -1) * (abs(a - b) / a); //(a < b ? (b - a) / (a + b) : -1 *((a - b) / a));
+                return (a < b ? 1 : -1) * (abs(a - b) / a);
             };
             res._overhead = overhead(_base._median, res._median);
             if (res._overhead != 0)

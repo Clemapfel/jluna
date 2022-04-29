@@ -6,3 +6,7 @@
 /.vscode
 /.benchmark/results
 /.idea/
+/jluna_c_adapter.lib/
+/jluna_c_adapter.so/
+/libjluna.so
+/libjluna_c_adapter.so

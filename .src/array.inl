@@ -5,44 +5,93 @@
 
 namespace jluna
 {
+    /// @brief box array
+    /// @param array
+    /// @returns pointer to newly allocated julia-side value
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        size_t Rank = T::rank,
+        std::enable_if_t<std::is_same_v<T, Array<Value_t, Rank>>, bool> = true>
+    unsafe::Value* box(T value)
+    {
+        return value.operator unsafe::Value*();
+    }
+
+    /// @brief box vector
+    /// @param vector
+    /// @returns pointer to newly allocated julia-side value
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        std::enable_if_t<std::is_same_v<T, Vector<Value_t>>, bool> = true>
+    unsafe::Value* box(T value)
+    {
+        return value.operator unsafe::Value*();
+    }
+
+    /// @brief unbox to array
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        size_t Rank = T::rank,
+        std::enable_if_t<std::is_same_v<T, Array<Value_t, Rank>>, bool> = true>
+    T unbox(unsafe::Value* in)
+    {
+        return Array<Value_t, Rank>(in);
+    }
+
+    /// @brief unbox to vector
+    template<typename T,
+        typename Value_t = typename T::value_type,
+        std::enable_if_t<std::is_same_v<T, Vector<Value_t>>, bool> = true>
+    T unbox(unsafe::Value* in)
+    {
+        return Vector<Value_t>(in);
+    }
+
     namespace detail
     {
         template<typename Value_t, size_t N>
-        struct to_julia_type_aux<Array<Value_t, N>>
+        struct as_julia_type_aux<Array<Value_t, N>>
         {
-            static inline const std::string type_name = "Array{" + to_julia_type_aux<Value_t>::type_name + ", " + std::to_string(N) + "}";
+            static inline const std::string type_name = "Array{" + as_julia_type_aux<Value_t>::type_name + ", " + std::to_string(N) + "}";
         };
     }
 
-    template<Boxable V, size_t R>
-    Array<V, R>::Array(Any* value, jl_sym_t* symbol)
+    template<is_boxable V, size_t R>
+    Array<V, R>::Array(unsafe::Value* value, jl_sym_t* symbol)
         : Proxy(value, symbol)
     {
-        static jl_datatype_t* array_t = (jl_datatype_t*) jl_eval_string("return Base.Array");
-        jl_assert_type(value, array_t);
+        detail::assert_type((unsafe::DataType*) jl_typeof(value), (unsafe::DataType*) jl_array_type);
+        detail::assert_type((unsafe::DataType*) detail::array_value_type((unsafe::Array*) value), (unsafe::DataType*) as_julia_type<V>::type());
     }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     Array<V, R>::Array(Proxy* proxy)
         : Proxy(*proxy)
     {
-        static jl_datatype_t* array_t = (jl_datatype_t*) jl_eval_string("return Base.Array");
-        jl_assert_type(proxy->operator Any*(), array_t);
+        auto* value = proxy->operator unsafe::Value*();
+        detail::assert_type((unsafe::DataType*) jl_typeof(value), (unsafe::DataType*) jl_array_type);
+        detail::assert_type((unsafe::DataType*) detail::array_value_type((unsafe::Array*) value), (unsafe::DataType*) as_julia_type<V>::type());
     }
 
-    template<Boxable T, size_t Rank>
+    template<is_boxable V, size_t R>
+    template<typename... Dims>
+    Array<V, R>::Array(V* data, Dims... size_per_dimension)
+        : Proxy((unsafe::Value*) unsafe::new_array_from_data((unsafe::Value*) as_julia_type<V>::type(),(void*) data, size_per_dimension...))
+    {}
+
+    template<is_boxable T, size_t Rank>
     size_t Array<T, Rank>::get_dimension(int index) const
     {
-        static jl_function_t* size = jl_get_function(jl_base_module, "size");
-
-        jl_gc_pause;
-        auto out = jl_unbox_uint64(jl_call2(size, _content->value(), jl_box_int32(index + 1)));
-        jl_gc_unpause;
-
-        return out;
+        return jl_array_dim(this->operator unsafe::Array*(), index);
     }
 
-    template<Boxable T, size_t Rank>
+    template<is_boxable T, size_t Rank>
+    Array<T, Rank>::operator unsafe::Array*() const
+    {
+        return (unsafe::Array*) _content->value();
+    }
+
+    template<is_boxable T, size_t Rank>
     void Array<T, Rank>::throw_if_index_out_of_range(int index, size_t dimension) const
     {
         if (index < 0)
@@ -73,9 +122,9 @@ namespace jluna
             str << "0-based index " << index << " out of range for array of length " << dim << " along " << dim_id << std::endl;
             throw std::out_of_range(str.str().c_str());
         }
-    } //°
+    }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     auto Array<V, R>::operator[](size_t i)
     {
         if (i >= get_n_elements())
@@ -88,49 +137,38 @@ namespace jluna
         return Iterator(i, this);
     }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     Vector<V> Array<V, R>::operator[](const std::vector<size_t>& range) const
     {
-        static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        static jl_function_t* vector = jl_get_function(jl_base_module, "Vector");
-
-        jl_gc_pause;
-
-        jl_array_t* out = (jl_array_t*) jl_call2(vector, jl_undef_initializer(), jl_box_uint64(range.size()));
+        gc_pause;
+        auto* out = unsafe::new_array((unsafe::Value*) as_julia_type<V>::type(), range.size());
+        auto* me = operator jl_array_t*();
 
         for (size_t i = 0; i < range.size(); ++i)
-        {
-            if (range.at(i)+1 > get_n_elements())
-            {
-                std::stringstream str;
-                str << "[C++][EXCEPTION] 0-based index " << range.at(i) << " out of range for array of length " << get_n_elements() << std::endl;
-                throw std::out_of_range(str.str());
-            }
+            jl_arrayset(out, jl_arrayref(me, range.at(i)), i);
 
-            jl_arrayset(out, jl_box_uint64(range.at(i)+1), i);
-        }
-
-        return Vector<V>(jl_call2(getindex, _content->value(), (Any*) out));
-
-        jl_gc_unpause;
+        gc_unpause;
+        return Vector<V>((unsafe::Value*) out);
     }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     Vector<V> Array<V, R>::operator[](const GeneratorExpression& gen) const
     {
-        std::vector<size_t> vec;
-        vec.reserve(gen.size());
-        for (auto it : gen)
-            vec.push_back(unbox<size_t>(it));
+        gc_pause;
+        auto res = Vector<V>();
+        res.reserve(gen.size());
 
-        return operator[](vec);
+        for (auto it : gen)
+            res.push_back(this->operator[](unbox<size_t>(it)));
+
+        gc_unpause;
+        return res;
     }
 
-    template<Boxable V, size_t R>
-    template<Boxable T>
+    template<is_boxable V, size_t R>
+    template<is_boxable T>
     Vector<V> Array<V, R>::operator[](std::initializer_list<T>&& list) const
     {
-        // cast
         std::vector<size_t> index;
         index.reserve(list.size());
         for (auto& e : list)
@@ -139,8 +177,8 @@ namespace jluna
         return operator[](index);
     }
 
-    template<Boxable V, size_t R>
-    template<Unboxable T>
+    template<is_boxable V, size_t R>
+    template<is_unboxable T>
     T Array<V, R>::operator[](size_t i) const
     {
         if (i >= get_n_elements())
@@ -153,8 +191,8 @@ namespace jluna
         return unbox<T>(jl_arrayref((jl_array_t*) _content->value(), i));
     }
 
-    template<Boxable V, size_t R>
-    template<Unboxable T, typename... Args, std::enable_if_t<sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
+    template<is_boxable V, size_t R>
+    template<is_unboxable T, typename... Args, std::enable_if_t<sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
     T Array<V, R>::at(Args... in) const
     {
         {
@@ -176,7 +214,7 @@ namespace jluna
         return operator[]<T>(index);
     }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     template<typename... Args, std::enable_if_t<sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
     auto Array<V, R>::at(Args... in)
     {
@@ -199,165 +237,173 @@ namespace jluna
         return operator[](index);
     }
 
-    template<Boxable V, size_t R>
-    template<Boxable T>
+    template<is_boxable V, size_t R>
+    template<is_boxable T>
     void Array<V, R>::set(size_t i, T value)
     {
         jl_arrayset((jl_array_t*) _content->value(), box<T>(value), i);
-    } //°
+    }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     auto Array<V, R>::front()
     {
         return operator[](0);
     }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     auto Array<V, R>::begin()
     {
         return Iterator(0, this);
     }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     auto Array<V, R>::begin() const
     {
         return ConstIterator(0, const_cast<Array<V, R>*>(this));
     }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     auto Array<V, R>::end()
     {
         return Iterator(get_n_elements(), this);
     }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     auto Array<V, R>::end() const
     {
         return ConstIterator(get_n_elements(), const_cast<Array<V, R>*>(this));
     }
 
-    template<Boxable V, size_t R>
-    template<Unboxable T>
+    template<is_boxable V, size_t R>
+    template<is_unboxable T>
     T Array<V, R>::front() const
     {
         return operator[](0);
     }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     auto Array<V, R>::back()
     {
         return operator[](get_n_elements() - 1);
     }
 
-    template<Boxable V, size_t R>
-    template<Unboxable T>
+    template<is_boxable V, size_t R>
+    template<is_unboxable T>
     T Array<V, R>::back() const
     {
         return operator[]<T>(get_n_elements() - 1);
-    } //°
+    }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
     size_t Array<V, R>::get_n_elements() const
     {
-        return reinterpret_cast<const jl_array_t*>(this->operator const Any*())->length;
-    } //°
+        return reinterpret_cast<const jl_array_t*>(this->operator const unsafe::Value*())->length;
+    }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
+    size_t Array<V, R>::size(size_t dimension_index) const
+    {
+        auto* as = reinterpret_cast<const jl_array_t*>(this->operator const unsafe::Value*());
+        return jl_array_dim(as, dimension_index);
+    }
+
+    template<is_boxable V, size_t R>
     bool Array<V, R>::empty() const
     {
-        return reinterpret_cast<const jl_array_t*>(this->operator const Any*())->length == 0;
-    } //°
+        return reinterpret_cast<const jl_array_t*>(this->operator const unsafe::Value*())->length == 0;
+    }
 
-    template<Boxable V, size_t R>
+    template<is_boxable V, size_t R>
+    void Array<V, R>::reserve(size_t n)
+    {
+        jl_array_sizehint(reinterpret_cast<jl_array_t*>(this->operator unsafe::Value*()), n);
+    }
+
+    template<is_boxable V, size_t R>
     void* Array<V, R>::data()
     {
-        return reinterpret_cast<jl_array_t*>(this->operator Any*())->data;
-    } //°
+        return (operator unsafe::Array*())->data;
+    }
 
     // ###
 
-    template<Boxable V>
+    template<is_boxable V>
     Vector<V>::Vector()
-        : Array<V, 1>(box<std::vector<V>>(std::vector<V>()), nullptr)
+        : Array<V, 1>((unsafe::Value*) unsafe::new_array((unsafe::Value*) as_julia_type<V>::type(), 0), nullptr)
     {}
 
-    template<Boxable V>
+    template<is_boxable V>
     Vector<V>::Vector(const std::vector<V>& vec)
-        : Array<V, 1>(box<std::vector<V>>(vec), nullptr)
+        : Array<V, 1>((unsafe::Value*) unsafe::new_array((unsafe::Value*) as_julia_type<V>::type(), vec.size()), nullptr)
+    {
+        for (size_t i = 0; i < vec.size(); ++i)
+            jl_arrayset(reinterpret_cast<jl_array_t*>(this->operator unsafe::Value*()), box(vec.at(i)), i);
+    }
+
+    template<is_boxable V>
+    Vector<V>::Vector(V* data, size_t size)
+        : Array<V, 1>(data, size)
     {}
 
-    template<Boxable V>
+    template<is_boxable V>
     Vector<V>::Vector(Proxy* owner)
         : Array<V, 1>(owner)
-    {
-        static jl_datatype_t* vector_t = (jl_datatype_t*) jl_eval_string("return Vector");
-        jl_assert_type(owner->operator Any*(), vector_t);
-    }
+    {}
 
-    template<Boxable V>
-    Vector<V>::Vector(jl_value_t* value, jl_sym_t* symbol)
+    template<is_boxable V>
+    Vector<V>::Vector(unsafe::Value* value, jl_sym_t* symbol)
         : Array<V, 1>(value, symbol)
-    {
-        static jl_datatype_t* vector_t = (jl_datatype_t*) jl_eval_string("return Vector");
-        jl_assert_type(value, vector_t);
-    }
+    {}
 
-    template<Boxable V>
+    template<is_boxable V>
     Vector<V>::Vector(const GeneratorExpression& gen)
-        : Vector([gen = std::ref(gen)]() -> std::vector<V> {
-
-            std::vector<V> vec;
-            vec.reserve(gen.get().size());
-            for (auto it : gen.get())
-                vec.push_back(unbox<V>(it));
-
-            return vec;
+        : Array<V, 1>([&]() -> unsafe::Value* {
+            static unsafe::Function* collect = unsafe::get_function(jl_base_module, "collect"_sym);
+            return unsafe::call(collect, gen.operator jl_value_t *());
         }())
     {}
 
-    template<Boxable V>
+    template<is_boxable V>
     void Vector<V>::insert(size_t pos, V value)
     {
-        static jl_value_t* insert = jl_get_function(jl_base_module, "insert!");
+        static unsafe::Value* insert = jl_get_function(jl_base_module, "insert!");
 
-        jl_gc_pause;
+        gc_pause;
         jl_call3(insert, _content->value(), jl_box_uint64(pos + 1), box(value));
-        jl_gc_unpause;
         forward_last_exception();
+        gc_unpause;
     }
 
-    template<Boxable V>
+    template<is_boxable V>
     void Vector<V>::erase(size_t pos)
     {
-        static jl_value_t* deleteat = jl_get_function(jl_base_module, "deleteat!");
+        static unsafe::Value* deleteat = jl_get_function(jl_base_module, "deleteat!");
 
-        jl_gc_pause;
+        gc_pause;
         jl_call2(deleteat, _content->value(), jl_box_uint64(pos + 1));
-        jl_gc_unpause;
         forward_last_exception();
+        gc_unpause;
     }
 
-    template<Boxable V>
-    template<Boxable T>
+    template<is_boxable V>
+    template<is_boxable T>
     void Vector<V>::push_front(T value)
     {
-        static jl_value_t* pushfirst = jl_get_function(jl_base_module, "pushfirst!");
-
-        jl_gc_pause;
-        jl_call2(pushfirst, _content->value(), box(value));
-        jl_gc_unpause;
-        forward_last_exception();
+        gc_pause;
+        auto* array = (jl_array_t*) _content->value();
+        jl_array_grow_beg(array, 1);
+        jl_arrayset((unsafe::Array*) _content->value(), box<V>(value), 0);
+        gc_unpause;
     }
 
-    template<Boxable V>
-    template<Boxable T>
+    template<is_boxable V>
+    template<is_boxable T>
     void Vector<V>::push_back(T value)
     {
-        static jl_value_t* push = jl_get_function(jl_base_module, "push!");
-
-        jl_gc_pause;
-        jl_call2(push, _content->value(), box(value));
-        jl_gc_unpause;
-        forward_last_exception();
+        gc_pause;
+        auto* array = (jl_array_t*) _content->value();
+        jl_array_grow_end(array, 1);
+        jl_arrayset((unsafe::Array*) _content->value(), box<V>(value), jl_array_len(array)-1);
+        gc_unpause;
     }
 }

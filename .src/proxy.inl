@@ -3,37 +3,39 @@
 // Created on 31.01.22 by clem (mail@clemens-cords.com)
 //
 
+#include <include/unsafe_utilities.hpp>
+
 namespace jluna
 {
     /// @brief unbox to proxy
-    template<Is<Proxy> T>
-    inline T unbox(Any* value)
+    template<is<Proxy> T>
+    inline T unbox(unsafe::Value* value)
     {
         return Proxy(value, nullptr);
     }
 
     /// @brief box jluna::Proxy to Base.Any
-    template<Is<Proxy> T>
-    inline Any* box(T value)
+    template<is<Proxy> T>
+    inline unsafe::Value* box(T value)
     {
-        return value.operator Any*();
+        return value.operator unsafe::Value*();
     }
 
     /// @brief type deduction
     template<>
-    struct detail::to_julia_type_aux<Proxy>
+    struct detail::as_julia_type_aux<Proxy>
     {
         static inline const std::string type_name = "Any";
     };
 
-    template<Unboxable T>
+    template<is_unboxable T>
     T Proxy::operator[](size_t i)
     {
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        return unbox<T>(jluna::safe_call(getindex, _content->value(), box(i + 1)));
+        return unbox<T>(jluna::safe_call(getindex, _content->value(), box<size_t>(i + 1)));
     }
 
-    template<Unboxable T, std::enable_if_t<not std::is_same_v<T, std::string>, bool>>
+    template<is_unboxable T, std::enable_if_t<not std::is_same_v<T, std::string>, bool>>
     Proxy::operator T() const
     {
         return unbox<T>(_content->value());
@@ -51,13 +53,15 @@ namespace jluna
         return T(this);
     }
 
-    template<Boxable T>
+    template<is_boxable T>
     Proxy & Proxy::operator=(T value)
     {
+        gc_pause;
         return this->operator=(box(value));
+        gc_unpause;
     }
 
-    template<Unboxable T>
+    template<is_unboxable T>
     T Proxy::operator[](const std::string& field)
     {
         return operator[](field.c_str());
@@ -70,35 +74,42 @@ namespace jluna
         return Proxy(
             _content.get()->get_field(symbol),
             _content,
-            (Any*) symbol
+            (unsafe::Value*) symbol
         );
     }
 
-    template<Unboxable T, typename U, std::enable_if_t<std::is_same_v<U, char>, Bool>>
+    template<is_unboxable T, typename U, std::enable_if_t<std::is_same_v<U, char>, Bool>>
     T Proxy::operator[](const U* field)
     {
         return unbox<T>(_content.get()->get_field(jl_symbol(field)));
     }
 
-    template<Boxable... Args_t>
-    Proxy Proxy::call(Args_t&&... args)
-    {
-        static jl_module_t* jluna_module = (jl_module_t*) jl_eval_string("return jluna");
-        static jl_function_t* invoke = jl_get_function(jluna_module, "invoke");
-
-        return Proxy(jluna::call(invoke, _content->value(), box(args)...), nullptr);
-    }
-
-    template<Boxable... Args_t>
+    template<is_boxable... Args_t>
     Proxy Proxy::safe_call(Args_t&&... args)
     {
-        static jl_module_t* jluna_module = (jl_module_t*) jl_eval_string("return jluna");
-        static jl_function_t* invoke = jl_get_function(jluna_module, "invoke");
+        static jl_function_t* invoke = unsafe::get_function("jluna"_sym, "invoke"_sym);
 
-        return Proxy(jluna::safe_call(invoke, _content->value(), box(args)...), nullptr);
+        gc_pause;
+        auto out = Proxy(jluna::safe_call(invoke, _content->value(), box(args)...), nullptr);
+        gc_unpause;
+        return out;
     }
 
-    template<Boxable... Args_t>
+    template<typename T, is_boxable... Args_t, std::enable_if_t<not std::is_void_v<T> and not is<Proxy, T>, bool>>
+    T Proxy::safe_call(Args_t&&... args)
+    {
+        static jl_function_t* invoke = unsafe::get_function("jluna"_sym, "invoke"_sym);
+        return unbox<T>(jluna::safe_call(invoke, _content->value(), box(args)...));
+    }
+
+    template<typename T, is_boxable... Args_t, std::enable_if_t<std::is_void_v<T> and not is<Proxy, T>, bool>>
+    T Proxy::safe_call(Args_t&&... args)
+    {
+        static jl_function_t* invoke = unsafe::get_function("jluna"_sym, "invoke"_sym);
+        jluna::safe_call(invoke, _content->value(), box(args)...);
+    }
+
+    template<is_boxable... Args_t>
     Proxy Proxy::operator()(Args_t&&... args)
     {
         return this->safe_call(args...);

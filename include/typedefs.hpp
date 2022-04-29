@@ -10,21 +10,6 @@
 
 namespace jluna
 {
-    /// @brief constexpr transform C++ type into the julia type it will be after unboxing
-    /// @tparam C++ type
-    /// @returns type_name, accessible via member if type can be deduced, has no member otherwise
-    template<typename T>
-    struct to_julia_type
-    {
-        static inline const std::string type_name = detail::to_julia_type_aux<T>::type_name;
-    };
-
-    template<typename T>
-    concept ToJuliaTypeConvertable = requires
-    {
-        to_julia_type<T>::type_name;
-    };
-
     /// @brief 1-bit bool interpreted as 8-bit Bool julia-side
     using Bool = bool;
 
@@ -61,9 +46,50 @@ namespace jluna
     /// @brief 64-bit double interpreted as Float64 julia-side
     using Float64 = double;
 
-    /// @brief address of julia-side memory
-    using Any = jl_value_t;
+    /// @brief nothing
+    using Nothing = void;
 
-    /// @brief address of julia-side function
-    using Function = jl_function_t;
+    namespace unsafe
+    {
+        /// @brief address of julia-side memory
+        using Value = jl_value_t;
+
+        /// @brief address of julia-side function
+        using Function = jl_function_t;
+
+        /// @brief julia-side, non-proxy symbol
+        using Symbol = jl_sym_t;
+
+        /// @brief julia-side, non-proxy module
+        using Module = jl_module_t;
+
+        /// @brief julia-side expression
+        using Expression = jl_expr_t;
+
+        /// @brief julia-side array
+        using Array = jl_array_t;
+
+        /// @brief julia-side type
+        using DataType = jl_datatype_t;
+    }
+
+    /// @brief constexpr transform C++ type into the julia type it will be after unboxing
+    /// @tparam C++ type
+    /// @returns type_name, accessible via member if type can be deduced, has no member otherwise
+    template<typename T>
+    struct as_julia_type
+    {
+        static inline const std::string type_name = detail::as_julia_type_aux<T>::type_name;
+        static unsafe::DataType* type()
+        {
+            static jl_datatype_t* out = (jl_datatype_t*) jl_eval_string(("return " + type_name).c_str());return out;
+        }
+    };
+
+    // @concept: can be converted to Julia type
+    template<typename T>
+    concept to_julia_type_convertable = requires(T)
+    {
+        as_julia_type<T>::type_name;
+    };
 }

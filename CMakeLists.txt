@@ -22,11 +22,11 @@ Options
 ``BUILD_TESTING``
     build jluna_test, as CTest. On by default
 ``BUILD_BENCHMARK``
-    build jluna_benchmark. On by default
+    build jluna_benchmark. Off by default
 
 #]=======================================================================]
 
-project(jluna VERSION 0.8.4 LANGUAGES CXX)
+project(jluna VERSION 0.9.0 LANGUAGES CXX)
 
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)
@@ -38,40 +38,18 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find")
 find_package(Julia 1.7.0 REQUIRED)
 
+### Find Threads ###
+
+find_package(Threads)
+
 ### Configure Files ###
 
-# TODO: don't hardcode these
-set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}")
+set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}") # TODO: don't hardcode these
 set(C_ADAPTER_NAME "${C_ADAPTER_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna_c_adapter${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 file(READ
-    include/julia/01_common.jl
-    01_COMMON
-)
-
-file(READ
-    include/julia/02_common.jl
-    02_COMMON
-)
-
-file(READ
-    include/julia/03_exception_handler.jl
-    03_EXCEPTION_HANDLER
-)
-
-file(READ
-    include/julia/04_memory_handler.jl
-    04_MEMORY_HANDLER
-)
-
-file(READ
-    include/julia/05_cppcall.jl
-    05_CPPCALL
-)
-
-file(READ
-    include/julia/06_public.jl
-    06_PUBLIC
+    include/julia/jluna.jl
+    JLUNA_JULIA_SOURCE
 )
 
 configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
@@ -86,7 +64,10 @@ add_library(
 
 target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
 target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
-target_link_libraries(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:Julia::Julia>")
+target_link_libraries(jluna_c_adapter PUBLIC
+    "$<BUILD_INTERFACE:Julia::Julia>"
+    "$<BUILD_INTERFACE:Threads::Threads>"
+)
 
 ### Declare Library ###
 
@@ -95,23 +76,25 @@ add_library(jluna SHARED
 
     include/exceptions.hpp
     .src/exceptions.cpp
-    .src/exceptions.inl
 
     include/typedefs.hpp
     .src/typedefs.inl
 
+    include/unsafe_utilities.hpp
+    .src/unsafe_utilities.inl
+    .src/unsafe_utilities.cpp
+
+    include/safe_utilities.hpp
+    .src/safe_utilities.inl
+    .src/safe_utilities.cpp
+
     include/concepts.hpp
-    include/julia_extension.hpp
 
     include/box.hpp
     .src/box.inl
 
     include/unbox.hpp
     .src/unbox.inl
-
-    include/state.hpp
-    .src/state.cpp
-    .src/state.inl
 
     include/proxy.hpp
     .src/proxy.cpp
@@ -123,9 +106,6 @@ add_library(jluna SHARED
 
     include/cppcall.hpp
     .src/cppcall.inl
-
-    include/expression.hpp
-    .src/expression.cpp
 
     include/module.hpp
     .src/module.cpp
@@ -139,18 +119,20 @@ add_library(jluna SHARED
     .src/type.cpp
     .src/type.inl
 
-    include/function.hpp
-    .src/function.cpp
-
     include/generator_expression.hpp
     .src/generator_expression.cpp
 
     include/usertype.hpp
     .src/usertype.inl
 
-    include/gc_sentinel.hpp
+    include/multi_threading.hpp
+    .src/multi_threading.inl
+
+    include/mutex.hpp
+    .src/mutex.cpp
 )
 
+#target_compile_features(jluna PUBLIC cxx_std_20)
 target_link_libraries(jluna PUBLIC jluna_c_adapter)
 target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 
@@ -170,17 +152,6 @@ if(NOT CMAKE_SKIP_INSTALL_RULES)
     include(cmake/install-rules.cmake)
 endif()
 
-### Developer mode ###
-
-if(NOT jluna_DEVELOPER_MODE)
-    return()
-elseif(NOT PROJECT_IS_TOP_LEVEL)
-    message(
-        AUTHOR_WARNING
-        "Developer mode is intended for developers of jluna"
-    )
-endif()
-
 include(CTest)
 ### Declare Test ###
 
@@ -195,10 +166,21 @@ if (BUILD_TESTING)
     add_test(NAME jluna_test COMMAND jluna_test)
 endif()
 
+### Developer mode ###
+
+if(NOT jluna_DEVELOPER_MODE)
+    return()
+elseif(NOT PROJECT_IS_TOP_LEVEL)
+    message(
+        AUTHOR_WARNING
+        "Developer mode is intended for developers of jluna"
+    )
+endif()
+
 ### Declare Benchmark ###
 
-option(BUILD_BENCHMARK "Enable jluna_benchmark" ON)
-if (BUILD_BENCHMARK AND NOT WIN32)
+option(BUILD_BENCHMARK "Enable jluna_benchmark" OFF)
+if (BUILD_BENCHMARK) # AND NOT WIN32)
     add_executable(
         jluna_benchmark
         .benchmark/main.cpp

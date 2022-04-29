@@ -7,6 +7,7 @@
 
 #include <include/julia_wrapper.hpp>
 #include <include/typedefs.hpp>
+#include <include/concepts.hpp>
 
 #include <string>
 #include <exception>
@@ -32,10 +33,10 @@ namespace jluna
 
             /// @brief decay to jl value
             /// @returns jl_value_t*
-            operator Any*();
+            operator unsafe::Value*();
 
         protected:
-            Any* _value = nullptr;
+            unsafe::Value* _value = nullptr;
             std::string _message;
     };
 
@@ -50,36 +51,10 @@ namespace jluna
         virtual const char* what() const noexcept override final;
     };
 
-    /// @brief throw exception, used frequently for safeguarding code
-    void throw_if_uninitialized();
-
     /// @brief if exception occurred, forward as JuliaException
     void forward_last_exception();
 
-    /// @brief call function with args, with brief exception forwarding
-    /// @tparam Args_t: argument types, must be castable to Any*
-    /// @param function
-    /// @param args
-    /// @returns result
-    template<typename... Args_t>
-    Any* call(Function* function, Args_t... args);
-
-    /// @brief call function with args, with verbose exception forwarding
-    /// @tparam Args_t: argument types, must be castable to Any*
-    /// @param function
-    /// @param args
-    /// @returns result
-    template<typename... Args_t>
-    Any* safe_call(Function* function, Args_t... args);
-
-    /// @brief evaluate string with exception forwarding
-    /// @param string
-    /// @returns result
-    Any* safe_eval(const char*);
-
-    /// @brief literal operator for prettier syntax
-    /// @returns result of safe_eval
-    Any* operator""_eval(const char*, size_t);
+    /// @brief throw if initialize was not yet called
+    void throw_if_uninitialized();
 }
 
-#include <.src/exceptions.inl>

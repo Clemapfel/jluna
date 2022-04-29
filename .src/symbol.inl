@@ -6,29 +6,29 @@
 namespace jluna
 {
     /// @brief unbox symbol to symbol
-    template<Is<Symbol> T>
-    inline T unbox(Any* value)
+    template<is<Symbol> T>
+    inline T unbox(unsafe::Value* value)
     {
-        jl_assert_type(value, jl_symbol_type);
+        detail::assert_type((unsafe::DataType*) jl_typeof(value), jl_symbol_type);
         return Symbol((jl_sym_t*) value);
     }
 
     /// @brief box jluna::Module to Base.Module
-    template<Is<Symbol> T>
-    inline Any* box(T value)
+    template<is<Symbol> T>
+    inline unsafe::Value* box(T value)
     {
-        return value.operator Any*();
+        return value.operator unsafe::Value*();
     }
 
-    template<Is<Symbol> T>
-    inline Any* box(const std::string& value)
+    template<is<Symbol> T>
+    inline unsafe::Value* box(const std::string& value)
     {
-        return (Any*) jl_symbol(value.c_str());
+        return (unsafe::Value*) jl_symbol(value.c_str());
     }
 
     /// @brief type deduction
     template<>
-    struct detail::to_julia_type_aux<Symbol>
+    struct detail::as_julia_type_aux<Symbol>
     {
         static inline const std::string type_name = "Symbol";
     };

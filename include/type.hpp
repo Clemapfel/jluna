@@ -19,11 +19,6 @@ namespace jluna
             /// @brief default ctor, construct as Nothing
             Type();
 
-            /// @brief construct from C++ type
-            /// @param to_julia_type meta template
-            template<ToJuliaTypeConvertable T>
-            static Type construct_from();
-
             /// @brief ctor
             /// @param value
             Type(jl_datatype_t* value);
@@ -36,12 +31,15 @@ namespace jluna
             operator jl_datatype_t*();
 
             /// @brief unroll type as much as possible
+            /// @returns unrolled type
             Type unroll() const;
 
             /// @brief get direct super type
+            /// @returns type
             Type get_super_type() const;
 
             /// @brief get name
+            /// @returns Julia-side name as symbol
             Symbol get_symbol() const;
 
             /// @brief get number of parameters
@@ -51,14 +49,6 @@ namespace jluna
             /// @brief get parameter names
             /// @returns vector
             std::vector<std::pair<Symbol, Type>> get_parameters() const;
-
-            /// @brief get number of methods
-            /// @returns size_t
-            //size_t get_n_methods() const;
-
-            /// @brief methods
-            /// @returns vector of jluna::Methods
-            //std::vector<Method> get_methods() const;
 
             /// @brief get number of fields
             /// @returns size_t
@@ -70,7 +60,7 @@ namespace jluna
 
             /// @brief if type is singleton, get instance of that singleton
             /// @returns instance ptr if singleton-type, nullptr otherwise
-            Any* get_singleton_instance() const;
+            unsafe::Value* get_singleton_instance() const;
 
             /// @brief this <: other
             /// @param other
@@ -138,16 +128,18 @@ namespace jluna
             /// @brief check if .name property of unrolled type is equal to typename
             /// @param symbol: name of type, evaluated to Main.eval(symbol)
             /// @returns bool
-            bool is_typename(const std::string& symbol);
+            bool typename_is(const std::string& symbol);
 
             /// @brief check if .name property of unrolled type is equal to typename
             /// @param type
             /// @returns bool
-            bool is_typename(const Type& other);
+            bool typename_is(const Type& other);
 
         private:
             jl_datatype_t* get() const;
     };
+
+    /// @brief pre-initialized base types, already unrolled
 
     inline Type AbstractArray_t;
     inline Type AbstractChar_t;
@@ -175,6 +167,7 @@ namespace jluna
     inline Type Integer_t;
     inline Type LineNumberNode_t;
     inline Type Method_t;
+    inline Type Missing_t;
     inline Type Module_t;
     inline Type NTuple_t;
     inline Type NamedTuple_t;

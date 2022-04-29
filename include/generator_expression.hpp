@@ -37,17 +37,20 @@ namespace jluna
             /// @brief get length of iterable component
             size_t size() const;
 
+            /// @brief get julia-side Base.generator object
+            explicit operator unsafe::Value*() const;
+
         protected:
             /// @brief ctor
             /// @param pointer to Base.Generator
-            GeneratorExpression(Any*);
+            GeneratorExpression(unsafe::Value*);
 
         private:
             Int64 _length;
 
-            Any* get() const;
+            unsafe::Value* get() const;
             size_t _value_key;
-            Any* _value_ref;
+            unsafe::Value* _value_ref;
 
             static inline jl_function_t* _iterate = nullptr;
     };
@@ -62,14 +65,13 @@ namespace jluna
             ForwardIterator(const GeneratorExpression*, Int64);
 
             /// @brief dereference to julia object
-            Any* operator*();
+            unsafe::Value* operator*();
 
             /// @brief cast to C++ type
-            template<Unboxable T>
-            operator T()
-            {
-                return unbox<T>(this->operator*());
-            }
+            /// @tparam resulting type
+            /// @returns T
+            template<is_unboxable T>
+            operator T();
 
             /// @brief prefix advance by 1 state
             void operator++();
@@ -93,3 +95,5 @@ namespace jluna
             bool _is_end = false;
     };
 }
+
+#include <.src/generator_expression.inl>

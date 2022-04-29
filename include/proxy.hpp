@@ -31,13 +31,13 @@ namespace jluna
             /// @brief construct with no owner, reserved for global temporaries and main
             /// @param value
             /// @param symbol
-            Proxy(Any* value, jl_sym_t* symbol = nullptr);
+            Proxy(unsafe::Value* value, jl_sym_t* symbol = nullptr);
 
             /// @brief construct with owner
             /// @param value
             /// @param owner: shared pointer to owner
             /// @param symbol
-            Proxy(Any* value, std::shared_ptr<ProxyValue>& owner, Any* name_or_index);
+            Proxy(unsafe::Value* value, std::shared_ptr<ProxyValue>& owner, unsafe::Value* name_or_index);
 
             /// @brief dtor
             ~Proxy();
@@ -56,13 +56,13 @@ namespace jluna
             /// @brief access field
             /// @param field_name
             /// @returns unboxed value
-            template<Unboxable T>
+            template<is_unboxable T>
             T operator[](const std::string& field);
 
             /// @brief access field
             /// @param field_name
             /// @returns unboxed value
-            template<Unboxable T, typename U, std::enable_if_t<std::is_same_v<U, char>, Bool> = true>
+            template<is_unboxable T, typename U, std::enable_if_t<std::is_same_v<U, char>, Bool> = true>
             T operator[](const U* field);
 
             /// @brief linear indexing, if array type, returns getindex result
@@ -73,21 +73,21 @@ namespace jluna
             /// @brief linear indexing, if array type returns getindex result
             /// @param index
             /// @returns field as proxy
-            template<Unboxable T>
+            template<is_unboxable T>
             T operator[](size_t);
 
             /// @brief cast to Any
-            operator Any*();
+            operator unsafe::Value*();
 
             /// @brief cast to const Any
-            operator const Any*() const;
+            operator const unsafe::Value*() const;
 
             /// @brief cast to string using julias Base.string
             virtual operator std::string() const;
 
             /// @brief implicitly convert to T via unboxing
             /// @returns value as T
-            template<Unboxable T, std::enable_if_t<not std::is_same_v<T, std::string>, bool> = true>
+            template<is_unboxable T, std::enable_if_t<not std::is_same_v<T, std::string>, bool> = true>
             operator T() const;
 
             /// @brief implicitly downcast to base
@@ -104,7 +104,7 @@ namespace jluna
             /// @returns name as string
             std::string get_name() const;
 
-            /// @brief if proxy is a value, get fieldnames of typeof(value), if proxy is a type, get fieldnames of itself
+            /// @brief if proxy is not a type value, get the fields of the proxies types. If proxy is already a type, get fieldnames of itself
             /// @returns vector of strings
             std::vector<std::string> get_field_names() const;
 
@@ -112,19 +112,34 @@ namespace jluna
             /// @returns proxy to singleton type
             Type get_type() const;
 
-            /// @brief call with any arguments
-            /// @tparams Args_t: types of arguments, need to be boxable
-            template<Boxable... Args_t>
-            Proxy call(Args_t&&...);
+            /// @brief check if this <: type
+            /// @param type
+            /// @returns true if `*this isa type`, false otherwise
+            bool isa(const Type& type);
 
             /// @brief call with any arguments
             /// @tparams Args_t: types of arguments, need to be boxable
-            template<Boxable... Args_t>
+            /// @returns proxy
+            template<is_boxable... Args_t>
             Proxy safe_call(Args_t&&...);
 
-            /// call with arguments and exception forwarding, if proxy is a callable function
+            /// @brief call and return value, does not construct proxy
+            /// @tparams T: return value
+            /// @tparams Args_t: types of arguments
+            /// @returns value
+            template<typename T, is_boxable... Args_t, std::enable_if_t<not std::is_void_v<T> and not is<Proxy, T>, bool> = true>
+            T safe_call(Args_t&&... args);
+
+            /// @brief call and return value, does not construct proxy
+            /// @tparams Args_t: types of arguments
+            /// @returns nothing
+            template<typename T, is_boxable... Args_t, std::enable_if_t<std::is_void_v<T> and not is<Proxy, T>, bool> = true>
+            T safe_call(Args_t&&... args);
+
+            /// @brief call with arguments and exception forwarding, if proxy is a callable function
             /// @tparams Args_t: types of arguments, need to be boxable
-            template<Boxable... Args_t>
+            /// @returns proxy
+            template<is_boxable... Args_t>
             Proxy operator()(Args_t&&...);
 
             /// @brief check whether assigning to this proxy will modify values julia-side
@@ -132,27 +147,22 @@ namespace jluna
             bool is_mutating() const;
 
             /// @brief assign value to proxy, this modifies the value julia-side
-            /// @param Any*
+            /// @param unsafe::Value*
             /// @returns reference to self
-            Proxy& operator=(Any*);
+            Proxy& operator=(unsafe::Value*);
 
             /// @brief assign value to proxy, this modifies the value julia-side
             /// @param T: value
             /// @returns reference to self
-            template<Boxable T>
+            template<is_boxable T>
             Proxy& operator=(T);
 
             /// @brief create a new unnamed proxy that holds the same value
-            /// @returns new proxy by value
+            /// @returns new proxy by valuejluna: Manual & Tut
             [[nodiscard]] Proxy as_unnamed() const;
 
             /// @brief update value if proxy symbol was reassigned outside of operator=
             void update();
-
-            /// @brief check if this <: type
-            /// @param type
-            /// @returns true if `*this isa type`, false otherwise
-            bool isa(const Type& type);
 
         protected:
             std::shared_ptr<ProxyValue> _content;
@@ -169,29 +179,31 @@ namespace jluna
 
             /// @brief get value
             /// @returns pointer to value
-            Any* value() const;
+            unsafe::Value* value() const;
 
             /// @brief get id
             /// @returns pointer to jluna.memory_handler.ProxyID
-            Any* id() const;
+            unsafe::Value* id() const;
 
         protected:
             /// @brief ctor without owner
             /// @param value: pointer to value
             /// @param id: jluna.memory_handler.ProxyID object
-            ProxyValue(Any* value, jl_sym_t* id);
+            ProxyValue(unsafe::Value* value, jl_sym_t* id);
 
             /// @brief ctor with owner and proper name
             /// @param value: pointer to value
             /// @param id: jluna.memory_handler.ProxyID object
-            ProxyValue(Any* value, std::shared_ptr<ProxyValue>& owner, Any* symbol_or_index);
+            ProxyValue(unsafe::Value* value, std::shared_ptr<ProxyValue>& owner, unsafe::Value* symbol_or_index);
 
+            /// @brief copy ctor
+            /// @param other
             ProxyValue(const ProxyValue&);
 
             /// @brief access field
             /// @param symbol: name of field
             /// @returns pointer to field data
-            Any* get_field(jl_sym_t*);
+            unsafe::Value* get_field(jl_sym_t*);
 
             /// @brief owner
             std::shared_ptr<ProxyValue> _owner;
@@ -202,8 +214,8 @@ namespace jluna
             size_t _id_key;
             size_t _value_key;
 
-            mutable Any* _id_ref;
-            mutable Any* _value_ref;
+            mutable unsafe::Value* _id_ref;
+            mutable unsafe::Value* _value_ref;
     };
 }
 

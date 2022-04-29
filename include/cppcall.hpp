@@ -1,90 +1,49 @@
 // 
 // Copyright 2022 Clemens Cords
-// Created on 20.01.22 by clem (mail@clemens-cords.com)
+// Created on 17.04.22 by clem (mail@clemens-cords.com)
 //
 
 #pragma once
 
-#include <include/julia_wrapper.hpp>
-
-#include <vector>
-
 #include <include/typedefs.hpp>
-#include <include/concepts.hpp>
+#include <functional>
 
 namespace jluna
 {
-    /// @brief register lambda with signature void() or jl_value_t*()
-    /// @param name: function name
-    /// @param lambda
-    template<LambdaType<> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda);
+    /// @brief make lambda available to Julia
+    /// @tparam Signature: signature of lambda, C-style
+    /// @tparam Lambda_t: automatically deduced
+    /// @returns unsafe pointer to Julia-side function object
+    template<typename Signature, typename Lambda_t>
+    unsafe::Value* as_julia_function(Lambda_t lambda);
 
-    /// @brief register lambda with signature void(jl_value_t*) or jl_value_t*(jl_value_t*)
-    /// @param name: function name
-    /// @param lambda
-    template<LambdaType<jl_value_t*> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda);
+    /// @brief make function with signature () -> Return_t available to julia
+    /// @tparam Return_t
+    /// @param function
+    /// @returns unsafe pointer to Julia-side function object
+    template<typename Return_t>
+    unsafe::Value* register_function(std::function<Return_t()>);
 
-    /// @brief register lambda with signature void(jl_value_t*, jl_value_t*) or jl_value_t*(jl_value_t*, jl_value_t*)
-    /// @param name: function name
-    /// @param lambda
-    template<LambdaType<jl_value_t*, jl_value_t*> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda);
+    /// @brief make function with signature (T1) -> Return_t available to julia
+    /// @tparam Return_t
+    /// @param function
+    /// @returns unsafe pointer to Julia-side function object
+    template<typename Return_t, typename Arg1_t>
+    unsafe::Value* register_function(std::function<Return_t(Arg1_t)> f);
 
-    /// @brief register lambda with signature void(3x jl_value_t*) or jl_value_t*(3x jl_value_t*)
-    /// @param name: function name
-    /// @param lambda
-    template<LambdaType<jl_value_t*, jl_value_t*, jl_value_t*> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda);
+    /// @brief make function with signature (T1, T2) -> Return_t available to julia
+    /// @tparam Return_t
+    /// @param function
+    /// @returns unsafe pointer to Julia-side function object
+    template<typename Return_t, typename Arg1_t, typename Arg2_t>
+    unsafe::Value* register_function(std::function<Return_t(Arg1_t, Arg2_t)> f);
 
-    /// @brief register lambda with signature void(4x jl_value_t*) or jl_value_t*(4x jl_value_t*)
-    /// @param name: function name
-    /// @param lambda
-    template<LambdaType<jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda);
-
-    /// @brief register lambda with signature void(std::vector<jl_value_t*>) or jl_value_t*(std::vector<jl_value_t*>)
-    /// @param name: function name
-    /// @param lambda
-    template<LambdaType<std::vector<jl_value_t*>> Lambda_t>
-    void register_function(const std::string& name, const Lambda_t& lambda);
-    
-    /// @brief register anonymous lambda with signature void() or jl_value_t*()
-    /// @param lambda
-    /// @returns julia-side anonymous function wrapping lambda
-    template<LambdaType<> Lambda_t>
-    Function* register_unnamed_function(const Lambda_t& lambda);
-    
-    /// @brief register anonymous lambda with signature void(jl_value_t*) or jl_value_t*(jl_value_t*)
-    /// @param lambda
-    /// @returns julia-side anonymous function wrapping lambda
-    template<LambdaType<jl_value_t*> Lambda_t>
-    Function* register_unnamed_function(const Lambda_t& lambda);
-    
-    /// @brief register anonymous lambda with signature void(jl_value_t*, jl_value_t*) or jl_value_t*(jl_value_t*, jl_value_t*)
-    /// @param lambda
-    /// @returns julia-side anonymous function wrapping lambda
-    template<LambdaType<jl_value_t*, jl_value_t*> Lambda_t>
-    Function* register_unnamed_function(const Lambda_t& lambda);
-    
-    /// @brief register anonymous lambda with signature void(3x jl_value_t*) or jl_value_t*(3x jl_value_t*)
-    /// @param lambda
-    /// @returns julia-side anonymous function wrapping lambda
-    template<LambdaType<jl_value_t*, jl_value_t*, jl_value_t*> Lambda_t>
-    Function* register_unnamed_function(const Lambda_t& lambda);
-    
-    /// @brief register anonymous lambda with signature void(4x jl_value_t*) or jl_value_t*(4x jl_value_t*)
-    /// @param lambda
-    /// @returns julia-side anonymous function wrapping lambda
-    template<LambdaType<jl_value_t*, jl_value_t*, jl_value_t*, jl_value_t*> Lambda_t>
-    Function* register_unnamed_function(const Lambda_t& lambda);
-    
-    /// @brief register anonymous lambda with signature void(std::vector<jl_value_t*>) or jl_value_t*(std::vector<jl_value_t*>)
-    /// @param lambda
-    /// @returns julia-side anonymous function wrapping lambda
-    template<LambdaType<std::vector<jl_value_t*>> Lambda_t>
-    Function* register_unnamed_function(const Lambda_t& lambda);
+    /// @brief make function with signature (T1, T2, T3) -> Return_t available to julia
+    /// @tparam Return_t
+    /// @param function
+    /// @returns unsafe pointer to Julia-side function object
+    template<typename Return_t, typename Arg1_t, typename Arg2_t, typename Arg3_t>
+    unsafe::Value* register_function(std::function<Return_t(Arg1_t, Arg2_t, Arg3_t)> f);
 }
 
 #include <.src/cppcall.inl>

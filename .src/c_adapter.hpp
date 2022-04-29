@@ -9,60 +9,59 @@
 
 #ifdef __cplusplus
 
-#include <map>
 #include <include/julia_wrapper.hpp>
 #include <functional>
 #include <string>
 
 extern "C"
 {
-    /// @brief c-compatible interface, only intended for internal use
     namespace jluna::c_adapter
     {
-        /// @brief holds lambda registers via jluna
-        static inline std::map<size_t, std::pair<std::function<jl_value_t*(jl_value_t*)>, size_t>> _functions = {};
+        using lambda_0_arg = std::function<jl_value_t*()>;
+        using lambda_1_arg = std::function<jl_value_t*(jl_value_t*)>;
+        using lambda_2_arg = std::function<jl_value_t*(jl_value_t*, jl_value_t*)>;
+        using lambda_3_arg = std::function<jl_value_t*(jl_value_t*, jl_value_t*, jl_value_t*)>;
+        //using lambda_n_arg = std::function<jl_value_t*(const std::vector<jl_value_t*>&)>;
 
-        /// @brief hash lambda-side
-        /// @param name
-        /// @returns hash
-        size_t hash(const std::string&);
+        /// @brief construct an UnnamedFunctionProxy object
+        /// @param function_ptr: allocated with `new`
+        /// @param n_args: number of arguments: 0, 1, 2, 3 or -1
+        /// @returns ptr to UnnamedFunctionProxy object
+        jl_value_t* make(void* function_ptr, int n_args);
 
-        /// @brief add lambda to function register
-        /// @param name
-        /// @param n_args: size of tuple argument
-        /// @param lambda
-        void register_function(const std::string& name, size_t n_args, std::function<jl_value_t*(jl_value_t*)>&&);
+        jl_value_t* invoke_lambda_0(void* function_ptr);
+        jl_value_t* invoke_lambda_1(void* function_ptr, jl_value_t*);
+        jl_value_t* invoke_lambda_2(void* function_ptr, jl_value_t*,  jl_value_t*);
+        jl_value_t* invoke_lambda_3(void* function_ptr, jl_value_t*,  jl_value_t*, jl_value_t*);
+        //jl_value_t* invoke_lambda_n(void* function_ptr, unsafe::Array* vector);
 
-        /// @brief remove lambda from function register
-        /// @param name
-        void unregister_function(const std::string& name);
+        /// @brief `delete` a function pointer held
+        /// @param pointer to function
+        /// @param n_args: 0, 1, 2, 3 or -1
+        void free_lambda(void* function_ptr, int n_args);
 
-        /// @brief call lambda by id
-        /// @param id
-        void call_function(size_t);
+        /// @brief get pointer to arbitrary object
+        void* to_pointer(jl_value_t*);
 
-        /// @brief get number of tuples allowed for function with id
-        /// @param id
-        /// @returns expected tuple size
-        size_t get_n_args(size_t);
+        /// @brief invoke function ptr, used within threadpool
+        /// @param function_pointer
+        /// @returns result pointer
+        size_t invoke_from_task(size_t function_ptr);
 
-        /// @brief check if function is registered
-        /// @param id
-        /// @returns true if registered, false otherwise
-        bool is_registered(size_t id);
-
-        /// @brief free function
-        /// @param id
-        void free_function(size_t);
+        /// @brief verify c_adapter is working, used for test
+        /// @returns true
+        bool verify();
     }
 }
 
 #else // exposed to juila as pure C header:
 
-void initialize(const char*);
-void call_function(size_t);
-bool is_registered(size_t);
-void throw_undefined_symbol(const char*);
-size_t get_n_args(size_t);
+void free_lambda(void*, int);
+jl_value_t* invoke_lambda_0(void*);
+jl_value_t* invoke_lambda_1(void*, jl_value_t*);
+jl_value_t* invoke_lambda_2(void*, jl_value_t*,  jl_value_t*);
+jl_value_t* invoke_lambda_3(void*, jl_value_t*,  jl_value_t*, jl_value_t*);
+void* to_pointer(jl_value_t*);
+bool verify();
 
 #endif

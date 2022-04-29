@@ -14,7 +14,7 @@ namespace jluna
 {
     /// @brief declare T to be a usertype at compile time, uses C++-side name as Julia-side typename
     /// @param T: type
-    #define set_usertype_enabled(T) template<> struct jluna::usertype_enabled<T> {static_assert(IsDefaultConstructible<T>, "types managed by Usertype<T> need to be default constructable"); constexpr static inline const char* name = #T; constexpr static inline bool value = true;};
+    #define set_usertype_enabled(T) template<> struct jluna::usertype_enabled<T> {static_assert(is_default_constructible<T>, "types managed by Usertype<T> need to be default constructable"); constexpr static inline const char* name = #T; constexpr static inline bool value = true;};
 
     /// @brief customizable wrapper for non-julia type T
     /// @note for information on how to use this class, visit https://github.com/Clemapfel/jluna/blob/master/docs/manual.md#usertypes
@@ -41,8 +41,8 @@ namespace jluna
 
             /// @brief add field
             /// @param name: julia-side name of field
-            /// @param box_get: lambda with signature (T&) -> Any*
-            /// @param unbox_set: lambda with signature (T&, Any*) -> void
+            /// @param box_get: lambda with signature (T&) -> unsafe::Value*
+            /// @param unbox_set: lambda with signature (T&, unsafe::Value*) -> void
             template<typename Field_t>
             static void add_property(
                 const std::string& name,
@@ -52,7 +52,7 @@ namespace jluna
 
             /// @brief create the type, setup through the interface, julia-side
             /// @param module: module in which the type is evaluated
-            static void implement(Module module = Main);
+            static void implement(unsafe::Module* module = Main);
 
             /// @brief has implement() been called at least once
             /// @returns bool
@@ -62,13 +62,13 @@ namespace jluna
             /// @param T&: instance
             /// @returns boxed value
             /// @note this function will call implement() if it has not been called before, incurring a tremendous overhead on first execution, once
-            static Any* box(T&);
+            static unsafe::Value* box(T&);
 
             /// @brief box interface
-            /// @param Any*
+            /// @param unsafe::Value*
             /// @returns unboxed value
             /// @note this function will call implement() if it has not been called before, incurring a tremendous overhead on first execution, once
-            static T unbox(Any*);
+            static T unbox(unsafe::Value*);
 
         private:
             static void initialize();
@@ -79,8 +79,8 @@ namespace jluna
 
             static inline std::vector<Symbol> _fieldnames_in_order = {};
             static inline std::map<Symbol, std::tuple<
-                std::function<Any*(T&)>,        // getter
-                std::function<void(T&, Any*)>,   // setter
+                std::function<unsafe::Value*(T&)>,        // getter
+                std::function<void(T&, unsafe::Value*)>,   // setter
                 Type
             >> _mapping = {};
     };

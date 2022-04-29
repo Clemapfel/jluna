@@ -1,3 +1,21 @@
+#
+# This FindJulia.cmake is intended to detect julia as a package.
+#
+# Use
+# `list(APPEND CMAKE_MODULE_PATH "path/to/this/file")`
+# `find_package(Julia 1.7.0 REQUIRED)`
+#
+# to make the julia target available through:
+# `"$<BUILD_INTERFACE:Julia::Julia>"`
+#
+# Furthermore the following variables will be set on
+# successful detection:
+#
+# JULIA_LIBRARY         : julia shared library
+# JULIA_EXECUTABLE      : julia REPL executable
+# JULIA_BINDIR          : directory to julia binary
+# JULIA_INCLUDE_DIR     : directory that contains julia.h
+#
 #[=======================================================================[.rst:
 
 FindJulia

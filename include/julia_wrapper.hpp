@@ -7,6 +7,10 @@
 # define NOMINMAX
 # define WIN32_LEAN_AND_MEAN
 # include <Windows.h>
+
 #endif
 
 #include <julia.h>
+#include <julia_gcext.h>
+#include <julia_threads.h>
+

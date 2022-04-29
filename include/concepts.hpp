@@ -17,12 +17,37 @@
 namespace jluna
 {
     /// @concept: wrapper for std::is_same_v
+    template<class T, class U>
+    struct is_same_or_const
+    {
+        static constexpr bool value = false;
+    };
+
+    template<class T>
+    struct is_same_or_const<T, T>
+    {
+        static constexpr bool value = true;
+    };
+
+    template<class T>
+    struct is_same_or_const<T, const T>
+    {
+        static constexpr bool value = true;
+    };
+
     template<typename T, typename U>
-    concept Is = std::is_same<T, U>::value or std::is_same_v<T, const U>;
+    concept is = std::conditional_t<
+        std::is_void_v<T>,
+        std::is_void<U>,
+        is_same_or_const<T, U>
+    >::value;
+
+    template<typename T, typename U>
+    concept is_not = not is<T, U>;
 
     /// @concept: has default ctor
     template<typename T>
-    concept IsDefaultConstructible = requires(T)
+    concept is_default_constructible = requires(T)
     {
         {T()};
     };
@@ -42,44 +67,120 @@ namespace jluna
     template<typename T, typename... Args_t>
     concept LambdaType = std::is_invocable<T, Args_t...>::value and not std::is_base_of<Proxy, T>::value;
 
-    /// @concept: can be reinterpret-cast to jl_value_t*
+    /// @brief introspect functions
     template<typename T>
-    concept IsJuliaValuePointer =
+    struct function_traits;
+
+    template<typename Return_t, typename... Args_t>
+    struct function_traits<Return_t(Args_t...)>
+    {
+        // as C literal function
+        using as_c_function = Return_t(Args_t...);
+
+        // as std::function
+        using as_std_function = std::function<Return_t(Args_t...)>;
+
+        // return type
+        using return_t = typename as_std_function::result_type;
+
+        // number of arguments
+        static constexpr size_t n_args = sizeof...(Args_t);
+
+        // all argument types as tuple type
+        using argument_ts = std::tuple<Args_t...>;
+
+        // type of i-th argument
+        template<size_t i>
+        using argument_type = std::tuple_element_t<i, argument_ts>;
+    };
+
+    template<typename T, size_t i>
+    using get_nth_argument_t = std::tuple_element_t<i, typename function_traits<T>::argument_ts>;
+
+    /// @brief forward function or lambda as C-literal function
+    namespace detail
+    {
+        template<typename T>
+        struct as_c_function;
+
+        template<typename Return_t, typename... Args_t>
+        struct as_c_function<Return_t(Args_t...)>
+        {
+            using value = Return_t(Args_t...);
+        };
+
+        template<typename Return_t, typename... Args_t>
+        struct as_c_function<std::function<Return_t(Args_t...)>>
+        {
+            using value = Return_t(Args_t...);
+        };
+
+        template<typename T>
+        using as_c_function_v = typename as_c_function<T>::value;
+    }
+
+    /// @concept: check signature of argument function or lambda
+    template<typename T, typename Return_t, typename... Args_t>
+    concept is_function_with_signature =
+    std::is_invocable_v<detail::as_c_function_v<T>, Args_t...> and
+    std::conditional_t<
+        std::is_void_v<Return_t>,
+        std::is_void<typename function_traits<detail::as_c_function_v<T>>::return_t>,
+        std::is_same<typename function_traits<detail::as_c_function_v<T>>::return_t, Return_t>
+    >::value;
+
+    /// @concept: function with n args
+    template<typename T, size_t N>
+    concept is_function_with_n_args = (function_traits<detail::as_c_function_v<T>>::n_args == N);
+
+    /// @concept: can be cast to jl_value_t*
+    template<typename T>
+    concept is_julia_value_pointer =
         std::is_same_v<T, jl_value_t*> or
         std::is_same_v<T, jl_module_t*> or
+        std::is_same_v<T, jl_array_t*> or
+        std::is_same_v<T, jl_datatype_t*> or
         std::is_same_v<T, jl_function_t*> or
-        std::is_same_v<T, jl_sym_t*>;
+        std::is_same_v<T, jl_sym_t*> or
+        std::is_same_v<T, jl_expr_t*> or
+        std::is_same_v<T, jl_unionall_t*>;
 
-    /// @concept can be cast to Any*
+    /// @concept: can be cast to jl_value_t* if it was pointer
     template<typename T>
-    concept IsAnyPtrCastable = requires(T t)
-    {
-        static_cast<jl_value_t*>(t);
-    };
+    concept is_julia_value =
+        std::is_same_v<T, jl_value_t> or
+        std::is_same_v<T, jl_module_t> or
+        std::is_same_v<T, jl_array_t> or
+        std::is_same_v<T, jl_datatype_t> or
+        std::is_same_v<T, jl_function_t> or
+        std::is_same_v<T, jl_sym_t> or
+        std::is_same_v<T, jl_expr_t> or
+        std::is_same_v<T, jl_unionall_t>;
+
 
     /// @concept is primitive
     template<typename T>
-    concept IsPrimitive =
-        Is<T, bool> or
-        Is<T, std::bool_constant<true>> or
-        Is<T, std::bool_constant<false>> or
-        Is<T, char> or
-        Is<T, uint8_t> or
-        Is<T, uint16_t> or
-        Is<T, uint32_t> or
-        Is<T, uint64_t> or
-        Is<T, int8_t> or
-        Is<T, int16_t> or
-        Is<T, int32_t> or
-        Is<T, int64_t> or
-        Is<T, float> or
-        Is<T, double> or
-        Is<T, std::string> or
-        Is<T, const char*>;
+    concept is_primitive =
+        is<T, bool> or
+        is<T, std::bool_constant<true>> or
+        is<T, std::bool_constant<false>> or
+        is<T, char> or
+        is<T, uint8_t> or
+        is<T, uint16_t> or
+        is<T, uint32_t> or
+        is<T, uint64_t> or
+        is<T, int8_t> or
+        is<T, int16_t> or
+        is<T, int32_t> or
+        is<T, int64_t> or
+        is<T, float> or
+        is<T, double> or
+        is<T, std::string> or
+        is<T, const char*>;
 
     /// @concept is std::complex
     template<typename T>
-    concept IsComplex = requires(T t)
+    concept is_complex = requires(T t)
     {
         typename T::value_type;
         std::is_same_v<T, std::complex<typename T::value_type>>;
@@ -87,7 +188,7 @@ namespace jluna
 
     /// @concept is std::vector
     template<typename T>
-    concept IsVector = requires (T t)
+    concept is_vector = requires (T t)
     {
         typename T::value_type;
         std::is_same_v<T, std::vector<typename T::value_type>>;
@@ -95,7 +196,7 @@ namespace jluna
 
     /// @concept is map
     template<typename T>
-    concept IsMap = requires(T t)
+    concept is_map = requires(T t)
     {
         typename T::key_type;
         typename T::mapped_type;
@@ -106,7 +207,7 @@ namespace jluna
 
     /// @concept is std::set
     template<typename T>
-    concept IsSet = requires(T t)
+    concept is_set = requires(T t)
     {
         typename T::value_type;
         std::is_same_v<T, std::set<typename T::value_type>>;
@@ -114,7 +215,7 @@ namespace jluna
 
     /// @concept is pair
     template<typename T>
-    concept IsPair = requires(T)
+    concept is_pair = requires(T)
     {
         std::is_same_v<T, std::pair<typename T::first_type, typename T::second_type>>;
     };
@@ -125,11 +226,13 @@ namespace jluna
         template<typename T, size_t... Ns>
         constexpr bool is_tuple_aux(std::index_sequence<Ns...> _)
         {
+            if (false) _ = _; // silence unused arg warning
+
             return std::is_same_v<T, std::tuple<std::tuple_element_t<Ns, T>...>>;
         }
     }
     template<typename T>
-    concept IsTuple = detail::is_tuple_aux<T>(std::make_index_sequence<std::tuple_size<T>::value>());
+    concept is_tuple = detail::is_tuple_aux<T>(std::make_index_sequence<std::tuple_size<T>::value>());
 
     /// @concept should be resolved as usertype
     template<typename T>
@@ -140,5 +243,5 @@ namespace jluna
     };
 
     template<typename T>
-    concept IsUsertype = usertype_enabled<T>::value;
+    concept is_usertype = usertype_enabled<T>::value;
 }

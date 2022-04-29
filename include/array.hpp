@@ -11,11 +11,11 @@
 
 namespace jluna
 {
-    template<Boxable T>
+    template<is_boxable T>
     class Vector;
 
     /// @brief wrapper for julia-side Array{Value_t, Rank}
-    template<Boxable Value_t, size_t Rank>
+    template<is_boxable Value_t, size_t Rank>
     class Array : public Proxy
     {
         public:
@@ -36,7 +36,18 @@ namespace jluna
 
             /// @brief ctor from proxy
             /// @param proxy
-            Array(Any* value, jl_sym_t* = nullptr);
+            Array(unsafe::Value* value, jl_sym_t* = nullptr);
+
+            /// @brief ctor as undef of given size
+            /// @param size
+            Array(size_t);
+
+            /// @brief ctor as thin wrapper data, does not invoke copy
+            /// @warning user is responsible for data being properly formatted and for it staying in scope
+            /// @param data
+            /// @param size_per_dimension
+            template<typename... Dims>
+            Array(Value_t*, Dims... size_per_dimension);
 
             /// @brief linear indexing, no bounds checking
             /// @param index, 0-based
@@ -57,14 +68,14 @@ namespace jluna
             /// @brief julia-style list indexing
             /// @param initializer list with indices
             /// @returns new array result of Julia-side getindex(this, range)
-            template<Boxable T>
+            template<is_boxable T>
             jluna::Vector<Value_t> operator[](std::initializer_list<T>&&) const;
 
             /// @brief linear indexing, no bounds checking
             /// @tparam return type
             /// @param index, 0-based
             /// @returns unboxed value
-            template<Unboxable T = Value_t>
+            template<is_unboxable T = Value_t>
             T operator[](size_t) const;
 
             /// @brief multi-dimensional indexing
@@ -78,19 +89,23 @@ namespace jluna
             /// @tparam integral type
             /// @param n integrals, where n is the rank of the array
             /// @returns unboxed value
-            template<Unboxable T = Value_t, typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
+            template<is_unboxable T = Value_t, typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
             T at(Args... in) const;
 
             /// @brief manually assign a value using a linear index
             /// @param index: 0-based
             /// @param value
-            template<Boxable T = Value_t>
+            template<is_boxable T = Value_t>
             void set(size_t i, T);
 
             /// @brief get number of elements, equal to Base.length
             /// @returns length
             size_t get_n_elements() const;
-            inline size_t size() { return get_n_elements(); };
+
+            /// @brief get size in specific dimension
+            /// @param dimension_index: 0-based
+            /// @returns result of Base.size(array, dimension_index)
+            size_t size(size_t dimension_index) const;
 
             /// @brief get iterator to 0-indexed element
             /// @returns assignable iterator
@@ -114,7 +129,7 @@ namespace jluna
 
             /// @brief get first element, equivalent to operator[](0)
             /// @returns unboxed value
-            template<Unboxable T = Value_t>
+            template<is_unboxable T = Value_t>
             T front() const;
 
             /// @brief get last valid element
@@ -123,17 +138,24 @@ namespace jluna
 
             /// @brief get last valid element
             /// @returns unboxed value
-            template<Unboxable T = Value_t>
+            template<is_unboxable T = Value_t>
             T back() const;
 
             /// @brief is empty
             /// @returns true if 0 element, false otherwise
             bool empty() const;
 
-            /// @brief cast to Any*
-            using Proxy::operator Any*;
+            /// @brief call Base.sizehint!, allocates array to be of size
+            /// @param target_size
+            void reserve(size_t);
 
-            /// @brief expose C-data
+            /// @brief cast to unsafe::Value*
+            using Proxy::operator unsafe::Value*;
+
+            /// @brief cast to unsafe::Array*
+            operator unsafe::Array*() const;
+
+            /// @brief expose data as void*
             void* data();
 
         protected:
@@ -182,7 +204,7 @@ namespace jluna
 
                     /// @brief decay into unboxed value
                     /// @tparam value-type, not necessarily the same as declared in the array type
-                    template<Unboxable T = Value_t, std::enable_if_t<not Is<Proxy, T>, bool> = true>
+                    template<is_unboxable T = Value_t, std::enable_if_t<not is<Proxy, T>, bool> = true>
                     operator T() const;
 
                     /// @brief decay into proxy
@@ -205,12 +227,12 @@ namespace jluna
                 /// @brief assign value, also assign value of proxy, regardless of whether it is mutating
                 /// @param value
                 /// @returns reference to self
-                template<Boxable T = Value_t>
+                template<is_boxable T = Value_t>
                 auto& operator=(T value);
 
                 /// @brief decay into unboxed value
                 /// @tparam value-type, not necessarily the same as declared in the array type
-                template<Unboxable T = Value_t, std::enable_if_t<not std::is_same_v<T, Proxy>, bool> = true>
+                template<is_unboxable T = Value_t, std::enable_if_t<not std::is_same_v<T, Proxy>, bool> = true>
                 operator T() const;
 
                 protected:
@@ -219,13 +241,8 @@ namespace jluna
             };
     };
 
-    /// typedefs of vectors that can attach to anything
-    using Array1d = Array<Any*, 1>;
-    using Array2d = Array<Any*, 2>;
-    using Array3d = Array<Any*, 3>;
-
     /// @brief vector typedef
-    template<Boxable Value_t>
+    template<is_boxable Value_t>
     class Vector : public Array<Value_t, 1>
     {
         public:
@@ -240,6 +257,12 @@ namespace jluna
             /// @param generator_expression
             Vector(const GeneratorExpression&);
 
+            /// @brief ctor as thin wrapper around data
+            /// @warning the user is responsible for data being correctly formatted
+            /// @param data
+            /// @param size
+            Vector(Value_t* data, size_t size);
+
             /// @brief ctor from proxy
             /// @param proxy
             Vector(Proxy*);
@@ -247,7 +270,7 @@ namespace jluna
             /// @brief ctor
             /// @param value
             /// @param symbol
-            Vector(Any* value, jl_sym_t* = nullptr);
+            Vector(unsafe::Value* value, jl_sym_t* = nullptr);
 
             /// @brief insert
             /// @param linear index, 0-based
@@ -261,61 +284,27 @@ namespace jluna
             /// @brief add to front
             /// @tparam type of value, not necessarily the same as the declared array type
             /// @param value
-            template<Boxable T = Value_t>
+            template<is_boxable T = Value_t>
             void push_front(T value);
 
             /// @brief add to back
             /// @tparam type of value, not necessarily the same as the declared array type
             /// @param value
-            template<Boxable T = Value_t>
+            template<is_boxable T = Value_t>
             void push_back(T value);
 
-            /// @brief: cast to Any*
-            using Array<Value_t, 1>::operator Any*;
+            /// @brief: cast to unsafe::Value*
+            using Array<Value_t, 1>::operator unsafe::Value*;
 
         protected:
             using Array<Value_t, 1>::_content;
     };
 
-    template<Boxable Value_t>
-    class Matrix : public Array<Value_t, 2>
-    {
-        // this feature is not yet implemented, consider using Array<T, 2> instead
-    };
-
-    /// @brief box array
-    /// @param array
-    /// @returns pointer to newly allocated julia-side value
-    template<typename T,
-        typename Value_t = typename T::value_type,
-        size_t Rank = T::rank,
-        std::enable_if_t<std::is_same_v<T, Array<Value_t, Rank>>, bool> = true>
-    Any* box(T value)
-    {
-        return value.operator Any*();
-    }
-
-    /// @brief box vector
-    /// @param vector
-    /// @returns pointer to newly allocated julia-side value
-    template<typename T,
-        typename Value_t = typename T::value_type,
-        std::enable_if_t<std::is_same_v<T, Vector<Value_t>>, bool> = true>
-    Any* box(T value)
-    {
-        return value.operator Any*();
-    }
-
-    /// @brief box matrix
-    /// @param matrix
-    /// @returns pointer to newly allocated julia-side value
-    template<typename T,
-        typename Value_t = typename T::value_type,
-        std::enable_if_t<std::is_same_v<T, Matrix<Value_t>>, bool> = true>
-    Any* box(T value)
-    {
-        return value.operator Any*();
-    }
+    /// typedefs for Array{Any}
+    using ArrayAny1d = Array<unsafe::Value*, 1>;
+    using ArrayAny2d = Array<unsafe::Value*, 2>;
+    using ArrayAny3d = Array<unsafe::Value*, 3>;
+    using VectorAny = Vector<unsafe::Value*>;
 }
 
 #include <.src/array.inl>
