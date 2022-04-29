@@ -22,6 +22,23 @@ set_usertype_enabled(NonJuliaType);
 int main()
 {
     initialize();
+
+// call Julia functions with C++ Values
+Main.safe_eval("f(x) = x^x^x");
+
+auto f = Main["f"];
+std::cout << (Int64) f(3) << std::endl;
+
+// mutate Julia values
+Main.safe_eval("vec = Int64[1, 2, 3, 4]");
+Main["vec"][2] = 999;
+Main.safe_eval(R"(print(typeof(vec), " ", vec, "\n"))");
+
+// assign Julia values with `std::` objects
+Main["vec"] = std::vector<char>{117, 118, 119, 120};
+Main.safe_eval(R"(print(typeof(vec), " ", vec, "\n"))");
+return 0;
+
     Test::initialize();
 
     Test::test("c_adapter found", [](){
