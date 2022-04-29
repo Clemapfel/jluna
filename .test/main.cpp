@@ -23,13 +23,6 @@ set_usertype_enabled(NonJuliaType);
 int main()
 {
     initialize();
-
-    jluna::Array<Int64, 1> array = Main.safe_eval("return [987, 123, 21]");
-    Int64* array_data = (Int64*) array.data();
-    std::cout << array_data[1] << std::endl;
-    return 0;
-
-
     Test::initialize();
 
     Test::test("c_adapter found", [](){

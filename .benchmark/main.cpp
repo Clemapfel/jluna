@@ -15,62 +15,10 @@ int main()
 {
     initialize(1);
 
-    // alloc two arrays of length 3 and 5
-    const Int64 array_l3[3] = {1234, 101, 111};
-    const Int64 array_l5[5] = {12, 112, 9, 0, 1};
-
-    auto* jl_array_l3 = unsafe::new_array_from_data(Int64_t, (void*) array_l3, 3);
-    auto* jl_array_l5 = unsafe::new_array_from_data(Int64_t, (void*) array_l5, 5);
-
-    // print length 3
-    auto* println = unsafe::get_function(Base, "println"_sym);
-    jluna::safe_call(println, box<std::string>("before: "), jl_array_l3);
-
-    // transform l3 into a thin wrapper of l5
-    unsafe::override_array(jl_array_l3, jl_array_l5);
-
-    // print again
-    jluna::safe_call(println, box<std::string>("after : "), jl_array_l3);
-
-
-return 0;
-
-    size_t n_reps = 5000000;
-
-    std::function<void()> task = []() {
-        size_t sum = 0;
-        for (volatile auto i = 0; i < 100; ++i)
-            sum += generate_number<Int64>();
-
-        return sum;
-    };
-
-    // base comparison: just call function
-    Benchmark::run_as_base("threading: base", n_reps, [&](){
-        task();
-    });
-
-    // run task using jluna::Task
-    Benchmark::run("threading: jluna::Task", n_reps, [&](){
-        auto t = ThreadPool::create<void()>(task);
-        t.schedule();
-        t.join();
-    });
-
-    // run task using std::thread
-    Benchmark::run("threading: std::thread", n_reps, [&](){
-        auto t = std::thread(task);
-        t.join();
-    });
-
-    Benchmark::conclude();
-    Benchmark::save();
-    return 0;
-
     // ### ACCESSING JULIA-SIDE VALUES ###
 
     // number of cycles
-    n_reps = 1000000;
+    size_t n_reps = 1000000;
 
     // allocate function object Julia-side
     Main.safe_eval(R"(
@@ -241,29 +189,6 @@ return 0;
     //Benchmark::save();
     //return 0;
 
-    // ### JLUNA TASK ###
-    // base comparison: just call function
-    Benchmark::run_as_base("threading: no task", n_reps, [](){
-        task_f();
-    });
-
-    // run task using std::thread
-    Benchmark::run("threading: std::thread", n_reps, [](){
-        auto t = std::thread(task_f);
-        t.join();
-    });
-
-    // run task using jluna::Task
-    Benchmark::run("threading: jluna::Task", n_reps, [](){
-        auto t = ThreadPool::create<void()>(task_f);
-        t.schedule();
-        t.join();
-    });
-
-    //Benchmark::conclude();
-    //Benchmark::save();
-    //return 0;
-
     // ### JLUNA ARRAY ###
     n_reps = 1000000;
 
@@ -322,11 +247,9 @@ return 0;
     //Benchmark::save();
     //return 0;
 
-    // ### JLUNA TASK ###
+    n_reps = 5000000;
 
-    n_reps = 1000000;
-
-    std::function<void()> task_ = []() {
+    std::function<void()> task = []() {
         size_t sum = 0;
         for (volatile auto i = 0; i < 100; ++i)
             sum += generate_number<Int64>();

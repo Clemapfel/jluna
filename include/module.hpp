@@ -284,7 +284,7 @@ namespace jluna
 
             /// @brief get binding
             /// @returns vector of pairs where .first is the variable name, .second is the value
-            auto bindings() -> std::vector<std::pair<unsafe::Symbol*, unsafe::Value*>>;
+            // auto bindings() -> std::vector<std::pair<unsafe::Symbol*, unsafe::Value*>>;
 
         private:
             jl_module_t* value() const;
