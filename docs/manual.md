@@ -3978,8 +3978,8 @@ Each task simply sums 100 random integers together. This assures each tasks func
 | name | median duration (ms) | overhead|
 |------|----------------------|-------------|
 | `base` | `0.004646ms`           | `0%`  |
-| `std::thread` | `0.012474ms`   | `168.489%`  |
-| `jluna::Task` | `0.022373ms`   | `381.554%`  |
+| `jluna::Task` | `0.012474ms`   | `168.489%`  |
+| `std::thread` | `0.022373ms`   | `381.554%`  |
 
 Surprisingly, using `jluna::ThreadPool` is actually **faster** than using `std::thread`. Comparing the two result to each other (rather than to the `base` run), we see that `std::thread` exhibits a ~80% overhead compared to `jluna::Task`. While jlunas low-overhead, when calling C++ functions and creating tasks, contributes to this, most of this performance gain is solely because Julia itself is seemingly more optimized.
 
