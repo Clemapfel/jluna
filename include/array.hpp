@@ -155,6 +155,9 @@ namespace jluna
             /// @brief cast to unsafe::Array*
             operator unsafe::Array*() const;
 
+            /// @brief expose data as void*
+            void* data();
+
         protected:
             using Proxy::_content;
 

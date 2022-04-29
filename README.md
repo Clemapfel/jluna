@@ -221,8 +221,6 @@ make install
 ctest --verbose
 ```
 
-
-
 Afterwards, you can make jluna available to your library using 
 
 ```cmake

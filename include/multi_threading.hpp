@@ -140,14 +140,14 @@ namespace jluna
         /// @returns Task, not yet scheduled
         /// @note once the task is done, .result() will return a future with value of type jluna::Nothing_t
         template<typename... Args_t>
-        static Task<void> create(const std::function<void(Args_t...)>& f, Args_t... args);
+        [[nodiscard]] static Task<void> create(const std::function<void(Args_t...)>& f, Args_t... args);
 
         /// @brief create a task from a std::function returning non-void
         /// @param f: function
         /// @param args: arguments
         /// @returns Task, not yet scheduled
         template<is_not<void> Return_t, typename... Args_t>
-        static Task<Return_t> create(const std::function<Return_t(Args_t...)>& f, Args_t... args);
+        [[nodiscard]] static Task<Return_t> create(const std::function<Return_t(Args_t...)>& f, Args_t... args);
 
         /// @brief create a task from a lambda
         /// @param f: lambda
@@ -158,7 +158,7 @@ namespace jluna
             typename... Args_t,
             typename T = std::invoke_result_t<std::function<Signature>, Args_t...>
         >
-        static Task<T> create(Lambda_t f, Args_t... args);
+        [[nodiscard]] static Task<T> create(Lambda_t f, Args_t... args);
 
         /// @brief get number of threads
         /// @returns number

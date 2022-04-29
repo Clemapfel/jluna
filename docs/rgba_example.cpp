@@ -12,21 +12,23 @@ using namespace jluna;
 // define RGBA
 struct RGBA
 {
-    float _red;
-    float _green;
-    float _blue;
-    float _alpha;
+    float _red;     // field _red
+    float _green;   // field _green
+    float _blue;    // field _blue
+    float _alpha;   // field _alpha
 
+    // ctor
     RGBA(float r, float g, float b)
         : _red(r), _green(g), _blue(b), _alpha(1)
     {}
 
+    // default ctor (required by jluna::Usertype)
     RGBA()
         : _red(0), _green(0), _blue(0), _alpha(1)
     {}
 };
 
-// enable as usertype
+// enable as usertype at compile time
 set_usertype_enabled(RGBA);
 
 int main()
@@ -34,28 +36,40 @@ int main()
     jluna::initialize();
 
     // add fields
+
+    // field _red
     Usertype<RGBA>::add_property<float>(
-        "_red",
-        [](RGBA& in) -> float {return in._red;},
-        [](RGBA& out, float in) -> void {out._red = in;}
+        "_red",                                          // name
+        [](RGBA& in) -> float {return in._red;},         // boxing behavior
+        [](RGBA& out, float in) -> void {out._red = in;} // unboxing behvaior
     );
+
+    // field _green
     Usertype<RGBA>::add_property<float>(
         "_green",
         [](RGBA& in) -> float {return in._green;},
         [](RGBA& out, float in) -> void {out._green = in;}
     );
+
+    // field _blue
     Usertype<RGBA>::add_property<float>(
         "_blue",
         [](RGBA& in) -> float {return in._blue;},
         [](RGBA& out, float in) -> void {out._blue = in;}
     );
+
+    // field _alpha
     Usertype<RGBA>::add_property<float>(
         "_alpha",
         [](RGBA& in) -> float {return in._alpha;},
         [](RGBA& out, float in) -> void {out._alpha = in;}
     );
+
+    // julia-only field _value
     Usertype<RGBA>::add_property<float>(
-        "_value",
+        "_value",  // name
+
+        // boxing routine: compute value from red, green and blue
         [](RGBA& in) -> float {
             float max = 0;
             for (auto v : {in._red, in._green, in._blue})

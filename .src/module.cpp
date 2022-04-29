@@ -87,4 +87,10 @@ namespace jluna
         if (_lock == nullptr)
             _lock = new Mutex();
     }
+
+    std::vector<std::pair<unsafe::Symbol*, unsafe::Value*>> Module::bindings()
+    {
+        auto htable = value()->bindings;
+        //htable.
+    }
 }

@@ -282,6 +282,10 @@ namespace jluna
             /// @param package_name
             void include(const std::string& file_path);
 
+            /// @brief get binding
+            /// @returns vector of pairs where .first is the variable name, .second is the value
+            auto bindings() -> std::vector<std::pair<unsafe::Symbol*, unsafe::Value*>>;
+
         private:
             jl_module_t* value() const;
 

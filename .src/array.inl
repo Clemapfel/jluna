@@ -319,6 +319,12 @@ namespace jluna
         jl_array_sizehint(reinterpret_cast<jl_array_t*>(this->operator unsafe::Value*()), n);
     }
 
+    template<is_boxable V, size_t R>
+    void* Array<V, R>::data()
+    {
+        return (operator unsafe::Array*())->data;
+    }
+
     // ###
 
     template<is_boxable V>
