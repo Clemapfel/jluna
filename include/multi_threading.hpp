@@ -47,7 +47,9 @@ namespace jluna
     {
         // forward declarations
         class FutureHandler;
-        struct TaskSuper {};
+        struct TaskSuper {
+            virtual void free() {};
+        };
         template<typename>struct TaskValue;
     }
 
@@ -91,7 +93,7 @@ namespace jluna
 
         public:
             /// @brief dtor
-            ~Task() = default;
+            ~Task();
 
             /// @brief access the Julia-side value of type Task
             operator unsafe::Value*();
@@ -120,10 +122,10 @@ namespace jluna
 
         protected:
             /// @brief ctor private, use ThreadPool::create
-            Task(std::reference_wrapper<detail::TaskValue<Result_t>>);
+            Task(detail::TaskValue<Result_t>*);
 
         private:
-            std::reference_wrapper<detail::TaskValue<Result_t>> _ref;
+            detail::TaskValue<Result_t>* _value; // lifetime managed by threadpool
     };
 
     /// @brief threadpool that allows scheduled C++-side tasks to safely access the Julia State from within a thread.
@@ -132,7 +134,7 @@ namespace jluna
     struct ThreadPool
     {
         template<typename>
-        friend class detail::TaskValue;
+        friend class Task;
 
         /// @brief create a task from a std::function returning void
         /// @param f: function returning void
@@ -169,11 +171,13 @@ namespace jluna
         static size_t thread_id();
 
         private:
+            static void free(size_t id);
+
             static inline size_t _current_id = 0;
             static inline std::mutex _storage_lock = std::mutex();
             static inline std::map<size_t,
                 std::pair<
-                    std::unique_ptr<detail::TaskSuper>,
+                    detail::TaskSuper*,
                     std::unique_ptr<std::function<unsafe::Value*()>>
                 >> _storage = {};
     };
