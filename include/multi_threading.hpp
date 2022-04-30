@@ -91,7 +91,7 @@ namespace jluna
 
         public:
             /// @brief dtor
-            ~Task() = default;
+            ~Task();
 
             /// @brief access the Julia-side value of type Task
             operator unsafe::Value*();
@@ -132,7 +132,7 @@ namespace jluna
     struct ThreadPool
     {
         template<typename>
-        friend class detail::TaskValue;
+        friend class Task;
 
         /// @brief create a task from a std::function returning void
         /// @param f: function returning void
@@ -169,6 +169,8 @@ namespace jluna
         static size_t thread_id();
 
         private:
+            static void free(size_t id);
+
             static inline size_t _current_id = 0;
             static inline std::mutex _storage_lock = std::mutex();
             static inline std::map<size_t,

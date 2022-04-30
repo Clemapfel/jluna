@@ -14,6 +14,7 @@ namespace jluna
             TaskValue(size_t);
             ~TaskValue();
 
+            void free();
             void initialize(std::function<unsafe::Value*()>*);
 
             unsafe::Value* _value;
@@ -90,11 +91,8 @@ namespace jluna
     template<typename T>
     detail::TaskValue<T>::~TaskValue()
     {
+        std::cout << "called" << std::endl;
         unsafe::gc_release(_value_id);
-
-        ThreadPool::_storage_lock.lock();
-        ThreadPool::_storage.erase(_threadpool_id);
-        ThreadPool::_storage_lock.unlock();
     }
 
     template<typename T>
@@ -115,6 +113,12 @@ namespace jluna
     Task<T>::Task(std::reference_wrapper<detail::TaskValue<T>> ref)
         : _ref(ref)
     {}
+
+    template<typename T>
+    Task<T>::~Task()
+    {
+        assert(false);
+    }
 
     template<typename T>
     void Task<T>::join()
@@ -157,14 +161,14 @@ namespace jluna
         return std::ref(*(_ref.get()._future.get()));
     }
 
-     // void specialization for nicer syntax
+    // void specialization for nicer syntax
     template<>
     class Task<void>
     {
         friend class ThreadPool;
 
         public:
-            ~Task() = default;
+            ~Task();
             operator unsafe::Value*();
             void join();
             void schedule();
@@ -183,6 +187,11 @@ namespace jluna
     Task<void>::Task(std::reference_wrapper<detail::TaskValue<unsafe::Value*>> ref)
         : _ref(ref)
     {}
+
+    Task<void>::~Task()
+    {
+        ThreadPool::free(_ref.get()._threadpool_id);
+    }
 
     void Task<void>::join()
     {
@@ -236,13 +245,13 @@ namespace jluna
         _storage.emplace(_current_id,
             std::make_pair(
             std::unique_ptr<detail::TaskSuper>(task),
-            std::make_unique<std::function<unsafe::Value*()>>([lambda, future = std::ref(*(task->_future.get())) ,args...]() -> unsafe::Value* {
+            std::make_unique<std::function<unsafe::Value*()>>([lambda, task, future = std::ref(*(task->_future.get())) ,args...]() -> unsafe::Value* {
                 lambda(args...);
                 detail::FutureHandler::update_future<unsafe::Value*>(future, jl_nothing);
                 return jl_nothing;
         })));
         auto& it = _storage.find(_current_id)->second;
-        auto* out = reinterpret_cast<detail::TaskValue<unsafe::Value*>*> (it.first.get());
+        auto* out = reinterpret_cast<detail::TaskValue<unsafe::Value*>*>(it.first.get());
         out->initialize(it.second.get());
 
         _current_id += 1;
@@ -283,6 +292,15 @@ namespace jluna
     {
         static auto* threadid = unsafe::get_function("Threads"_sym, "threadid"_sym);
         return unbox<Int64>(jl_call0(threadid));
+    }
+
+    inline void ThreadPool::free(size_t id)
+    {
+        _storage_lock.lock();
+
+        auto it = _storage.find(id);
+        _storage.erase(id);
+        _storage_lock.unlock();
     }
 
     // ###
