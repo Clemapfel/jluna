@@ -79,7 +79,7 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
    9.7 [Code Examble](./rgba_example.cpp)<br>
    9.8 [Additional Member Functions](#additional-member-functions)<br>
 10. [**Multi-Threading**](#multi-threading)<br>
-  10.1 [Initializing the Julia Threadpool](#initializing-the-julia-threadpool)<br>
+  10.1 [Initializing the Julia Threadpool](#initializing-the-julia-thread pool)<br>
     10.2 [Creating a Task](#creating-a-task)<br>
     10.3 [Running a Task](#running-a-task)<br>
     10.5 [Managing a Tasks Lifetime](#managing-a-tasks-lifetime)<br>
@@ -2921,7 +2921,7 @@ Similarly, `std::mutex` or `std::unique_lock` can be used for the same purpose.
 
 #### Interacting with `jluna::Task` from Julia
 
-Internally, jluna makes accessing the Julia-state from a C++-sided, asynchronously executed function possible, by wrapping it in a Julia-side `Task`. jluna can then use Julia's native threadpool, allowing for C-API functions to be safely executed. This has some side-effects, most of them useful.
+Internally, jluna makes accessing the Julia-state from a C++-sided, asynchronously executed function possible, by wrapping it in a Julia-side `Task`. jluna can then use Julia's native thread pool, allowing for C-API functions to be safely executed. This has some side-effects, most of them useful.
 
 For example, `yield`, called from C++ like so:
 
@@ -3936,11 +3936,12 @@ Whether 0.5x overhead is acceptable depends on the user and application. What is
 
 With all the wrapping that needs to take place for any C++-side function to be executable from within a Julia-side task, user may worry about the incurred overhead.
 
-In this example, we are measuring the time it takes to create a `jluna::Task`, then execute it until conclusion. Note that each benchmark cycle runs **in sequence**. There is only a single thread available for the entire benchmark. We are not measuring parallel performance, only the overhead of construction. To make for a fair comparison, a 1-thread threadpool was implemented using only the standard library. This allows for the overhead of constructing `std::thread` to not affect benchmarks results, all the C++ benchmark is doing is allocating a task, then notifying the already existing worker thread to finish that task.
+In this benchmark, we are measuring the time it takes to create a `jluna::Task` and execute it until conclusion. Note that each benchmark cycle runs **in sequence**: there is only a single thread available for the entire benchmark. We are not measuring parallel performance, only the overhead of construction. 
 
+To make for a fair comparison, a 1-thread, minimal thread pool was implemented using only the standard library. This allows for the overhead of constructing `std::thread` to not affect benchmarks results, as we want to compare jluna task-creation to C++ task-creation, not jluna task-creation to C++ **thread**-creation.
 
 ```cpp
-// setup 1-thread threapool
+// setup 1-thread thread pool
 static std::mutex queue_mutex;
 static auto queue_lock = std::unique_lock(queue_mutex, std::defer_lock);
 static std::condition_variable queue_cv;
@@ -3981,10 +3982,12 @@ std::function<void()> task = []() {
     return sum;
 };
 
-// n cycles
-size_t n_reps = 10000001;
+// ### BENCHMARK ###
 
-// run task using jluna::Task
+// n cycles
+size_t n_reps = 10000000;
+
+// execute task using jluna::Task
 Benchmark::run_as_base("threading: jluna::Task", n_reps, [&]()
 {
     auto t = ThreadPool::create<void()>(task);
@@ -3992,38 +3995,37 @@ Benchmark::run_as_base("threading: jluna::Task", n_reps, [&]()
     t.join();
 });
 
-// run task using std::thread
+// execute task using std::thread
 Benchmark::run("threading: std::thread", n_reps, [&]()
 {
+    // queue task
     queue.emplace(std::packaged_task<void()>(task));
+    
+    // start worker
     queue_cv.notify_all();
+    
+    // wait for worker to finish before
+    // going to the next benchmark cycle
     master_cv.wait(master_lock, [](){
         return queue.empty();
     });
 });
 
+// safely shutdown worker
 shutdown = true;
-thread.detach();
 queue_cv.notify_all();
-
-Benchmark::conclude();
-return 0;
 ```
 
-This benchmark may be hard to follow. It implements a 1-thread threadpool, using entirely `std::` objects. This is important, as we want to compare jluna *task*-creation to C++ task-creation, not jluna task-creation to C++ *thread*-creation. 
-
-Furthermore, this benchmark does not measure overhead compared to the C-API, it measures how much faster / slower the `std::` threadpool is at completing a C++-only task, compared to `jluna::ThreadPool`. 
-Considering we are more or less forced to do so because of the C-API, this is an important statistics.
+This benchmark does not measure overhead compared to the C-API, it measures how much faster / slower the `std::` thread pool is at completing a C++-only task, compared to `jluna::ThreadPool`. Considering the C-API more or less forces us to use jlunas thread pool, this is an important statistics.
 
 ### Constructing `jluna::Task`: Results
 
 | name | median duration (ms) | overhead|
 |------|----------------------|-------------|
-| `jluna::Task` | `0.012245ms`   | `0%`  |
-| `std::thread` | `0.012232ms`   | `-0.106166%`  |
+| `jluna::Task` | `0.011592ms`   | `0%`  |
+| `std::thread` | `0.012151ms`   | `4.82229%`  |
 
-
-We see that the runtimes are basically identical. This is reassuring, as it not only makes the 5% target, but means that there is no opportunity cost, when using `jluna::ThreadPool` as the basis for an entire C++-side multi-threaded environment.
+Results suggest that the `std::` thread pool is actually slightly slower, about 5%. While this is not significant enough to make one thread pool better than the other, it assures users that migrating a parallel architecture from C++-only to jluna will not incur any overhead, making `jluna::ThreadPool` a fully valid replacement in both functionality and performance.
 
 ---
 

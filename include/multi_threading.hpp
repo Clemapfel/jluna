@@ -47,7 +47,9 @@ namespace jluna
     {
         // forward declarations
         class FutureHandler;
-        struct TaskSuper {};
+        struct TaskSuper {
+            virtual void free() {};
+        };
         template<typename>struct TaskValue;
     }
 
@@ -120,10 +122,10 @@ namespace jluna
 
         protected:
             /// @brief ctor private, use ThreadPool::create
-            Task(std::reference_wrapper<detail::TaskValue<Result_t>>);
+            Task(detail::TaskValue<Result_t>*);
 
         private:
-            std::reference_wrapper<detail::TaskValue<Result_t>> _ref;
+            detail::TaskValue<Result_t>* _value; // lifetime managed by threadpool
     };
 
     /// @brief threadpool that allows scheduled C++-side tasks to safely access the Julia State from within a thread.
@@ -175,7 +177,7 @@ namespace jluna
             static inline std::mutex _storage_lock = std::mutex();
             static inline std::map<size_t,
                 std::pair<
-                    std::unique_ptr<detail::TaskSuper>,
+                    detail::TaskSuper*,
                     std::unique_ptr<std::function<unsafe::Value*()>>
                 >> _storage = {};
     };

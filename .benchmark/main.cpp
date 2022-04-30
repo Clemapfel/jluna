@@ -16,79 +16,6 @@ int main()
 {
     initialize(1);
 
-    {
-        // setup 1-thread threapool
-        static std::mutex queue_mutex;
-        static auto queue_lock = std::unique_lock(queue_mutex, std::defer_lock);
-        static std::condition_variable queue_cv;
-
-        static auto queue = std::queue<std::packaged_task<void()>>();
-        static auto shutdown = false;
-
-        static std::mutex master_mutex;
-        static auto master_lock = std::unique_lock(queue_mutex, std::defer_lock);
-        static std::condition_variable master_cv;
-
-        // worker thread
-        static auto thread = std::thread([](){
-
-            while (true)
-            {
-                queue_cv.wait(queue_lock, []() -> bool {
-                    return not queue.empty() or shutdown;
-                });
-
-                if (shutdown)
-                    return;
-
-                auto task = std::move(queue.front());
-                queue.pop();
-                task();
-
-                master_cv.notify_all();
-            }
-        });
-
-        // task
-        std::function<void()> task = []() {
-            size_t sum = 0;
-            for (volatile auto i = 0; i < 100; ++i)
-                sum += generate_number<Int64>();
-
-            return sum;
-        };
-
-        size_t n_reps = 10000000;
-
-        // run task using jluna::Task
-        //Benchmark::run_as_base("threading: jluna::Task", n_reps, [&]()
-        for (size_t i = 0; i < 1000; ++i)
-        {
-            auto t = ThreadPool::create<void()>(task);
-            t.schedule();
-            t.join();
-        }//);
-
-        /*
-        // run task using std::thread
-        Benchmark::run("threading: std::thread", n_reps, [&]()
-        {
-            queue.emplace(std::packaged_task<void()>(task));
-            queue_cv.notify_all();
-            master_cv.wait(master_lock, [](){
-                return queue.empty();
-            });
-        });
-         */
-
-        shutdown = true;
-        thread.detach();
-        queue_cv.notify_all();
-
-        Benchmark::conclude();
-        return 0;
-    }
-
     // ### ACCESSING JULIA-SIDE VALUES ###
 
     // number of cycles
@@ -364,7 +291,7 @@ int main()
         return sum;
     };
 
-    n_reps = 5000000;
+    n_reps = 10000000;
 
     // run task using jluna::Task
     Benchmark::run_as_base("threading: jluna::Task", n_reps, [&]()
