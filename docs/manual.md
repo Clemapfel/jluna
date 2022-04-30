@@ -36,7 +36,7 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
    3.6 [List of (Un)Boxables](#unboxable-types)<br>
    3.7 [Unnamed Proxies](#named--unnamed-proxies)<br>
    3.8 [Named Proxies](#named-proxy)<br>
-   3.9 [Accessing a Proxies Name](#additional-member-functions)<br>
+   3.9 [Accessing a Proxies Name](#proxy-additional-member-functions)<br>
    3.10 [Fixing Detached Proxies](#detached-proxies)<br>
    3.11 [Named & Unnamed: Implications](#implications)<br>
    3.12 [Proxy Inheritance](#proxy-inheritance)<br>
@@ -76,10 +76,10 @@ jluna makes extensive use of newer C++20 features and high-level techniques such
    9.4 [Step 3: Adding Property Routines](#step-3-adding-property-routines)<br>
    9.5 [Step 4: Implementing the Type](#step-4-implementing-the-type)<br>
    9.6 [Step 5: Usage](#step-5-usage)<br>
-   9.7 [Code Examble](./rgba_example.cpp)<br>
-   9.8 [Additional Member Functions](#additional-member-functions)<br>
+   9.7 [Code Example](./rgba_example.cpp)<br>
+   9.8 [Additional Member Functions](#usertype-additional-member-functions)<br>
 10. [**Multi-Threading**](#multi-threading)<br>
-  10.1 [Initializing the Julia Threadpool](#initializing-the-julia-thread pool)<br>
+  10.1 [Initializing the Julia Threadpool](#initializing-the-julia-threadpool)<br>
     10.2 [Creating a Task](#creating-a-task)<br>
     10.3 [Running a Task](#running-a-task)<br>
     10.5 [Managing a Tasks Lifetime](#managing-a-tasks-lifetime)<br>
@@ -268,7 +268,7 @@ std::cout << result << std::endl;
 ```
 > **C++ Hint**: `std::cout << x << std::endl` is C++s version to Julia's `println(x)`.
 
-Where `Int64` is a type alias of `long int`. Most of the C++ primitive types have been aliased in jluna, such that their name corresponds to their Julia-side equivaent. `Float64` instead of `double`, `UInt32` instead of `unsigned int`, etc.
+Where `Int64` is a type alias of `long int`. Most of the C++ primitive types have been aliased in jluna, such that their name corresponds to their Julia-side equivalent. `Float64` instead of `double`, `UInt32` instead of `unsigned int`, etc.
 
 While the general case will be explained later, for now, be aware that **we have to manually specify the type** of the C++-side variable that captures the result, rather than using `auto`. In the example above, we used `Int64`.
 
@@ -954,7 +954,7 @@ In summary:
 <br><br>
 + We construct a **named proxy** using `Module["<variable name>"]`. Mutating a named proxy will mutate its value **and** mutate its corresponding Julia-side variable.
 
-### Additional Member Functions
+### Proxy: Additional Member Functions
 
 We can check which (if any) variable a proxy is managing using `get_name`:
 
@@ -2481,7 +2481,7 @@ std::cout << cpp_rgba._blue << " ";
 
 This section was quite complicated, a fully working `main.cpp` replicating this `RGBA` example can be found [here](./rgba_example.cpp). Users are encouraged to play with it, to further their understanding of the usertype interface.
 
-### Additional Member Functions
+### Usertype: Additional Member Functions
 
 In addition to functions used for steps outlined in this section, `Usertype<T>` offers the following additional members / member functions:
 
@@ -2835,7 +2835,7 @@ For example, `jluna::safe_call` can be called from multiple threads, and `safe_c
 
 Similarly, we can freely create unrelated proxies and modify them individually. If we create two proxies that reference the same Julia-side variable, mutating both proxies (if they are named) at the same time will possibly trigger an error or data corruption.
 
-The user is required to ensure thread-safety in these conditions, just like they would have to in Julia. jluna has no hidden pitfalls or behind-the-scene machinery that multi-threading may throw a wrench into, all its internals (that are unaccessible to the user) are thread-safe as of version 0.9.0. 
+The user is required to ensure thread-safety in these conditions, just like they would have to in Julia. jluna has no hidden pitfalls or behind-the-scene machinery that multi-threading may throw a wrench into, all its internals (that are inaccessible to the user) are thread-safe as of version 0.9.0. 
 
 Any user-created objects are outside of jlunas responsibility, however.
 
@@ -2932,7 +2932,7 @@ yield();
 
 Will actually yield the thread this C++ code is executed in, letting another Julia thread take over. This applies to all Julia-side functions such as `fetch`, `bind`, etc. <br>Calling them from within a `jluna::Task` has exactly the same effect as calling them from within a `Base.Task`. 
 
-We can access the Julia-side object, `jluna::Task` is managing, using `operator unsafe::Value*()`, which returns a raw C-pointer to the Julia-side taks. This allows us to create a `jluna::Proxy` of a `jluna::Task` like so:
+We can access the Julia-side object, `jluna::Task` is managing, using `operator unsafe::Value*()`, which returns a raw C-pointer to the Julia-side tasks. This allows us to create a `jluna::Proxy` of a `jluna::Task` like so:
 
 ```cpp
 // declare lambda
@@ -2951,7 +2951,7 @@ std::cout << (bool) task_proxy["sticky"] << std::endl;
 true
 ```
 
-> **Julia Hint**: `Threads.Tasks.sticky` is a property that governs wether a task can be executed concurrently. By default, `sticky` is set to `false`, making it "stick" to the main thread, instead of "detaching" and being run on its own.
+> **Julia Hint**: `Threads.Tasks.sticky` is a property that governs whether a task can be executed concurrently. By default, `sticky` is set to `false`, making it "stick" to the main thread, instead of "detaching" and being run on its own.
 
 We can then use this proxy as we would use a Julia-side variable, allowing for full freedom on how to manage and schedule tasks.
 
@@ -3030,7 +3030,7 @@ Furthermore, specialized proxies can be implicitly cast to their `unsafe` pointe
 
 #### From Julia-side Values
 
-Sometimes, we want a Julia-side pointer to a Julia-side object. This is useful when handling large arrays, or when trying to reference a Julia-side object that is not bound to any variable. Julias standard library provides `pointer_from_objref`, however, this function is highly unreliable because it can only be used on mutable types.
+Sometimes, we want a Julia-side pointer to a Julia-side object. This is useful when handling large arrays, or when trying to reference a Julia-side object that is not bound to any variable. Julia's standard library provides `pointer_from_objref`, however, this function is highly unreliable because it can only be used on mutable types.
 
 Instead, jluna provides the C++ function `as_julia_pointer`, which returns a pointer to arbitrary Julia-side objects, even if they are immutable:
 
@@ -3117,7 +3117,7 @@ Main
 
 If an exception is raised during `unsafe::call`, the user will not be notified and the function will silently return a `nulltpr`, potentially causing a segfault when accessing the returned value.
 
-jluna offers a middle ground between the `Proxy::operator()` and `unsafe::call`: `jluna::safe_call`. This function also returns an `unsafe::Value*`, however any exception that is raised during invokation of the function is forwarded to C++. Unless absolute peak performance is needed, it is generally recommended to use `jluna::safe_call` in place of `unsafe::call`, as both functions have the same signature.
+jluna offers a middle ground between the `Proxy::operator()` and `unsafe::call`: `jluna::safe_call`. This function also returns an `unsafe::Value*`, however any exception that is raised during invocation of the function is forwarded to C++. Unless absolute peak performance is needed, it is generally recommended to use `jluna::safe_call` in place of `unsafe::call`, as both functions have the same signature.
 
 ### Executing Strings as Code
 
@@ -3217,7 +3217,7 @@ Int8 64
 
 Where unbox implicitly converted the Julia-side value of type `Int8` to a complex.
 
-Note that `box<T>` and `unbox<T>` should always be called with an explicit template argument. This is to make sure a user conciously chooses the type a value is boxed / unboxed to, eliminating the possibility of accidental implicit conversions reducing performance.
+Note that `box<T>` and `unbox<T>` should always be called with an explicit template argument. This is to make sure a user consciously chooses the type a value is boxed / unboxed to, eliminating the possibility of accidental implicit conversions reducing performance.
 
 ### Protecting Values from the Garbage Collector
 
@@ -3444,7 +3444,7 @@ after : [12, 112, 9, 0, 1]
 
 Where we used `box<std::string>` to forward an inline string as a `unsafe::Value*`, as `jluna::safe_call` needs all its elements to already be Julia-side values.
 
-Similarly, `swap_array_data` replaces array `B`s data with that of `A`, and array `A`s data with that of `B`. Like `override_array`, no copy is performed: the space needed in RAM for this oepration will always be exactly the size of `A` + `B`. The user is responsible for both arrays' memory staying in scope until `swap_array_data` has returned.
+Similarly, `swap_array_data` replaces array `B`s data with that of `A`, and array `A`s data with that of `B`. Like `override_array`, no copy is performed: the space needed in RAM for this operation will always be exactly the size of `A` + `B`. The user is responsible for both arrays' memory staying in scope until `swap_array_data` has returned.
 
 ### Shared Memory
 
@@ -3559,7 +3559,7 @@ This function was deemed to represent the intuitive notion of speedup and overhe
 
 + A is 10% faster than B, if Bs runtime is 110% that of A 
   - -> A  exhibits a -10% overhead compared to B
-+ C is 25% slower than D, if Cs runttime is 125% that of D.
++ C is 25% slower than D, if Cs runtime is 125% that of D.
   - -> C  exhibits a +25% overhead compared to D
 
 The **median cycle duration** for any particular benchmark run was used to measure overhead. This mitigates potential spikes due to noise or one-time-only allocations, which a simple mean would have exhibited.
@@ -4037,12 +4037,12 @@ This section will take the benchmark results into account, giving tips on how to
 
 #### Accessing Julia Values
 
-To access the value of something Julias-side, be it a function or the value of a variable, it is best to use `Module::get<T>` wherever possible. Because the function knows what type the return value will be at compile time, it can directly (but safely) access the Julia-state through C, unboxing the value for us without ever going through the `jluna::Proxy` infrastructure.
+To access the value of something Julia-side, be it a function or the value of a variable, it is best to use `Module::get<T>` wherever possible. Because the function knows what type the return value will be at compile time, it can directly (but safely) access the Julia-state through C, unboxing the value for us without ever going through the `jluna::Proxy` infrastructure.
 
 
 #### Changing a Julia Value
 
-To mutate a variable, `Module::assign` is the preffered choice. It is much faster than a named proxy, yet still forwards exceptions and automatically boxes C++-side values for us.
+To mutate a variable, `Module::assign` is the preferred choice. It is much faster than a named proxy, yet still forwards exceptions and automatically boxes C++-side values for us.
 
 #### Creating a Julia Variable 
 
@@ -4092,9 +4092,9 @@ Many common tasks require handling of large arrays. Julia is very adept at this,
 
 Admittedly, the fact C-side threads are inherently incompatible with Julia is a big problem. This is unrelated to jluna, but was attempted to be addressed using `jluna::ThreadPool`.
 
-While C-side threads don't play nice with Julia, Julia-side threads *do* work well in C++. As a `jluna::Task` is also a Julia-side `Base.Task`, we can handle them like any other Julia-side variable, giving us the exact same flexiblity offered by pure Julia. Furthermore, any code executed inside a `jluna::Task` can make use of both Julia-side and C++-side synchronization primitives, making it possible to be fit into an already existing parallel architecture.
+While C-side threads don't play nice with Julia, Julia-side threads *do* work well in C++. As a `jluna::Task` is also a Julia-side `Base.Task`, we can handle them like any other Julia-side variable, giving us the exact same flexibility offered by pure Julia. Furthermore, any code executed inside a `jluna::Task` can make use of both Julia-side and C++-side synchronization primitives, making it possible to be fit into an already existing parallel architecture.
 
-For any project using jluna, it may be necessary to redesign any particular multi-threaded environment, such that, any concurrent tasks is done Julia-side only. Luckliy, this option may actually be faster, and it can make full use of Julias multi-threading support. This makes the transition as smooth as one could hope for.
+For any project using jluna, it may be necessary to redesign any particular multi-threaded environment, such that, any concurrent tasks is done Julia-side only. Luckily, this option may actually be faster, and it can make full use of Julia's multi-threading support. This makes the transition as smooth as one could hope for.
 
 ---
 ---
