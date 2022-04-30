@@ -180,41 +180,41 @@ namespace jluna
             std::reference_wrapper<detail::TaskValue<unsafe::Value*>> _ref;
     };
 
-    Task<void>::Task(std::reference_wrapper<detail::TaskValue<unsafe::Value*>> ref)
+    inline Task<void>::Task(std::reference_wrapper<detail::TaskValue<unsafe::Value*>> ref)
         : _ref(ref)
     {}
 
-    void Task<void>::join()
+    inline void Task<void>::join()
     {
         static auto* wait = unsafe::get_function(jl_base_module, "wait"_sym);
         jluna::safe_call(wait, _ref.get()._value);
     }
 
-    void Task<void>::schedule()
+    inline void Task<void>::schedule()
     {
         static auto* schedule = unsafe::get_function(jl_base_module, "schedule"_sym);
         jluna::safe_call(schedule, _ref.get()._value);
     }
 
-    bool Task<void>::is_done() const
+    inline bool Task<void>::is_done() const
     {
         static auto* istaskdone = unsafe::get_function(jl_base_module, "istaskdone"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskdone, _ref.get()._value));
     }
 
-    bool Task<void>::is_failed() const
+    inline bool Task<void>::is_failed() const
     {
         static auto* istaskfailed = unsafe::get_function(jl_base_module, "istaskfailed"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskfailed, _ref.get()._value));
     }
 
-    bool Task<void>::is_running() const
+    inline bool Task<void>::is_running() const
     {
         static auto* istaskstarted = unsafe::get_function(jl_base_module, "istaskstarted"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskstarted, _ref.get()._value));
     }
 
-    Future<unsafe::Value*>& Task<void>::result()
+    inline Future<unsafe::Value*>& Task<void>::result()
     {
         return std::ref(*(_ref.get()._future.get()));
     }
