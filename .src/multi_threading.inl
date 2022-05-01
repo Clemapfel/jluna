@@ -187,46 +187,46 @@ namespace jluna
             detail::TaskValue<unsafe::Value*>* _value; // lifetime managed by threadpool
     };
 
-    Task<void>::Task(detail::TaskValue<unsafe::Value*>* value)
+    inline Task<void>::Task(detail::TaskValue<unsafe::Value*>* value)
         : _value(value)
     {}
 
-    Task<void>::~Task()
+    inline Task<void>::~Task()
     {
         ThreadPool::free(_value->_threadpool_id);
     }
 
-    void Task<void>::join()
+    inline void Task<void>::join()
     {
         static auto* wait = unsafe::get_function(jl_base_module, "wait"_sym);
         jluna::safe_call(wait, _value->_value);
     }
 
-    void Task<void>::schedule()
+    inline void Task<void>::schedule()
     {
         static auto* schedule = unsafe::get_function(jl_base_module, "schedule"_sym);
         jluna::safe_call(schedule, _value->_value);
     }
 
-    bool Task<void>::is_done() const
+    inline bool Task<void>::is_done() const
     {
         static auto* istaskdone = unsafe::get_function(jl_base_module, "istaskdone"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskdone, _value->_value));
     }
 
-    bool Task<void>::is_failed() const
+    inline bool Task<void>::is_failed() const
     {
         static auto* istaskfailed = unsafe::get_function(jl_base_module, "istaskfailed"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskfailed, _value->_value));
     }
 
-    bool Task<void>::is_running() const
+    inline bool Task<void>::is_running() const
     {
         static auto* istaskstarted = unsafe::get_function(jl_base_module, "istaskstarted"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskstarted, _value->_value));
     }
 
-    Future<unsafe::Value*>& Task<void>::result()
+    inline Future<unsafe::Value*>& Task<void>::result()
     {
         return std::ref(*(_value->_future.get()));
     }
