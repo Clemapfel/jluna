@@ -3,7 +3,7 @@
 ![](./header.png)
 
 Julia is a beautiful language, it is well-designed, and well-documented. Julia's C-API is also well-designed, less beautiful, and much less... documented.<br>
-Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua <-> C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), jluna aims to fully wrap the official julia C-API, replacing it in projects with C++ as the host language, by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
+Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua <-> C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), jluna aims to fully wrap the official julia C-API, replacing it in projects with C++ as the host language, by making accessing Julia's unique strengths through C++ safe, hassle-free, and just as beautiful.
 
 ---
 
