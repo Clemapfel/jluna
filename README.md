@@ -1,8 +1,8 @@
-# jluna: A modern julia <-> C++ Wrapper (v0.9.0)
+# jluna: A modern Julia <-> C++ wrapper (v0.9.0)
 
 ![](./header.png)
 
-Julia is a beautiful language, it is well-designed, and well-documented. Julias C-API is also well-designed, less beautiful, and much less... documented.<br>
+Julia is a beautiful language, it is well-designed, and well-documented. Julia's C-API is also well-designed, less beautiful, and much less... documented.<br>
 Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua <-> C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), jluna aims to fully wrap the official julia C-API, replacing it in projects with C++ as the host language, by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
 
 ---
@@ -153,6 +153,7 @@ std::cout << std::endl;
 ---
 
 ### Features
+
 + expressive, generic syntax
 + create / call / assign Julia-side variables from C++
 + thread-safe, provides a custom thread pool that, [unlike the C-API](./docs/manual.md/#multi-threading), allows for concurrent interfacing with Julia
