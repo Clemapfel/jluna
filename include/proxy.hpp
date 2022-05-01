@@ -82,7 +82,7 @@ namespace jluna
             /// @brief cast to const Any
             operator const unsafe::Value*() const;
 
-            /// @brief cast to string using julias Base.string
+            /// @brief cast to string using Julia's Base.string
             virtual operator std::string() const;
 
             /// @brief implicitly convert to T via unboxing
