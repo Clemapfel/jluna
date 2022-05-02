@@ -1768,7 +1768,7 @@ We now know how to work around the restriction on the number of arguments, but w
 Let's say we have the following C++ class:
 
 ```cpp
-// declare non-julia class
+// declare non-Julia class
 struct NonJuliaObject
 {
     // member
@@ -1838,7 +1838,7 @@ auto modify_instance =
         return;
     };
 
-// create julia-side variable
+// create Julia-side variable
 Main.create_or_assign(
     "modify_instance",  // variable name
     as_julia_function<void(size_t)>(modify_instance)  // lambda
@@ -2163,7 +2163,7 @@ To classify a type means to evaluate a condition based on a types attributes, in
 There is a subtle difference between how jluna evaluates properties of a type and how pure Julia does. Consider the following:
 
 ```julia
-# in julia
+# in Julia
 function is_array_type(type::Type) 
     return getproperty(type, :name) == Base.typename(Array)
 end
@@ -2528,7 +2528,7 @@ int main()
 }
 ```
 
-Here, we're doing a very simple operation. We created a C++ lambda that *does nothing*. It executes no julia-side code by handing `jl_eval_string` (the C-APIs way to execute strings as code) an empty string, after which is simply returns. We then create a C++-side thread using `std::thread`. In C++, once a thread is created, it starts running immediately. We wait for its execution to finish using `.join()`.
+Here, we're doing a very simple operation. We created a C++ lambda that *does nothing*. It executes no Julia-side code by handing `jl_eval_string` (the C-APIs way to execute strings as code) an empty string, after which is simply returns. We then create a C++-side thread using `std::thread`. In C++, once a thread is created, it starts running immediately. We wait for its execution to finish using `.join()`.
 
 Note that **not a single jluna function was called** over the runtime of this main. All functions where purely Julia C-API functions.
 
@@ -2848,14 +2848,14 @@ Notably, `Module::new_*`, `Module::create` and `Module::create_or_assign` are th
 As an example for how to make modifying an object thread-safe, let's say we have the following variable in `Main`:
 
 ```julia
-# in julia
+# in Julia
 to_be_modified = []
 ```
 
 We want to thread-safely add elements to this vector. One way to do this would be with a Julia-side Lock:
 
 ```julia
-# in julia
+# in Julia
 to_be_modified = []
 to_be_modified_lock = Base.ReentrantLock()
 ```
@@ -3104,7 +3104,7 @@ unsafe::Function* println = unsafe::get_function(
 
 Where, as stated, most of jlunas proxies are able to be `static_cast` to their corresponding `unsafe` pointer type. `jluna::Module` to `unsafe::Module*`, in this case. 
 
-Because these operators are [not explicit](https://en.cppreference.com/w/cpp/language/explicit), we can use these classes directly with functions expecting their pointer type, such as most `unsafe` functions. This allows for some convenience (with no additional performance overhead).
+Despite these operators being [explicit](https://en.cppreference.com/w/cpp/language/explicit), we can use these classes directly with functions expecting their pointer type, such as most `unsafe` functions. This allows for some convenience (with no additional performance overhead).
 
 Having acquired a pointer to `println`, we can call the function like so:
 
@@ -3832,7 +3832,7 @@ Benchmark::run_as_base("Call C++-Function in C++", n_reps, [](){
     task_f();
 });
 
-// move to julia
+// move to Julia
 Main.create_or_assign("task_f", as_julia_function<void()>(task_f));
 auto* jl_task_f = unsafe::get_function(jl_main_module, "task_f"_sym);
 

@@ -370,7 +370,6 @@ int main()
 
     test_box_unbox("Pair", std::pair<size_t, std::string>(12, "abc"));
     test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(12, "abc", 0.01));
-    test_box_unbox("Proxy", Proxy((unsafe::Value*) jl_main_module, nullptr));
     test_box_unbox("Symbol", jluna::Symbol("abc"));
 
     auto test_box_unbox_iterable = []<typename T>(const std::string& name, T&& value) {
