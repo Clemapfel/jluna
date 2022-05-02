@@ -77,10 +77,10 @@ namespace jluna
             T operator[](size_t);
 
             /// @brief cast to Any
-            operator unsafe::Value*();
+            explicit operator unsafe::Value*();
 
             /// @brief cast to const Any
-            operator const unsafe::Value*() const;
+            explicit operator const unsafe::Value*() const;
 
             /// @brief cast to string using julias Base.string
             virtual operator std::string() const;

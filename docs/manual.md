@@ -3104,7 +3104,7 @@ unsafe::Function* println = unsafe::get_function(
 
 Where, as stated, most of jlunas proxies are able to be `static_cast` to their corresponding `unsafe` pointer type. `jluna::Module` to `unsafe::Module*`, in this case. 
 
-Because these operators are [not explicit](https://en.cppreference.com/w/cpp/language/explicit), we can use these classes directly with functions expecting their pointer type, such as most `unsafe` functions. This allows for some convenience (with no additional performance overhead).
+Despite these operators being [explicit](https://en.cppreference.com/w/cpp/language/explicit), we can use these classes directly with functions expecting their pointer type, such as most `unsafe` functions. This allows for some convenience (with no additional performance overhead).
 
 Having acquired a pointer to `println`, we can call the function like so:
 
