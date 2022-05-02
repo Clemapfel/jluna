@@ -1,9 +1,9 @@
-# jluna: A modern julia <-> C++ Wrapper (v0.9.0)
+# jluna: A modern Julia <-> C++ Wrapper (v0.9.0)
 
 ![](./header.png)
 
-Julia is a beautiful language, it is well-designed, and well-documented. Julias C-API is also well-designed, less beautiful, and much less... documented.<br>
-Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua <-> C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), jluna aims to fully wrap the official julia C-API, replacing it in projects with C++ as the host language, by making accessing julias unique strengths through C++ safe, hassle-free, and just as beautiful.
+Julia is a beautiful language, it is well-designed, and well-documented. Julia's C-API is also well-designed, less beautiful, and much less... documented.<br>
+Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua <-> C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), jluna aims to fully wrap the official Julia C-API, replacing it in projects with C++ as the host language, by making accessing Julia's unique strengths through C++ safe, hassle-free, and just as beautiful.
 
 ---
 
@@ -97,7 +97,7 @@ auto cpp_function = [](jluna::ArrayAny1d array_in) -> std::string
 // bind to Julia variable
 Main.create_or_assign("cpp_function", as_julia_function<std::string(ArrayAny1d)>(cpp_function));
 
-// can now be used in julia
+// can now be used in Julia
 Main.safe_eval(R"(
     println(cpp_function(["does", "it", "work", "with", [1, 2, 3], "?"]))
 )");

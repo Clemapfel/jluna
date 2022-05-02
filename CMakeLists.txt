@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 3.12)
 Build jluna
 -----------
 
-This cmake attempts to automatically detect the julia image.
-If this is not possible, manually specify the path to the julia binary using:
+This cmake attempts to automatically detect the Julia image.
+If this is not possible, manually specify the path to the Julia binary using:
 
     ``-DJULIA_BINDIR=/path/to/.../julia/bin``
 

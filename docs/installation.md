@@ -184,24 +184,24 @@ You may encounter the following error:
 
 ```
 CMake Error at cmake/find/FindJulia.cmake:5 (message):
-  Unable to detect the julia executable.  Make sure JULIA_BINDIR is set
+  Unable to detect the Julia executable.  Make sure JULIA_BINDIR is set
   correctly.
 ```
 
-This error appears, because jluna was unable to locate the julia package on your system. To make jluna aware of the location manually, you can pass the following variable to the cmake command:
+This error appears, because jluna was unable to locate the Julia package on your system. To make jluna aware of the location manually, you can pass the following variable to the cmake command:
 
 ```bash
 cmake .. -DJULIA_BINDIR=path/to/your/julia/bin #-DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
 ```
 
-Where `path/to/your/julia/bin` is the path of the binary directory of your julia image. If you are unsure of its location, you can execute
+Where `path/to/your/julia/bin` is the path of the binary directory of your Julia image. If you are unsure of its location, you can execute
 
 ```julia
-# in julia
+# in Julia
 println(Sys.BINDIR)
 ```
 
-From inside the julia REPL, which will print the correct directory to the console.
+From inside the Julia REPL, which will print the correct directory to the console.
 
 ### Found unsuitable version
 
@@ -213,7 +213,7 @@ CMake Error at /home/(...)/FindPackageHandleStandardArgs.cmake:218 (message):
   least "1.7.0" (found /home/clem/Applications/julia/lib/libjulia.so)
 ```
 
-Where `1.5.1` could instead be any version before `1.7.0`. This means your julia version is out of date, either update it through your packet manager or download the latest version [here](https://julialang.org/downloads/), install it, then make sure `JULIA_BINDIR` is pointing to the newer version.
+Where `1.5.1` could instead be any version before `1.7.0`. This means your Julia version is out of date, either update it through your packet manager or download the latest version [here](https://julialang.org/downloads/), install it, then make sure `JULIA_BINDIR` is pointing to the newer version.
 
 ### Could NOT find Julia (missing: X)
 
@@ -223,7 +223,7 @@ Where X can be any of :
 + `JULIA_BINDIR` 
 + `JULIA_INCLUDE_DIR`
 
-This means that either `JULIA_BINDIR` was not set correctly, or the directory it is pointing to is not the julia binary directory. Verify that the value of `JULIA_BINDIR` starts at root (`/` on unix and `C:/` on Windows), ends in `/bin`, and that your julia image folder is uncompressed. 
+This means that either `JULIA_BINDIR` was not set correctly, or the directory it is pointing to is not the Julia binary directory. Verify that the value of `JULIA_BINDIR` starts at root (`/` on unix and `C:/` on Windows), ends in `/bin`, and that your julia image folder is uncompressed. 
 
 Make sure the folder `JULIA_BINDIR` points to, has the following layout:
 
@@ -306,7 +306,7 @@ terminate called after throwing an instance of 'jluna::JuliaException'
 signal (6): Aborted
 ```
 
-To allow the local julia state to interface with jluna, it needs the shared C-adapter-library to be available. During `make install`, jluna modifies its own code to keep track of the location of the C-adapter. If it was moved, jluna may no longer be able to find it.
+To allow the local Julia state to interface with jluna, it needs the shared C-adapter-library to be available. During `make install`, jluna modifies its own code to keep track of the location of the C-adapter. If it was moved, jluna may no longer be able to find it.
 To fix this, recompile jluna, as detailed [above](#make-install). 
 
 The C-adapter library is always installed into the directory specified by `CMAKE_INSTALL_PREFIX`, regardless of cmake presets used. Be aware of this.

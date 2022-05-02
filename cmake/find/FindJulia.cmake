@@ -1,19 +1,19 @@
 #
-# This FindJulia.cmake is intended to detect julia as a package.
+# This FindJulia.cmake is intended to detect Julia as a package.
 #
 # Use
 # `list(APPEND CMAKE_MODULE_PATH "path/to/this/file")`
 # `find_package(Julia 1.7.0 REQUIRED)`
 #
-# to make the julia target available through:
+# to make the Julia target available through:
 # `"$<BUILD_INTERFACE:Julia::Julia>"`
 #
 # Furthermore the following variables will be set on
 # successful detection:
 #
-# JULIA_LIBRARY         : julia shared library
-# JULIA_EXECUTABLE      : julia REPL executable
-# JULIA_BINDIR          : directory to julia binary
+# JULIA_LIBRARY         : Julia shared library
+# JULIA_EXECUTABLE      : Julia REPL executable
+# JULIA_BINDIR          : directory to Julia binary
 # JULIA_INCLUDE_DIR     : directory that contains julia.h
 #
 #[=======================================================================[.rst:
@@ -21,7 +21,7 @@
 FindJulia
 -----------
 
-This module is intended to detect julia as a package.
+This module is intended to detect Julia as a package.
 
 Imported Targets
 ^^^^^^^^^^^^^^^^
@@ -33,13 +33,13 @@ Result Variables
 ^^^^^^^^^^^^^^^^
 
 ``JULIA_LIBRARY``
-    julia shared library
+    Julia shared library
 ``JULIA_EXECUTABLE``
-    julia REPL executable
+    Julia REPL executable
 ``JULIA_BINDIR``
-    directory to julia binary
+    directory to Julia binary
 ``JULIA_INCLUDE_DIR``
-    directory that contains julia.h
+    directory that contains Julia.h
 
 Usage
 ^^^^^
@@ -47,7 +47,7 @@ Use:
     ``list(APPEND CMAKE_MODULE_PATH "path/to/this/file")``
     ``find_package(Julia 1.7.0 REQUIRED)``
 
-to make the julia target available to your target through
+to make the Julia target available to your target through
     ``"$<BUILD_INTERFACE:Julia::Julia>"``
 
 #]=======================================================================]
@@ -60,11 +60,11 @@ macro(julia_bail_if_false message var)
     endif()
 endmacro()
 
-# detect julia executable
+# detect Julia executable
 find_program(JULIA_EXECUTABLE julia PATHS ENV JULIA_BINDIR)
-julia_bail_if_false("Unable to detect the julia executable. Make sure JULIA_BINDIR is set correctly." JULIA_EXECUTABLE)
+julia_bail_if_false("Unable to detect the Julia executable. Make sure JULIA_BINDIR is set correctly." JULIA_EXECUTABLE)
 
-# detect julia binary dir
+# detect Julia binary dir
 if(NOT DEFINED JULIA_BINDIR)
     # The executable could be a chocolatey shim, so run some Julia code to report
     # the path of the BINDIR
@@ -94,7 +94,7 @@ if(WIN32)
     endif()
 endif()
 
-# detect julia library
+# detect Julia library
 find_library(JULIA_LIBRARY julia HINTS "${JULIA_PATH_PREFIX}/lib")
 
 if(WIN32)
@@ -104,14 +104,14 @@ endif()
 
 julia_bail_if_false("Unable to find the julia shared library. Make sure JULIA_BINDIR is set correctly and that the julia image is uncompressed" JULIA_LIBRARY)
 
-# detect julia include dir
+# detect Julia include dir
 find_path(
     JULIA_INCLUDE_DIR julia.h
     HINTS "${JULIA_PATH_PREFIX}/include" "${JULIA_PATH_PREFIX}/include/julia"
 )
 julia_bail_if_false("Unable to find julia.h. Make sure JULIA_BINDIR is set correctly and that your image is uncompressed." JULIA_INCLUDE_DIR)
 
-# detect julia version
+# detect Julia version
 if(NOT DEFINED JULIA_VERSION)
     file(STRINGS "${JULIA_INCLUDE_DIR}/julia_version.h" JULIA_VERSION_LOCAL LIMIT_COUNT 1 REGEX JULIA_VERSION_STRING)
     string(REGEX REPLACE ".*\"([^\"]+)\".*" "\\1" JULIA_VERSION_LOCAL "${JULIA_VERSION_LOCAL}")
