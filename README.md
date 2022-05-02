@@ -100,7 +100,7 @@ Main.create_or_assign("cpp_function", as_julia_function<std::string(ArrayAny1d)>
 
 // can now be used in Julia
 Main.safe_eval(R"(
-    println(cpp_function(["does", "it", "work", "with", [1, 2, 3], "?"]))
+    print(cpp_function(["does ", "it ", "work ", "with ", [1, 2, 3], " ?"]))
 )");
 ```
 ```
