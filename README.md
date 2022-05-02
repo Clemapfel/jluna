@@ -1,5 +1,6 @@
 # jluna: A modern Julia <-> C++ Wrapper (v0.9.0)
 
+
 ![](./header.png)
 
 Julia is a beautiful language, it is well-designed, and well-documented. Julia's C-API is also well-designed, less beautiful, and much less... documented.<br>
@@ -153,6 +154,7 @@ std::cout << std::endl;
 ---
 
 ### Features
+
 + expressive, generic syntax
 + create / call / assign Julia-side variables from C++
 + thread-safe, provides a custom thread pool that, [unlike the C-API](./docs/manual.md/#multi-threading), allows for concurrent interfacing with Julia
