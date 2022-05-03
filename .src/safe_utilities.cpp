@@ -39,7 +39,14 @@ namespace jluna
             return;
         }
 
-        setenv("JULIA_NUM_THREADS", n_threads == 0 ? "auto" : std::to_string(n_threads).c_str(), 1);
+        #ifdef _WIN32
+            if (n_threads == 0)
+                _putenv("JULIA_NUM_THREADS=auto");
+            else
+                _putenv("JULIA_NUM_THREADS=" + std::to_string(n_threads));
+        #else
+            setenv("JULIA_NUM_THREADS", n_threads == 0 ? "auto" : std::to_string(n_threads).c_str(), 1);
+        #endif
         detail::_num_threads = n_threads;
         if (path.empty())
             jl_init();
@@ -47,7 +54,11 @@ namespace jluna
             jl_init_with_image(path.c_str(), nullptr);
 
         forward_last_exception();
-        setenv("JULIA_NUM_THREADS", "", 1);
+
+        #ifdef _WIN32
+        #else
+            setenv("JULIA_NUM_THREADS", "", 1);
+        #endif
 
         std::stringstream julia_code;
         julia_code << "module jluna" << std::endl;
