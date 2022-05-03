@@ -10,7 +10,7 @@ namespace jluna
         template<typename Result_t>
         struct TaskValue : public detail::TaskSuper
         {
-            friend class ThreadPool;
+            friend class jluna::ThreadPool;
             TaskValue(size_t);
             ~TaskValue();
 
