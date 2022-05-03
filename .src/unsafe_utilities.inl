@@ -8,21 +8,30 @@ namespace jluna::unsafe
     template<is_julia_value_pointer... Args_t>
     unsafe::Value* call(Function* function, Args_t... args)
     {
+        gc_pause;
         std::array<jl_value_t*, sizeof...(Args_t)> wrapped = {(unsafe::Value*) args...};
-        return jl_call(function, wrapped.data(), wrapped.size());
+        auto* out = jl_call(function, wrapped.data(), wrapped.size());
+        gc_unpause;
+        return out;
     }
 
     template<is_julia_value_pointer... Args_t>
     unsafe::Value* call(DataType* type, Args_t... args)
     {
-        return jl_new_struct(type, args...);
+        gc_pause;
+        auto* out = jl_new_struct(type, args...);
+        gc_unpause;
+        return out;
     }
 
     template<is_julia_value_pointer... Args_t>
     unsafe::Expression* Expr(unsafe::Symbol* first, Args_t... other)
     {
+        gc_pause;
         static unsafe::Function* expr = unsafe::get_function(jl_base_module, "Expr"_sym);
-        return (unsafe::Expression*) call(expr, first, other...);
+        auto* out = (unsafe::Expression*) call(expr, first, other...);
+        gc_unpause;
+        return out;
     }
 
     namespace detail
@@ -149,6 +158,7 @@ namespace jluna::unsafe
     template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool>>
     unsafe::Value* get_index(unsafe::Array* array, Index... index_per_dimension)
     {
+        gc_pause;
         std::array<size_t, sizeof...(Index)> indices = {size_t(index_per_dimension)...};
         size_t index = 0;
         size_t mul = 1;
@@ -160,22 +170,31 @@ namespace jluna::unsafe
             mul *= dim;
         }
 
-        return jl_arrayref(array, index);
+        auto* out = jl_arrayref(array, index);
+        gc_unpause;
+        return out;
     }
 
     inline unsafe::Value* get_index(unsafe::Array* array, size_t i)
     {
-        return jl_arrayref(array, i);
+        gc_pause;
+        auto* out = jl_arrayref(array, i);
+        gc_unpause;
+        return out;
     }
 
     inline unsafe::Value* get_index(unsafe::Array* array, size_t i, size_t j)
     {
-        return jl_arrayref(array, i + jl_array_dim(array, 0) * j);
+        gc_pause;
+        auto* out = jl_arrayref(array, i + jl_array_dim(array, 0) * j);
+        gc_unpause;
+        return out;
     }
 
     template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool>>
     void set_index(unsafe::Array* array, unsafe::Value* new_value, Index... index_per_dimension)
     {
+        gc_pause;
         std::array<size_t, sizeof...(Index)> indices = {size_t(index_per_dimension)...};
         size_t index = 0;
         size_t mul = 1;
@@ -188,31 +207,40 @@ namespace jluna::unsafe
         }
 
         jl_arrayset(array, new_value, index);
+        gc_unpause;
     }
 
     inline void set_index(unsafe::Array* array, unsafe::Value* value, size_t i)
     {
+        gc_pause;
         jl_arrayset(array, value, i);
+        gc_unpause;
     }
 
     template<typename T>
     void set_array_data(unsafe::Array* array, T* new_data, size_t new_size)
     {
+        gc_pause;
         array->data = new_data;
         jl_gc_wb(array, new_data);
         array->length = new_size;
+        gc_unpause;
     }
 
     inline void push_back(unsafe::Array* arr, unsafe::Value* value)
     {
+        gc_pause;
         jl_array_grow_end(arr, 1);
         jl_arrayset(arr, value, jl_array_len(arr) - 1);
+        gc_unpause;
     }
 
     inline void push_front(unsafe::Array* arr, unsafe::Value* value)
     {
+        gc_pause;
         jl_array_grow_beg(arr, 1);
         jl_arrayset(arr, value, 0);
+        gc_unpause;
     }
 
     template<is_julia_value T>
@@ -296,7 +324,10 @@ namespace jluna::unsafe
     template<is<std::string> T>
     unsafe::Value* unsafe_box(const T& in)
     {
-        return jl_array_to_string(jl_ptr_to_array_1d(jl_apply_array_type((jl_value_t*) jl_char_type, 1), in.data(), in.size(), 0));
+        gc_pause;
+        auto* out = jl_array_to_string(jl_ptr_to_array_1d(jl_apply_array_type((jl_value_t*) jl_char_type, 1), in.data(), in.size(), 0));
+        gc_unpause;
+        return out;
     }
 
     template<is<bool> T>

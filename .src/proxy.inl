@@ -31,8 +31,11 @@ namespace jluna
     template<is_unboxable T>
     T Proxy::operator[](size_t i)
     {
+        gc_pause;
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        return unbox<T>(jluna::safe_call(getindex, _content->value(), box<size_t>(i + 1)));
+        auto* out = jluna::safe_call(getindex, _content->value(), box<size_t>(i + 1));
+        gc_unpause;
+        return unbox<T>(out);
     }
 
     template<is_unboxable T, std::enable_if_t<not std::is_same_v<T, std::string>, bool>>
@@ -70,12 +73,15 @@ namespace jluna
     template<typename T, std::enable_if_t<std::is_same_v<T, char>, Bool>>
     Proxy Proxy::operator[](const T* field)
     {
+        gc_pause;
         jl_sym_t* symbol = jl_symbol(field);
-        return Proxy(
+        auto out = Proxy(
             _content.get()->get_field(symbol),
             _content,
             (unsafe::Value*) symbol
         );
+        gc_unpause;
+        return out;
     }
 
     template<is_unboxable T, typename U, std::enable_if_t<std::is_same_v<U, char>, Bool>>
@@ -98,15 +104,21 @@ namespace jluna
     template<typename T, is_boxable... Args_t, std::enable_if_t<not std::is_void_v<T> and not is<Proxy, T>, bool>>
     T Proxy::safe_call(Args_t&&... args)
     {
+        gc_pause;
         static jl_function_t* invoke = unsafe::get_function("jluna"_sym, "invoke"_sym);
-        return unbox<T>(jluna::safe_call(invoke, _content->value(), box(args)...));
+        auto* out = jluna::safe_call(invoke, _content->value(), box(args)...);
+        gc_unpause;
+        return unbox<T>(out);
     }
 
     template<typename T, is_boxable... Args_t, std::enable_if_t<std::is_void_v<T> and not is<Proxy, T>, bool>>
     T Proxy::safe_call(Args_t&&... args)
     {
+        gc_pause;
         static jl_function_t* invoke = unsafe::get_function("jluna"_sym, "invoke"_sym);
-        jluna::safe_call(invoke, _content->value(), box(args)...);
+        auto* out = jluna::safe_call(invoke, _content->value(), box(args)...);
+        gc_unpause;
+        return jl_nothing;
     }
 
     template<is_boxable... Args_t>

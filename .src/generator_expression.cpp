@@ -54,7 +54,10 @@ namespace jluna
 
     unsafe::Value* GeneratorExpression::get() const
     {
-        return jl_get_nth_field(_value_ref, 0);
+        gc_pause;
+        auto* out = jl_get_nth_field(_value_ref, 0);
+        gc_unpause;
+        return out;
     }
 
     typename GeneratorExpression::ForwardIterator GeneratorExpression::begin() const

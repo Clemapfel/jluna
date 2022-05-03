@@ -53,6 +53,7 @@ namespace jluna
         else
             jl_init_with_image(path.c_str(), nullptr);
 
+        gc_pause;
         forward_last_exception();
 
         #ifdef _WIN32
@@ -66,7 +67,7 @@ namespace jluna
         julia_code << detail::julia_source_02 << std::endl;
         julia_code << detail::julia_source_03 << std::endl;
         julia_code << detail::julia_source_04 << std::endl;
-        julia_code << "end" << std::endl;
+        julia_code << "end; return true" << std::endl;
 
         bool success = jl_unbox_bool(jl_eval_string(julia_code.str().c_str()));
         forward_last_exception();
@@ -121,12 +122,14 @@ namespace jluna
 
         std::atexit(&jluna::detail::on_exit);
         is_initialized = true;
+        gc_unpause;
 
         detail::initialize_lock.unlock();
     }
 
     unsafe::Value* safe_eval(const std::string& code, unsafe::Module* module)
     {
+        gc_pause;
         static auto* eval = unsafe::get_function(jl_base_module, "eval"_sym);
 
         const std::string a = "quote ";
@@ -143,17 +146,18 @@ namespace jluna
         }
 
         jl_set_nth_field(quote, 0, (unsafe::Value*) "toplevel"_sym);
-        return safe_call(eval, module, quote);
+        auto* out = safe_call(eval, module, quote);
+        gc_unpause;
+        return out;
     }
 
     unsafe::Value* safe_eval_file(const std::string& path, unsafe::Module* module)
     {
+        gc_pause;
         auto* jl_string = box<std::string>(path);
-        auto jl_string_id = unsafe::gc_preserve(jl_string);
-
         static auto* include = unsafe::get_function(jl_base_module, "include"_sym);
         auto* out = jluna::safe_call(include, (unsafe::Value*) module, jl_string);
-        unsafe::gc_release(jl_string_id);
+        gc_unpause;
         return out;
     }
 
@@ -205,15 +209,20 @@ namespace jluna::detail
 
     unsafe::Value* get_reference(size_t key)
     {
+        gc_pause;
         static unsafe::Function* get_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "get_reference"_sym);
-        return jluna::safe_call(get_reference, jl_box_uint64(static_cast<size_t>(key)));
+        auto* out = jluna::safe_call(get_reference, jl_box_uint64(static_cast<size_t>(key)));
+        gc_unpause;
+        return out;
     }
 
     void free_reference(size_t key)
     {
+        gc_pause;
         throw_if_uninitialized();
         static unsafe::Function* free_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "free_reference"_sym);
         jluna::safe_call(free_reference, jl_box_uint64(static_cast<size_t>(key)));
+        gc_unpause;
     }
 
     void initialize_types()
@@ -285,9 +294,11 @@ namespace jluna::detail
 
     void initialize_modules()
     {
+        gc_pause;
         Main = Module(jl_main_module);
         Core = Module(jl_core_module);
         Base = Module(jl_base_module);
+        gc_unpause;
     }
 }
 

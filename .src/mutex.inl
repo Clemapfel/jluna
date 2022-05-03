@@ -16,10 +16,12 @@ namespace jluna
     template<is<jluna::Mutex> T>
     T unbox(unsafe::Value* in)
     {
+        gc_pause;
         jluna::detail::assert_type(
             (unsafe::DataType*) jl_typeof(in),
             (unsafe::DataType*) jl_eval_string("return Base.ReentrantLock")
         );
+        gc_unpause;
 
         return Mutex(in);
     }

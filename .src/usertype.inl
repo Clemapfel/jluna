@@ -27,6 +27,7 @@ namespace jluna
         std::function<Field_t(T&)> box_get,
         std::function<void(T&, Field_t)> unbox_set)
     {
+        gc_pause;
         if (_name.get() == nullptr)
             initialize();
 
@@ -44,6 +45,7 @@ namespace jluna
             },
             Type((jl_datatype_t*) jl_eval_string(as_julia_type<Field_t>::type_name.c_str()))
         }});
+        gc_unpause;
     }
 
     template<typename T>

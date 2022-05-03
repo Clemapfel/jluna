@@ -83,13 +83,17 @@ namespace jluna
 
     unsafe::Value* Proxy::ProxyValue::get_field(jl_sym_t* symbol)
     {
+        gc_pause;
         static jl_function_t* dot = unsafe::get_function("jluna"_sym, "dot"_sym);
 
         auto* v = value();
+        unsafe::Value* out;
         if (jl_isa(value(), (unsafe::Value*) jl_module_type) && jl_defines_or_exports_p((unsafe::Module*) v, symbol))
-                return jl_get_global((unsafe::Module*) v, symbol);
+            out = jl_get_global((unsafe::Module*) v, symbol);
         else
-            return jluna::safe_call(dot, value(), (unsafe::Value*) symbol);
+            out = jluna::safe_call(dot, value(), (unsafe::Value*) symbol);
+        gc_unpause;
+        return out;
     }
 
     /// ####################################################################
@@ -118,6 +122,7 @@ namespace jluna
 
     Proxy Proxy::operator[](size_t i)
     {
+        gc_pause;
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
 
         unsafe::Value* out;
@@ -128,7 +133,9 @@ namespace jluna
         else
             out = jluna::safe_call(getindex, v, box<size_t>(i + 1));
 
-        return Proxy(out, _content, jl_box_uint64(i+1));
+        auto proxy = Proxy(out, _content, jl_box_uint64(i+1));
+        gc_unpause;
+        return proxy;
     }
 
     Proxy::operator unsafe::Value*()
@@ -151,14 +158,20 @@ namespace jluna
 
     Proxy::operator std::string() const
     {
+        gc_pause;
         static jl_function_t* to_string = jl_get_function(jl_base_module, "string");
-        return std::string(jl_string_data(jl_call1(to_string, _content->value())));
+        auto* out = jl_string_data(jl_call1(to_string, _content->value()));
+        gc_unpause;
+        return std::string(out);
     }
 
     std::string Proxy::get_name() const
     {
+        gc_pause;
         static jl_function_t* get_name = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "get_name"_sym);
-        return unbox<std::string>(jluna::safe_call(get_name, _content->id()));
+        auto* out = jluna::safe_call(get_name, _content->id());
+        gc_unpause;
+        return unbox<std::string>(out);
     }
 
     std::vector<std::string> Proxy::get_field_names() const
@@ -200,8 +213,11 @@ namespace jluna
 
     Proxy Proxy::as_unnamed() const
     {
+        gc_pause;
         static auto* deepcopy = unsafe::get_function(jl_base_module, "deepcopy"_sym);
-        return Proxy(unsafe::call(deepcopy, _content->value()), nullptr);
+        auto* out = unsafe::call(deepcopy, _content->value());
+        gc_unpause;
+        return Proxy(out, nullptr);
     }
 
     void Proxy::update()

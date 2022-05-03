@@ -17,13 +17,18 @@ namespace jluna
     Type::Type(Proxy* owner)
         : Proxy(*owner)
     {
+        gc_pause;
         detail::assert_type((unsafe::DataType*) jl_typeof(owner->operator unsafe::Value*()), (unsafe::DataType*) jl_type_type);
+        gc_unpause;
     }
 
     Type Type::unroll() const
     {
+        gc_pause;
         static jl_function_t* unroll = unsafe::get_function("jluna"_sym, "unroll_type"_sym);
-        return Type((jl_datatype_t*) jluna::safe_call(unroll, get()));
+        auto* out = jluna::safe_call(unroll, get());
+        gc_unpause;
+        return Type((jl_datatype_t*) out);
     }
 
     Type::operator jl_datatype_t*()
@@ -48,26 +53,38 @@ namespace jluna
 
     size_t Type::get_n_fields() const
     {
+        gc_pause;
         static jl_function_t* get_n_fields = unsafe::get_function("jluna"_sym, "get_n_fields"_sym);
-        return unbox<size_t>(jluna::safe_call(get_n_fields, get()));
+        auto* out = jluna::safe_call(get_n_fields, get());
+        gc_unpause;
+        return unbox<size_t>(out);
     }
 
     std::vector<std::pair<Symbol, Type>> Type::get_fields() const
     {
+        gc_pause;
         static jl_function_t* get_fields = unsafe::get_function("jluna"_sym, "get_fields"_sym);
-        return unbox<std::vector<std::pair<Symbol, Type>>>(jluna::safe_call(get_fields, get()));
+        auto* out = jluna::safe_call(get_fields, get());
+        gc_unpause;
+        return unbox<std::vector<std::pair<Symbol, Type>>>(out);
     }
 
     std::vector<std::pair<Symbol, Type>> Type::get_parameters() const
     {
+        gc_pause;
         static jl_function_t* get_parameters = unsafe::get_function("jluna"_sym, "get_parameters"_sym);
-        return unbox<std::vector<std::pair<Symbol, Type>>>(jluna::safe_call(get_parameters, get()));
+        auto* out = jluna::safe_call(get_parameters, get());
+        gc_unpause;
+        return unbox<std::vector<std::pair<Symbol, Type>>>(out);
     }
 
     size_t Type::get_n_parameters() const
     {
+        gc_pause;
         static jl_function_t* get_n_fields = unsafe::get_function("jluna"_sym, "get_n_parameters"_sym);
-        return unbox<size_t>(jluna::safe_call(get_n_fields, get()));
+        auto* out = jluna::safe_call(get_n_fields, get());
+        gc_unpause;
+        return unbox<size_t>(out);
     }
 
     unsafe::Value* Type::get_singleton_instance() const
@@ -97,8 +114,11 @@ namespace jluna
 
     bool Type::is_same_as(const Type& other) const
     {
+        gc_pause;
         static auto* is_identical = unsafe::get_function(jl_base_module, "==="_sym);
-        return unsafe::call(is_identical, (unsafe::Value*) get(), (unsafe::Value*) other.get());
+        auto* out = unsafe::call(is_identical, (unsafe::Value*) get(), (unsafe::Value*) other.get());
+        gc_unpause;
+        return out;
     }
 
     bool Type::operator==(const Type& other) const
@@ -148,14 +168,20 @@ namespace jluna
 
     bool Type::typename_is(const Type& other)
     {
+        gc_pause;
         static jl_function_t* is_name_typename = unsafe::get_function("jluna"_sym, "is_name_typename"_sym);
-        return unbox<bool>(jluna::safe_call(is_name_typename, get(), other.get()));
+        auto out = unbox<bool>(jluna::safe_call(is_name_typename, get(), other.get()));
+        gc_unpause;
+        return out;
     }
 
     bool Type::typename_is(const std::string& symbol)
     {
+        gc_pause;
         static jl_function_t* is_name_typename = unsafe::get_function("jluna"_sym, "is_name_typename"_sym);
-        return unbox<bool>(jluna::safe_call(is_name_typename, get(), jl_eval_string(("Main.eval(Symbol(\"" + symbol + "\"))").c_str())));
+        auto out = unbox<bool>(jluna::safe_call(is_name_typename, get(), jl_eval_string(("Main.eval(Symbol(\"" + symbol + "\"))").c_str())));
+        gc_unpause;
+        return out;
     }
 }
 

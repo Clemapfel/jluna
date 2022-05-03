@@ -9,8 +9,10 @@ namespace jluna
     template<is<Type> T>
     inline T unbox(unsafe::Value* value)
     {
+        gc_pause;
         static jl_datatype_t* type_t = (jl_datatype_t*) jl_eval_string("return Type");
         detail::assert_type((unsafe::DataType*) jl_typeof(value), type_t);
+        gc_unpause;
         return Type((jl_datatype_t*) value);
     }
 

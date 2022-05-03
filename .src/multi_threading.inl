@@ -101,6 +101,7 @@ namespace jluna
     template<typename T>
     void detail::TaskValue<T>::initialize(std::function<unsafe::Value*()>* in)
     {
+        gc_pause;
         static auto* make_task = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna.cppcall"), "make_task"_sym);
         _value = unsafe::call(make_task, box(reinterpret_cast<size_t>(in)));
 
@@ -110,6 +111,7 @@ namespace jluna
         unsafe::call(setfield, _value, sticky, jl_box_bool(false));
 
         _value_id = unsafe::gc_preserve(_value);
+        gc_unpause;
     }
     
     template<typename T>
@@ -126,36 +128,49 @@ namespace jluna
     template<typename T>
     void Task<T>::join()
     {
+        gc_pause;
         static auto* wait = unsafe::get_function(jl_base_module, "wait"_sym);
         jluna::safe_call(wait, _value->_value);
+        gc_unpause;
     }
 
     template<typename T>
     void Task<T>::schedule()
     {
+        gc_pause;
         static auto* schedule = unsafe::get_function(jl_base_module, "schedule"_sym);
         jluna::safe_call(schedule, _value->_value);
+        gc_unpause;
     }
 
     template<typename T>
     bool Task<T>::is_done() const
     {
+        gc_pause;
         static auto* istaskdone = unsafe::get_function(jl_base_module, "istaskdone"_sym);
-        return jl_unbox_bool(jluna::safe_call(istaskdone, _value->_value));
+        auto out = jl_unbox_bool(jluna::safe_call(istaskdone, _value->_value));
+        gc_unpause;
+        return out;
     }
 
     template<typename T>
     bool Task<T>::is_failed() const
     {
+        gc_pause;
         static auto* istaskfailed = unsafe::get_function(jl_base_module, "istaskfailed"_sym);
-        return jl_unbox_bool(jluna::safe_call(istaskfailed, _value->_value));
+        auto out = jl_unbox_bool(jluna::safe_call(istaskfailed, _value->_value));
+        gc_unpause;
+        return out;
     }
 
     template<typename T>
     bool Task<T>::is_running() const
     {
+        gc_pause;
         static auto* istaskstarted = unsafe::get_function(jl_base_module, "istaskstarted"_sym);
-        return jl_unbox_bool(jluna::safe_call(istaskstarted, _value->_value));
+        auto out = jl_unbox_bool(jluna::safe_call(istaskstarted, _value->_value));
+        gc_unpause;
+        return out;
     }
 
     template<typename T>
@@ -210,20 +225,29 @@ namespace jluna
 
     inline bool Task<void>::is_done() const
     {
+        gc_pause;
         static auto* istaskdone = unsafe::get_function(jl_base_module, "istaskdone"_sym);
-        return jl_unbox_bool(jluna::safe_call(istaskdone, _value->_value));
+        auto out = jl_unbox_bool(jluna::safe_call(istaskdone, _value->_value));
+        gc_unpause;
+        return out;
     }
 
     inline bool Task<void>::is_failed() const
     {
+        gc_pause;
         static auto* istaskfailed = unsafe::get_function(jl_base_module, "istaskfailed"_sym);
-        return jl_unbox_bool(jluna::safe_call(istaskfailed, _value->_value));
+        auto out = jl_unbox_bool(jluna::safe_call(istaskfailed, _value->_value));
+        gc_unpause;
+        return out;
     }
 
     inline bool Task<void>::is_running() const
     {
+        gc_pause;
         static auto* istaskstarted = unsafe::get_function(jl_base_module, "istaskstarted"_sym);
-        return jl_unbox_bool(jluna::safe_call(istaskstarted, _value->_value));
+        auto out = jl_unbox_bool(jluna::safe_call(istaskstarted, _value->_value));
+        gc_unpause;
+        return out;
     }
 
     inline Future<unsafe::Value*>& Task<void>::result()
@@ -243,7 +267,7 @@ namespace jluna
     Task<void> ThreadPool::create(const std::function<void(Args_t...)>& lambda, Args_t... args)
     {
         _storage_lock.lock();
-
+        gc_pause;
         detail::TaskValue<unsafe::Value*>* task = new detail::TaskValue<unsafe::Value*>(_current_id);
         _storage.emplace(_current_id,
             std::make_pair(
@@ -257,6 +281,7 @@ namespace jluna
         task->initialize(it.second.get());
 
         _current_id += 1;
+        gc_unpause;
         _storage_lock.unlock();
         return Task<void>(task);
     }
@@ -266,6 +291,7 @@ namespace jluna
     {
         _storage_lock.lock();
 
+        gc_pause;
         detail::TaskValue<Return_t>* task = new detail::TaskValue<Return_t>(_current_id);
         _storage.emplace(_current_id,
             std::make_pair(
@@ -279,20 +305,27 @@ namespace jluna
         task->initialize(it.second.get());
 
         _current_id += 1;
+        gc_unpause;
         _storage_lock.unlock();
         return Task<Return_t>(task);
     }
 
     inline size_t ThreadPool::n_threads()
     {
+        gc_pause;
         static auto* nthreads = unsafe::get_function("Threads"_sym, "nthreads"_sym);
-        return unbox<Int64>(jl_call0(nthreads));
+        auto out = unbox<Int64>(jl_call0(nthreads));
+        gc_unpause;
+        return out;
     }
 
     inline size_t ThreadPool::thread_id()
     {
+        gc_pause;
         static auto* threadid = unsafe::get_function("Threads"_sym, "threadid"_sym);
-        return unbox<Int64>(jl_call0(threadid));
+        auto out = unbox<Int64>(jl_call0(threadid));
+        gc_unpause;
+        return out;
     }
 
     inline void ThreadPool::free(size_t id)
@@ -310,8 +343,10 @@ namespace jluna
 
     inline void yield()
     {
+        gc_pause;
         static auto* jl_yield = unsafe::get_function(jl_base_module, "yield"_sym);
         jluna::safe_call(jl_yield);
+        gc_unpause;
     }
 
     // ###

@@ -46,12 +46,17 @@ namespace jluna::unsafe
 
     unsafe::Value* get_value(unsafe::Symbol* module_name, unsafe::Symbol* name)
     {
-        return unsafe::get_function((unsafe::Module*) jl_get_global(jl_main_module, module_name), name);
+        gc_pause;
+        auto* out = unsafe::get_function((unsafe::Module*) jl_get_global(jl_main_module, module_name), name);
+        gc_unpause;
+        return out;
     }
 
     void set_value(unsafe::Module* module, unsafe::Symbol* name, unsafe::Value* value)
     {
+        gc_pause;
         jl_set_global(module, name, value);
+        gc_unpause;
     }
 
     void set_value(unsafe::Symbol* module_name, unsafe::Symbol* name, unsafe::Value* value)
@@ -125,17 +130,26 @@ namespace jluna::unsafe
 
     unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d)
     {
-        return jl_alloc_array_1d(jl_apply_array_type(value_type, 1), one_d);
+        gc_pause;
+        auto* out = jl_alloc_array_1d(jl_apply_array_type(value_type, 1), one_d);
+        gc_unpause;
+        return out;
     }
 
     unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d)
     {
-        return jl_alloc_array_2d(jl_apply_array_type(value_type, 2), one_d, two_d);
+        gc_pause;
+        auto* out = jl_alloc_array_2d(jl_apply_array_type(value_type, 2), one_d, two_d);
+        gc_unpause;
+        return out;
     }
 
     unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d)
     {
-        return jl_ptr_to_array_1d(jl_apply_array_type(value_type, 1), data, one_d, 0);
+        gc_pause;
+        auto* out = jl_ptr_to_array_1d(jl_apply_array_type(value_type, 1), data, one_d, 0);
+        gc_unpause;
+        return out;
     }
 
     void sizehint(unsafe::Array* arr, size_t n_elements)
@@ -146,6 +160,7 @@ namespace jluna::unsafe
     void override_array(unsafe::Array* overridden, const unsafe::Array* constant)
     {
         //memcpy(overridden->data, constant->data, constant->length);
+        gc_pause;
         overridden->data = constant->data;
         jl_gc_wb(overridden, constant->data);
         overridden->length = constant->length;
@@ -155,6 +170,7 @@ namespace jluna::unsafe
         overridden->offset = constant->offset;
         overridden->elsize = constant->elsize;
         overridden->maxsize = constant->maxsize;
+        gc_unpause;
     }
 
     void swap_array_data(unsafe::Array* a, unsafe::Array* b)

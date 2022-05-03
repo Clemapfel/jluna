@@ -52,9 +52,15 @@ namespace jluna
     {
         throw_if_uninitialized();
 
+        gc_pause;
         auto* exc = jl_exception_occurred();
         if (exc != nullptr)
-            throw JuliaException(exc, jl_string_ptr(jl_get_nth_field(exc, 0)));
+        {
+            auto out = JuliaException(exc, jl_string_ptr(jl_get_nth_field(exc, 0)));
+            gc_unpause;
+            throw out;
+        }
+        gc_unpause;
     }
 }
 

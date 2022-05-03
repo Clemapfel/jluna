@@ -154,8 +154,11 @@ namespace jluna
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::complex<Value_t>>, bool>>
     unsafe::Value* box(T value)
     {
+        gc_pause;
         static jl_function_t* complex = unsafe::get_function("jluna"_sym, "new_complex"_sym);
-        return safe_call(complex, box<Value_t>(value.real()), box<Value_t>(value.imag()));
+        auto* out = safe_call(complex, box<Value_t>(value.real()), box<Value_t>(value.imag()));
+        gc_unpause;
+        return out;
     }
 
     template<typename T, typename Value_t, std::enable_if_t<std::is_same_v<T, std::vector<Value_t>>, bool>>
@@ -212,8 +215,11 @@ namespace jluna
     template<typename T, typename T1, typename T2, std::enable_if_t<std::is_same_v<T, std::pair<T1, T2>>, bool>>
     unsafe::Value* box(const T& value)
     {
+        gc_pause;
         static auto* pair = unsafe::get_function(jl_base_module, "Pair"_sym);
-        return unsafe::call(pair, box<T1>(value.first), box<T2>(value.second));
+        auto* out = unsafe::call(pair, box<T1>(value.first), box<T2>(value.second));
+        gc_unpause;
+        return out;
     }
 
     template<is_tuple T>

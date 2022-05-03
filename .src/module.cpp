@@ -12,13 +12,17 @@ namespace jluna
     Module::Module(jl_module_t* value)
         : Proxy((unsafe::Value*) value, value->name), _lock(nullptr)
     {
+        gc_pause;
         detail::assert_type((unsafe::DataType*) jl_typeof((unsafe::Value*) value), jl_module_type);
+        gc_unpause;
     }
 
     Module::Module(Proxy* owner)
         : Proxy(*owner), _lock(nullptr)
     {
+        gc_pause;
         detail::assert_type((unsafe::DataType*) jl_typeof(owner->operator unsafe::Value*()), jl_module_type);
+        gc_unpause;
     }
 
     Module::~Module()
@@ -48,8 +52,11 @@ namespace jluna
 
     bool Module::is_defined(const std::string& name) const
     {
+        gc_pause;
         static jl_function_t* isdefined = jl_get_function(jl_base_module, "isdefined");
-        return jluna::safe_call(isdefined, value(), jl_symbol(name.c_str()));
+        auto* out = jluna::safe_call(isdefined, value(), jl_symbol(name.c_str()));
+        gc_unpause;
+        return out;
     }
 
     void Module::import(const std::string& package_name)

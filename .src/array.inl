@@ -60,17 +60,21 @@ namespace jluna
     Array<V, R>::Array(unsafe::Value* value, jl_sym_t* symbol)
         : Proxy(value, symbol)
     {
+        gc_pause;
         detail::assert_type((unsafe::DataType*) jl_typeof(value), (unsafe::DataType*) jl_array_type);
         detail::assert_type((unsafe::DataType*) detail::array_value_type((unsafe::Array*) value), (unsafe::DataType*) as_julia_type<V>::type());
+        gc_unpause;
     }
 
     template<is_boxable V, size_t R>
     Array<V, R>::Array(Proxy* proxy)
         : Proxy(*proxy)
     {
+        gc_pause;
         auto* value = proxy->operator unsafe::Value*();
         detail::assert_type((unsafe::DataType*) jl_typeof(value), (unsafe::DataType*) jl_array_type);
         detail::assert_type((unsafe::DataType*) detail::array_value_type((unsafe::Array*) value), (unsafe::DataType*) as_julia_type<V>::type());
+        gc_unpause;
     }
 
     template<is_boxable V, size_t R>
@@ -188,7 +192,10 @@ namespace jluna
             throw std::out_of_range(str.str().c_str());
         }
 
-        return unbox<T>(jl_arrayref((jl_array_t*) _content->value(), i));
+        gc_pause;
+        auto out = unbox<T>(jl_arrayref((jl_array_t*) _content->value(), i));
+        gc_unpause;
+        return out;
     }
 
     template<is_boxable V, size_t R>
@@ -241,7 +248,9 @@ namespace jluna
     template<is_boxable T>
     void Array<V, R>::set(size_t i, T value)
     {
+        gc_pause;
         jl_arrayset((jl_array_t*) _content->value(), box<T>(value), i);
+        gc_unpause;
     }
 
     template<is_boxable V, size_t R>
@@ -336,8 +345,10 @@ namespace jluna
     Vector<V>::Vector(const std::vector<V>& vec)
         : Array<V, 1>((unsafe::Value*) unsafe::new_array((unsafe::Value*) as_julia_type<V>::type(), vec.size()), nullptr)
     {
+        gc_pause;
         for (size_t i = 0; i < vec.size(); ++i)
             jl_arrayset(reinterpret_cast<jl_array_t*>(this->operator unsafe::Value*()), box(vec.at(i)), i);
+        gc_unpause;
     }
 
     template<is_boxable V>
@@ -358,8 +369,11 @@ namespace jluna
     template<is_boxable V>
     Vector<V>::Vector(const GeneratorExpression& gen)
         : Array<V, 1>([&]() -> unsafe::Value* {
+            gc_pause;
             static unsafe::Function* collect = unsafe::get_function(jl_base_module, "collect"_sym);
-            return unsafe::call(collect, gen.operator jl_value_t *());
+            auto* out = unsafe::call(collect, gen.operator jl_value_t *());
+            gc_unpause;
+            return out;
         }())
     {}
 

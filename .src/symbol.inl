@@ -9,7 +9,9 @@ namespace jluna
     template<is<Symbol> T>
     inline T unbox(unsafe::Value* value)
     {
+        gc_pause;
         detail::assert_type((unsafe::DataType*) jl_typeof(value), jl_symbol_type);
+        gc_unpause;
         return Symbol((jl_sym_t*) value);
     }
 

@@ -6,12 +6,15 @@
 #pragma once
 
 #include <include/concepts.hpp>
+#include <include/unsafe_utilities.hpp>
 
 namespace jluna::detail
 {
     template<is_julia_value_pointer... Ts>
     inline void gc_push(Ts... ts)
     {
+        auto before = jl_gc_is_enabled();
+        jl_gc_enable(false);
         static unsafe::Function* gc_push = nullptr;
 
         if (gc_push == nullptr)
@@ -23,10 +26,13 @@ namespace jluna::detail
         }
 
         (jl_call1(gc_push, jl_box_voidpointer((void*) ts)), ...);
+        jl_gc_enable(before);
     }
 
     inline void gc_pop(size_t n = 1)
     {
+        auto before = jl_gc_is_enabled();
+        jl_gc_enable(false);
         static unsafe::Function* gc_pop = nullptr;
 
         if (gc_pop == nullptr)
@@ -39,6 +45,8 @@ namespace jluna::detail
 
         for (size_t i = 0; i < n; ++i)
             jl_call0(gc_pop);
+
+        jl_gc_enable(before);
     }
 
     inline unsafe::Value* gc_save(unsafe::Value* in)

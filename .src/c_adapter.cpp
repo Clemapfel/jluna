@@ -12,13 +12,13 @@ extern "C"
 {
     namespace jluna::c_adapter
     {
-
         unsafe::Value* make(void* function_ptr, int n_args)
         {
-            gc_pause;
+            auto before = jl_gc_is_enabled();
+            jl_gc_enable(false);
             static auto* make = (jl_function_t*) jl_eval_string("return jluna.cppcall.make_unnamed_function");
-            auto* res = jluna::safe_call(make, jl_box_voidpointer(function_ptr), jl_box_int64(n_args));
-            gc_unpause;
+            auto* res = jl_call2(make, jl_box_voidpointer(function_ptr), jl_box_int64(n_args));
+            jl_gc_enable(before);
             return res;
         }
 

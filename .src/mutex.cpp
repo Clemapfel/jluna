@@ -11,9 +11,11 @@ namespace jluna
 {
     Mutex::Mutex()
     {
+        gc_pause;
         static auto* new_lock = unsafe::get_function("jluna"_sym, "new_lock"_sym);
         _value = unsafe::call(new_lock);
         _value_id = unsafe::gc_preserve(_value);
+        gc_unpause;
     }
 
     Mutex::Mutex(unsafe::Value* lock)
@@ -52,8 +54,11 @@ namespace jluna
 
     bool Mutex::is_locked() const
     {
+        gc_pause;
         static auto* islocked = unsafe::get_function(jl_base_module, "islocked"_sym);
-        return jl_unbox_bool(unsafe::call(islocked, _value));
+        auto out = jl_unbox_bool(unsafe::call(islocked, _value));
+        gc_unpause;
+        return out;
     }
 }
 

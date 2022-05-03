@@ -87,8 +87,11 @@ namespace jluna
     template<is_unboxable T, std::enable_if_t<not is < Proxy, T>, bool>>
     Array<V, R>::ConstIterator::operator T() const
     {
+        gc_pause;
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        return unbox<T>(jluna::safe_call(getindex, _owner->operator jl_value_t *(), box<size_t>(_index + 1)));
+        auto out = unbox<T>(jluna::safe_call(getindex, _owner->operator jl_value_t *(), box<size_t>(_index + 1)));
+        gc_unpause;
+        return out;
     }
 
     template<is_boxable V, size_t R>
@@ -116,7 +119,10 @@ namespace jluna
     template<is_unboxable T, std::enable_if_t<not std::is_same_v<T, Proxy>, bool>>
     Array<V, R>::Iterator::operator T() const
     {
+        gc_pause;
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        return unbox<T>(jluna::safe_call(getindex, _owner->operator jl_value_t *(), box<size_t>(_index + 1)));
+        auto out = unbox<T>(jluna::safe_call(getindex, _owner->operator jl_value_t *(), box<size_t>(_index + 1)));
+        gc_unpause;
+        return out;
     }
 }
