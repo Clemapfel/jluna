@@ -12,5 +12,8 @@ namespace jluna::detail
     static inline const char* c_adapter_path = "@C_ADAPTER_NAME@";
     static inline std::string c_adapter_path_override = "";
 
-    static inline const char* julia_source = R"(@JLUNA_JULIA_SOURCE@)";
+    static inline const char* julia_source_01 = R"(@JLUNA_JULIA_SOURCE_01@)";
+    static inline const char* julia_source_02 = R"(@JLUNA_JULIA_SOURCE_02@)";
+    static inline const char* julia_source_03 = R"(@JLUNA_JULIA_SOURCE_03@)";
+    static inline const char* julia_source_04 = R"(@JLUNA_JULIA_SOURCE_04@)";
 }

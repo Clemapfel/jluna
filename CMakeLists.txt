@@ -48,8 +48,23 @@ set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}") # TODO: don't hardcode these
 set(C_ADAPTER_NAME "${C_ADAPTER_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna_c_adapter${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 file(READ
-    include/julia/jluna.jl
-    JLUNA_JULIA_SOURCE
+    include/julia/jluna_01.jl
+    JLUNA_JULIA_SOURCE_01
+)
+
+file(READ
+    include/julia/jluna_02.jl
+    JLUNA_JULIA_SOURCE_02
+)
+
+file(READ
+    include/julia/jluna_03.jl
+    JLUNA_JULIA_SOURCE_03
+)
+
+file(READ
+    include/julia/jluna_04.jl
+    JLUNA_JULIA_SOURCE_04
 )
 
 configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)

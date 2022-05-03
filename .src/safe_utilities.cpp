@@ -49,7 +49,15 @@ namespace jluna
         forward_last_exception();
         setenv("JULIA_NUM_THREADS", "", 1);
 
-        bool success = jl_unbox_bool(jl_eval_string(detail::julia_source));
+        std::stringstream julia_code;
+        julia_code << "module jluna" << std::endl;
+        julia_code << detail::julia_source_01 << std::endl;
+        julia_code << detail::julia_source_02 << std::endl;
+        julia_code << detail::julia_source_03 << std::endl;
+        julia_code << detail::julia_source_04 << std::endl;
+        julia_code << "end" << std::endl;
+
+        bool success = jl_unbox_bool(jl_eval_string(julia_code.str().c_str()));
         forward_last_exception();
 
         assert(success);
