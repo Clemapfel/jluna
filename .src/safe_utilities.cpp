@@ -8,6 +8,7 @@
 #include <.src/include_julia.inl>
 #include <include/type.hpp>
 #include <include/module.hpp>
+#include <mutex>
 
 namespace jluna
 {
