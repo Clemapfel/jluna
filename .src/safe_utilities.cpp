@@ -40,10 +40,11 @@ namespace jluna
         }
 
         #ifdef _WIN32
-            if (n_threads == 0)
-                _putenv("JULIA_NUM_THREADS=auto");
-            else
-                _putenv("JULIA_NUM_THREADS=" + std::to_string(n_threads));
+        {
+            std::stringstream str;
+            str << "JULIA_NUM_THREADS=" << (n_threads == 0 ? "auto" : std::to_string(n_threads)) << std::endl;
+            _putenv(str.str().c_str());
+        };
         #else
             setenv("JULIA_NUM_THREADS", n_threads == 0 ? "auto" : std::to_string(n_threads).c_str(), 1);
         #endif
@@ -57,6 +58,7 @@ namespace jluna
         forward_last_exception();
 
         #ifdef _WIN32
+            _putenv("JULIA_NUM_THREADS=1");
         #else
             setenv("JULIA_NUM_THREADS", "", 1);
         #endif
