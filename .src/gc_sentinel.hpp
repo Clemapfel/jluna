@@ -8,8 +8,13 @@
 #include <include/concepts.hpp>
 #include <include/unsafe_utilities.hpp>
 
-namespace jluna::detail
+namespace jluna
 {
+    namespace detail
+    {
+        inline size_t _gc_stack_size = 0;
+    }
+
     template<is_julia_value_pointer... Ts>
     inline void gc_push(Ts... ts)
     {
@@ -27,6 +32,8 @@ namespace jluna::detail
 
         (jl_call1(gc_push, jl_box_voidpointer((void*) ts)), ...);
         jl_gc_enable(before);
+
+        detail::_gc_stack_size += sizeof...(Ts);
     }
 
     inline void gc_pop(size_t n = 1)
@@ -47,11 +54,17 @@ namespace jluna::detail
             jl_call0(gc_pop);
 
         jl_gc_enable(before);
+
+        detail::_gc_stack_size -= n;
     }
 
-    inline unsafe::Value* gc_save(unsafe::Value* in)
+    template<typename T>
+    inline T gc_save(T in)
     {
         gc_push(in);
         return in;
     }
 }
+
+#define gc_store size_t __gc_stack_size__ = jluna::detail::_gc_stack_size;
+#define gc_restore if (__gc_stack_size__ > jluna::detail::_gc_stack_size) gc_pop(__gc_stack_size__ - jluna::detail::_gc_stack_size);

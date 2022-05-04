@@ -15,6 +15,9 @@ int main()
     initialize();
     Test::initialize();
 
+    gc_store;
+    gc_restore;
+
     Test::test("c_adapter found", [](){
 
         Test::assert_that(jl_unbox_bool(jl_eval_string("return jluna.cppcall.verify_library()")));

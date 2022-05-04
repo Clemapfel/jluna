@@ -26,8 +26,8 @@ namespace jluna
     template<is_julia_value_pointer... Args_t>
     unsafe::Value* safe_call(unsafe::Function* function, Args_t... in)
     {
-        gc_pause;
-        throw_if_uninitialized();
+        gc_store;
+        gc_push(in...);
 
         static auto* jl_safe_call = unsafe::get_function("jluna"_sym, "safe_call"_sym);
 
@@ -39,13 +39,13 @@ namespace jluna
         size_t i = 1;
         (set(i++, (unsafe::Value*) in), ...);
 
-        auto* tuple_res = jl_call(jl_safe_call, args.data(), args.size());
+        auto* tuple_res = gc_save(jl_call(jl_safe_call, args.data(), args.size()));
 
         if (jl_unbox_bool(jl_get_nth_field(tuple_res, 1)))
             throw JuliaException(jl_get_nth_field(tuple_res, 2), jl_string_ptr(jl_get_nth_field(tuple_res, 3)));
 
         auto* res = jl_get_nth_field(tuple_res, 0);
-        gc_unpause;
+        gc_restore;
         return res;
     }
 
