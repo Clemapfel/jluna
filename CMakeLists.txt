@@ -44,8 +44,7 @@ find_package(Threads)
 
 ### Configure Files ###
 
-set(C_ADAPTER_PATH "${CMAKE_INSTALL_PREFIX}") # TODO: don't hardcode these
-set(C_ADAPTER_NAME "${C_ADAPTER_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna_c_adapter${CMAKE_SHARED_LIBRARY_SUFFIX}")
+set(SHARED_LIBARY_NAME "${CMAKE_INSTALL_PREFIX}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 file(READ
     include/julia/jluna.jl
@@ -53,21 +52,6 @@ file(READ
 )
 
 configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
-
-### Declare C adapter ###
-
-add_library(
-    jluna_c_adapter SHARED
-    .src/c_adapter.hpp
-    .src/c_adapter.cpp
-)
-
-target_compile_features(jluna_c_adapter PUBLIC cxx_std_20)
-target_include_directories(jluna_c_adapter PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
-target_link_libraries(jluna_c_adapter PUBLIC
-    "$<BUILD_INTERFACE:Julia::Julia>"
-    "$<BUILD_INTERFACE:Threads::Threads>"
-)
 
 ### Declare Library ###
 
@@ -130,21 +114,25 @@ add_library(jluna SHARED
 
     include/mutex.hpp
     .src/mutex.cpp
+
+    .src/c_adapter.hpp
+    .src/c_adapter.cpp
 )
 
-#target_compile_features(jluna PUBLIC cxx_std_20)
-target_link_libraries(jluna PUBLIC jluna_c_adapter)
-target_include_directories(jluna PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
+target_compile_features(jluna PUBLIC cxx_std_20)
+target_include_directories(jluna PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
+target_link_libraries(jluna PUBLIC
+    "$<BUILD_INTERFACE:Julia::Julia>"
+    "$<BUILD_INTERFACE:Threads::Threads>"
+)
 
 ### HACK: export all symbols on Windows ###
-
-set_target_properties(jluna jluna_c_adapter PROPERTIES
+set_target_properties(jluna PROPERTIES
     WINDOWS_EXPORT_ALL_SYMBOLS YES # TODO
     VERSION "${PROJECT_VERSION}"
     SOVERSION "${PROJECT_VERSION}"
-    LIBRARY_OUTPUT_DIRECTORY "${C_ADAPTER_PATH}"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_INSTALL_PREFIX}"
 )
-# Fix this using the GenerateExportHeader CMake module and visibility properties.
 
 ### Install rules ###
 

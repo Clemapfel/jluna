@@ -15,7 +15,7 @@ The following is a step-by-step guide on how to install jluna and link it to you
     2.3 [Found Unsuitable Version](#found-unsuitable-version)<br>
     2.4 [Could NOT find Julia: Missing X](#could-not-find-julia-missing-x)<br>
     2.5 [Could not find `julia.h` / `jluna.hpp`](#cannot-find-juliah--jlunahpp)<br>
-    2.6 [Could not find libjluna_c_adapter](#cannot-find-libjluna_c_adapter)<br>
+    2.6 [Could not find libjluna](#cannot-find-libjluna_c_adapter)<br>
     2.7 [error: `concept` does not name a type](#error-concept-does-not-name-a-type)<br>
     2.8 [Segmentation fault in expression starting at none:0](#segmentation-fault-in-expression-starting-at-none0)<br>
    
@@ -65,7 +65,7 @@ Having successfully configured cmake, call:
 make install
 ```
 
-Which will create two shared libraries `libjluna.*`, and `libjluna_c_adapter.*`, where `*` is the platform-dependent library suffix.
+Which will create the shared libraries `libjluna.*`, where `*` is the platform-dependent library suffix.
 
 You can then verify everything is working correctly by calling
 
@@ -89,7 +89,7 @@ Now that jluna is installed on your system, your application can access it using
 
 ```cmake
 # in users own CMakeLists.txt
-find_library(jluna REQUIRED)
+find_library(jluna REQUIRED NAMES jluna)
 ```
 
 If the above fails, you may need to manually specify, which directory jluna was installed into, using:
@@ -282,7 +282,7 @@ Where
 
 See the [official CMake documentation](https://cmake.org/cmake/help/latest/command/target_include_directories.html) for more information.
 
-### Cannot find libjluna_c_adapter
+### Cannot find libjluna
 
 When calling
 
@@ -293,7 +293,7 @@ jluna::initialize()
 The following error may appear:
 
 ```
-AssertionError: when trying to initialize jluna.cppcall: cannot find /home/Desktop/jluna/libjluna_c_adapter.so
+AssertionError: when trying to initialize jluna.cppcall: cannot find /home/Desktop/jluna/libjluna.so
 Stacktrace:
  [1] verify_library()
    @ Main.jluna.cppcall ./none:951
@@ -306,20 +306,22 @@ terminate called after throwing an instance of 'jluna::JuliaException'
 signal (6): Aborted
 ```
 
-To allow the local Julia state to interface with jluna, it needs the shared C-adapter-library to be available. During `make install`, jluna modifies its own code to keep track of the location of the C-adapter. If it was moved, jluna may no longer be able to find it.
-To fix this, recompile jluna, as detailed [above](#make-install). 
+To allow the jluna initialized Julia state to interact with the library, the Julia part of jluna needs to know where to 
+find the jluna shared library, `libjluna.so`, you compiled earlier. If this error occurs, it means Julia was unabled to
+do so. To address this, you can manually specify the path to the shared library during `jluna::initialize`:
 
-The C-adapter library is always installed into the directory specified by `CMAKE_INSTALL_PREFIX`, regardless of cmake presets used. Be aware of this.
+```cpp
+// initialize with manually set path
+jluna::initialize(
+    1,        // number of threads
+    false,    // should logging be disabled
+    "/path/to/libjluna.so" // path to jluna shared library
+);
+```
 
-> **HACK**: Some IDEs and modern versions of cmake may override `CMAKE_INSTALL_PREFIX` between the time of configuration and build. As a hacky fix (March 2022), you can override the C-adapter shared library location manually, **before calling `jluna::initialize`**, using `jluna::set_c_adapter_path`:
-> ```cpp
-> int main()
-> {
->   jluna::set_c_adapter_path("C:/actual/path/to/jluna_c_adapter.dll")
->   jluna::initialize();
->   (...)
-> ```
-> Where `jluna_c_adapter.dll` may have a differing pre- or suffix, depending on your system.
+Where `/path/to/libjluna.so` is the absolute path to the jluna shared library. Note that, on Windows, the library may 
+instead be named `libjluna.lib`, `jluna.dll`, etc., depending on your cmake environment. If you are unsure of where to
+find the library, it will be installed into the directory of `CMAKE_INSTALL_PREFIX` specified [earlier](#configure-cmake).
 
 ### error: `concept` does not name a type
 
@@ -331,14 +333,13 @@ When compiling a target that includes jluna, the following compiler error may oc
       |     ^~~~~~~
 ```
 
-This indicates that you have not configured your compiler to utilize C++20, or your compiler is out of date. After verifying you are using `g++-10`, `g++-11`, `clang++-12` or `MSVC 19.32`, make sure the following line is present in your `CMakeLists.txt`:
+This indicates that you have not configured your compiler to utilize C++20, or your compiler is out of date. After verifying you are using `g++-10` (or newer), `clang++-12` (or newer) or `MSVC 19.32` (or newer), make sure the following line is present in your `CMakeLists.txt`:
 
 ```cmake
 target_compile_features(<your target> PRIVATE cxx_std_20)
 ```
 
 Where `<your target>` is the name of your compile target, such as an executable or library. See the [official cmake documentation](https://cmake.org/cmake/help/latest/command/target_compile_features.html), for more information.
-
 
 ### Segmentation fault in expression starting at none:0
 

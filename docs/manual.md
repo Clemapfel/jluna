@@ -158,11 +158,19 @@ int main()
     return 0;
 }
 ```
+```
+[JULIA][LOG] initialization successful (1 thread(s)).
+```
+
 > **C++ Hint**: `using namespace jluna` makes it, such that, in the scope the statement was declared, we do not have to prefix jluna functions or objects with their namespace `jluna::`. This is why we can write `initialize()`, instead of `jluna::initialize()`.
 
 Where `#include <jluna.hpp>` automatically includes all headers intended for end-users, including `julia.h`.
 
 Note that the C-APIs `jl_atexit_hook` should never be called. At the end of runtime, jluna safely frees the Julia state automatically.
+
+While a no-argument `initialize` will usually work, on some systems, this function may fail with a message. This is usually
+caused by the systems directory structure and can be addressed using two of the four optional arguments of `initialize`. See
+the section on [troubleshooting](installation.md#troubleshooting) for more information.
 
 ---
 

@@ -201,7 +201,6 @@ Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-1
 
 > A step-by-step guide is available [here](./docs/installation.md). It is recommended that you follow this guide, instead of the highly abridged version below.
 
-
 Execute, in your bash console, in any public directory:
 
 ```bash
