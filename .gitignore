@@ -1,12 +1,10 @@
 /libjluna.so
-/libjluna_c_adapter.so
 /.src/include_julia.inl
 /docs/bckp.txt
 /build
 /.vscode
 /.benchmark/results
 /.idea/
-/jluna_c_adapter.lib/
 /jluna_c_adapter.so/
 /libjluna.so
 /libjluna_c_adapter.so

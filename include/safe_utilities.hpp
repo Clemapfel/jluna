@@ -11,20 +11,20 @@ namespace jluna
 {
     class Proxy;
 
-    /// @brief manually set the C-adapter path
-    void set_c_adapter_path(const std::string& path);
-
     /// @brief constant, equivalent to -t auto
     constexpr size_t JULIA_NUM_THREADS_AUTO = 0;
 
-    /// @brief initialize environment
-    /// @param number_of_threads: JULIA_NUM_THREADS set before initialization. If 0, set to "auto"
-    void initialize(size_t n_threads = 1, bool suppress_log = false);
-
     /// @brief initialize environment from image
-    /// @param absolute path to julia image
-    /// @param number_of_threads: JULIA_NUM_THREADS set before initialization. If 0, set to "auto"
-    void initialize(const std::string&, size_t n_threads = 1, bool suppress_log = false);
+    /// @param n_threads: number of threads to initialize the julia threadpool with. Default: 1
+    /// @param suppress_log: should logging be disabled. Default: No
+    /// @param jluna_shared_library_path: absolute path that is the location of libjluna.so. Leave empty to use default path
+    /// @param jluna_image_path: absolute path that is the location of the julia image. Leave empty to use default path
+    void initialize(
+        size_t n_threads = 1,
+        bool suppress_log = false,
+        const std::string& jluna_shared_library_path = "",
+        const std::string& julia_image_path = ""
+    );
 
     /// @brief call function with args, with verbose exception forwarding
     /// @tparam Args_t: argument types, must be castable to unsafe::Value*

@@ -689,16 +689,15 @@ module jluna
         function release()
             _sentinels[Threads.threadid()][] = nothing
         end
-
         """
     end
 
     module cppcall
 
-        #const _c_adapter_path = "<call jluna::initialize to initialize this field>";
+        #const _lib = "<call jluna::initialize to initialize this field>";
 
         function verify_library() ::Bool
-            return ccall((:verify, _c_adapter_path), Bool, ());
+            return ccall((:jluna_verify, cppcall._lib), Bool, ());
         end
 
         """
@@ -720,7 +719,7 @@ module jluna
 
                 out = new{N}(ptr, N)
                 finalizer(function (t::UnnamedFunction{N})
-                    ccall((:free_lambda, cppcall._c_adapter_path), Cvoid, (Csize_t, Cint), t._native_handle, t._n_args)
+                    ccall((:jluna_free_lambda, cppcall._lib), Cvoid, (Csize_t, Cint), t._native_handle, t._n_args)
                 end, out);
 
                 return out;
@@ -742,22 +741,22 @@ module jluna
         invoke function with 0 args
         """
         function invoke_function(f::UnnamedFunction{0}) ::Ptr{Any}
-            return ccall((:invoke_lambda_0, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid},), f._native_handle);
+            return ccall((:jluna_invoke_lambda_0, cppcall._lib), Ptr{Any}, (Ptr{Cvoid},), f._native_handle);
         end
 
         # overload for 1 arg
         function invoke_function(f::UnnamedFunction{1}, arg1::Ptr{Any}) ::Ptr{Any}
-            return ccall((:invoke_lambda_1, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}), f._native_handle, arg1);
+            return ccall((:jluna_invoke_lambda_1, cppcall._lib), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}), f._native_handle, arg1);
         end
 
         # overload for 2 args
         function invoke_function(f::UnnamedFunction{2}, arg1::Ptr{Any}, arg2::Ptr{Any}) ::Ptr{Any}
-            return ccall((:invoke_lambda_2, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}, Ptr{Any}), f._native_handle, arg1, arg2);
+            return ccall((:jluna_invoke_lambda_2, cppcall._lib), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}, Ptr{Any}), f._native_handle, arg1, arg2);
         end
 
         # overload for 3 args
         function invoke_function(f::UnnamedFunction{3}, arg1::Ptr{Any}, arg2::Ptr{Any}, arg3::Ptr{Any}) ::Ptr{Any}
-            return ccall((:invoke_lambda_3, cppcall._c_adapter_path), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}, Ptr{Any}, Ptr{Any}), f._native_handle, arg1, arg2, arg3);
+            return ccall((:jluna_invoke_lambda_3, cppcall._lib), Ptr{Any}, (Ptr{Cvoid}, Ptr{Any}, Ptr{Any}, Ptr{Any}), f._native_handle, arg1, arg2, arg3);
         end
 
         """
@@ -766,7 +765,7 @@ module jluna
         get pointer to any object (including immutable ones)
         """
         function to_pointer(x) ::Ptr{Any}
-            return ccall((:to_pointer, cppcall._c_adapter_path), Ptr{Cvoid}, (Any,), x)
+            return ccall((:jluna_to_pointer, cppcall._lib), Ptr{Cvoid}, (Any,), x)
         end
 
         """
@@ -812,7 +811,7 @@ module jluna
         """
         function make_task(ptr::UInt64)
             return Task() do;
-                res_ptr = ccall((:invoke_from_task, _c_adapter_path), Csize_t, (Csize_t,), ptr);
+                res_ptr = ccall((:jluna_invoke_from_task, _lib), Csize_t, (Csize_t,), ptr);
                 return unsafe_pointer_to_objref(Ptr{Any}(res_ptr))
             end
         end

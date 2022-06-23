@@ -17,17 +17,12 @@ namespace jluna
         static inline std::mutex initialize_lock = std::mutex();
     }
 
-    void set_c_adapter_path(const std::string& path)
-    {
-        jluna::detail::c_adapter_path_override = path;
-    }
-
-    void initialize(size_t n_threads, bool suppress_log)
-    {
-        initialize("", n_threads, suppress_log);
-    }
-
-    void initialize(const std::string& path, size_t n_threads, bool suppress_log)
+    void initialize(
+        size_t n_threads,
+        bool suppress_log,
+        const std::string& jluna_shared_library_path,
+        const std::string& julia_image_path
+    )
     {
         static bool is_initialized = false;
 
@@ -50,10 +45,10 @@ namespace jluna
         #endif
 
         detail::_num_threads = n_threads;
-        if (path.empty())
+        if (julia_image_path.empty())
             jl_init();
         else
-            jl_init_with_image(path.c_str(), nullptr);
+            jl_init_with_image(julia_image_path.c_str(), nullptr);
 
         forward_last_exception();
 
@@ -74,9 +69,9 @@ namespace jluna
         forward_last_exception();
 
         std::stringstream str;
-        str << "jluna.cppcall.eval(:(const _c_adapter_path = \"";
-        str << (jluna::detail::c_adapter_path_override.empty() ?  jluna::detail::c_adapter_path : jluna::detail::c_adapter_path_override);
-        str << "\"))";
+        str << "jluna.cppcall.eval(:(const _lib = \""
+            << (jluna_shared_library_path == "" ? jluna::detail::shared_library_name : jluna_shared_library_path)
+            << "\"))";
 
         jl_eval_string(str.str().c_str());
         forward_last_exception();

@@ -27,7 +27,8 @@ int main()
 
     Test::test("c_adapter found", [](){
 
-        Test::assert_that(jl_unbox_bool(jl_eval_string("return jluna.cppcall.verify_library()")));
+        auto a = safe_eval("return jluna.cppcall.verify_library()");
+        Test::assert_that(jl_unbox_bool(a));
     });
 
     Test::test("unsafe: gc_push / gc_pop", [](){

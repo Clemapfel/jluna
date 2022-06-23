@@ -22,45 +22,45 @@ namespace jluna
     template<typename Return_t>
     unsafe::Value* register_function(std::function<Return_t()> f)
     {
-        auto* out = new c_adapter::lambda_0_arg([f]() -> unsafe::Value*
+        auto* out = new detail::lambda_0_arg([f]() -> unsafe::Value*
         {
             return box_function_result(f);
         });
 
-        return c_adapter::make(out, 0);
+        return jluna_make(out, 0);
     }
 
     template<typename Return_t, typename Arg1_t>
     unsafe::Value* register_function(std::function<Return_t(Arg1_t)> f)
     {
-        auto* out = new c_adapter::lambda_1_arg([f](unsafe::Value* arg1)
+        auto* out = new detail::lambda_1_arg([f](unsafe::Value* arg1)
         {
             return box_function_result(f, unbox<Arg1_t>(arg1));
         });
 
-        return c_adapter::make(out, 1);
+        return jluna_make(out, 1);
     }
 
     template<typename Return_t, typename Arg1_t, typename Arg2_t>
     unsafe::Value* register_function(std::function<Return_t(Arg1_t, Arg2_t)> f)
     {
-        auto* out = new c_adapter::lambda_2_arg([f](unsafe::Value* arg1, unsafe::Value* arg2)
+        auto* out = new detail::lambda_2_arg([f](unsafe::Value* arg1, unsafe::Value* arg2)
         {
             return box_function_result(f, unbox<Arg1_t>(arg1), unbox<Arg2_t>(arg2));
         });
 
-        return c_adapter::make(out, 2);
+        return jluna_make(out, 2);
     }
 
     template<typename Return_t, typename Arg1_t, typename Arg2_t, typename Arg3_t>
     unsafe::Value* register_function(std::function<Return_t(Arg1_t, Arg2_t, Arg3_t)> f)
     {
-        auto* out = new c_adapter::lambda_3_arg([f](unsafe::Value* arg1, unsafe::Value* arg2, unsafe::Value* arg3)
+        auto* out = new detail::lambda_3_arg([f](unsafe::Value* arg1, unsafe::Value* arg2, unsafe::Value* arg3)
         {
             return box_function_result(f, unbox<Arg1_t>(arg1), unbox<Arg2_t>(arg2), unbox<Arg3_t>(arg3));
         });
 
-        return c_adapter::make(out, 3);
+        return jluna_make(out, 3);
     }
 
     template<typename Function_t, typename _>

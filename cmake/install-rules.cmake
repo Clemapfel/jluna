@@ -25,7 +25,7 @@ install(
 )
 
 install(
-    TARGETS jluna jluna_c_adapter
+    TARGETS jluna
     EXPORT jluna-targets
     RUNTIME #
     DESTINATION "${CMAKE_INSTALL_BINDIR}"
