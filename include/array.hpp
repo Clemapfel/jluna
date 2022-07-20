@@ -15,6 +15,8 @@ namespace jluna
     class Vector;
 
     /// @brief wrapper for julia-side Array{Value_t, Rank}
+    /// @tparam Value_t: boxable value ype
+    /// @tparam Rank: rank of the array
     template<is_boxable Value_t, size_t Rank>
     class Array : public Proxy
     {
@@ -28,78 +30,75 @@ namespace jluna
             /// @brief dimensionality, equivalent to julia-side Array{Value_t, Rank}
             static constexpr size_t rank = Rank;
 
-            /// @brief ctor
-            /// @param value
-            /// @param owner
-            /// @param symbol
+            /// @brief construct as child of already existing proxy
+            /// @param proxy: pointer to already created proxy
             Array(Proxy*);
 
-            /// @brief ctor from proxy
-            /// @param proxy
-            Array(unsafe::Value* value, jl_sym_t* = nullptr);
+            /// @brief constructor
+            /// @param value: pointer to Julia-side allocated array
+            /// @param symbol: name of Julia-side variable, or nullptr for anonymous variable
+            Array(unsafe::Value* value, jl_sym_t* symbol = nullptr);
 
-            /// @brief ctor as undef of given size
-            /// @param size
+            /// @brief constructor, initialize values as undef
+            /// @param size: target size of the new array
             Array(size_t);
 
-            /// @brief ctor as thin wrapper data, does not invoke copy
-            /// @warning user is responsible for data being properly formatted and for it staying in scope
-            /// @param data
-            /// @param size_per_dimension
+            /// @brief construct as thin wrapper, does not invoke copy
+            /// @warning user is responsible for data being properly formatted and staying in scope
+            /// @param data: raw pointer to Julia-side data
+            /// @param size_per_dimension: size along all dimensions, where Rank is the number of dimensions
             template<typename... Dims>
             Array(Value_t*, Dims... size_per_dimension);
 
             /// @brief linear indexing, no bounds checking
-            /// @param index, 0-based
+            /// @param index: 0-based
             /// @returns assignable iterator to element
             /// @note this function intentionally shadows Proxy::operator[](size_t) -> Proxy
             auto operator[](size_t);
 
             /// @brief julia-style array comprehension indexing
-            /// @param generator_expression
-            /// @returns new array result of Julia-side getindex(this, range)
+            /// @param generator_expression: generator expression used for the index list
+            /// @returns new array, result of Julia-side getindex(this, range)
             jluna::Vector<Value_t> operator[](const GeneratorExpression&) const;
 
             /// @brief julia-style list indexing
             /// @param range: iterable range with indices
-            /// @returns new array result of Julia-side getindex(this, range)
+            /// @returns new array, result of Julia-side getindex(this, range)
             jluna::Vector<Value_t> operator[](const std::vector<size_t>& range) const;
 
             /// @brief julia-style list indexing
-            /// @param initializer list with indices
-            /// @returns new array result of Julia-side getindex(this, range)
+            /// @param list: initializer list with indices
+            /// @returns new array, result of Julia-side getindex(this, range)
             template<is_boxable T>
             jluna::Vector<Value_t> operator[](std::initializer_list<T>&&) const;
 
             /// @brief linear indexing, no bounds checking
-            /// @tparam return type
-            /// @param index, 0-based
-            /// @returns unboxed value
+            /// @tparam T: return type, usually Value_t
+            /// @param index: index, 0-based
+            /// @returns unboxed value at given index. May throw jluna::JuliaException if index out of range
             template<is_unboxable T = Value_t>
             T operator[](size_t) const;
 
             /// @brief multi-dimensional indexing
-            /// @tparam integral type
-            /// @param n integrals, where n is the rank of the array
-            /// @returns assignable iterator to value
+            /// @param n: Rank-many integers
+            /// @returns non-const (assignable) iterator to value
             template<typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
             auto at(Args... in);
 
             /// @brief multi-dimensional indexing
-            /// @tparam integral type
-            /// @param n integrals, where n is the rank of the array
+            /// @param n: Rank-many integers
             /// @returns unboxed value
             template<is_unboxable T = Value_t, typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
             T at(Args... in) const;
 
             /// @brief manually assign a value using a linear index
-            /// @param index: 0-based
-            /// @param value
+            /// @param index: linear index, 0-based
+            /// @param value: new value
             template<is_boxable T = Value_t>
             void set(size_t i, T);
 
-            /// @brief get number of elements, equal to Base.length
-            /// @returns length
+            /// @brief get number of elements
+            /// @returns Base.length
             size_t get_n_elements() const;
 
             /// @brief get size in specific dimension
@@ -142,11 +141,11 @@ namespace jluna
             T back() const;
 
             /// @brief is empty
-            /// @returns true if 0 element, false otherwise
+            /// @returns true if size is 0 along all dimensions, false otherwise
             bool empty() const;
 
-            /// @brief call Base.sizehint!, allocates array to be of size
-            /// @param target_size
+            /// @brief call Base.sizehint!, allocates array to be of specified size. Useful for optimization
+            /// @param size: target size
             void reserve(size_t);
 
             /// @brief cast to unsafe::Value*
@@ -155,7 +154,8 @@ namespace jluna
             /// @brief cast to unsafe::Array*
             operator unsafe::Array*() const;
 
-            /// @brief expose data as void*
+            /// @brief expose raw data as void*
+            /// @returns void pointer
             void* data();
 
         protected:
@@ -166,6 +166,7 @@ namespace jluna
             size_t get_dimension(int) const;
 
         public:
+            /// @brief non-assignable iterator
             class ConstIterator
             {
                 public:
@@ -175,35 +176,41 @@ namespace jluna
                     ConstIterator(size_t i, Array<Value_t, Rank>*);
 
                     /// @brief increment
+                    /// @returns reference to self
                     auto& operator++();
 
                     /// @brief post-fix increment
+                    /// @returns reference to self
                     auto& operator++(int);
 
                     /// @brief post-fix decrement
+                    /// @returns reference to self
                     auto& operator--();
 
                     /// @brief post-fix decrement
+                    /// @returns reference to self
                     auto& operator--(int);
 
                     /// @brief equality operator
-                    /// @param other
-                    /// @returns bool
+                    /// @param other: other iterator
+                    /// @returns true if both iterators iterat the same array and have the same linear index
                     bool operator==(const ConstIterator&) const;
 
                     /// @brief inequality operator
-                    /// @param other
-                    /// @returns bool
+                    /// @param other: other iterator
+                    /// @returns not (this == other)
                     bool operator!=(const ConstIterator&) const;
 
                     /// @brief forward to self
+                    /// @returns self
                     auto operator*() const;
 
                     /// @brief forward to assignable
+                    /// @returns assignable
                     auto operator*();
 
                     /// @brief decay into unboxed value
-                    /// @tparam value-type, not necessarily the same as declared in the array type
+                    /// @tparam T: value type, not necessarily the same as declared in the array type
                     template<is_unboxable T = Value_t, std::enable_if_t<not is<Proxy, T>, bool> = true>
                     operator T() const;
 
@@ -215,6 +222,7 @@ namespace jluna
                     size_t _index;
             };
 
+            /// @brief assignable iterator
             struct Iterator : public ConstIterator
             {
                 /// @brief ctor
@@ -224,8 +232,8 @@ namespace jluna
 
                 using ConstIterator::operator*;
 
-                /// @brief assign value, also assign value of proxy, regardless of whether it is mutating
-                /// @param value
+                /// @brief assign array being iterated at given position, also assigns Julia-side proxy, even if host proxy is not mutating
+                /// @param value: new value
                 /// @returns reference to self
                 template<is_boxable T = Value_t>
                 auto& operator=(T value);
@@ -241,7 +249,7 @@ namespace jluna
             };
     };
 
-    /// @brief vector typedef
+    /// @brief vector, alias for array of rank 1
     template<is_boxable Value_t>
     class Vector : public Array<Value_t, 1>
     {
@@ -249,47 +257,47 @@ namespace jluna
             /// @param default ctor
             Vector();
 
-            /// @brief ctor as unnamed proxy from vector
-            /// @param vector
+            /// @brief construct as unnamed proxy from vector
+            /// @param vector: C++-side vector
             Vector(const std::vector<Value_t>& vec);
 
-            /// @brief ctor from generator expression. Only available for 1d arrays
-            /// @param generator_expression
+            /// @brief construct from generator expression
+            /// @param expression: generator expression, will be fully serialized on constructor call
             Vector(const GeneratorExpression&);
 
-            /// @brief ctor as thin wrapper around data
-            /// @warning the user is responsible for data being correctly formatted
-            /// @param data
-            /// @param size
+            /// @brief constrct as thin wrapper around data
+            /// @warning the user is responsible for data being correctly formatted and staying in scope
+            /// @param data: pointer to Julia-side data
+            /// @param size: size along the first dimension
             Vector(Value_t* data, size_t size);
 
-            /// @brief ctor from proxy
-            /// @param proxy
+            /// @brief construct as child of already existing proxy
+            /// @param proxy: proxy
             Vector(Proxy*);
 
-            /// @brief ctor
-            /// @param value
-            /// @param symbol
-            Vector(unsafe::Value* value, jl_sym_t* = nullptr);
+            /// @brief construct from value
+            /// @param value: Julia-side value
+            /// @param symbol: name of variable, or nullptr if anonymous variable
+            Vector(unsafe::Value* value, jl_sym_t* symbol = nullptr);
 
-            /// @brief insert
-            /// @param linear index, 0-based
-            /// @param value
+            /// @brief insert a value
+            /// @param pos: linear index, 0-based
+            /// @param value: new value
             void insert(size_t pos, Value_t value);
 
-            /// @brief erase
-            /// @param linear index, 0-based
+            /// @brief erase at specified position
+            /// @param pos: linear index, 0-based
             void erase(size_t pos);
 
             /// @brief add to front
-            /// @tparam type of value, not necessarily the same as the declared array type
-            /// @param value
+            /// @tparam T: type of value, not necessarily the same as the declared array type
+            /// @param value: new value
             template<is_boxable T = Value_t>
             void push_front(T value);
 
             /// @brief add to back
-            /// @tparam type of value, not necessarily the same as the declared array type
-            /// @param value
+            /// @tparam T: type of value, not necessarily the same as the declared array type
+            /// @param value: new value
             template<is_boxable T = Value_t>
             void push_back(T value);
 
@@ -300,10 +308,16 @@ namespace jluna
             using Array<Value_t, 1>::_content;
     };
 
-    /// typedefs for Array{Any}
+    ///@brief typedefs for Array{Any, 1}
     using ArrayAny1d = Array<unsafe::Value*, 1>;
+
+    ///@brief typedefs for Array{Any, 2}
     using ArrayAny2d = Array<unsafe::Value*, 2>;
+
+    ///@brief typedefs for Array{Any, 3}
     using ArrayAny3d = Array<unsafe::Value*, 3>;
+
+    ///@brief typedefs for Array{Any, N}
     using VectorAny = Vector<unsafe::Value*>;
 }
 
