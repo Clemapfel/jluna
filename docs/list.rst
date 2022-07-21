@@ -1,5 +1,5 @@
-Index
-=====
+Library Index
+=============
 
 This section provides a complete list of all objects and functions in jluna, ordered by header name.
 

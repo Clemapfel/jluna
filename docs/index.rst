@@ -25,7 +25,18 @@ Please navigate to the appropriate section below:
 
     installation.md
     troubleshooting.md
-    manual.md
+    basics.md
+    proxies.md
+    arrays.md
+    symbols.md
+    modules.md
+    cppcall.md
+    types.md
+    usertypes.md
+    multi_threading.md
+    unsafe.md
+    benchmarks.md
+    closing_statement.md
     list.rst
 
 --------------------

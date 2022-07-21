@@ -188,18 +188,6 @@ namespace jluna
     static unsafe::Value* box_function_result(Function_t f, Args_t... args);
     template<typename Function_t, typename... Args_t, std::enable_if_t<not std::is_void_v<std::invoke_result_t<Function_t, Args_t...>>, bool> = true>
     static unsafe::Value* box_function_result(Function_t f, Args_t... args);
-
-    namespace docs_only
-    {
-        // dummy because doxygen can't handle sfinae / concepts
-
-        /// @brief convert C++-side value to Julia-side value
-        /// @param value: C++-side value
-        /// @returns pointer to julia-side value
-        /// @note this function is a stand-in for the multitude of box functions in namespace `jluna::`. For a complete list of what value types can be boxed, please consult the manual.
-        template<typename T>
-        unsafe::Value* box(T value) {assert(false);}
-    }
 }
 
 #include <.src/box.inl>

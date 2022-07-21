@@ -15,9 +15,6 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 2. [Features](#features)<br>
 3. [Planned Features](#planned-but-not-yet-implemented)<br>
 4. [Documentation](#documentation)<br>
-    4.1 [Manual](./docs/manual.md)<br>
-    4.2 [Installation](./docs/installation.md)<br>
-    4.3 [Troubleshooting](./docs/installation.md#troubleshooting)<br>
 5. [Dependencies](#dependencies)<br>
    5.1 [julia 1.7.0+](#dependencies)<br>
    5.2 [Supported Compilers: gcc10, gcc11, clang12](#dependencies)<br>
@@ -174,11 +171,8 @@ jluna is feature complete as of 0.9.0. The library will continue to be supported
 
 ## Documentation
 
-A verbose, step-by-step introduction and manual is available [here](./docs/manual.md). This manual is written for people less familiar with C++ and/or Julia, providing non-jluna related guidance where necessary.
-
-Furthermore, all user-facing code has in-line documentation, available through most IDEs. 
-
-Advanced users are encouraged to check the headers (available in `jluna/include/`) for implementation details. They are formatted specifically to be easily understood by 3rd parties. 
+Documentation, including a step-by-step installation and troubleshooting guide, tutorial, and index of all functions and objects in jluna is available 
+[here](https://clemens-cords.com/jluna).
 
 ---
 
