@@ -193,7 +193,7 @@ namespace jluna
     {
         // dummy because doxygen can't handle sfinae / concepts
 
-        /// @brief convert C++-side value to julia side value
+        /// @brief convert C++-side value to Julia-side value
         /// @param value: C++-side value
         /// @returns pointer to julia-side value
         /// @note this function is a stand-in for the multitude of box functions in namespace `jluna::`. For a complete list of what value types can be boxed, please consult the manual.

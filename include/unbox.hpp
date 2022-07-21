@@ -162,13 +162,12 @@ namespace jluna
     {
         // dummy because doxygen can't handle sfinae / concepts
 
-        /// @brief convert julia-side value to C++-side value
+        /// @brief convert Julia-side value to C++-side value
         /// @param value: pointer to julia-side memory of arbitrary type
         /// @returns C++-side object by value
         /// @note this function is a stand-in for the multitude of unbox functions in namespace `jluna::`. For a complete list of what value types can be unboxed, please consult the manual.
         template<typename T>
         T unbox(unsafe::Value* value) {assert(false);};
-
     }
 }
 
