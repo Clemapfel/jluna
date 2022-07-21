@@ -62,7 +62,7 @@ namespace jluna
         friend class detail::FutureHandler;
 
         public:
-            /// @brief ctor
+            /// @brief construct
             Future();
 
             /// @brief access the value, thread-safe
@@ -131,44 +131,46 @@ namespace jluna
     /// @brief threadpool that allows scheduled C++-side tasks to safely access the Julia State from within a thread.
     /// Pool cannot be resized, it will use the native Julia threads to execute any C++-side tasks
     /// @note during task creation, the copy ctor will be invoked for all arguments `args` and the functions return value. To avoid this, wrap the type in an std::ref
-    struct ThreadPool
+    class ThreadPool
     {
         template<typename>
         friend class Task;
 
-        /// @brief create a task from a std::function returning void
-        /// @param f: function returning void
-        /// @param args: arguments
-        /// @returns Task, not yet scheduled
-        /// @note once the task is done, .result() will return a future with value of type jluna::Nothing_t
-        template<typename... Args_t>
-        [[nodiscard]] static Task<void> create(const std::function<void(Args_t...)>& f, Args_t... args);
+        public:
 
-        /// @brief create a task from a std::function returning non-void
-        /// @param f: function
-        /// @param args: arguments
-        /// @returns Task, not yet scheduled
-        template<is_not<void> Return_t, typename... Args_t>
-        [[nodiscard]] static Task<Return_t> create(const std::function<Return_t(Args_t...)>& f, Args_t... args);
+            /// @brief create a task from a std::function returning void
+            /// @param f: function returning void
+            /// @param args: arguments
+            /// @returns Task, not yet scheduled
+            /// @note once the task is done, .result() will return a future with value of type jluna::Nothing_t
+            template<typename... Args_t>
+            [[nodiscard]] static Task<void> create(const std::function<void(Args_t...)>& f, Args_t... args);
 
-        /// @brief create a task from a lambda
-        /// @param f: lambda
-        /// @param args: arguments
-        /// @returns Task, not yet scheduled
-        template<typename Signature,
-            typename Lambda_t,
-            typename... Args_t,
-            typename T = std::invoke_result_t<std::function<Signature>, Args_t...>
-        >
-        [[nodiscard]] static Task<T> create(Lambda_t f, Args_t... args);
+            /// @brief create a task from a std::function returning non-void
+            /// @param f: function
+            /// @param args: arguments
+            /// @returns Task, not yet scheduled
+            template<is_not<void> Return_t, typename... Args_t>
+            [[nodiscard]] static Task<Return_t> create(const std::function<Return_t(Args_t...)>& f, Args_t... args);
 
-        /// @brief get number of threads
-        /// @returns number
-        static size_t n_threads();
+            /// @brief create a task from a lambda
+            /// @param f: lambda
+            /// @param args: arguments
+            /// @returns Task, not yet scheduled
+            template<typename Signature,
+                typename Lambda_t,
+                typename... Args_t,
+                typename T = std::invoke_result_t<std::function<Signature>, Args_t...>
+            >
+            [[nodiscard]] static Task<T> create(Lambda_t f, Args_t... args);
 
-        /// @brief get id of current task
-        /// @returns number
-        static size_t thread_id();
+            /// @brief get number of threads
+            /// @returns number
+            static size_t n_threads();
+
+            /// @brief get id of current task
+            /// @returns number
+            static size_t thread_id();
 
         private:
             static void free(size_t id);

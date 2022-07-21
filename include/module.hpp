@@ -19,34 +19,34 @@ namespace jluna
         public:
             Module() = default;
 
-            /// @brief ctor
-            /// @param value
+            /// @brief construct from Julia module
+            /// @param value: pointer to Julia module
             /// @param name: symbol
             Module(jl_module_t*);
 
-            /// @brief ctor from proxy
-            /// @param proxy
+            /// @brief construct as child of proxy
+            /// @param proxy: proxy
             Module(Proxy*);
 
-            /// @brief dtor
+            /// @brief destructor
             ~Module();
 
             /// @brief decay to C-type
             operator jl_module_t*();
 
             /// @brief eval string in module scope with exception forwarding
-            /// @param code
-            /// @returns result of expression
+            /// @param code: julia code as string
+            /// @returns result of expression as unnamed proxy
             Proxy safe_eval(const std::string&);
 
             /// @brief eval file in module scope, with exception forwarding
-            /// @param path
-            /// @returns result of file
+            /// @param path: absolute path to .jl file
+            /// @returns result of executing the file
             Proxy safe_eval_file(const std::string&);
 
             /// @brief assign variable with given name in module, if variable does not exist, throw UndefVarError
             /// @param name: variable name, should not contain "."
-            /// @param value
+            /// @param value: new value
             /// @returns jluna::Proxy to value after assignment
             /// @note this function is thread-safe
             template<is_boxable T>
@@ -54,27 +54,27 @@ namespace jluna
 
             /// @brief assign variable with given name in module, if variable does not exist, create it
             /// @param name: variable name, should not contain "."
-            /// @param value
+            /// @param value: new value
             /// @returns jluna::Proxy to value after assignment
             /// @note this function is thread-safe
             template<is_boxable T>
             void create_or_assign(const std::string& variable_name, T value);
 
             /// @brief get variable value as named proxy
-            /// @param variable name
+            /// @param variable_name: name of variable
             /// @returns proxy
             Proxy get(const std::string& variable_name);
 
             /// @brief get variable value
-            /// @tparam value type
-            /// @param variable name
+            /// @tparam value: type
+            /// @param variable_name: name of variable
             /// @returns value
             template<is_unboxable T>
             T get(const std::string& variable_name);
 
             /// @brief creates new variable in main, then returns named proxy to it
             /// @param variable_name: exact name of variable
-            /// @returns *named* proxy to newly created value
+            /// @returns named proxy to newly created value
             /// @note this function is thread-safe
             [[nodiscard]] Proxy new_undef(const std::string& name);
 
@@ -179,8 +179,8 @@ namespace jluna
             /// @brief creates new variable in main, then returns named proxy to it
             /// @tparam value type T of Core.Complex{T}
             /// @param variable_name: exact name of variable
-            /// @param real
-            /// @param imaginary
+            /// @param real: real part of complex number
+            /// @param imag: imaginary part of complex number
             /// @returns *named* proxy to newly created value
             /// @note this function is thread-safe
             template<is_primitive T>
@@ -189,7 +189,7 @@ namespace jluna
             /// @brief creates new variable in main, then returns named proxy to it
             /// @tparam value type T of Core.Vector{T}
             /// @param variable_name: exact name of variable
-            /// @param vector
+            /// @param vector: vector
             /// @returns *named* proxy to newly created value
             /// @note this function is thread-safe
             template<is_boxable T>
@@ -199,7 +199,7 @@ namespace jluna
             /// @tparam Key_t: key type in Base.IdDict{Key_t, Value_t}
             /// @tparam Value_t: value type in Base.IdDict{Key_t, Value_t}
             /// @param variable_name: exact name of variable
-            /// @param map
+            /// @param map: map
             /// @returns *named* proxy to newly created value
             /// @note this function is thread-safe
             template<is_boxable Key_t, is_boxable Value_t>
@@ -209,7 +209,7 @@ namespace jluna
             /// @tparam Key_t: key type in Base.Dict{Key_t, Value_t}
             /// @tparam Value_t: value type in Base.Dict{Key_t, Value_t}
             /// @param variable_name: exact name of variable
-            /// @param unordered_map
+            /// @param unordered_map: unordered map
             /// @returns *named* proxy to newly created value
             /// @note this function is thread-safe
             template<is_boxable Key_t, is_boxable Value_t>
@@ -218,7 +218,7 @@ namespace jluna
             /// @brief creates new variable in main, then returns named proxy to it
             /// @tparam value type of Base.Set{T}
             /// @param variable_name: exact name of variable
-            /// @param set
+            /// @param set: set
             /// @returns *named* proxy to newly created value
             /// @note this function is thread-safe
             template<is_boxable T>
@@ -228,8 +228,8 @@ namespace jluna
             /// @tparam T1: first value type
             /// @tparam T2: second value type
             /// @param variable_name: exact name of variable
-            /// @param first
-            /// @param second
+            /// @param first: first
+            /// @param second: second
             /// @returns *named* proxy to newly created value
             /// @note this function is thread-safe
             template<is_boxable T1, is_boxable T2>
@@ -238,7 +238,7 @@ namespace jluna
             /// @brief creates new variable in main, then returns named proxy to it
             /// @param Ts...: value types
             /// @param variable_name: exact name of variable
-            /// @param values
+            /// @param values: tuple values
             /// @returns *named* proxy to newly created value
             /// @note this function is thread-safe
             template<is_boxable... Ts>

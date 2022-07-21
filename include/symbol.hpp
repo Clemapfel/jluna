@@ -21,12 +21,12 @@ namespace jluna
             Symbol(const std::string&);
 
             /// @brief construct as unnamed proxy
-            /// @param value
-            /// @param name
+            /// @param value: Julia-side symbol
+            /// @param name: name of proxy, or nullptr for unnamed proxy
             Symbol(jl_sym_t* value, jl_sym_t* symbol = nullptr);
 
-            /// @brief ctor from proxy
-            /// @param proxy
+            /// @brief construct as child of proxy
+            /// @param proxy: proxy
             Symbol(Proxy*);
 
             /// @brief decay to C-type
@@ -38,32 +38,32 @@ namespace jluna
             size_t hash() const;
 
             /// @brief equality operator, uses hash
-            /// @param other
+            /// @param other: other symbol
             /// @returns true if hashes equal, false otherwise
             bool operator==(const Symbol& other) const;
 
             /// @brief inequality operator, uses hash
-            /// @param other
+            /// @param other: other symbol
             /// @returns false if hashes equal, true otherwise
             bool operator!=(const Symbol& other) const;
 
             /// @brief comparison operator, uses hash
-            /// @param other
+            /// @param other: other symbol
             /// @returns true if this.hash < other.hash
             bool operator<(const Symbol& other) const;
 
             /// @brief comparison operator, uses hash
-            /// @param other
+            /// @param other: other symbol
             /// @returns true if this.hash <= other.hash
             bool operator<=(const Symbol& other) const;
 
             /// @brief comparison operator, uses hash
-            /// @param other
+            /// @param other: other symbol
             /// @returns true if this.hash >= other.hash
             bool operator>=(const Symbol& other) const;
 
             /// @brief comparison operator, uses hash
-            /// @param other
+            /// @param other: other symbol
             /// @returns true if this.hash > other.hash
             bool operator>(const Symbol& other) const;
     };

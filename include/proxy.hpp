@@ -29,49 +29,49 @@ namespace jluna
             Proxy();
 
             /// @brief construct with no owner, reserved for global temporaries and main
-            /// @param value
-            /// @param symbol
+            /// @param value: value
+            /// @param symbol: name, or nullptr for unnamed proxy
             Proxy(unsafe::Value* value, jl_sym_t* symbol = nullptr);
 
             /// @brief construct with owner
-            /// @param value
+            /// @param value: value
             /// @param owner: shared pointer to owner
-            /// @param symbol
+            /// @param symbol: name, or nullptr for unnamed proxy
             Proxy(unsafe::Value* value, std::shared_ptr<ProxyValue>& owner, unsafe::Value* name_or_index);
 
             /// @brief dtor
             ~Proxy();
 
             /// @brief access field
-            /// @param field_name
+            /// @param field_name: name of the field
             /// @returns field as proxy
             Proxy operator[](const std::string& field);
 
             /// @brief access field
-            /// @param field_name
+            /// @param field_name: name of the field as const char*
             /// @returns field as proxy
             template<typename T, std::enable_if_t<std::is_same_v<T, char>, Bool> = true>
             Proxy operator[](const T* field);
 
             /// @brief access field
-            /// @param field_name
+            /// @param field_name: name of the field as string
             /// @returns unboxed value
             template<is_unboxable T>
             T operator[](const std::string& field);
 
             /// @brief access field
-            /// @param field_name
+            /// @param field_name:  name of the field as const char*
             /// @returns unboxed value
             template<is_unboxable T, typename U, std::enable_if_t<std::is_same_v<U, char>, Bool> = true>
             T operator[](const U* field);
 
             /// @brief linear indexing, if array type, returns getindex result
-            /// @param index
+            /// @param index: index, 0-based
             /// @returns field as proxy
             Proxy operator[](size_t);
 
             /// @brief linear indexing, if array type returns getindex result
-            /// @param index
+            /// @param index: index, 0-based
             /// @returns field as proxy
             template<is_unboxable T>
             T operator[](size_t);
@@ -113,7 +113,7 @@ namespace jluna
             Type get_type() const;
 
             /// @brief check if this <: type
-            /// @param type
+            /// @param type: type
             /// @returns true if `*this isa type`, false otherwise
             bool isa(const Type& type);
 

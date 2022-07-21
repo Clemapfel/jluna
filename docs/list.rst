@@ -8,48 +8,6 @@ This section provides a complete list of all objects and functions in jluna, ord
 
 -------------
 
-Array
-*****
-
-.. doxygenclass:: jluna::Array
-    :members:
-
--------------
-
-Array: Non-Const Iterator
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. doxygenstruct:: jluna::Array::Iterator
-    :members:
-
--------------
-
-Array: Const Iterator
-^^^^^^^^^^^^^^^^^^^^^
-
-.. doxygenclass:: jluna::Array::ConstIterator
-    :members:
-
--------------
-
-Array: Typedefs
-^^^^^^^^^^^^^^^
-
-.. doxygentypedef:: jluna::ArrayAny1d
-.. doxygentypedef:: jluna::ArrayAny2d
-.. doxygentypedef:: jluna::ArrayAny3d
-.. doxygentypedef:: jluna::ArrayAny
-
---------------
-
-Vector
-^^^^^^
-
-.. doxygenclass:: jluna::Vector
-    :members:
-
---------------
-
 Box
 ***
 
@@ -94,6 +52,39 @@ Concept: is_unboxable
     {
         {unbox<T>(v)};
     };
+
+-------------
+
+Safe
+****
+
+Safe: Initialize
+^^^^^^^^^^^^^^^^
+
+.. doxygenvariable:: jluna::JULIA_NUM_THREADS_AUTO
+.. doxygenfunction:: jluna::initialize
+
+Safe: Call Function
+^^^^^^^^^^^^^^^^^^^
+
+.. doxygenfunction:: jluna::safe_call
+
+Safe: Eval
+^^^^^^^^^^
+
+.. doxygenfunction:: jluna::safe_eval
+.. doxygenfunction:: jluna::safe_eval_file
+
+Safe: Miscellaneous
+^^^^^^^^^^^^^^^^^^^
+
+.. doxygenfunction:: jluna::as_julia_pointer
+.. doxygenfunction:: jluna::println
+.. doxygenfunction:: jluna::undef
+.. doxygenfunction:: jluna::nothing
+.. doxygenfunction:: jluna::missing
+.. doxygenfunction:: jluna::collect_garbage
+
 
 -------------
 
@@ -149,6 +140,29 @@ Unsafe: Expressions
 
 -------------
 
+Proxy
+*****
+
+.. doxygenclass:: jluna::Proxy
+    :members:
+
+.. doxygenclass:: jluna::Proxy::ProxyValue
+    :members:
+
+-------------
+
+Module
+******
+
+.. doxygenclass:: jluna::Module
+    :members:
+
+.. doxygenvariable:: jluna::Main
+.. doxygenvariable:: jluna::Base
+.. doxygenvariable:: jluna::Core
+
+-------------
+
 Unsafe: Arrays
 ^^^^^^^^^^^^^^
 
@@ -177,3 +191,234 @@ Unsafe: Arrays
 .. doxygenfunction:: jluna::unsafe::push_back
 
 -------------
+
+Array
+*****
+
+.. doxygenclass:: jluna::Array
+    :members:
+
+-------------
+
+Array: Non-Const Iterator
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxygenstruct:: jluna::Array::Iterator
+    :members:
+
+-------------
+
+Array: Const Iterator
+^^^^^^^^^^^^^^^^^^^^^
+
+.. doxygenclass:: jluna::Array::ConstIterator
+    :members:
+
+-------------
+
+Array: Typedefs
+^^^^^^^^^^^^^^^
+
+.. doxygentypedef:: jluna::ArrayAny1d
+.. doxygentypedef:: jluna::ArrayAny2d
+.. doxygentypedef:: jluna::ArrayAny3d
+.. doxygentypedef:: jluna::ArrayAny
+
+--------------
+
+Vector
+^^^^^^
+
+.. doxygenclass:: jluna::Vector
+    :members:
+
+--------------
+
+cppcall
+*******
+
+.. doxygenfunction:: jluna::as_julia_function
+.. doxygenfunction:: jluna::register_function(std::function<Return_t()>)
+.. doxygenfunction:: jluna::register_function(std::function<Return_t(Arg1_t)> f)
+.. doxygenfunction:: jluna::register_function(std::function<Return_t(Arg1_t, Arg2_t)> f)
+.. doxygenfunction:: jluna::register_function(std::function<Return_t(Arg1_t, Arg2_t, Arg3_t)> f)
+
+-------------
+
+Exceptions
+**********
+
+.. doxygenclass:: jluna::JuliaException
+    :members:
+
+.. doxygenstruct:: jluna::JuliaUninitializedException
+    :members:
+
+.. doxygenfunction:: jluna::forward_last_exception
+.. doxygenfunction:: jluna::throw_if_uninitialized
+
+-------------
+
+Generator Expression
+********************
+
+.. doxygenclass:: jluna::GeneratorExpression
+    :members:
+
+.. doxygenclass:: jluna::GeneratorExpression::ForwardIterator
+    :members:
+
+-------------
+
+Multi Threading
+***************
+
+Future
+^^^^^^
+
+.. doxygenclass:: jluna::Future
+    :members:
+
+Task
+^^^^
+
+.. doxygenclass:: jluna::Task
+    :members:
+
+.. doxygenfunction:: jluna::yield
+
+ThreadPool
+^^^^^^^^^^
+
+.. doxygenclass:: jluna::ThreadPool
+    :members:
+
+Mutex
+^^^^^
+
+.. doxygenclass:: jluna::Mutex
+    :members:
+
+-------------
+
+Symbol
+******
+
+.. doxygenclass:: jluna::Symbol
+    :members:
+
+-------------
+
+Type
+****
+
+.. doxygenclass:: jluna::Type
+    :members:
+
+.. doxygenvariable:: jluna::AbstractArray_t
+.. doxygenvariable:: jluna::AbstractChar_t
+.. doxygenvariable:: jluna::AbstractFloat_t
+.. doxygenvariable:: jluna::AbstractString_t
+.. doxygenvariable:: jluna::Any_t
+.. doxygenvariable:: jluna::Array_t
+.. doxygenvariable:: jluna::Bool_t
+.. doxygenvariable:: jluna::Char_t
+.. doxygenvariable:: jluna::DataType_t
+.. doxygenvariable:: jluna::DenseArray_t
+.. doxygenvariable:: jluna::Exception_t
+.. doxygenvariable:: jluna::Expr_t
+.. doxygenvariable:: jluna::Float16_t
+.. doxygenvariable:: jluna::Float32_t
+.. doxygenvariable:: jluna::Float64_t
+.. doxygenvariable:: jluna::Function_t
+.. doxygenvariable:: jluna::GlobalRef_t
+.. doxygenvariable:: jluna::IO_t
+.. doxygenvariable:: jluna::Int128_t
+.. doxygenvariable:: jluna::Int16_t
+.. doxygenvariable:: jluna::Int32_t
+.. doxygenvariable:: jluna::Int64_t
+.. doxygenvariable:: jluna::Int8_t
+.. doxygenvariable:: jluna::Integer_t
+.. doxygenvariable:: jluna::LineNumberNode_t
+.. doxygenvariable:: jluna::Method_t
+.. doxygenvariable:: jluna::Missing_t
+.. doxygenvariable:: jluna::Module_t
+.. doxygenvariable:: jluna::NTuple_t
+.. doxygenvariable:: jluna::NamedTuple_t
+.. doxygenvariable:: jluna::Nothing_t
+.. doxygenvariable:: jluna::Number_t
+.. doxygenvariable:: jluna::Pair_t
+.. doxygenvariable:: jluna::Ptr_t
+.. doxygenvariable:: jluna::QuoteNode_t
+.. doxygenvariable:: jluna::Real_t
+.. doxygenvariable:: jluna::Ref_t
+.. doxygenvariable:: jluna::Signed_t
+.. doxygenvariable:: jluna::String_t
+.. doxygenvariable:: jluna::Symbol_t
+.. doxygenvariable:: jluna::Task_t
+.. doxygenvariable:: jluna::Tuple_t
+.. doxygenvariable:: jluna::Type_t
+.. doxygenvariable:: jluna::TypeVar_t
+.. doxygenvariable:: jluna::UInt128_t
+.. doxygenvariable:: jluna::UInt16_t
+.. doxygenvariable:: jluna::UInt32_t
+.. doxygenvariable:: jluna::UInt64_t
+.. doxygenvariable:: jluna::UInt8_t
+.. doxygenvariable:: jluna::UndefInitializer_t
+.. doxygenvariable:: jluna::Union_t
+.. doxygenvariable:: jluna::UnionAll_t
+.. doxygenvariable:: jluna::UnionEmpty_t
+.. doxygenvariable:: jluna::Unsigned_t
+.. doxygenvariable:: jluna::VecElement_t
+.. doxygenvariable:: jluna::WeakRef_t
+
+-------------
+
+Typedefs
+********
+
+.. doxygentypedef:: jluna::Bool
+.. doxygentypedef:: jluna::Char
+.. doxygentypedef:: jluna::Int8
+.. doxygentypedef:: jluna::Int16
+.. doxygentypedef:: jluna::Int32
+.. doxygentypedef:: jluna::Int64
+.. doxygentypedef:: jluna::UInt8
+.. doxygentypedef:: jluna::UInt16
+.. doxygentypedef:: jluna::UInt32
+.. doxygentypedef:: jluna::UInt64
+.. doxygentypedef:: jluna::Float32
+.. doxygentypedef:: jluna::Float64
+.. doxygentypedef:: jluna::Nothing
+.. doxygentypedef:: jluna::unsafe::Value
+.. doxygentypedef:: jluna::unsafe::Function
+.. doxygentypedef:: jluna::unsafe::Symbol
+.. doxygentypedef:: jluna::unsafe::Module
+.. doxygentypedef:: jluna::unsafe::Expression
+.. doxygentypedef:: jluna::unsafe::Array
+.. doxygentypedef:: jluna::unsafe::DataType
+
+.. doxygenstruct:: jluna::as_julia_type
+    :members:
+
+.. code-block:: cpp
+    :caption: Concept: is :code:`as_julia_type` defined for type :code:`T`
+
+    template<typename T>
+    concept to_julia_type_convertable = requires(T)
+    {
+        as_julia_type<T>::type_name;
+    };
+
+-------------
+
+Usertype
+********
+
+.. doxygendefine:: set_usertype_enabled
+
+.. doxygenclass:: jluna::Usertype
+    :members:
+
+-------------
+

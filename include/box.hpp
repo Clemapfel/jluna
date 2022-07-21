@@ -170,7 +170,7 @@ namespace jluna
     template<is<Mutex> T>
     unsafe::Value* box(T);
 
-    /// @concept requires a value to be boxable into a julia-side value
+    /// @brief requires a value to be boxable into a julia-side value
     template<typename T>
     concept is_boxable = requires(T t)
     {
