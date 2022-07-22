@@ -19,7 +19,7 @@ namespace jluna
             /// @brief default ctor, construct as Nothing
             Type();
 
-            /// @brief construct from type
+            /// @brief construct from type, implicit
             /// @param value: Julia-side type
             Type(jl_datatype_t* value);
 
@@ -27,7 +27,7 @@ namespace jluna
             /// @param proxy
             Type(Proxy*);
 
-            /// @brief decay to C-type
+            /// @brief decay to C-type, implicit
             operator jl_datatype_t*();
 
             /// @brief unroll type as much as possible

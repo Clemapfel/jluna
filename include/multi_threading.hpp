@@ -95,7 +95,7 @@ namespace jluna
             /// @brief dtor
             ~Task();
 
-            /// @brief access the Julia-side value of type Task
+            /// @brief access the Julia-side value of type Task, implicit
             operator unsafe::Value*();
 
             /// @brief stall the thread this function is called from until the task is done

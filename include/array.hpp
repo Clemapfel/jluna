@@ -30,7 +30,7 @@ namespace jluna
             /// @brief dimensionality, equivalent to julia-side Array{Value_t, Rank}
             static constexpr size_t rank = Rank;
 
-            /// @brief construct as child of already existing proxy
+            /// @brief construct as child of already existing proxy, implicit
             /// @param proxy: pointer to already created proxy
             Array(Proxy*);
 
@@ -39,7 +39,7 @@ namespace jluna
             /// @param symbol: name of Julia-side variable, or nullptr for anonymous variable
             Array(unsafe::Value* value, jl_sym_t* symbol = nullptr);
 
-            /// @brief constructor, initialize values as undef
+            /// @brief constructor, initialize values as undef, implicit
             /// @param size: target size of the new array
             Array(size_t);
 
@@ -148,10 +148,10 @@ namespace jluna
             /// @param size: target size
             void reserve(size_t);
 
-            /// @brief cast to unsafe::Value*
+            /// @brief cast to unsafe::Value*, implicit
             using Proxy::operator unsafe::Value*;
 
-            /// @brief cast to unsafe::Array*
+            /// @brief cast to unsafe::Array*, implicit
             operator unsafe::Array*() const;
 
             /// @brief expose raw data as void*
@@ -209,12 +209,12 @@ namespace jluna
                     /// @returns assignable
                     auto operator*();
 
-                    /// @brief decay into unboxed value
+                    /// @brief decay into unboxed value, implicit
                     /// @tparam T: value type, not necessarily the same as declared in the array type
                     template<is_unboxable T = Value_t, std::enable_if_t<not is<Proxy, T>, bool> = true>
                     operator T() const;
 
-                    /// @brief decay into proxy
+                    /// @brief decay into proxy, implicit
                     operator Proxy();
 
                 protected:
@@ -239,7 +239,7 @@ namespace jluna
                 auto& operator=(T value);
 
                 /// @brief decay into unboxed value
-                /// @tparam value-type, not necessarily the same as declared in the array type
+                /// @tparam value-type, not necessarily the same as declared in the array type, implicit
                 template<is_unboxable T = Value_t, std::enable_if_t<not std::is_same_v<T, Proxy>, bool> = true>
                 operator T() const;
 
@@ -271,7 +271,7 @@ namespace jluna
             /// @param size: size along the first dimension
             Vector(Value_t* data, size_t size);
 
-            /// @brief construct as child of already existing proxy
+            /// @brief construct as child of already existing proxy, implicit
             /// @param proxy: proxy
             Vector(Proxy*);
 

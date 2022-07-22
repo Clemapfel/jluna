@@ -10,27 +10,30 @@
 
 namespace jluna
 {
-    /// @brief wrapper for jl_sym_t*
+    /// @brief wrapper for `jl_sym_t*`
     class Symbol : public Proxy
     {
         public:
             /// @brief default ctor
             Symbol();
 
-            /// @param allocate symbol julia side
+            /// @brief allocate symbol Julia-side, implicit
+            /// @param string: value of symbol, constructed via `Base.Symbol(string)`
             Symbol(const std::string&);
 
-            /// @brief construct as unnamed proxy
+            /// @brief construct as unnamed proxy, implicit
             /// @param value: Julia-side symbol
             /// @param name: name of proxy, or nullptr for unnamed proxy
             Symbol(jl_sym_t* value, jl_sym_t* symbol = nullptr);
 
-            /// @brief construct as child of proxy
+            /// @brief construct as child of proxy, implicit
             /// @param proxy: proxy
             Symbol(Proxy*);
 
-            /// @brief decay to C-type
+            /// @brief decay to C-type, implicit
             operator jl_sym_t*() const;
+
+            /// @brief decay to unsafe pointer
             using Proxy::operator unsafe::Value*;
 
             /// @brief hash, constant runtime

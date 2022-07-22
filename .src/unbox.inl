@@ -284,7 +284,7 @@ namespace jluna
         auto* first = jl_get_nth_field(value, 0);
         auto* second = jl_get_nth_field(value, 1);
 
-        auto out = T(unbox<typename T::first_type>(first), unbox<typename T::second_type>(second));
+        jluna::is_pair auto out = T(unbox<typename T::first_type>(first), unbox<typename T::second_type>(second));
         gc_unpause;
         return out;
     }

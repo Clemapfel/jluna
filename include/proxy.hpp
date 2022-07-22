@@ -147,7 +147,7 @@ namespace jluna
             bool is_mutating() const;
 
             /// @brief assign value to proxy, this modifies the value julia-side
-            /// @param unsafe::Value*
+            /// @param value: Julia-side value
             /// @returns reference to self
             Proxy& operator=(unsafe::Value*);
 
@@ -197,7 +197,7 @@ namespace jluna
             ProxyValue(unsafe::Value* value, std::shared_ptr<ProxyValue>& owner, unsafe::Value* symbol_or_index);
 
             /// @brief copy ctor
-            /// @param other
+            /// @param other: other proxy
             ProxyValue(const ProxyValue&);
 
             /// @brief access field

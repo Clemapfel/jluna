@@ -19,7 +19,7 @@ namespace jluna
         public:
             Module() = default;
 
-            /// @brief construct from Julia module
+            /// @brief construct from Julia module, implicit
             /// @param value: pointer to Julia module
             /// @param name: symbol
             Module(jl_module_t*);
@@ -31,7 +31,7 @@ namespace jluna
             /// @brief destructor
             ~Module();
 
-            /// @brief decay to C-type
+            /// @brief decay to C-type, implicit
             operator jl_module_t*();
 
             /// @brief eval string in module scope with exception forwarding
