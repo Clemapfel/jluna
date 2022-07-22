@@ -19,12 +19,12 @@ struct RGBA
 
     // ctor
     RGBA(float r, float g, float b)
-            : _red(r), _green(g), _blue(b), _alpha(1)
+        : _red(r), _green(g), _blue(b), _alpha(1)
     {}
 
     // default ctor (required by jluna::Usertype)
     RGBA()
-            : _red(0), _green(0), _blue(0), _alpha(1)
+        : _red(0), _green(0), _blue(0), _alpha(1)
     {}
 };
 
@@ -39,43 +39,43 @@ int main()
 
     // field _red
     Usertype<RGBA>::add_property<float>(
-            "_red",                                          // name
-            [](RGBA& in) -> float {return in._red;},         // boxing behavior
-            [](RGBA& out, float in) -> void {out._red = in;} // unboxing behvaior
+        "_red",                                          // name
+        [](RGBA& in) -> float {return in._red;},         // boxing behavior
+        [](RGBA& out, float in) -> void {out._red = in;} // unboxing behvaior
     );
 
     // field _green
     Usertype<RGBA>::add_property<float>(
-            "_green",
-            [](RGBA& in) -> float {return in._green;},
-            [](RGBA& out, float in) -> void {out._green = in;}
+        "_green",
+        [](RGBA& in) -> float {return in._green;},
+        [](RGBA& out, float in) -> void {out._green = in;}
     );
 
     // field _blue
     Usertype<RGBA>::add_property<float>(
-            "_blue",
-            [](RGBA& in) -> float {return in._blue;},
-            [](RGBA& out, float in) -> void {out._blue = in;}
+        "_blue",
+        [](RGBA& in) -> float {return in._blue;},
+        [](RGBA& out, float in) -> void {out._blue = in;}
     );
 
     // field _alpha
     Usertype<RGBA>::add_property<float>(
-            "_alpha",
-            [](RGBA& in) -> float {return in._alpha;},
-            [](RGBA& out, float in) -> void {out._alpha = in;}
+        "_alpha",
+        [](RGBA& in) -> float {return in._alpha;},
+        [](RGBA& out, float in) -> void {out._alpha = in;}
     );
 
     // julia-only field _value
     Usertype<RGBA>::add_property<float>(
-            "_value",  // name
+        "_value",  // name
 
-            // boxing routine: compute value from red, green and blue
-            [](RGBA& in) -> float {
-                float max = 0;
-                for (auto v : {in._red, in._green, in._blue})
-                    max = std::max(v, max);
-                return max;
-            }
+        // boxing routine: compute value from red, green and blue
+        [](RGBA& in) -> float {
+            float max = 0;
+            for (auto v : {in._red, in._green, in._blue})
+                max = std::max(v, max);
+            return max;
+        }
     );
 
     // implement
@@ -115,3 +115,4 @@ int main()
     //
     return 0;
 }
+

@@ -1,10 +1,10 @@
-# jluna: A modern Julia <-> C++ Wrapper (v0.9.0)
+# jluna: A modern Julia <-> C++ Wrapper (v0.9.1)
 
 
 ![](./header.png)
 
 Julia is a beautiful language, it is well-designed, and well-documented. Julia's C-API is also well-designed, less beautiful, and much less... documented.<br>
-Heavily inspired in design and syntax by (but in no way affiliated with) the excellent Lua <-> C++ wrapper [**sol3**](https://github.com/ThePhD/sol2), jluna aims to fully wrap the official Julia C-API, replacing it in projects with C++ as the host language, by making accessing Julia's unique strengths through C++ safe, hassle-free, and just as beautiful.
+jluna aims to fully wrap the official Julia C-API, replacing it in projects with C++ as the host language, by making accessing Julia's unique strengths through C++ safe, hassle-free, and just as beautiful.
 
 ---
 
@@ -15,9 +15,6 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 2. [Features](#features)<br>
 3. [Planned Features](#planned-but-not-yet-implemented)<br>
 4. [Documentation](#documentation)<br>
-    4.1 [Manual](./docs/manual.md)<br>
-    4.2 [Installation](./docs/installation.md)<br>
-    4.3 [Troubleshooting](./docs/installation.md#troubleshooting)<br>
 5. [Dependencies](#dependencies)<br>
    5.1 [julia 1.7.0+](#dependencies)<br>
    5.2 [Supported Compilers: gcc10, gcc11, clang12](#dependencies)<br>
@@ -29,7 +26,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 
 ### Showcase
 
-(If you are looking for examples showing basic usage, please instead consult the [manual](./docs/manual.md).)
+(If you are looking for examples showing basic usage, please instead consult the [manual](https://clemens-cords.com/jluna/basics.html).)
 
 #### Executing Julia Code
 
@@ -157,13 +154,13 @@ std::cout << std::endl;
 
 + expressive, generic syntax
 + create / call / assign Julia-side variables from C++
-+ thread-safe, provides a custom thread pool that, [unlike the C-API](./docs/manual.md/#multi-threading), allows for concurrent interfacing with Julia
++ thread-safe, provides a custom thread pool that, [unlike the C-API](https://clemens-cords.com/jluna/multi_threading.html), allows for concurrent interfacing with Julia
 + `std::` types & usertypes can be moved freely between Julia and C++
 + call arbitrary C++ functions from Julia
 + multi-dimensional, iterable array interface
 + provides < 5% overhead functions, viable in performance-critical environments
 + full exception forwarding, verbose error messages
-+ complete [manual](./docs/manual.md), [installation guide](./docs/installation.md), [benchmark analysis](./docs/manual.md#performance-optimization), inline documentation for IDEs - all written by a human
++ complete [manual](https://clemens-cords.com/jluna/basics.html), [installation guide](https://clemens-cords.com/jluna/installation.md), [benchmark analysis](https://clemens-cords.com/jluna/benchmarks.html), inline documentation for IDEs - all written by a human
 + and more!
 
 ### Planned (but not yet implemented):
@@ -174,11 +171,8 @@ jluna is feature complete as of 0.9.0. The library will continue to be supported
 
 ## Documentation
 
-A verbose, step-by-step introduction and manual is available [here](./docs/manual.md). This manual is written for people less familiar with C++ and/or Julia, providing non-jluna related guidance where necessary.
-
-Furthermore, all user-facing code has in-line documentation, available through most IDEs. 
-
-Advanced users are encouraged to check the headers (available in `jluna/include/`) for implementation details. They are formatted specifically to be easily understood by 3rd parties. 
+Documentation, including a step-by-step installation and troubleshooting guide, tutorial, and index of all functions and objects in jluna is available 
+[here](https://clemens-cords.com/jluna).
 
 ---
 
@@ -197,9 +191,9 @@ Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-1
 
 ---
 
-## [Installation & Troubleshooting](./docs/installation.md)
+## [Installation & Troubleshooting](https://clemens-cords.com/jluna/installation.html)
 
-> A step-by-step guide is available [here](./docs/installation.md). It is recommended that you follow this guide, instead of the highly abridged version below.
+> A step-by-step guide is available [here](https://clemens-cords.com/jluna/installation.html). It is recommended that you follow this guide, instead of the highly abridged version below.
 
 Execute, in your bash console, in any public directory:
 
@@ -239,7 +233,7 @@ Where
 + `<julia>` is the Julia shared library (usually available in `"${JULIA_BINDIR}/../lib"`)
 + `<your library>` is the name of your library or executable
 
-If any step of this does not work for you, please follow the [installation guide](./docs/installation.md) instead.
+If any step of this does not work for you, please follow the [installation guide](https://clemens-cords.com/jluna/installation.html) instead.
 
 ---
 

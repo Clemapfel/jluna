@@ -60,7 +60,7 @@ namespace jluna
     {
         public:
             /// @brief Ctor
-            /// @param pointer
+            /// @param pointer: pointer to generator expression
             /// @param state: state in Int64, for begin() set State 0, for end() set State GeneratorExpression.lenght()
             ForwardIterator(const GeneratorExpression*, Int64);
 
@@ -80,12 +80,12 @@ namespace jluna
             void operator++(int);
 
             /// @brief comparison
-            /// @param other
+            /// @param other: other iterator
             /// @returns true if iterators point to the same expression and have the same state
             bool operator==(const GeneratorExpression::ForwardIterator& other) const;
 
             /// @brief comparison
-            /// @param other
+            /// @param other: other iterator
             /// @returns false if iterators point to the same expression and have the same state
             bool operator!=(const GeneratorExpression::ForwardIterator& other) const;
 

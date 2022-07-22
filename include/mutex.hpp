@@ -9,17 +9,17 @@
 
 namespace jluna
 {
-    /// @brief thread-safe wrapper for Base.ReentrantLock
+    /// @brief thread-safe wrapper for Base.ReentrantLock, lockable and capable of stalling both a Julia task and a C++ thread
     class Mutex
     {
         template<is<Mutex> T>
         friend T unbox(unsafe::Value*);
 
         public:
-            /// @brief ctor
+            /// @brief construct
             Mutex();
 
-            /// @brief dtor
+            /// @brief destruct
             ~Mutex();
 
             /// @brief stall until locking is possible

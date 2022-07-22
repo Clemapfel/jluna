@@ -13,10 +13,6 @@
 
 namespace jluna
 {
-    /// @brief convert julia-side value to C++-side value
-    /// @param value: pointer to julia-side memory of arbitrary type
-    /// @returns C++-side object by value
-
     // ###########################################################
 
     /// @brief unbox to unsafe::Value*

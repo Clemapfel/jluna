@@ -18,10 +18,6 @@
 
 namespace jluna
 {
-    /// @brief convert C++-side value to julia side value
-    /// @param value: C++-side value
-    /// @returns pointer to julia-side value
-
     // ###########################################################
 
     /// @brief box identity
@@ -174,7 +170,7 @@ namespace jluna
     template<is<Mutex> T>
     unsafe::Value* box(T);
 
-    /// @concept requires a value to be boxable into a julia-side value
+    /// @brief requires a value to be boxable into a julia-side value
     template<typename T>
     concept is_boxable = requires(T t)
     {

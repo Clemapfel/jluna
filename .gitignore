@@ -8,3 +8,8 @@
 /jluna_c_adapter.so/
 /libjluna.so
 /libjluna_c_adapter.so
+/docs/doxygen
+/docs/html
+/docs/latex
+/docs/out
+
