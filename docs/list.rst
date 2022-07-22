@@ -6,12 +6,15 @@ This section provides a complete list of all objects and functions in jluna, ord
 .. note::
     Use the "search" bar on the left of the page or the table of contents in the top right to find any particular function quickly!
 
--------------
+--------------
 
 Box
 ***
 
 .. doxygenfunction:: jluna::docs_only::box(T value)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::unsafe_box
 
 --------------
@@ -33,10 +36,15 @@ Concept: is_boxable
 
 --------------
 
+--------------
+
 Unbox
 *****
 
 .. doxygenfunction:: jluna::docs_only::unbox(unsafe::Value*)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::unsafe_unbox
 
 --------------
@@ -55,6 +63,9 @@ Concept: is_unboxable
 
 -------------
 
+--------------
+
+
 Safe
 ****
 
@@ -64,29 +75,53 @@ Safe: Initialize
 .. doxygenvariable:: jluna::JULIA_NUM_THREADS_AUTO
 .. doxygenfunction:: jluna::initialize
 
+--------------
+
 Safe: Call Function
 ^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: jluna::safe_call
 
+--------------
+
 Safe: Eval
 ^^^^^^^^^^
 
 .. doxygenfunction:: jluna::safe_eval
+
+--------------
+
 .. doxygenfunction:: jluna::safe_eval_file
 
 Safe: Miscellaneous
 ^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: jluna::as_julia_pointer
+
+--------------
+
 .. doxygenfunction:: jluna::println
+
+--------------
+
 .. doxygenfunction:: jluna::undef
+
+--------------
+
 .. doxygenfunction:: jluna::nothing
+
+--------------
+
 .. doxygenfunction:: jluna::missing
+
+--------------
+
 .. doxygenfunction:: jluna::collect_garbage
 
-
 -------------
+
+--------------
+
 
 Unsafe
 ******
@@ -94,10 +129,25 @@ Unsafe
 GC
 ^^
 .. doxygenfunction:: jluna::unsafe::docs_only::gc_preserve(T* value)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::gc_preserve(Ts... value)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::gc_release(size_t id)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::gc_release(std::vector<size_t> &ids)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::gc_disable
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::gc_enable
 
 -------------
@@ -106,8 +156,17 @@ Unsafe: Get / Call Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: jluna::unsafe::get_function(unsafe::Module* module, unsafe::Symbol* name)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::get_function(unsafe::Symbol* module_name, unsafe::Symbol* function_name)
-.. doxygenfunction:: jluna::unsafe::call(unsafe::Function* function, Args_t... args);
+
+--------------
+
+.. doxygenfunction:: jluna::unsafe::call(unsafe::Function* function, Args_t... args)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::call(unsafe::DataType* type, Args_t... args)
 
 -------------
@@ -115,17 +174,29 @@ Unsafe: Get / Call Functions
 Unsafe: Get / Set Values
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. doxygenfunction:: jluna::unsafe::get_value(unsafe::Module* module, unsafe::Symbol* name);
-.. doxygenfunction:: jluna::unsafe::get_value(unsafe::Symbol* module_name, unsafe::Symbol* variable_name);
+.. doxygenfunction:: jluna::unsafe::get_value(unsafe::Module* module, unsafe::Symbol* name)
+
+--------------
+
+.. doxygenfunction:: jluna::unsafe::get_value(unsafe::Symbol* module_name, unsafe::Symbol* variable_name)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::set_value(unsafe::Module* module, unsafe::Symbol* name, unsafe::Value* value)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::set_value(unsafe::Symbol* module_name, unsafe::Symbol* variable_name)
 
--------------
+--------------
 
 Unsafe: Get / Set Fields
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: jluna::unsafe::get_field
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::set_field
 
 -------------
@@ -134,8 +205,17 @@ Unsafe: Expressions
 ^^^^^^^^^^^^^^^^^^^
 
 .. doxygenfunction:: jluna::operator""_eval
+
+--------------
+
 .. doxygenfunction:: jluna::operator""_sym
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::eval
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::Expr
 
 -------------
@@ -145,6 +225,9 @@ Proxy
 
 .. doxygenclass:: jluna::Proxy
     :members:
+
+--------------
+
 
 .. doxygenclass:: jluna::Proxy::ProxyValue
     :members:
@@ -157,6 +240,8 @@ Module
 .. doxygenclass:: jluna::Module
     :members:
 
+--------------
+
 .. doxygenvariable:: jluna::Main
 .. doxygenvariable:: jluna::Base
 .. doxygenvariable:: jluna::Core
@@ -167,30 +252,96 @@ Unsafe: Arrays
 ^^^^^^^^^^^^^^
 
 .. doxygenfunction:: jluna::unsafe::docs_only::new_array(unsafe::Value* value_type, size_t one_d)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::new_array(unsafe::Value* value_type, size_t one_d, size_t two_d)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::new_array(unsafe::Value* value_type, Dims... size_per_dimension);
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::new_array_from_data(unsafe::Value* value_type, void* data, Dims... size_per_dimension)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::sizehint
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::resize_array(unsafe::Array* array, Dims...)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::resize_array(unsafe::Array* array, size_t one_d)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::resize_array(unsafe::Array* array, size_t one_d, size_t two_d)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::override_array
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::get_array_size(unsafe::Array*)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::get_array_size(unsafe::Array*, size_t dimension_index)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::get_index(unsafe::Array*, Index... index_per_dimension)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::get_index(unsafe::Array*, size_t)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::get_index(unsafe::Array*, size_t, size_t)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::set_index(unsafe::Array*, unsafe::Value* value, Index... index_per_dimension)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::set_index(unsafe::Array*, unsafe::Value* value, size_t)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::docs_only::set_index(unsafe::Array*, unsafe::Value* value, size_t, size_t)
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::get_array_data
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::swap_array_data
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::set_array_data
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::push_front
+
+--------------
+
 .. doxygenfunction:: jluna::unsafe::push_back
 
--------------
+--------------
 
 Array
 *****
@@ -238,12 +389,24 @@ cppcall
 *******
 
 .. doxygenfunction:: jluna::as_julia_function
+
+--------------
+
 .. doxygenfunction:: jluna::register_function(std::function<Return_t()>)
+
+--------------
+
 .. doxygenfunction:: jluna::register_function(std::function<Return_t(Arg1_t)> f)
+
+--------------
+
 .. doxygenfunction:: jluna::register_function(std::function<Return_t(Arg1_t, Arg2_t)> f)
+
+--------------
+
 .. doxygenfunction:: jluna::register_function(std::function<Return_t(Arg1_t, Arg2_t, Arg3_t)> f)
 
--------------
+--------------
 
 Exceptions
 **********
@@ -251,13 +414,20 @@ Exceptions
 .. doxygenclass:: jluna::JuliaException
     :members:
 
+--------------
+
 .. doxygenstruct:: jluna::JuliaUninitializedException
     :members:
 
+--------------
+
 .. doxygenfunction:: jluna::forward_last_exception
+
+--------------
+
 .. doxygenfunction:: jluna::throw_if_uninitialized
 
--------------
+--------------
 
 Generator Expression
 ********************
@@ -265,10 +435,12 @@ Generator Expression
 .. doxygenclass:: jluna::GeneratorExpression
     :members:
 
+--------------
+
 .. doxygenclass:: jluna::GeneratorExpression::ForwardIterator
     :members:
 
--------------
+--------------
 
 Multi Threading
 ***************
@@ -279,19 +451,27 @@ Future
 .. doxygenclass:: jluna::Future
     :members:
 
+--------------
+
 Task
 ^^^^
 
 .. doxygenclass:: jluna::Task
     :members:
 
+--------------
+
 .. doxygenfunction:: jluna::yield
+
+--------------
 
 ThreadPool
 ^^^^^^^^^^
 
 .. doxygenclass:: jluna::ThreadPool
     :members:
+
+--------------
 
 Mutex
 ^^^^^
@@ -314,6 +494,8 @@ Type
 
 .. doxygenclass:: jluna::Type
     :members:
+
+--------------
 
 .. doxygenvariable:: jluna::AbstractArray_t
 .. doxygenvariable:: jluna::AbstractChar_t
@@ -398,8 +580,12 @@ Typedefs
 .. doxygentypedef:: jluna::unsafe::Array
 .. doxygentypedef:: jluna::unsafe::DataType
 
+--------------
+
 .. doxygenstruct:: jluna::as_julia_type
     :members:
+
+--------------
 
 .. code-block:: cpp
     :caption: Concept: is :code:`as_julia_type` defined for type :code:`T`
