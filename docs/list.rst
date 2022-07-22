@@ -36,8 +36,6 @@ Concept: is_boxable
 
 --------------
 
---------------
-
 Unbox
 *****
 
@@ -62,9 +60,6 @@ Concept: is_unboxable
     };
 
 -------------
-
---------------
-
 
 Safe
 ****
@@ -92,6 +87,8 @@ Safe: Eval
 --------------
 
 .. doxygenfunction:: jluna::safe_eval_file
+
+--------------
 
 Safe: Miscellaneous
 ^^^^^^^^^^^^^^^^^^^
@@ -373,7 +370,7 @@ Array: Typedefs
 .. doxygentypedef:: jluna::ArrayAny1d
 .. doxygentypedef:: jluna::ArrayAny2d
 .. doxygentypedef:: jluna::ArrayAny3d
-.. doxygentypedef:: jluna::ArrayAny
+.. doxygentypedef:: jluna::VectorAny
 
 --------------
 
@@ -605,6 +602,3 @@ Usertype
 
 .. doxygenclass:: jluna::Usertype
     :members:
-
--------------
-
