@@ -1,6 +1,6 @@
 ## Calling C++ Functions from Julia
 
-We've seen how to call Julia functions from C++. Despite being more of a Julia-wrapper for C++ than a C++-wrapper for Julia, in jluna, calling C++ functions from Julia is actually just as convenient and [performant](#calling-c-functions-from-julia-results).
+We've seen how to call Julia functions from C++. Despite being more of a Julia-wrapper for C++ than a C++-wrapper for Julia, in jluna, calling C++ functions from Julia is actually just as convenient and [performant](benchmarks.md#calling-c-functions-from-julia-results).
 
 To call a C++ function, we need to assign to a Julia-side variable, a **lambda**.
 
@@ -69,8 +69,8 @@ Not all function signatures are supported for `as_julia_function`. Its argument 
 ```
 
 Where
-+ `T_r` is `void` or [unboxable]((Un)Boxable)
-+ `T1`, `T2`, `T3` are  [boxable]((Un)Boxable)
++ `T_r` is `void` or [unboxable](proxies.md#unboxable-types)
++ `T1`, `T2`, `T3` are  [boxable](proxies.md#unboxable-types)
 
 This may seem limiting at first, how could we execute arbitrary C++ code when we are only allowed to use functions with a maximum of three arguments using only (Un)Boxable types? The next sections will answer this question.
 
@@ -161,7 +161,7 @@ If we want our lambda to take any number of *differently-typed* arguments, we ca
 
 ### Using Non-Julia Objects
 
-We now know how to work around the restriction on the number of arguments, but what about the types? Not all types are [(Un)Boxable](#unboxable-types), but this does not mean we cannot use arbitrary C++ types. How? By using **captures**.
+We now know how to work around the restriction on the number of arguments, but what about the types? Not all types are [(Un)Boxable](proxies.md#unboxable-types), but this does not mean we cannot use arbitrary C++ types. How? By using **captures**.
 
 Let's say we have the following C++ class:
 
@@ -252,6 +252,6 @@ std::cout << instance._value << std::endl;
 104
 ```
 
-The Julia-function modified our C++-side instance, despite its type being uninterpretable to Julia.
+The Julia-side function modified our C++-side instance, despite its type being uninterpretable to Julia.
 
-By cleverly employing captures and collections / tuples, the restriction on what functions can be forwarded to Julia using `as_julia_function` are lifted. Any arbitrary C++ function (and thus any arbitrary C++ code) can now be executed Julia-side. Furthermore, calling C++ functions like this [introduces no overhead](#calling-c-functions-from-julia-results), making this feature of jluna very powerful.
+By cleverly employing captures and collections / tuples, the restriction on what functions can be forwarded to Julia using `as_julia_function` are lifted. Any arbitrary C++ function (and thus any arbitrary C++ code) can now be executed Julia-side. Furthermore, calling C++ functions like this [introduces no overhead](benchmarks.md#calling-c-functions-from-julia-results), making this feature of jluna very powerful.

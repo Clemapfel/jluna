@@ -153,15 +153,15 @@ Here, we created a Julia-side function `f`. We used various ways to access the v
 
 ### Accessing Julia-side Values: Results
 
-| function used | median duration (ms) | overhead (%)|
-|------|----------------------|-------------|
-| `C-API` | `8.1e-05ms` | `0%` |
-| `unsafe::get_function` | `8.4e-05ms` | `4%` |
-| `unsafe::get_value` | `8.4e-05ms` | `4%` |
-| `Module::get<T>` | `0.000282ms` | `248%` |
-| `Proxy::Proxy(unsafe::Value*)` | `0.005378ms` | `6190%` |
-| `Proxy::operator[](std::string)` | `0.005378ms` | `6540%` |
-| `jl_eval_string` | `0.085889ms` | `105936%` |
+| function used                    | median duration (ms) | overhead (%)  |
+|----------------------------------|----------------------|---------------|
+| `C-API`                          | `8.1e-05ms`          | `0%`          |
+| `unsafe::get_function`           | `8.4e-05ms`          | `4%`          |
+| `unsafe::get_value`              | `8.4e-05ms`          | `4%`          |
+| `Module::get<T>`                 | `0.000282ms`         | `248%`        |
+| `Proxy::Proxy(unsafe::Value*)`   | `0.005378ms`         | `6190%`       |
+| `Proxy::operator[](std::string)` | `0.005378ms`         | `6540%`       |
+| `jl_eval_string`                 | `0.085889ms`         | `105936%`     |
 
 We see that there are vast runtime difference between individual benchmarks. Firstly, `unsafe` falls into the `< 5%` overhead range, which is good to see.
 
@@ -222,12 +222,12 @@ During each cycle of each benchmark, we generate a random `Int64` using `generat
 
 ### Mutating Julia-side Variables: Results
 
-| name | median duration (ms) | overhead|
-|------|----------------------|-------------|
-| `C-API` | `0.000137ms`           | `0%`  |
-| `unsafe::set_value` | `0.000141ms` | `3%` |
-| `Module::assign` | `0.000379ms` | `176%` |
-| `named proxy` | `0.062295ms` | `45370.8%` | 
+| name                | median duration (ms) | overhead   |
+|---------------------|----------------------|------------|
+| `C-API`             | `0.000137ms`         | `0%`       |
+| `unsafe::set_value` | `0.000141ms`         | `3%`       |
+| `Module::assign`    | `0.000379ms`         | `176%`     |
+| `named proxy`       | `0.062295ms`         | `45370.8%` | 
 
 
 `unsafe` once again makes it below its target 5% goal, much more comfortably this time.
@@ -298,13 +298,13 @@ Here, we first access a pointer to our simple Julia-side function, `f`.This func
 
 ### Calling Julia-side Functions: Results
 
-| name | median duration (ms) | overhead|
-|------|----------------------|-------------|
-| `C-API` | `0.000243ms` | `0%` |
-| `unsafe::call` | `0.000256ms` | `5.34%` |
-| `jluna::safe_call` | `0.000513ms` | `111%` | 
-| `Proxy::safe_call<T>` | `0.000689ms` | `184%` |
-| `Proxy::operator()` | `0.006068ms` | `2397.12%` |
+| name                  | median duration (ms) | overhead    |
+|-----------------------|----------------------|-------------|
+| `C-API`               | `0.000243ms`         | `0%`        |
+| `unsafe::call`        | `0.000256ms`         | `5.34%`     |
+| `jluna::safe_call`    | `0.000513ms`         | `111%`      | 
+| `Proxy::safe_call<T>` | `0.000689ms`         | `184%`      |
+| `Proxy::operator()`   | `0.006068ms`         | `2397.12%`  |
 
 `unsafe` barely misses its target 5%, though `0.34%` could very well be due to noise.
 
@@ -346,10 +346,10 @@ This time, our baseline comparison is not the C-API, as it offers no way of call
 
 ### Calling C++ Functions from Julia: Results
 
-| name | median duration (ms) | overhead|
-|------|----------------------|-------------|
-| `called C++-side` | `0.015963ms` | `0%` |
-| `called Julia-side` | `0.016145ms` | `1.14%` |
+| name                | median duration (ms) | overhead    |
+|---------------------|----------------------|-------------|
+| `called C++-side`   | `0.015963ms`         | `0%`        |
+| `called Julia-side` | `0.016145ms`         | `1.14%`     |
 
 Results suggest that there is very little overhead at all, about 1%. Users can be assured, that calling any C++ function moved to Julia via `as_julia_function` is basically just as fast af it was called from pure C++. `as_julia_function` can therefore be used freely in performance-critical code.
 
@@ -416,11 +416,11 @@ To make for a fair comparison, the overhead of `jl_gc_collect` was introduced to
 
 ### Using jluna::Array: Results
 
-| name | median duration (ms) | overhead|
-|------|----------------------|-------------|
-| `C-API` | `0.049239ms`       | `0%`  |
-| `unsafe` | `0.049703ms` | `0.94%` |
-| `jluna::Array` | `0.074531ms` | `51.3658%` |
+| name           | median duration (ms) | overhead    |
+|----------------|----------------------|-------------|
+| `C-API`        | `0.049239ms`         | `0%`        |
+| `unsafe`       | `0.049703ms`         | `0.94%`     |
+| `jluna::Array` | `0.074531ms`         | `51.3658%`  |
 
 Once again, `unsafe` is very close to the C-API, 1% being far below 5%.
 
@@ -518,10 +518,10 @@ This benchmark does not measure overhead compared to the C-API, it measures how 
 
 ### Constructing `jluna::Task`: Results
 
-| name | median duration (ms) | overhead|
-|------|----------------------|-------------|
-| `jluna::Task` | `0.011592ms`   | `0%`  |
-| `std::thread` | `0.012151ms`   | `4.82229%`  |
+| name          | median duration (ms) | overhead    |
+|---------------|----------------------|-------------|
+| `jluna::Task` | `0.011592ms`         | `0%`        |
+| `std::thread` | `0.012151ms`         | `4.82229%`  |
 
 Results suggest that the `std::` thread pool is actually slightly slower, about 5%. While this is not significant enough to make one thread pool better than the other, it assures users that migrating a parallel architecture from C++-only to jluna will not incur any overhead, making `jluna::ThreadPool` a fully valid replacement in both functionality and performance.
 
@@ -564,7 +564,7 @@ Some functions are not named bindings, however. Temporary functions are best man
 
 #### Executing Strings as Julia Code
 
-If we really have no choice but to execute a string as Julia code, `jluna::safe_eval` is the function of choice. It has all the bells and whistles `Module::safe_eval` has, except that it returns a raw C-pointer to the result of the code, rather then a proxy. This makes it ideal for this purpose.
+If we really have no choice but to execute a string as Julia code, `jluna::safe_eval` is the function of choice. It has all the bells and whistles `Module::safe_eval` has, except that it returns a raw C-pointer to the result of the code, rather than a proxy. This makes it ideal for this purpose.
 
 Just like `jluna::safe_call`, the following is GC-safe:
 
@@ -572,7 +572,7 @@ Just like `jluna::safe_call`, the following is GC-safe:
 Int64 variable_value = unbox<Int64>(jluna::safe_eval("length([i for i in 1:43 if i % 2 != 0]"))
 ```
 
-Here we have a somewhat complex line of code, what it does exactly isn't important. What is important, is that it returns a value of type `Int64`. We can capture this value safely by making sure that there is no line of code executed between `safe_eval` returning, and the `unbox` call starting. This allows us to safely unbox the result of the `safe_eval` call.
+Here we have a somewhat complex line of code, what it does exactly isn't important. What is important, how is that it returns a value of type `Int64`. We can capture this value safely by making sure that there is no line of code executed between `safe_eval` returning, and the `unbox` call starting. This allows us to safely unbox the result of the `safe_eval` call.
 
 Regardless, running Julia code as strings instead of functions should always be a last resort.
 
@@ -581,7 +581,7 @@ Regardless, running Julia code as strings instead of functions should always be 
 Many common tasks require handling of large arrays. Julia is very adept at this, making it a natural choice for this purpose. When doing the same with jluna, rather than pure Julia, the following should be kept in mind:
 
 + **Always choose a C-Type as value type**
-    - The only way to share arrays losslessly, and without performance overhead, is if it has a value-type that [is interpretable for both C++ and Julia](#shared-memory)
+    - The only way to share arrays losslessly, and without performance overhead, is if it has a value-type that [is interpretable for both C++ and Julia](unsafe.md#shared-memory)
 + **Don't be scared of jluna::Array**
     - `jluna::Array` is decently fast. Most importantly, we can always just access the raw C-pointer it is managing using `data()`, which then lets us operate on it using the `unsafe` library. This is the best compromise between convenience C-like performance.
 

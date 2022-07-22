@@ -191,9 +191,9 @@ Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-1
 
 ---
 
-## [Installation & Troubleshooting](./docs/installation.md)
+## [Installation & Troubleshooting](https://clemens-cords.com/jluna/installation.html)
 
-> A step-by-step guide is available [here](./docs/installation.md). It is recommended that you follow this guide, instead of the highly abridged version below.
+> A step-by-step guide is available [here](https://clemens-cords.com/jluna/installation.html). It is recommended that you follow this guide, instead of the highly abridged version below.
 
 Execute, in your bash console, in any public directory:
 
@@ -233,7 +233,7 @@ Where
 + `<julia>` is the Julia shared library (usually available in `"${JULIA_BINDIR}/../lib"`)
 + `<your library>` is the name of your library or executable
 
-If any step of this does not work for you, please follow the [installation guide](./docs/installation.md) instead.
+If any step of this does not work for you, please follow the [installation guide](https://clemens-cords.com/jluna/installation.html) instead.
 
 ---
 

@@ -56,8 +56,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "furo" #"sphinx_rtd_theme"
-#html_theme_path = [hachibee_sphinx_theme.get_html_themes_path()]
+html_theme = "furo"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -67,5 +66,6 @@ html_static_path = ['_static']
 # disable "show source" in html output
 html_show_sourcelink = False
 
-html_logo = "_static/favicon.png"
+html_logo = "_static/logo.png"
+html_favicon = "_static/favicon.png"
 # note: this icon is from noto-emoji, which is a public domain emote package. No copyright applies

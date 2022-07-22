@@ -89,7 +89,7 @@ Usertype<RGBA>::add_property<Float32>(     // template argument
 );
 ```
 
-This call has a lot going on so it's best to investigate it closely.
+This call has a lot going on, so it's best to investigate it closely.
 
 Firstly, we have the template argument, `Float32`. This decides the Julia-side type of the Julia-side instances field.
 
@@ -265,7 +265,7 @@ std::cout << cpp_rgba._blue << " ";
 
 ### Example Summary
 
-This section was quite complicated, a fully working `main.cpp` replicating this `RGBA` example can be found [here](./rgba_example.cpp). Users are encouraged to play with it, to further their understanding of the usertype interface.
+This section was quite complicated, a fully working `main.cpp` replicating this `RGBA` example can be found [here](https://github.com/Clemapfel/jluna/blob/master/docs/rgba_example.cpp). Users are encouraged to play with it, to further their understanding of the usertype interface.
 
 ### Usertype: Additional Member Functions
 

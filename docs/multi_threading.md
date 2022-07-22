@@ -155,7 +155,7 @@ Note how, even though we called the Julia function `println`, the task **did not
 
 ### Managing a Tasks Lifetime
 
-The result of `ThreadPool::create` is a `jluna::Task<T>`, where `T` is the return type of the C++ function used to `create` it, or `void`. **The user is responsible for keeping the task in memory**. If the variable the task is bound to goes out of scope, the task simply ends:
+The result of `ThreadPool::create` is a `jluna::Task<T>`, where `T` is the return type of the C++ function used to `create` it, or `void`. **The user is responsible for keeping the task in memory**. If the variable the task is bound to, goes out of scope, the task simply ends:
 
 ```cpp
 /// in main.cpp
@@ -320,12 +320,12 @@ We can wait for the value of a future to become available by calling `.wait()`. 
 
 The user is responsible for any potential data races a `jluna::Task` may trigger. Useful C++-side tools for this application include the following (where their Julia-side functional equivalent is listed for reference):
 
-| C++ | Julia | C++ Documentation  |
-|------------|--------------|---------------------|
-| `std::mutex` | `Base.ReentrantLock` |  [[here]](https://en.cppreference.com/w/cpp/thread/mutex)                  |
-| `std::lock_guard`| `Threads.@lock` | [[here]](https://en.cppreference.com/w/cpp/thread/lock_guard)
-| `std::condition_variable` | `Threads.Condition` | [[here]](https://en.cppreference.com/w/cpp/thread/condition_variable)
-| `std::unique_lock` | `n/a` | [[here]](https://en.cppreference.com/w/cpp/thread/unique_lock)
+| C++                       | Julia                | C++ Documentation                                                     |
+|---------------------------|----------------------|-----------------------------------------------------------------------|
+| `std::mutex`              | `Base.ReentrantLock` | [[here]](https://en.cppreference.com/w/cpp/thread/mutex)              |
+| `std::lock_guard`         | `Threads.@lock`      | [[here]](https://en.cppreference.com/w/cpp/thread/lock_guard)         |
+| `std::condition_variable` | `Threads.Condition`  | [[here]](https://en.cppreference.com/w/cpp/thread/condition_variable) |
+| `std::unique_lock`        | `n/a`                | [[here]](https://en.cppreference.com/w/cpp/thread/unique_lock)        |
 
 Furthermore, jluna provides its own lock-like object `jluna::Mutex`, which is a simple wrapper around a Julia-side `Base.ReentrantLock`. It has the same usage and interface as `std::mutex`, except that it works when called both from C++ and Julia, because it is (Un)Boxable.
 
@@ -362,7 +362,7 @@ to_be_modified = []
 to_be_modified_lock = Base.ReentrantLock()
 ```
 
-Now, when a thread wants to modify `to_be_modified`, it first need to acquire this lock:
+Now, when a thread wants to modify `to_be_modified`, it first needs to acquire this lock:
 
 ```cpp
 // in cpp
@@ -423,7 +423,7 @@ Similarly, `std::mutex` or `std::unique_lock` can be used for the same purpose.
 
 #### Interacting with `jluna::Task` from Julia
 
-Internally, jluna makes accessing the Julia-state from a C++-sided, asynchronously executed function possible, by wrapping it in a Julia-side `Task`. jluna can then use Julia's native thread pool, allowing for C-API functions to be safely executed. This has some side-effects, most of them useful.
+Internally, jluna makes accessing the Julia-state from a C++-sided, asynchronously executed function possible, by wrapping it in a Julia-side `Task`. jluna can then use Julia's native thread pool, allowing for C-API functions to be safely executed. This has some side effects, most of them useful.
 
 For example, `yield`, called from C++ like so:
 

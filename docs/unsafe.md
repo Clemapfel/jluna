@@ -114,7 +114,7 @@ Base["println"](julia_side_ptr);
 Ptr{Nothing} @0x00007ffdf8ae1520
 ```
 
-Where `std::thread([](){})` returns an object that is neither boxable, nor usertype-boxable, yet its pointer value can still be moved to Julia. Note that dereferencing that pointer in Julia will lead to undefined behavior.
+Where `std::thread([](){})` returns an object that is neither boxable, nor usertype-boxable, yet its pointer value can still be moved to Julia. Note that de-referencing that pointer in Julia will lead to undefined behavior.
 
 We will learn more about `box<T>` shortly.
 
@@ -260,7 +260,7 @@ Note that `box<T>` and `unbox<T>` should always be called with an explicit templ
 
 The result of `box` is a `unsafe::Value*`, a raw C-pointer. The value this pointer points to **is not protected from the garbage collector** (GC). At any time after the resolution of `box`, the Julia GC may deallocate our value right from under our nose. This can't happen when using proxies - it is the entire point of them - but it can, when handling raw pointers.
 
-Because of this, we have to micro-manage each value depending on how it was allocated. As a general rule of thumb: any value that is not explicitly referenced by either a Julia-side named variable, or a Julia-side `Ref`, can be garbage collected at any point, usually segfaulting the entire application at random times. This includes the result of `box`, `jluna::safe_call`, `unsafe::call` and most `unsafe` functions returning pointers. Any pointer acquired by calling `static_cast<unsafe::Value*>` on a proxy is safe, as long as the proxy stays in memory.
+Because of this, we have to micromanage each value depending on how it was allocated. As a general rule of thumb: any value that is not explicitly referenced by either a Julia-side named variable, or a Julia-side `Ref`, can be garbage collected at any point, usually segfaulting the entire application at random times. This includes the result of `box`, `jluna::safe_call`, `unsafe::call` and most `unsafe` functions returning pointers. Any pointer acquired by calling `static_cast<unsafe::Value*>` on a proxy is safe, as long as the proxy stays in memory.
 
 To prevent accidental deallocation without using `jluna::Proxy`, the `unsafe` library provides `unsafe::gc_preserve`. This function takes a raw C-Pointer and protects its memory from the garbage collector. `gc_preserve` returns a `size_t`, which is called the **id** of a value:
 
@@ -332,7 +332,7 @@ y
 
 Here, we did not need to `gc_preserve`. We can be sure that `Char(121)` is protected, because we just created a named Julia-side variable, `jl_char`, pointing to it. If we were to reassign `jl_char`, `Char(121)` may be garbage collected at any point afterwards.
 
-All of `unsafe::get_*` / `unsafe::set_*` functions will be vastly superior, in terms of performance, when compared to `Module::safe_eval`. They [are even faster](#mutating-julia-side-variables-results) than `Module::assign`.
+All of `unsafe::get_*` / `unsafe::set_*` functions will be vastly superior, in terms of performance, when compared to `Module::safe_eval`. They [are even faster](benchmarks.md#mutating-julia-side-variables-results) than `Module::assign`.
 
 ---
 

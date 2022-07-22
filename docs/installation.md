@@ -1,6 +1,8 @@
 # Installation
 
-The following is a step-by-step guide on how to install jluna and link it to your application. The troubleshooting section addresses the most commorn errors experienced during installation.
+The following is a step-by-step guide on how to install jluna and link it to your application. The [upcoming section on troubleshooting](troubleshooting.md) addresses the most common errors experienced during installation.
+
+----------------
 
 ## Installing jluna
 
@@ -29,15 +31,13 @@ cmake .. -DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
 ```
 
 Where `<compiler>` is one of:
-+ `g++-10`
-+ `g++-11`
-+ `clang++-12`
++ `g++-10` (or newer)
++ `clang++-12` (or newer)
++ `MSVC 19.30` (or newer)
 
 and `<path>` is the desired install path, usually `/usr/local` on unix, `C:/Program Files/jluna` on Windows. Keep track of this path, as you may need it later.
 
-> Window supports is experimental. This means using MSVC may work, however this is currently untested. The [cpp compiler support]() page seems to imply that MSVC 19.30 or newer is required to compile jluna.
-
-Some errors may appear here, if this is the case, head to [troubleshooting](#troubleshooting).
+Some errors may appear here, if this is the case, head to [troubleshooting](troubleshooting.md).
 
 ### Make Install & Test
 
@@ -121,7 +121,7 @@ while the julia include directory is usually
 + `${JULIA_BINDIR}/../include/` or
 + `${JULIA_BINDIR}/../include/julia/`
 
-If building your library triggers linker or compiler errors, head to [troubleshooting](#troubleshooting).
+If building your library triggers linker or compiler errors, head to [troubleshooting](troubleshooting.md).
 
 ### Example: Hello World
 
@@ -142,4 +142,4 @@ int main()
 
 Where `jluna.hpp` already includes `julia.h`.
 
-To learn how to use more of jlunas features, please consult the [manual](./manual.md).
+To learn how to use more of jlunas features, continue on to the [manual](basics.md).

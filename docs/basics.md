@@ -1,11 +1,5 @@
 # Basics
 
-### Installation
-
-This manual does not go over how to download and build jluna. Instead, a step-by-step tutorial on how to install and create a C++ application using jluna, from scratch, is available [here](./installation.md).
-
----
-
 ### Initializing the Julia State
 
 Before any Julia or jluna functionality can be accessed, we need to initialize the Julia state using `jluna::initialize()`. This sets up the Julia environment and initializes many global jluna variables.
@@ -39,7 +33,7 @@ Note that the C-APIs `jl_atexit_hook` should never be called. At the end of runt
 
 While a no-argument `initialize` will usually work, on some systems, this function may fail with a message. This is usually
 caused by the systems directory structure and can be addressed using two of the four optional arguments of `initialize`. See
-the section on [troubleshooting](installation.md#troubleshooting) for more information.
+the section on [troubleshooting](troubleshooting.md) for more information.
 
 ---
 
@@ -235,7 +229,7 @@ std::cout << result << std::endl;
 8916100448256
 ```
 
-Where we now used `auto` as `f`s type. We will learn why this is necessary in the [section on proxies](#proxies).
+Where we now used `auto` as `f`s type. We will learn why this is necessary in the [section on proxies](./proxies.md).
 
 Calling functions using `()` is `safe`, meaning any exception is forwarded to C++, just like with `safe_eval`:
 

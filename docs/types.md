@@ -22,7 +22,7 @@ Type type_proxy = Main.safe_eval("return Base.Vector");
 Type type = Base["typeof"](/* ... */);
 ```
 
-Most often, we will want to know the type of a variable. For this we can either use `Base.typeof`, binding the result to an explicitly declared `jluna::Type`, or we can use`jluna::Proxy::get_type`.
+Most often, we will want to know what type a variable is an instance of. For this we can either use `Base.typeof`, binding the result to an explicitly declared `jluna::Type`, or we can use`jluna::Proxy::get_type`.
 
 ### Base Types
 
@@ -30,62 +30,62 @@ For most types in `Base`, jluna offers a pre-defined type proxy in `jluna::` nam
 
 The following types are available this way:
 
-| jluna Constant Name | Julia-side Name|
-|-------------------|---------|
-| `AbstractArray_t` | `AbstractArray{T, N}` |
-| `AbstractChar_t` | `AbstractChar` |
-| `AbstractFloat_t`| `AbstractFloat` |
-| `AbstractString_t`| `AbstractString` |
-| `Any_t`| `Any` |
-| `Array_t`| `Array{T, N}` |
-| `Bool_t`| `Bool` |
-| `Char_t`| `Char` |
-| `DataType_t`| `DataType` |
-| `DenseArray_t`| `DenseArray{T, N}` |
-| `Exception_t`| `Exception` |
-| `Expr_t`| `Expr` |
-| `Float16_t`| `Float16` |
-| `Float32_t`| `Float32` |
-| `Float64_t`| `Float64` |
-| `Function_t`| `Function` |
-| `GlobalRef_t`| `GlobalRef` |
-| `IO_t`| `IO` |
-| `Int8_t`| `Int8` |
-| `Int16_t`| `Int16` |
-| `Int32_t`| `Int32` |
-| `Int64_t`| `Int64` |
-| `Int128_t`| `Int128` |
-| `Integer_t`| `Integer` |
-| `UInt8_t`| `UInt8` |
-| `UInt16_t`| `UInt16` |
-| `UInt32_t`| `UInt32` |
-| `UInt64_t`| `UInt64` |
-| `UInt128_t`| `UInt128` |
-| `Unsigned_t`| `Unsigned` |
-| `Signed_t`| `Signed` |
-| `LineNumberNode_t`| `LineNumberNode` |
-| `Method_t`| `Method` |
-| `Module_t`| `Module` |
-| `NTuple_t`| `NTuple{T, N}` |
-| `NamedTuple_t`| `NamedTuple` |
-| `Nothing_t`| `Nothing` |
-| `Number_t`| `Number` |
-| `Pair_t`| `Pair{T, U}` |
-| `Ptr_t`| `Ptr{T}` |
-| `QuoteNode_t`| `QuoteNode` |
-| `Real_t`| `Real` |
-| `Ref_t`| `Ref{T}` |
-| `String_t`| `String` |
-| `Symbol_t`| `Symbol` |
-| `Task_t`| `Task` |
-| `Tuple_t`| `Tuple{T...}` |
-| `Type_t`| `Type{T}` |
-| `TypeVar_t`| `TypeVar` |
-| `UndefInitializer_t`| `UndefInitializer` |
-| `Union_t`| `Union{T...}` |
-| `UnionAll_t`| `UnionAlll` |
-| `VecElement_t`| `VecElement{T}` |
-| `WeakRef_t`| `WeakRef` |
+| jluna Constant Name  | Julia-side Name       |
+|----------------------|-----------------------|
+| `AbstractArray_t`    | `AbstractArray{T, N}` |
+| `AbstractChar_t`     | `AbstractChar`        |
+| `AbstractFloat_t`    | `AbstractFloat`       |
+| `AbstractString_t`   | `AbstractString`      |
+| `Any_t`              | `Any`                 |
+| `Array_t`            | `Array{T, N}`         |
+| `Bool_t`             | `Bool`                |
+| `Char_t`             | `Char`                |
+| `DataType_t`         | `DataType`            |
+| `DenseArray_t`       | `DenseArray{T, N}`    |
+| `Exception_t`        | `Exception`           |
+| `Expr_t`             | `Expr`                |
+| `Float16_t`          | `Float16`             |
+| `Float32_t`          | `Float32`             |
+| `Float64_t`          | `Float64`             |
+| `Function_t`         | `Function`            |
+| `GlobalRef_t`        | `GlobalRef`           |
+| `IO_t`               | `IO`                  |
+| `Int8_t`             | `Int8`                |
+| `Int16_t`            | `Int16`               |
+| `Int32_t`            | `Int32`               |
+| `Int64_t`            | `Int64`               |
+| `Int128_t`           | `Int128`              |
+| `Integer_t`          | `Integer`             |
+| `UInt8_t`            | `UInt8`               |
+| `UInt16_t`           | `UInt16`              |
+| `UInt32_t`           | `UInt32`              |
+| `UInt64_t`           | `UInt64`              |
+| `UInt128_t`          | `UInt128`             |
+| `Unsigned_t`         | `Unsigned`            |
+| `Signed_t`           | `Signed`              |
+| `LineNumberNode_t`   | `LineNumberNode`      |
+| `Method_t`           | `Method`              |
+| `Module_t`           | `Module`              |
+| `NTuple_t`           | `NTuple{T, N}`        |
+| `NamedTuple_t`       | `NamedTuple`          |
+| `Nothing_t`          | `Nothing`             |
+| `Number_t`           | `Number`              |
+| `Pair_t`             | `Pair{T, U}`          |
+| `Ptr_t`              | `Ptr{T}`              |
+| `QuoteNode_t`        | `QuoteNode`           |
+| `Real_t`             | `Real`                |
+| `Ref_t`              | `Ref{T}`              |
+| `String_t`           | `String`              |
+| `Symbol_t`           | `Symbol`              |
+| `Task_t`             | `Task`                |
+| `Tuple_t`            | `Tuple{T...}`         |
+| `Type_t`             | `Type{T}`             |
+| `TypeVar_t`          | `TypeVar`             |
+| `UndefInitializer_t` | `UndefInitializer`    |
+| `Union_t`            | `Union{T...}`         |
+| `UnionAll_t`         | `UnionAlll`           |
+| `VecElement_t`       | `VecElement{T}`       |
+| `WeakRef_t`          | `WeakRef`             |
 
 Where `T`, `U` are arbitrary types, `N` is an Integer
 

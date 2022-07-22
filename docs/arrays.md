@@ -41,7 +41,7 @@ Both these template arguments directly correspond to the Julia-side parameters o
 
 Note that we have declared the Julia-side vector `[1, 2, 3, 4]` to be of value-type `Int64`. This is important, because we specified the C++-side array to also have that value-type. On construction, `jluna::Array` will check if the value types match (that is, whether for all elements `e_n` in the Julia-side array, it holds that `e_n <: T`). If they do not, an exception is thrown.
 
-Because the match does not have to be exact (see the section on [type ordering](#type-order)), we can simply declare the value type to be `Any`. This lets us move any assortment of objects into the same array. jluna provides a typedef for this:
+Because the match does not have to be exact (see the section on [type ordering](types.md#type-order)), we can simply declare the value type to be `Any`. This lets us move any assortment of objects into the same array. jluna provides a typedef for this:
 
 ```cpp
 using ArrayAny1d = // equivalent to Base.Array<Any, 1>
@@ -71,7 +71,7 @@ array_1d: [1, 2, 3, 4, 5]
 array_2d: [1 4 7; 2 5 8; 3 6 9]
 ```
 
-Where `jluna::safe_eval` is faster version of `Main.safe_eval`, as it returns a pointer to Julia-side values, not a proxy. Because we are binding the result to a proxy  (`jluna::Array`) anyway, `jluna::safe_eval` is the better choice in this situation. For more information, visit the section on [performance optimization tips](#performance-evaluation-summary).
+Where `jluna::safe_eval` is faster version of `Main.safe_eval`, as it returns a pointer to Julia-side values, not a proxy. Because we are binding the result to a proxy  (`jluna::Array`) anyway, `jluna::safe_eval` is the better choice in this situation. For more information, visit the section on [performance optimization tips](benchmarks.md#performance-evaluation-summary).
 
 We created two arrays, a `Base.Array{Int64, 1}` bound to the C++-side array proxy `array_1d`, as well as a `Base.Array{Int64, 2}`, bound to `array_2d`.
 
@@ -147,15 +147,15 @@ C++ indices are 0-based, this means `array[3]` will give use the `(3 - 0)`th ele
 
 The following table illustrates how to translate C++-side indexing into Julia-side indexing:
 
-| Rank | Julia | jluna |
-|------|-------|--------------------------|
-| 1    | `M[1]` | `M[0]`|
-| 2    | `M[1, 2]` | `M[0, 1]`|
-| 3    | `M[1, 2, 3]` | `M[0, 1, 2]`|
-| Any  | `M[ [1, 13, 7] ]` | `M[ {0, 12, 6} ]` |
-| Any  | `M[i for i in 1:10]` | `M["i for i in 1:10"_gen]`
-|      |        |     |
-| *    | `M[:]` | not available |
+| Rank | Julia                | jluna                       |
+|------|----------------------|-----------------------------|
+| 1    | `M[1]`               | `M[0]`                      |
+| 2    | `M[1, 2]`            | `M[0, 1]`                   |
+| 3    | `M[1, 2, 3]`         | `M[0, 1, 2]`                |
+| Any  | `M[ [1, 13, 7] ]`    | `M[ {0, 12, 6} ]`           |
+| Any  | `M[i for i in 1:10]` | `M["i for i in 1:10"_gen]`  |
+|      |                      |                             |
+| *    | `M[:]`               | not available               |
 
 Where `_gen` is a string-literal operator that  constructs a generator expression from the code it was called with. We will learn more about them shortly.
 

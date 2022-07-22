@@ -5,7 +5,7 @@ to solve them is provided here.
 
 ### Permission Denied
 
-During `make install`, your OS may notify you that it was unable to write to a folder due to missing permissions. To fix this, either run `make install` as `sudo` (or as administrator on Windows), or specify a different folder (using `-DCMAKE_INSTALL_PREFIX` )for which jluna or cmake does have write/read permission.
+During `make install`, your OS may notify you that it was unable to write to a folder due to missing permissions. To fix this, either run `make install` as `sudo` (or as administrator on Windows), or specify a different folder (using `-DCMAKE_INSTALL_PREFIX`) for which jluna or cmake does have write/read permission.
 
 ### Unable to detect the Julia executable
 
@@ -16,7 +16,7 @@ When calling:
 cmake .. #-DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
 ```
 
-(Where the commented out arguments are set as detailed in the [section on configuring cmake](#configure-cmake).)
+(Where the commented out arguments are set as detailed in the [section on configuring cmake](installation.md#configure-cmake).)
 
 You may encounter the following error:
 
@@ -82,7 +82,7 @@ julia*/
 
 Where
 + `*` may be a version suffix, such as `julia-1.7.2`
-+ `libjulia.so` may have a different file extension on windows
++ `libjulia.so` may have a different file extension on Windows
 
 ### Cannot find <julia.h> / <jluna.hpp>
 
@@ -115,7 +115,7 @@ target_include_directories(<your target> PRIVATE
 Where
 
 + `<your target>` is the build target, a library or executable
-+ `<path to jluna>` is the install path of the jluna shared library, as specified via `CMAKE_INSTALL_PREFIX` during [configuration](#configure-cmake)
++ `<path to jluna>` is the install path of the jluna shared library, as specified via `CMAKE_INSTALL_PREFIX` during [configuration](installation.md#configure-cmake)
 + `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
 
 See the [official CMake documentation](https://cmake.org/cmake/help/latest/command/target_include_directories.html) for more information.
@@ -145,7 +145,7 @@ signal (6): Aborted
 ```
 
 To allow the jluna initialized Julia state to interact with the library, the Julia part of jluna needs to know where to
-find the jluna shared library, `libjluna.so`, you compiled earlier. If this error occurs, it means Julia was unabled to
+find the jluna shared library, `libjluna.so`, you compiled earlier. If this error occurs, it means Julia was unable to
 do so. To address this, you can manually specify the path to the shared library during `jluna::initialize`:
 
 ```cpp
@@ -159,7 +159,7 @@ jluna::initialize(
 
 Where `/path/to/libjluna.so` is the absolute path to the jluna shared library. Note that, on Windows, the library may
 instead be named `libjluna.lib`, `jluna.dll`, etc., depending on your cmake environment. If you are unsure of where to
-find the library, it will be installed into the directory of `CMAKE_INSTALL_PREFIX` specified [earlier](#configure-cmake).
+find the library, it will be installed into the directory of `CMAKE_INSTALL_PREFIX` specified [earlier](installation.md#configure-cmake).
 
 ### error: `concept` does not name a type
 
@@ -193,7 +193,7 @@ Allocations: 1619712 (Pool: 1618782; Big: 930); GC: 1
 Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)
 ``` 
 
-Where the above is the entirety of the console output. This error means that you tried to access jluna or the Julia C-API from inside a C-side thread that was not master (the thread `main` is executed in). Unrelated to jluna, the C-API disallows this. It will always trigger a crash when accessed concurrently. Please read the [multi-threading section of the manual](./manual.md#multi-threading) for more information.
+Where the above is the entirety of the console output. This error means that you tried to access jluna or the Julia C-API from inside a C-side thread that was not master (the thread `main` is executed in). Unrelated to jluna, the C-API disallows this. It will always trigger a crash when accessed concurrently. Please read the [multi-threading section of the manual](multi_threading.md) for more information.
 
 ---
 

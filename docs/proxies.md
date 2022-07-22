@@ -24,7 +24,7 @@ In jluna, the **inverse is not true**. We do not have to reformat Julia-side mem
 
 ### Constructing a Proxy
 
-We rarely construct proxies from raw pointers (see the [section on `unsafe` usage](#the-unsafe-library)), instead, a proxy will be the return value of a member function of another proxy.
+We rarely construct proxies from raw pointers (see the [section on `unsafe` usage](unsafe.md#the-unsafe-library)), instead, a proxy will be the return value of a member function of another proxy.
 
 How can we make a proxy if we need a proxy to do so? We've done so already, jluna offers many pre-initialized proxies, including those for modules `Main`, `Base` and `Core`. We can use these proxies to generate new proxies for us.
 
@@ -36,7 +36,7 @@ auto proxy = Main.safe_eval("return 1234");
 
 To reiterate, the resulting proxy, `proxy`, **does not contain the Julia-side value `1234`**. It only keeps a pointer to wherever `1234` is located.
 
-We can actually access the raw pointer using `static_cast<unsafe::Value*>`, where `unsafe::Value*` is a the type of a pointer pointing to arbitrary Julia-side memory:
+We can actually access the raw pointer using `static_cast<unsafe::Value*>`, where `unsafe::Value*` is the type of pointer pointing to arbitrary Julia-side memory:
 
 ```cpp
 std::cout << static_cast<unsafe::Value*>(proxy) << std::endl;
@@ -103,7 +103,7 @@ Vector{Int64}
 
 We initialized a proxy, `proxy`, with the value of a Julia-side string `"string_value"`. Its type is, of course, `Base.String`. We then assigned `proxy` a C++ `std::vector`. This updates the proxies value. It is now pointing to `[4, 5, 6]`, which is of type `Vector{Int64}` and located entirely Julia-side.
 
-Here, `proxy` is **not** pointing to the C++-side vector. jluna has implicitly converted the C++-side `std::vector<Int64>` to a Julia-side `Base.Vector{Int64}`, creating a deepcopy Julia-side (we will learn [later](#the-unsafe-library) how to avoid this copying behavior, if desired). It has even accurately deduced the type of the resulting vector, based on the declared type and value-type of the C++-side vector.
+Here, `proxy` is **not** pointing to the C++-side vector. jluna has implicitly converted the C++-side `std::vector<Int64>` to a Julia-side `Base.Vector{Int64}`, creating a deepcopy Julia-side (we will learn [later](unsafe.md#the-unsafe-library) how to avoid this copying behavior, if desired). It has even accurately deduced the type of the resulting vector, based on the declared type and value-type of the C++-side vector.
 
 > **Hint**: Let `std::vector<T> x`, then `x`s type is `std::vector<T>`, `x`s value-type is `T`
 
