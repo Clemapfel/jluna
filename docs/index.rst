@@ -99,4 +99,20 @@ In summary, the only fully functional equivalent for jluna is the Julia C-API, a
 C / C++ as the host language. It is therefore the superior choice in projects where Julia plays an auxiliary rule while C++
 is more dominant, as jluna provides clearer design, more documentation and overall ease-of-use when compared to the C-API.
 
+----
+
+FAQ: Is it done / fast yet?
+***************************
+
+Julia is feature-complete as of 0.9.0. This release also included `extensive benchmarking <./benchmarks.html>`_, quantifying
+jlunas performance and proving its capability for high performance. Correctness is assured through automated testing.
+
+0.9.x will be upgraded to 1.0 in winter 2022, even if no new features are implemented. This is to give the community time
+make possible suggestions / corrections. Regardless, jluna is already ready to be used in release applications.
+
+-----
+
+
+
+
 
