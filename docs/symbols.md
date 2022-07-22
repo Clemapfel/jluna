@@ -38,7 +38,7 @@ auto symbol = Symbol("abc");
 std::cout << "name: " << static_cast<std::string>(symbol) << std::endl;
 std::cout << "hash: " << symbol.hash() << std::endl;
 ```
-```
+```text
 name: abc
 hash: 16076289990349425027
 ```
@@ -81,7 +81,7 @@ for (auto str : {"abc", "bcd", "cde", "def"})
 for (auto symbol : set)
     std::cout << symbol.operator std::string() << " (" << symbol.hash() << ")" << std::endl;
 ```
-```
+```text
 cde (10387276483961993059)
 bcd (11695727471843261121)
 def (14299692412389864439)

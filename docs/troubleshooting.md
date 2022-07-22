@@ -1,7 +1,9 @@
 ## Troubleshooting
 
-Several issue may arise during compilation, linking or regular usage. A list of the most common issue and how 
-to solve them is provided here.
+Several errors may arise during compilation, linking or regular usage. A list of the most common issue, and how 
+to solve them, is provided here.
+
+------------------
 
 ### Permission Denied
 
@@ -20,7 +22,7 @@ cmake .. #-DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
 
 You may encounter the following error:
 
-```
+```text
 CMake Error at cmake/find/FindJulia.cmake:5 (message):
   Unable to detect the Julia executable.  Make sure JULIA_BINDIR is set
   correctly.
@@ -45,7 +47,7 @@ From inside the Julia REPL, which will print the correct directory to the consol
 
 During the cmake configuration step, the following error may appear:
 
-```
+```text
 CMake Error at /home/(...)/FindPackageHandleStandardArgs.cmake:218 (message):
   Could NOT find Julia: Found unsuitable version "1.5.1", but required is at
   least "1.7.0" (found /home/clem/Applications/julia/lib/libjulia.so)
@@ -65,7 +67,7 @@ This means that either `JULIA_BINDIR` was not set correctly, or the directory it
 
 Make sure the folder `JULIA_BINDIR` points to, has the following layout:
 
-```
+```text
 julia*/
     bin/
        julia 
@@ -88,7 +90,7 @@ Where
 
 The following error may appear when compiling your library:
 
-```
+```text
 fatal error: julia.h: No such file or directory
     3 | #include <julia.h>
       |          ^~~~~~~~~
@@ -97,7 +99,7 @@ compilation terminated.
 
 or, similarly:
 
-```
+```text
 fatal error: jluna.hpp: No such file or directory
     3 | #include <jluna.hpp>
       |          ^~~~~~~~~~~
@@ -106,7 +108,7 @@ compilation terminated.
 
 This means the `include_directories` in your `CMakeLists.txt` were set improperly. Make sure the following lines are present in your `CMakeLists.txt`:
 
-```
+```text
 target_include_directories(<your target> PRIVATE
     "<path to jluna>" 
     "<path to julia>"
@@ -130,7 +132,7 @@ jluna::initialize()
 
 The following error may appear:
 
-```
+```text
 AssertionError: when trying to initialize jluna.cppcall: cannot find /home/Desktop/jluna/libjluna.so
 Stacktrace:
  [1] verify_library()
@@ -165,7 +167,7 @@ find the library, it will be installed into the directory of `CMAKE_INSTALL_PREF
 
 When compiling a target that includes jluna, the following compiler error may occur:
 
-```
+```text
 /home/clem/Workspace/jluna/include/typedefs.hpp:90:5: error: ‘concept’ does not name a type
    90 |     concept to_julia_type_convertable = requires(T)
       |     ^~~~~~~
@@ -183,7 +185,7 @@ Where `<your target>` is the name of your compile target, such as an executable 
 
 When calling `jluna::initialize`, or any other jluna function, the following error may occur:
 
-```cpp
+```text
 [JULIA][LOG] initialization successful (1 thread(s)).
 
 signal (11): Segmentation fault

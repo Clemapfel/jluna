@@ -1,5 +1,7 @@
 ## Closing Statement
 
+---
+
 If you find yourself here, having read this manual from start to finish, I would like to extend a genuine thank-you for your time. Hopefully, jluna will be worth the effort you have already put in by reading this overly verbose manual.
 
 Version 0.9.0 was released in late April 2022. As of its release, jluna can be considered feature complete. The library will still be supported, and any potential issues will be fixed, hopefully for years to come. Maybe, with time, a feature request will come in that inspires me to add a new section to jluna, we'll see. Some additional performance optimization may also happen, along with me maturing in my C++ knowledge.
@@ -12,3 +14,5 @@ For collaboration or other matters, feel free to [contact me](https://www.clemen
 
 Thank you for your participation,<br>
 C. Cords
+
+---

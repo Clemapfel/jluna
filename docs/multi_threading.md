@@ -35,7 +35,7 @@ Here, we're doing a very simple operation. We created a C++ lambda that *does no
 Note that **not a single jluna function was called** over the runtime of this main. All functions where purely Julia C-API functions.
 
 Running the above code, the following happens:
-```
+```text
 signal (11): Segmentation fault
 in expression starting at none:0
 Allocations: 782030 (Pool: 781753; Big: 277); GC: 1
@@ -147,7 +147,7 @@ task.schedule();
 // wait for task to finish
 task.join();
 ```
-```
+```text
 lambda called with 1234
 ```
 
@@ -185,7 +185,7 @@ jluna::initialize(8);
 std::this_thread::sleep_for(10ms); // wait for another 10ms
 return 0; // exit main
 ```
-```
+```text
 (...)
 2609
 2609
@@ -228,7 +228,7 @@ std::vector<Task<void>> tasks;
 std::this_thread::sleep_for(10ms);
 return 0;
 ```
-```
+```text
 (...)
 9996
 9997

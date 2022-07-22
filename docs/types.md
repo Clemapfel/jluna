@@ -6,6 +6,8 @@ We've seen specialized module-, symbol- and array-proxies. jluna has a fourth ki
 
 While some overlap is present, `jluna::Type` is not a direct equivalent of `Base.Type{T}`, even though it is asserted to manage an object of type `T` such that `T isa Type`. It just provides more functions than are available using only Julia's `Base`.
 
+---
+
 ### Constructing a Type
 
 There are multiple ways to construct a type proxy:
@@ -339,7 +341,7 @@ println(type)
 # print propertynames of unrolled type
 println(propertynames(type))
 ```
-```
+```text
 Array{T, N}
 (:name, :super, :parameters, :types, :instance, :layout, :size, :hash, :flags)
 ```

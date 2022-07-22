@@ -247,7 +247,7 @@ Base["println"](Base["typeof"](boxed_int8), " ", boxed_int8);
 auto unboxed_c64 = unbox<std::complex<Float64>>(boxed_int8);
 std::cout << unboxed_c64.real() << " + " << unboxed_c64.imag() << "i" << std::endl;
 ```
-```
+```text
 Int8 64
 64 + 0i
 ```

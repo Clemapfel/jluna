@@ -2,7 +2,7 @@
 
 ### Initializing the Julia State
 
-Before any Julia or jluna functionality can be accessed, we need to initialize the Julia state using `jluna::initialize()`. This sets up the Julia environment and initializes many global jluna variables.
+Before any Julia or jluna functionality can be accessed, we need to initialize the Julia state using [`jluna::initialize()`]. This sets up the Julia environment and initializes many global jluna variables.
 
 A basic `main.cpp` will have the following structure:
 
@@ -59,7 +59,7 @@ This function is called **safe**_eval, because it forwards any exceptions, that 
 ```cpp
 Main.safe_eval("sqrt(-1)");
 ```
-```
+```test
 terminate called after throwing an instance of 'jluna::JuliaException'
   what():  [JULIA][EXCEPTION] DomainError with -1.0:
 sqrt will only return a complex result if called with a complex argument. Try sqrt(Complex(x)).

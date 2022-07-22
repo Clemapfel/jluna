@@ -4,6 +4,8 @@ So far, we were only able to move (Un)Boxables to and from Julia. In some applic
 
 > **Hint**: A usertype is any type not defined by the standard library or jluna itself.
 
+---
+
 ### Usertype Interface
 
 Consider the following C++ class:
@@ -240,7 +242,7 @@ Main.safe_eval("println(jl_rgba);");
 // print fieldnames of the Julia-side type
 Main.safe_eval("println(fieldnames(RGBA))");
 ```
-```
+```text
 RGBA(1.0f0, 0.0f0, 1.0f0, 1.0f0)
 (:_red, :_green, :_blue, :_alpha, :_value)
 ```
