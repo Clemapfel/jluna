@@ -26,7 +26,7 @@ Heavily inspired in design and syntax by (but in no way affiliated with) the exc
 
 ### Showcase
 
-(If you are looking for examples showing basic usage, please instead consult the [manual](./docs/manual.md).)
+(If you are looking for examples showing basic usage, please instead consult the [manual](https://clemens-cords.com/jluna/basics.html).)
 
 #### Executing Julia Code
 
@@ -154,13 +154,13 @@ std::cout << std::endl;
 
 + expressive, generic syntax
 + create / call / assign Julia-side variables from C++
-+ thread-safe, provides a custom thread pool that, [unlike the C-API](./docs/manual.md/#multi-threading), allows for concurrent interfacing with Julia
++ thread-safe, provides a custom thread pool that, [unlike the C-API](https://clemens-cords.com/jluna/multi_threading.html), allows for concurrent interfacing with Julia
 + `std::` types & usertypes can be moved freely between Julia and C++
 + call arbitrary C++ functions from Julia
 + multi-dimensional, iterable array interface
 + provides < 5% overhead functions, viable in performance-critical environments
 + full exception forwarding, verbose error messages
-+ complete [manual](./docs/manual.md), [installation guide](./docs/installation.md), [benchmark analysis](./docs/manual.md#performance-optimization), inline documentation for IDEs - all written by a human
++ complete [manual](https://clemens-cords.com/jluna/basics.html), [installation guide](https://clemens-cords.com/jluna/installation.md), [benchmark analysis](https://clemens-cords.com/jluna/benchmarks.html), inline documentation for IDEs - all written by a human
 + and more!
 
 ### Planned (but not yet implemented):
