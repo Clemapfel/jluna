@@ -117,7 +117,7 @@ add_library(jluna SHARED
 
     .src/c_adapter.hpp
     .src/c_adapter.cpp
-)
+        include/distributed.hpp)
 
 target_compile_features(jluna PUBLIC cxx_std_20)
 target_include_directories(jluna PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
@@ -177,3 +177,9 @@ if (BUILD_BENCHMARK) # AND NOT WIN32)
     )
     target_link_libraries(jluna_benchmark PRIVATE jluna)
 endif()
+
+### TODO: Declare Debug ###
+
+add_executable(debug .test/debug.cpp)
+target_link_libraries(debug PRIVATE jluna)
+

@@ -21,6 +21,7 @@ namespace jluna
     /// @param jluna_image_path: absolute path that is the location of the julia image. Leave empty to use default path
     void initialize(
         size_t n_threads = 1,
+        size_t n_procs = 0,
         bool suppress_log = false,
         const std::string& jluna_shared_library_path = "",
         const std::string& julia_image_path = ""

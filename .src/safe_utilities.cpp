@@ -19,6 +19,7 @@ namespace jluna
 
     void initialize(
         size_t n_threads,
+        size_t n_procs,
         bool suppress_log,
         const std::string& jluna_shared_library_path,
         const std::string& julia_image_path
@@ -50,8 +51,9 @@ namespace jluna
         else
             jl_init_with_image(julia_image_path.c_str(), nullptr);
 
-        forward_last_exception();
+        jl_eval_string(("using Distributed; Distributed.addprocs(" + std::to_string(n_procs) + ")").c_str());
 
+        forward_last_exception();
         bool success = jl_unbox_bool(jl_eval_string(detail::julia_source));
         forward_last_exception();
 
@@ -92,13 +94,15 @@ namespace jluna
         else
         {
             safe_eval(R"(
-                if isdefined(Main, :jluna)
-                    print("[JULIA][LOG] ")
-                    Base.printstyled("initialization successful (" * string(Threads.nthreads()) * " thread(s)).\n"; color = :green)
-                else
-                    print("[JULIA]")
-                    Base.printstyled("[ERROR] initialization failed.\n"; color = :red)
-                    throw(AssertionError(("[JULIA][ERROR] initialization failed.")))
+                let n_threads = Threads.nthreads(), n_procs = Distributed.nprocs()
+                    if isdefined(Main, :jluna)
+                        print("[JULIA][LOG] ")
+                        Base.printstyled("initialization successful (" * string(n_threads) * " thread" * (n_threads > 1 ? "s" : "") * ", " * string(n_procs) * " process" * (n_procs > 0 ? "es" : "") * ")\n"; color = :green)
+                    else
+                        print("[JULIA]")
+                        Base.printstyled("[ERROR] initialization failed.\n"; color = :red)
+                        throw(AssertionError(("[JULIA][ERROR] initialization failed.")))
+                    end
                 end
             )");
         }

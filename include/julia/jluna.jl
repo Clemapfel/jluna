@@ -1,5 +1,6 @@
+using Distributed
 
-module jluna
+@everywhere module jluna
 
     """
     `safe_call(::Function, args...) ::Tuple{Any, Bool, Exception, String)`
@@ -816,6 +817,66 @@ module jluna
             end
         end
     end
+
+    module libcall
+
+        using Base64
+        using Base.Filesystem
+
+        """
+        `Library`
+        library object in memory
+
+        # Members
+        (no public members)
+
+        # Constructors
+        `Library(path_to_library::String)`
+        """
+        mutable struct Library
+
+            _encoded::String
+            _dummy_file::String
+
+            Library(path::String) = return new(base64encode(open(path)), "")
+        end
+        export Library
+
+        """
+        `dump!(::Library) -> Nothing`
+
+        allocate library as local temporary file, noop if already allocated
+        """
+        function dump!(library::Library) ::Nothing
+
+            if (library._dummy_file != "")
+                return
+            end
+
+            path, io = Filesystem.mktemp("./")
+            for e in base64decode(library._encoded)
+                write(io, e)
+            end
+
+            library._dummy_file = path
+            return nothing
+        end
+        export dump!
+
+        """
+        `@libcall(::Symbol, ::Library, ::Type, ::Tuple{Type}) -> Nothing`
+
+        invoke call of Trojan.Library
+        """
+        macro libcall(symbol::QuoteNode, library::Symbol, return_type::Symbol, arg_type_tuple::Expr)
+            quote
+                Trojan.dump!($library)
+                ccall(($symbol, $library._dummy_file), $return_type, ($arg_type_tuple))
+            end
+        end
+        export @libcall
+    end
+    using .libcall
 
     # obfuscate internal state to encourage using operator[] sytanx
     struct ProxyInternal
