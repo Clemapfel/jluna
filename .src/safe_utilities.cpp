@@ -71,7 +71,7 @@ namespace jluna
         forward_last_exception();
 
         std::stringstream str;
-        str << "jluna.cppcall.eval(:(const _lib = \""
+        str << "@everywhere jluna.cppcall.eval(:(const _lib = \""
             << (jluna_shared_library_path == "" ? jluna::detail::shared_library_name : jluna_shared_library_path)
             << "\"))";
 

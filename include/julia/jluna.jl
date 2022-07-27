@@ -961,4 +961,22 @@ using Distributed
     end
 end
 
+# TODO
+
+function compress(string::String) ::String
+
+    out = ""
+
+    for i in 1:length(string)
+
+    end
+
+end
+
+function decompress(string::String) ::String
+
+end
+
+# TODO
+
 return true # used for testing
