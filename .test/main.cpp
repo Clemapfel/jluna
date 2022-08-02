@@ -192,28 +192,39 @@ int main()
 
         using namespace unsafe;
 
+        std::vector<size_t> gc_ids;
+
         auto* one_d = new_array(Float64_t, 15);
+        gc_ids.push_back(unsafe::gc_preserve(one_d));
         Test::assert_that(jl_array_len(one_d) == 15);
         Test::assert_that(jl_array_ndims(one_d) == 1);
 
         auto* two_d = new_array(Float64_t, 15, 15);
+        gc_ids.push_back(unsafe::gc_preserve(two_d));
         Test::assert_that(jl_array_len(two_d) == 15 * 15);
         Test::assert_that(jl_array_ndims(two_d) == 2);
 
         auto* six_d = new_array(Float64_t, 15, 15, 15, 15, 15, 15);
+        gc_ids.push_back(unsafe::gc_preserve(six_d));
         Test::assert_that(jl_array_len(six_d) == pow(15, 6));
         Test::assert_that(jl_array_ndims(six_d) == 6);
+
+        for (size_t id : gc_ids)
+            unsafe::gc_release(id);
     });
 
     Test::test("unsafe: new_array_from_data", []() {
 
         using namespace unsafe;
 
+        std::vector<size_t> gc_ids;
+
         std::vector<size_t> one_d_vec;
         for (size_t i = 0; i < 10; ++i)
             one_d_vec.push_back(i);
 
         auto* one_d = unsafe::new_array_from_data(UInt64_t, one_d_vec.data(), one_d_vec.size());
+        gc_ids.push_back(unsafe::gc_preserve(one_d));
         Test::assert_that(jl_unbox_uint64(jl_arrayref(one_d, 9)) == 9);
 
         std::vector<size_t> two_d_vec;
@@ -221,6 +232,7 @@ int main()
             two_d_vec.push_back(i);
 
         auto* two_d = unsafe::new_array_from_data(UInt64_t, two_d_vec.data(), 5, 5);
+        gc_ids.push_back(unsafe::gc_preserve(two_d));
         Test::assert_that(jl_unbox_uint64(jl_arrayref(two_d, 9)) == 9);
 
         std::vector<size_t> four_d_vec;
@@ -228,23 +240,34 @@ int main()
             four_d_vec.push_back(i);
 
         auto* four_d = unsafe::new_array_from_data(UInt64_t, four_d_vec.data(), 4, 4, 4, 4);
+        gc_ids.push_back(unsafe::gc_preserve(four_d));
         Test::assert_that(jl_unbox_uint64(jl_arrayref(four_d, 9)) == 9);
+
+        for (size_t id : gc_ids)
+            unsafe::gc_release(id);
     });
 
     Test::test("unsafe: override_array", []() {
 
         jl_array_t * arr01 = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
+        size_t id_1 = unsafe::gc_preserve(arr01);
         jl_array_t * arr02 = (jl_array_t*) jl_eval_string("return Int64[i for i in 25:(25+25)]");
+        size_t id_2 = unsafe::gc_preserve(arr02);
 
         unsafe::override_array(arr02, arr01);
         for (size_t i = 0; i < 25; ++i)
             Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == i + 1);
+
+        unsafe::gc_release(id_1);
+        unsafe::gc_release(id_2);
     });
 
     Test::test("unsafe: swap_array_data", []() {
 
         jl_array_t * arr01 = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
+        size_t id_1 = unsafe::gc_preserve(arr01);
         jl_array_t * arr02 = (jl_array_t*) jl_eval_string("return Int64[i for i in -1:-1:-25]");
+        size_t id_2 = unsafe::gc_preserve(arr02);
 
         unsafe::swap_array_data(arr01, arr02);
         for (size_t i = 0; i < 25; ++i)
@@ -252,11 +275,16 @@ int main()
             Test::assert_that(jl_unbox_int64(jl_arrayref(arr01, i)) == -(i + 1));
             Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == +(i + 1));
         }
+
+        unsafe::gc_release(id_1);
+        unsafe::gc_release(id_2);
     });
 
     Test::test("unsafe: set_array_data", []() {
 
         jl_array_t * arr01 = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
+        size_t id = unsafe::gc_preserve(arr01);
+
         std::vector<Int64> new_data;
         for (size_t i = 0; i < 30; ++i)
             new_data.push_back(i + 43);
@@ -265,62 +293,91 @@ int main()
 
         for (size_t i = 0; i < new_data.size(); ++i)
             Test::assert_that(jl_unbox_int64(jl_arrayref(arr01, i)) == new_data.at(i));
+
+        unsafe::gc_release(id);
     });
 
-    Test::test("unsafe: resize_array: reshape", []() {
+    Test::test("unsafe: resize_array: reshape", []()
+    {
         jl_array_t * arr = (jl_array_t*) jl_eval_string("return [i for i in 1:(5*5*5)]");
+        size_t id1 = unsafe::gc_preserve(arr);
+
         unsafe::resize_array(arr, 5, 5, 5);
         Test::assert_that(jl_array_ndims(arr) == 3);
 
         arr = (jl_array_t*) jl_eval_string("return [i for i in 1:(5*5)]");
+        size_t id2 = unsafe::gc_preserve(arr);
         unsafe::resize_array(arr, 5, 5);
         Test::assert_that(jl_array_ndims(arr) == 2);
 
         arr = (jl_array_t*) jl_eval_string("return reshape([i for i in 1:(5*5)], 5, 5)");
+        size_t id3 = unsafe::gc_preserve(arr);
         unsafe::resize_array(arr, 25);
         Test::assert_that(jl_array_ndims(arr) == 1);
+
+        for (size_t id : {id1, id2, id3})
+            unsafe::gc_release(id);
     });
 
     Test::test("unsafe: resize_array: grow", []() {
 
         jl_array_t * arr = (jl_array_t*) jl_eval_string("return [i for i in 1:(5*5*5)]");
+        size_t id1 = unsafe::gc_preserve(arr);
         unsafe::resize_array(arr, 5 * 5);
         Test::assert_that(jl_array_len(arr) == 5 * 5);
         unsafe::resize_array(arr, 5 * 5 * 5);
         Test::assert_that(jl_array_len(arr) == 5 * 5 * 5);
 
         arr = (jl_array_t*) jl_eval_string("return reshape([i for i in 1:(5*5)], 5, 5)");
+        size_t id2 = unsafe::gc_preserve(arr);
         unsafe::resize_array(arr, 4, 4);
         Test::assert_that(jl_array_len(arr) == 4 * 4);
         unsafe::resize_array(arr, 6, 6);
         Test::assert_that(jl_array_len(arr) == 6 * 6);
+
+        for (size_t id : {id1, id2})
+            unsafe::gc_release(id);
     });
 
     Test::test("unsafe: array: get_index", []() {
 
         jl_array_t * arr = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
+        size_t id1 = unsafe::gc_preserve(arr);
+
         for (size_t i = 0; i < 25; ++i)
             Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, i)) == i + 1);
 
         static unsafe::Function* getindex = unsafe::get_function(jl_base_module, "getindex"_sym);
 
         arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(6*8)], 6, 8)");
+        size_t id2 = unsafe::gc_preserve(arr);
         Test::assert_that(jl_unbox_int64(unsafe::call(getindex, arr, jl_box_int64(4), jl_box_int64(4))) ==
                           jl_unbox_int64(unsafe::get_index(arr, 3, 3)));
 
         arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(3*4*5*6)], 3, 4, 5, 6)");
+        size_t id3 = unsafe::gc_preserve(arr);
         Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, 2, 2, 2, 2)) == jl_unbox_int64(
                 unsafe::call(getindex, arr, jl_box_int64(3), jl_box_int64(3), jl_box_int64(3), jl_box_int64(3))));
+
+        for (size_t id : {id1, id2, id3})
+            unsafe::gc_release(id);
     });
 
     Test::test("unsafe: get_array_size", []() {
+
         jl_array_t * arr = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
+        size_t id1 = unsafe::gc_preserve(arr);
         Test::assert_that(unsafe::get_array_size(arr) == 25);
 
         arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(3*5*4)], 3, 5, 4)");
+        size_t id2 = unsafe::gc_preserve(arr);
+
         Test::assert_that(unsafe::get_array_size(arr, 0) == 3);
         Test::assert_that(unsafe::get_array_size(arr, 1) == 5);
         Test::assert_that(unsafe::get_array_size(arr, 2) == 4);
+
+        for (size_t id : {id1, id2})
+            unsafe::gc_release(id);
     });
 
     Test::test("catch c exception", []() {
