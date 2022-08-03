@@ -238,7 +238,7 @@ return 0;
 Process finished with exit code 0
 ```
 
-This time, because the tasks was not destructed prematurely, it had 10 milliseconds more time to finish. This happened to be enough for it to reach its intended count, after which it was safely destructed when `main` returned.
+This time, because the task was not destructed prematurely, it had 10 milliseconds more time to finish. This happened to be enough for it to reach its intended count, after which it was safely destructed when `main` returned.
 
 jluna has no equivalent to Julia's `Threads.@spawn`. This is to force users to keep track of their tasks. To `.schedule` a task, they need to first cache it in a variable. This hopefully avoids situations where tasks end unexpectedly because they go out of scope.
 
@@ -314,7 +314,7 @@ std::cout << future.get().value() << std::endl;
 ```
 > **C++ Hint**: Trying to access the value of a std::optional before it is available will raise an exception. See the [standard libraries documentation](https://en.cppreference.com/w/cpp/utility/optional) for more ways to interact with `std::optional<T>`.
 
-We can wait for the value of a future to become available by calling `.wait()`. This will stall the thread `.wait()` is called from until the value becomes accessible, after which the function will return that value. This way, we don't necessarily need to keep track of the futures task, just having the future allows us to access the tasks result. We do still need to make sure the corresponding task stays in scope, however.
+We can wait for the value of a future to become available by calling `.wait()`. This will stall the thread `.wait()` is called from until the value becomes accessible, after which the function will return that value. This way, we don't necessarily need to keep track of the futures task, just having the future allows us to access the task's result. We do still need to make sure the corresponding task stays in scope, however.
 
 ### Data Race Freedom
 
@@ -456,6 +456,57 @@ true
 > **Julia Hint**: `Threads.Tasks.sticky` is a property that governs whether a task can be executed concurrently. By default, `sticky` is set to `false`, making it "stick" to the main thread, instead of "detaching" and being run on its own.
 
 We can then use this proxy as we would use a Julia-side variable, allowing for full freedom on how to manage and schedule tasks.
+
+#### Moving / Copying Tasks
+
+Each task holds a pointer to an internal state, which manages the task's future among other things. To preserve this state, copying a task is made impossible (by declaring the tasks [copy constructor](https://en.cppreference.com/w/cpp/language/copy_constructor) and [assignment operator](https://en.cppreference.com/w/cpp/language/copy_assignment) as `delete`d):
+
+```cpp
+auto f = [](){};
+
+Task<void> original = ThreadPool::create<void()>(f);
+Task<void> copy = original; // compiler error
+```
+```text
+/home/Workspace/jluna/.test/main.cpp:33:23: error: use of deleted function ‘jluna::Task<void>::Task(const jluna::Task<void>&)’
+    4 |     Task<void> copy = original;
+      |                       ^~~~~~~~
+/home/Workspace/jluna/.src/multi_threading.inl:213:13: note: declared here
+  213 |             Task(const Task&) = delete;
+      |             ^~~~
+```
+
+However, task's can still be **move** [assigned](https://en.cppreference.com/w/cpp/language/move_assignment) / [constructed](https://en.cppreference.com/w/cpp/language/move_constructor). This is why we can store them in containers. 
+
+If a move is invoked explicitly, the old task's internal state is safely transferred:
+
+```cpp
+auto f = []() -> int {
+    return 1234
+};
+
+Task<int> original = ThreadPool::create<int()>(f);
+Task<int> copy = std::move(original); // no error
+```
+
+Users need to be aware that, **after a move assignment / construction, the old task is no longer valid**. `Task::is_failed` will return `true`, other member functions will simply exit at the earliest possible point.
+Trying to access an invalidated tasks future, however, will cause an error:
+
+```cpp
+auto f = [](){};
+
+Task<int> original = ThreadPool::create<int()>(f);
+Task<int> copy = std::move(original);
+
+auto future = original.get().value(); // despite original being now invalid
+```
+```
+[ERROR][C++] In Task<T>::result: trying to access the future of a task that is no longer valid. Tasks are invalidated when the move assignment operator or move constructor is called, which transfers a tasks internal state into the newly constructed one.
+jluna_test: /home/clem/Workspace/jluna/.src/multi_threading.inl:197: jluna::Future<Result_t>& jluna::Task<Result_t>::result() [with Result_t = int]: Assertion `this->_value != nullptr' failed.
+```
+
+In general, a **task invalidated after a move should not be interacted with**. Users should be aware of this, though during general usage it is rare to run into this error.
+
 
 #### Do **NOT** use `@threadcall`
 
