@@ -120,7 +120,21 @@ namespace jluna
     template<typename T>
     Task<T>::~Task()
     {
-        ThreadPool::free(_value->_threadpool_id);
+        //ThreadPool::free(_value->_threadpool_id);
+    }
+
+    template<typename T>
+    Task<T>::Task(Task&& other)
+    {
+        _value = std::move(other._value);
+        other._is_valid = false;
+    }
+
+    template<typename T>
+    Task<T>& Task<T>::operator=(Task&& other)
+    {
+        _value = std::move(other._value);
+        other._is_valid = false;
     }
 
     template<typename T>
@@ -172,6 +186,12 @@ namespace jluna
 
         public:
             ~Task();
+
+            Task& operator=(const Task&) = delete;
+            Task(const Task&) = delete;
+            Task(Task&& other);
+            Task& operator=(Task&& other);
+
             operator unsafe::Value*();
             void join();
             void schedule();
@@ -184,6 +204,7 @@ namespace jluna
             Task(detail::TaskValue<unsafe::Value*>*);
 
         private:
+            bool _is_valid = true;
             detail::TaskValue<unsafe::Value*>* _value; // lifetime managed by threadpool
     };
 
@@ -193,7 +214,20 @@ namespace jluna
 
     inline Task<void>::~Task()
     {
-        ThreadPool::free(_value->_threadpool_id);
+        if (_is_valid)
+            ThreadPool::free(_value->_threadpool_id);
+    }
+
+    inline Task<void>::Task(Task&& other)
+    {
+        _value = std::move(other._value);
+        other._is_valid = false;
+    }
+
+    inline Task<void>& Task<void>::operator=(Task&& other)
+    {
+        _value = std::move(other._value);
+        other._is_valid = false;
     }
 
     inline void Task<void>::join()
