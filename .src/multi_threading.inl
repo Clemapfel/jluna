@@ -120,26 +120,30 @@ namespace jluna
     template<typename T>
     Task<T>::~Task()
     {
-        //ThreadPool::free(_value->_threadpool_id);
+        if (_value != nullptr)
+            ThreadPool::free(_value->_threadpool_id);
     }
 
     template<typename T>
     Task<T>::Task(Task&& other)
     {
         _value = std::move(other._value);
-        other._is_valid = false;
+        other._value = nullptr;
     }
 
     template<typename T>
     Task<T>& Task<T>::operator=(Task&& other)
     {
         _value = std::move(other._value);
-        other._is_valid = false;
+        other._value = nullptr;
     }
 
     template<typename T>
     void Task<T>::join()
     {
+        if (_value == nullptr)
+            return;
+
         static auto* wait = unsafe::get_function(jl_base_module, "wait"_sym);
         jluna::safe_call(wait, _value->_value);
     }
@@ -147,6 +151,9 @@ namespace jluna
     template<typename T>
     void Task<T>::schedule()
     {
+        if (_value == nullptr)
+            return;
+
         static auto* schedule = unsafe::get_function(jl_base_module, "schedule"_sym);
         jluna::safe_call(schedule, _value->_value);
     }
@@ -154,6 +161,9 @@ namespace jluna
     template<typename T>
     bool Task<T>::is_done() const
     {
+        if (_value == nullptr)
+            return false;
+
         static auto* istaskdone = unsafe::get_function(jl_base_module, "istaskdone"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskdone, _value->_value));
     }
@@ -161,6 +171,9 @@ namespace jluna
     template<typename T>
     bool Task<T>::is_failed() const
     {
+        if (_value == nullptr)
+            return true;
+
         static auto* istaskfailed = unsafe::get_function(jl_base_module, "istaskfailed"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskfailed, _value->_value));
     }
@@ -168,6 +181,9 @@ namespace jluna
     template<typename T>
     bool Task<T>::is_running() const
     {
+        if (_value == nullptr)
+            return false;
+
         static auto* istaskstarted = unsafe::get_function(jl_base_module, "istaskstarted"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskstarted, _value->_value));
     }
@@ -175,6 +191,12 @@ namespace jluna
     template<typename T>
     Future<T>& Task<T>::result()
     {
+        if (_value == nullptr)
+        {
+            std::cerr << "[ERROR][C++] In Task<T>::result: trying to access the future of a task that is no longer valid. Tasks are invalidated when the move assignment operator or move constructor is called, which transfers a tasks internal state into the newly constructed one." << std::endl;
+            assert(this->_value != nullptr);
+        }
+
         return std::ref(*(_value->_future.get()));
     }
 
@@ -204,7 +226,6 @@ namespace jluna
             Task(detail::TaskValue<unsafe::Value*>*);
 
         private:
-            bool _is_valid = true;
             detail::TaskValue<unsafe::Value*>* _value; // lifetime managed by threadpool
     };
 
@@ -214,54 +235,74 @@ namespace jluna
 
     inline Task<void>::~Task()
     {
-        if (_is_valid)
+        if (_value == nullptr)
             ThreadPool::free(_value->_threadpool_id);
     }
 
     inline Task<void>::Task(Task&& other)
     {
         _value = std::move(other._value);
-        other._is_valid = false;
+        other._value = nullptr;
     }
 
     inline Task<void>& Task<void>::operator=(Task&& other)
     {
         _value = std::move(other._value);
-        other._is_valid = false;
+        other._value = nullptr;
     }
 
     inline void Task<void>::join()
     {
+        if (_value == nullptr)
+            return;
+
         static auto* wait = unsafe::get_function(jl_base_module, "wait"_sym);
         jluna::safe_call(wait, _value->_value);
     }
 
     inline void Task<void>::schedule()
     {
+        if (_value == nullptr)
+            return;
+
         static auto* schedule = unsafe::get_function(jl_base_module, "schedule"_sym);
         jluna::safe_call(schedule, _value->_value);
     }
 
     inline bool Task<void>::is_done() const
     {
+        if (_value == nullptr)
+            false;
+
         static auto* istaskdone = unsafe::get_function(jl_base_module, "istaskdone"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskdone, _value->_value));
     }
 
     inline bool Task<void>::is_failed() const
     {
+        if (_value == nullptr)
+            true;
+
         static auto* istaskfailed = unsafe::get_function(jl_base_module, "istaskfailed"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskfailed, _value->_value));
     }
 
     inline bool Task<void>::is_running() const
     {
+        if (_value == nullptr)
+            return false;
+
         static auto* istaskstarted = unsafe::get_function(jl_base_module, "istaskstarted"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskstarted, _value->_value));
     }
 
     inline Future<unsafe::Value*>& Task<void>::result()
     {
+        if (_value == nullptr)
+        {
+            std::cerr << "[ERROR][C++] In Task<void>::result: trying to access the future of a task that is no longer valid. Tasks are invalidated when the move assignment operator or move constructor is called, which transfers a tasks internal state into the newly constructed one." << std::endl;
+            assert(this->_value != nullptr);
+        }
         return std::ref(*(_value->_future.get()));
     }
 

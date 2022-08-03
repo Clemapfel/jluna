@@ -139,7 +139,6 @@ namespace jluna
             Task(detail::TaskValue<Result_t>*);
 
         private:
-            bool _is_valid = true;
             detail::TaskValue<Result_t>* _value; // lifetime managed by threadpool
     };
 
