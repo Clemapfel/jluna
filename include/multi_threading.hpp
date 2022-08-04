@@ -95,6 +95,20 @@ namespace jluna
             /// @brief dtor
             ~Task();
 
+            /// @brief copy assignment deleted
+            Task& operator=(const Task&) = delete;
+
+            /// @brief copy ctor deleted
+            Task(const Task&) = delete;
+
+            /// @brief move ctor
+            /// @param other: other task, will be unusable after
+            Task(Task&& other);
+
+            /// @brief move ctor
+            /// @param other: other task, will be unusable after
+            Task& operator=(Task&& other);
+
             /// @brief access the Julia-side value of type Task, implicit
             operator unsafe::Value*();
 
@@ -137,7 +151,6 @@ namespace jluna
         friend class Task;
 
         public:
-
             /// @brief create a task from a std::function returning void
             /// @param f: function returning void
             /// @param args: arguments

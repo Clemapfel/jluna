@@ -20,9 +20,11 @@ struct NonJuliaType
 };
 set_usertype_enabled(NonJuliaType);
 
+#include <thread>
+
 int main()
 {
-    initialize();
+    initialize(2);
     Test::initialize();
 
     Test::test("c_adapter found", [](){
@@ -1407,8 +1409,8 @@ int main()
         Test::assert_that(not mutex.is_locked());
     });
 
-    Test::test("Task", [](){
-
+    Test::test("Task: schedule/join", []()
+    {
         auto task = ThreadPool::create<size_t()>([]() -> size_t {
             return 4;
         });
@@ -1417,8 +1419,24 @@ int main()
         task.schedule();
         task.join();
         Test::assert_that(task.is_done());
-
         Test::assert_that(task.result().get().value() == 4);
+    });
+
+    Test::test("Task: move ctor", []()
+    {
+        std::vector<Task<size_t>> task_a;
+        task_a.push_back(ThreadPool::create<size_t()>([]() -> size_t {
+            return 4;
+        }));
+
+        std::vector<Task<size_t>> task_b;
+        task_b.emplace_back(std::move(task_a.back()));
+
+        task_a.back().schedule();
+        task_b.back().schedule();
+
+        task_a.back().join();
+        task_b.back().join();
     });
 
     return Test::conclude() ? 0 : 1;
