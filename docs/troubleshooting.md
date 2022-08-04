@@ -1,6 +1,6 @@
 ## Troubleshooting
 
-Several errors may arise during compilation, linking or regular usage. A list of the most common issue, and how 
+Several errors may arise during compilation, linking, or regular usage. A list of the most common issue, and how 
 to solve them, is provided here.
 
 ------------------
