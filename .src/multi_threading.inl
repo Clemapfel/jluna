@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 Clemens Cords
 // Created on 12.04.22 by clem (mail@clemens-cords.com)
 //
@@ -111,7 +111,7 @@ namespace jluna
 
         _value_id = unsafe::gc_preserve(_value);
     }
-    
+
     template<typename T>
     Task<T>::Task(detail::TaskValue<T>* ptr)
         : _value(ptr)
@@ -129,6 +129,15 @@ namespace jluna
     {
         _value = std::move(other._value);
         other._value = nullptr;
+    }
+
+    template<typename T>
+    Task<T>::operator unsafe::Value*()
+    {
+        if (_value == nullptr)
+            return jl_nothing;
+        else
+            return _value->_value;
     }
 
     template<typename T>
@@ -235,7 +244,7 @@ namespace jluna
 
     inline Task<void>::~Task()
     {
-        if (_value == nullptr)
+        if (_value != nullptr)
             ThreadPool::free(_value->_threadpool_id);
     }
 
@@ -243,6 +252,14 @@ namespace jluna
     {
         _value = std::move(other._value);
         other._value = nullptr;
+    }
+
+    inline Task<void>::operator unsafe::Value*()
+    {
+        if (_value == nullptr)
+            return jl_nothing;
+        else
+            return _value->_value;
     }
 
     inline Task<void>& Task<void>::operator=(Task&& other)
@@ -272,7 +289,7 @@ namespace jluna
     inline bool Task<void>::is_done() const
     {
         if (_value == nullptr)
-            false;
+            return false;
 
         static auto* istaskdone = unsafe::get_function(jl_base_module, "istaskdone"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskdone, _value->_value));
@@ -281,7 +298,7 @@ namespace jluna
     inline bool Task<void>::is_failed() const
     {
         if (_value == nullptr)
-            true;
+            return true;
 
         static auto* istaskfailed = unsafe::get_function(jl_base_module, "istaskfailed"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskfailed, _value->_value));

@@ -441,7 +441,7 @@ We can access the Julia-side object, `jluna::Task` is managing, using `operator 
 auto lambda = [](){ //...
     
 // create task
-auto task = ThreadPool::create<void>(lambda);
+auto task = ThreadPool::create<void()>(lambda);
 
 // create proxy to task
 auto task_proxy = Proxy(static_cast<unsafe::Value*>(task));

@@ -1409,7 +1409,7 @@ int main()
         Test::assert_that(not mutex.is_locked());
     });
 
-    Test::test("Task: schedule/join", []()
+    Test::test("Task<T>: schedule/join", []()
     {
         auto task = ThreadPool::create<size_t()>([]() -> size_t {
             return 4;
@@ -1422,7 +1422,7 @@ int main()
         Test::assert_that(task.result().get().value() == 4);
     });
 
-    Test::test("Task: move ctor", []()
+    Test::test("Task<T>: move ctor", []()
     {
         std::vector<Task<size_t>> task_a;
         task_a.push_back(ThreadPool::create<size_t()>([]() -> size_t {
@@ -1437,6 +1437,49 @@ int main()
 
         task_a.back().join();
         task_b.back().join();
+    });
+
+    Test::test("Task<T>: access task proxy", []()
+    {
+        auto lambda = []() -> size_t {return 4;};
+        auto task = ThreadPool::create<size_t()>(lambda);
+        auto task_proxy = Proxy(static_cast<unsafe::Value*>(task));
+
+        Test::assert_that((bool)task_proxy["sticky"] == false);
+    });
+
+    Test::test("Task<void>: schedule/join", []()
+    {
+        auto task = ThreadPool::create<void()>([]() {});
+
+        Test::assert_that(not task.is_running());
+        task.schedule();
+        task.join();
+        Test::assert_that(task.is_done());
+    });
+
+    Test::test("Task<void>: move ctor", []()
+    {
+        std::vector<Task<void>> task_a;
+        task_a.push_back(ThreadPool::create<void()>([]() {}));
+
+        std::vector<Task<void>> task_b;
+        task_b.emplace_back(std::move(task_a.back()));
+
+        task_a.back().schedule();
+        task_b.back().schedule();
+
+        task_a.back().join();
+        task_b.back().join();
+    });
+
+    Test::test("Task<void>: access task proxy", []()
+    {
+        auto lambda = []() {};
+        auto task = ThreadPool::create<void()>(lambda);
+        auto task_proxy = Proxy(static_cast<unsafe::Value*>(task));
+
+        Test::assert_that((bool)task_proxy["sticky"] == false);
     });
 
     return Test::conclude() ? 0 : 1;
