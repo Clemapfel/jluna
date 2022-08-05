@@ -291,7 +291,7 @@ namespace jluna
     inline bool Task<void>::is_done() const
     {
         if (_value == nullptr)
-            false;
+            return false;
 
         static auto* istaskdone = unsafe::get_function(jl_base_module, "istaskdone"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskdone, _value->_value));
@@ -300,7 +300,7 @@ namespace jluna
     inline bool Task<void>::is_failed() const
     {
         if (_value == nullptr)
-            true;
+            return true;
 
         static auto* istaskfailed = unsafe::get_function(jl_base_module, "istaskfailed"_sym);
         return jl_unbox_bool(jluna::safe_call(istaskfailed, _value->_value));
