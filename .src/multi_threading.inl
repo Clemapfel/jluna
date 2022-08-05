@@ -134,11 +134,10 @@ namespace jluna
     template<typename T>
     Task<T>::operator unsafe::Value*()
     {
-        auto* res = _value->_value;
-        if (res == nullptr)
+        if (_value == nullptr)
             return jl_nothing;
         else
-            return res;
+            return _value->_value;
     }
 
     template<typename T>
