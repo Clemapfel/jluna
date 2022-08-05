@@ -245,7 +245,7 @@ namespace jluna
 
     inline Task<void>::~Task()
     {
-        if (_value == nullptr)
+        if (_value != nullptr)
             ThreadPool::free(_value->_threadpool_id);
     }
 
