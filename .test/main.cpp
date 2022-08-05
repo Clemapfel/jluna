@@ -1439,6 +1439,21 @@ int main()
         task_b.back().join();
     });
 
+    Test::test("Task: access task proxy", []()
+    {
+        auto lambda_void = []() {};
+        auto lambda_size_t = []() -> size_t {return 4;};
+
+        auto task_a = ThreadPool::create<void()>(lambda_void);
+        auto task_b = ThreadPool::create<size_t()>(lambda_size_t);
+
+        auto task_a_proxy = Proxy(static_cast<unsafe::Value*>(task_a));
+        auto task_b_proxy = Proxy(static_cast<unsafe::Value*>(task_b));
+
+        Test::assert_that((bool)task_a_proxy["sticky"] == false);
+        Test::assert_that((bool)task_b_proxy["sticky"] == false);
+    });
+
     return Test::conclude() ? 0 : 1;
 }
 

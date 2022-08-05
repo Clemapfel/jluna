@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 Clemens Cords
 // Created on 12.04.22 by clem (mail@clemens-cords.com)
 //
@@ -111,7 +111,7 @@ namespace jluna
 
         _value_id = unsafe::gc_preserve(_value);
     }
-    
+
     template<typename T>
     Task<T>::Task(detail::TaskValue<T>* ptr)
         : _value(ptr)
@@ -129,6 +129,16 @@ namespace jluna
     {
         _value = std::move(other._value);
         other._value = nullptr;
+    }
+
+    template<typename T>
+    Task<T>::operator unsafe::Value*()
+    {
+        auto* res = _value->_value;
+        if (res == nullptr)
+            return jl_nothing;
+        else
+            return res;
     }
 
     template<typename T>
@@ -243,6 +253,15 @@ namespace jluna
     {
         _value = std::move(other._value);
         other._value = nullptr;
+    }
+
+    inline Task<void>::operator unsafe::Value*()
+    {
+        auto* res = _value->_value;
+        if (res == nullptr)
+            return jl_nothing;
+        else
+            return res;
     }
 
     inline Task<void>& Task<void>::operator=(Task&& other)
