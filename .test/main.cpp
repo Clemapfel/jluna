@@ -1409,7 +1409,7 @@ int main()
         Test::assert_that(not mutex.is_locked());
     });
 
-    Test::test("Task: schedule/join", []()
+    Test::test("Task<T>: schedule/join", []()
     {
         auto task = ThreadPool::create<size_t()>([]() -> size_t {
             return 4;
@@ -1422,17 +1422,7 @@ int main()
         Test::assert_that(task.result().get().value() == 4);
     });
 
-    Test::test("Task<void>: schedule/join", []()
-    {
-        auto task = ThreadPool::create<void()>([]() {});
-
-        Test::assert_that(not task.is_running());
-        task.schedule();
-        task.join();
-        Test::assert_that(task.is_done());
-    });
-
-    Test::test("Task: move ctor", []()
+    Test::test("Task<T>: move ctor", []()
     {
         std::vector<Task<size_t>> task_a;
         task_a.push_back(ThreadPool::create<size_t()>([]() -> size_t {
@@ -1447,6 +1437,25 @@ int main()
 
         task_a.back().join();
         task_b.back().join();
+    });
+
+    Test::test("Task<T>: access task proxy", []()
+    {
+        auto lambda = []() -> size_t {return 4;};
+        auto task = ThreadPool::create<size_t()>(lambda);
+        auto task_proxy = Proxy(static_cast<unsafe::Value*>(task));
+
+        Test::assert_that((bool)task_proxy["sticky"] == false);
+    });
+
+    Test::test("Task<void>: schedule/join", []()
+    {
+        auto task = ThreadPool::create<void()>([]() {});
+
+        Test::assert_that(not task.is_running());
+        task.schedule();
+        task.join();
+        Test::assert_that(task.is_done());
     });
 
     Test::test("Task<void>: move ctor", []()
@@ -1464,19 +1473,13 @@ int main()
         task_b.back().join();
     });
 
-    Test::test("Task: access task proxy", []()
+    Test::test("Task<void>: access task proxy", []()
     {
-        auto lambda_void = []() {};
-        auto lambda_size_t = []() -> size_t {return 4;};
+        auto lambda = []() {};
+        auto task = ThreadPool::create<void()>(lambda);
+        auto task_proxy = Proxy(static_cast<unsafe::Value*>(task));
 
-        auto task_a = ThreadPool::create<void()>(lambda_void);
-        auto task_b = ThreadPool::create<size_t()>(lambda_size_t);
-
-        auto task_a_proxy = Proxy(static_cast<unsafe::Value*>(task_a));
-        auto task_b_proxy = Proxy(static_cast<unsafe::Value*>(task_b));
-
-        Test::assert_that((bool)task_a_proxy["sticky"] == false);
-        Test::assert_that((bool)task_b_proxy["sticky"] == false);
+        Test::assert_that((bool)task_proxy["sticky"] == false);
     });
 
     return Test::conclude() ? 0 : 1;
