@@ -256,11 +256,10 @@ namespace jluna
 
     inline Task<void>::operator unsafe::Value*()
     {
-        auto* res = _value->_value;
-        if (res == nullptr)
+        if (_value == nullptr)
             return jl_nothing;
         else
-            return res;
+            return _value->_value;
     }
 
     inline Task<void>& Task<void>::operator=(Task&& other)
