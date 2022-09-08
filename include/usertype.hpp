@@ -85,8 +85,8 @@ namespace jluna
             >> _mapping = {};
     };
 
-    /// @brief declare T to be implicitly convertible to it's same-named Julia-side equivalent. The user is responsible for assuring the usertype interface for T is fully specified and implemented, otherwise behavior of calling box on the type is undefined.
-    /// @param T: usertype-wrapped type, for example if `MyType` should be implicitly convertible, `Usertype<MyType>` needs to be specified, `set_usertype_enable(MyType)` needs to have been called, then `make_usertype_implicitly_convertible(MyType)` will enable the conversion
+    /// @brief declare T to be implicitly convertible to its same-named Julia-side equivalent. The user is responsible for assuring the usertype interface for T is fully specified and implemented, otherwise behavior of calling box on the type is undefined.
+    /// @param T: usertype-wrapped type, for example if `MyType` should be implicitly convertible, `Usertype<MyType>` needs to be specified, `set_usertype_enable(MyType)` needs to have been called, then `make_usertype_implicitly_convertible(MyType)` will enable the conversion once `Usertype<MyType>::implement` was called during runtime
     #define make_usertype_implicitly_convertible(T) namespace jluna::detail { template<> struct as_julia_type_aux<T> { static inline const std::string type_name = #T; }; }
 }
 #include <.src/usertype.inl>
