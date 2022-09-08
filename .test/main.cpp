@@ -19,6 +19,7 @@ struct NonJuliaType
     std::vector<size_t> _field;
 };
 set_usertype_enabled(NonJuliaType);
+make_usertype_implicitly_convertible(NonJuliaType);
 
 #include <thread>
 
