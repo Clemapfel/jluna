@@ -75,7 +75,7 @@ namespace jluna
         for (auto& field_name : _fieldnames_in_order)
             jluna::safe_call(setfield, template_proxy, (unsafe::Value*) std::get<0>(_mapping.at(field_name))(default_instance), (unsafe::Value*) field_name);
 
-        _type = std::make_unique<Type>((jl_datatype_t*) jluna::safe_call(implement, template_proxy));
+        _type = std::make_unique<Type>((jl_datatype_t*) jluna::safe_call(implement, template_proxy, module));
         _implemented = true;
         gc_unpause;
     }
