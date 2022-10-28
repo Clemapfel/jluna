@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 Clemens Cords
 // Created on 04.04.22 by clem (mail@clemens-cords.com)
 //
@@ -18,12 +18,14 @@ namespace jluna
     /// @param n_threads: number of threads to initialize the julia threadpool with. Default: 1
     /// @param suppress_log: should logging be disabled. Default: No
     /// @param jluna_shared_library_path: absolute path that is the location of libjluna.so. Leave empty to use default path
-    /// @param jluna_image_path: absolute path that is the location of the julia image. Leave empty to use default path
+    /// @param julia_bindir: absolute path that is the location of the julia image. Leave empty to use default path
+    /// @param image_path: the path of a system image file (*.so), a non-absolute path is interpreted as relative to julia_bindir
     void initialize(
         size_t n_threads = 1,
         bool suppress_log = false,
         const std::string& jluna_shared_library_path = "",
-        const std::string& julia_image_path = ""
+        const std::string& julia_bindir = "",
+        const std::string& image_path = ""
     );
 
     /// @brief call function with args, with verbose exception forwarding

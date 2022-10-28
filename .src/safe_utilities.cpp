@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 Clemens Cords
 // Created on 04.04.22 by clem (mail@clemens-cords.com)
 //
@@ -21,7 +21,8 @@ namespace jluna
         size_t n_threads,
         bool suppress_log,
         const std::string& jluna_shared_library_path,
-        const std::string& julia_image_path
+        const std::string& julia_bindir,
+        const std::string& image_path
     )
     {
         static bool is_initialized = false;
@@ -45,10 +46,14 @@ namespace jluna
         #endif
 
         detail::_num_threads = n_threads;
-        if (julia_image_path.empty())
+        if (julia_bindir.empty() && image_path.empty())
             jl_init();
+        else if (image_path.empty())
+            jl_init_with_image(julia_bindir.c_str(), nullptr);
+        else if (julia_bindir.empty())
+            jl_init_with_image(nullptr, image_path.c_str());
         else
-            jl_init_with_image(julia_image_path.c_str(), nullptr);
+            jl_init_with_image(julia_bindir.c_str(), image_path.c_str());
 
         forward_last_exception();
 
