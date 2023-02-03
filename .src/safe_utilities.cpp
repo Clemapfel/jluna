@@ -46,7 +46,7 @@ namespace jluna
         #endif
 
         detail::_num_threads = n_threads;
-        if (julia_bindir.empty() && image_path.empty())
+        if (julia_bindir.empty() and image_path.empty())
             jl_init();
         else if (image_path.empty())
             jl_init_with_image(julia_bindir.c_str(), nullptr);
