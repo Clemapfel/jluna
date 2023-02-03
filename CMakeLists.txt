@@ -26,7 +26,7 @@ Options
 
 #]=======================================================================]
 
-project(jluna VERSION 1.0.0 LANGUAGES CXX)
+project(jluna VERSION 0.9.1 LANGUAGES CXX)
 
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)
@@ -140,9 +140,9 @@ if(NOT CMAKE_SKIP_INSTALL_RULES)
     include(cmake/install-rules.cmake)
 endif()
 
+include(CTest)
 ### Declare Test ###
 
-include(CTest)
 option(BUILD_TESTING "Enable jluna_test" ON)
 if (BUILD_TESTING)
     add_executable(
@@ -154,7 +154,7 @@ if (BUILD_TESTING)
     add_test(NAME jluna_test COMMAND jluna_test)
 endif()
 
-### Developer Mode ###
+### Developer mode ###
 
 if(NOT jluna_DEVELOPER_MODE)
     return()
