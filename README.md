@@ -1,4 +1,4 @@
-# jluna: A modern Julia <-> C++ Wrapper (v0.9.2)
+# jluna: A modern Julia <-> C++ Wrapper (v1.0.0)
 
 
 ![](./header.png)
@@ -21,7 +21,7 @@ jluna aims to fully wrap the official Julia C-API, replacing it in projects with
    5.3 [cmake 3.12+](#dependencies)<br>
 6. [License](#license)
 7. [Authors](#credits)
-   
+
 ---
 
 ### Showcase
@@ -66,7 +66,7 @@ Base["println"](matrix);
 
 // iterable
 for (auto element : matrix)
-    element = static_cast<Int64>(element) + 1;
+element = static_cast<Int64>(element) + 1;
 Base["println"](matrix);
 
 // supports list indexing
@@ -85,11 +85,11 @@ Base["println"](generated_vector);
 // C++ function: concatenate all elements of input array
 auto cpp_function = [](jluna::ArrayAny1d array_in) -> std::string
 {
-    std::stringstream str;
-    for (auto e : array_in)
-        str << static_cast<std::string>(e) << " ";
+std::stringstream str;
+for (auto e : array_in)
+str << static_cast<std::string>(e) << " ";
 
-    return str.str();
+return str.str();
 };
 
 // bind to Julia variable
@@ -114,32 +114,32 @@ initialize(8);
 // custom synchronization primitive 
 // that works in both Julia and C++
 auto mutex = jluna::Mutex();
- 
+
 // thread behavior: write current thread id to vector
 std::vector<size_t> to_write_to;
 auto task_function = [&]() -> void
 {
-    mutex.lock();
-    to_write_to.push_back(ThreadPool::thread_id());
-    mutex.unlock();
+mutex.lock();
+to_write_to.push_back(ThreadPool::thread_id());
+mutex.unlock();
 };
 
 // create tasks and store them until they are finished
 std::vector<Task<void>> tasks;
 for (size_t i = 0; i < 2 * ThreadPool::n_threads(); ++i)
 {
-    // spawn task
-    tasks.push_back(ThreadPool::create<void()>(task_function));
-    tasks.back().schedule();
+// spawn task
+tasks.push_back(ThreadPool::create<void()>(task_function));
+tasks.back().schedule();
 }
 
 // wait for all tasks to finish
 for (auto& task : tasks)
-    task.join();
+task.join();
 
 // print
 for (auto id : to_write_to)
-    std::cout << id << " ";
+std::cout << id << " ";
 std::cout << std::endl;
 
 // result shows which threads of the threadpool executed which task
@@ -157,37 +157,37 @@ std::cout << std::endl;
 + thread-safe, provides a custom thread pool that, [unlike the C-API](https://clemens-cords.com/jluna/multi_threading.html), allows for concurrent interfacing with Julia
 + `std::` types & usertypes can be moved freely between Julia and C++
 + call arbitrary C++ functions from Julia
-+ multi-dimensional, iterable array interface
++ multidimensional, iterable array interface
 + provides < 5% overhead functions, viable in performance-critical environments
 + full exception forwarding, verbose error messages
 + complete [manual](https://clemens-cords.com/jluna/basics.html), [installation guide](https://clemens-cords.com/jluna/installation.md), [benchmark analysis](https://clemens-cords.com/jluna/benchmarks.html), inline documentation for IDEs - all written by a human
 + and more!
 
-### Planned (but not yet implemented):
+## Long-Term Support
 
-jluna is feature complete as of 0.9.0. The library will continue to be supported. If no major issues or feature request come up, 0.9 will be upgraded to 1.0 in Winter 2022.
+jluna entered version 1.0.0 in February 2023. While feature complete, the following areas would benefit from additional development:
++ **Windows Support**: Currently, the library should compile on a Windows machine with a sufficiently new compiler, stability remains untested, mostly due to the fact the developer does not currently have access to a Windows workstation
++ **Foreign Thread Support**: With Julia 1.9.0 foreign thread support [seems to have been implemented](https://github.com/JuliaLang/Julia/pull/45447), however, until 1.9.0 becomes the stable release, jluna will not utilize this new feature
 
 ---
 
 ## Documentation
 
-Documentation, including a step-by-step installation and troubleshooting guide, tutorial, and index of all functions and objects in jluna is available 
+Documentation, including a step-by-step installation and troubleshooting guide, tutorial, and index of all functions and objects in jluna is available
 [here](https://clemens-cords.com/jluna).
 
 ---
 
 ## Dependencies
 
-jluna aims to be as modern as is practical. It uses C++20 features extensively and aims to support the newest julia version, rather than focusing on backwards compatibility. 
+jluna aims to be as modern as is practical. It uses C++20 features extensively and aims to support the newest stable Julia version, rather than focusing on backwards compatibility.
 
 For jluna you'll need:
 + [**Julia 1.7.0**](https://julialang.org/downloads/#current_stable_release) (or higher)
 + [**cmake 3.12**](https://cmake.org/download/) (or higher)
 + C++ Compiler (see below)
 
-Currently [**g++10**](https://askubuntu.com/questions/1192955/how-to-install-g-10-on-ubuntu-18-04), [**g++11**](https://lindevs.com/install-g-on-ubuntu/) and [**clang++-12**](https://linux-packages.com/ubuntu-focal-fossa/package/clang-12) are fully supported. `g++-11` is the primary compiler used for development of jluna and is thus recommended. `MSVC 19.32` seems to work, but stability remains untested.
-
-> I currently do not have access to a windows environment for testing. If someone would like to open a PR or create a GitHub issue addressing windows-related problems, I'd be happy to review them and credit you! ~ C.
+Currently, [g++10](https://gcc.gnu.org/) (or newer) and [clang-12](https://releases.llvm.org/) (or newer) fully supported. `g++-11` is the primary compiler used for development of jluna and is thus recommended. `MSVC 19.32` (or newer) seems to work, but stability remains untested.
 
 ---
 
@@ -206,9 +206,9 @@ cd build
 ```
 cmake .. -DJULIA_BINDIR=$(julia -e "println(Sys.BINDIR)") -DCMAKE_CXX_COMPILER=<C++ Compiler> -DCMAKE_INSTALL_PREFIX=<install directory>
 ```
-Where 
+Where
 + `<C++ Compiler>` is one of `g++-10`, `g++-11`, `clang++-12`
-+ `<install directory>` is the desired install directory, usually `/usr/local` on unix, `C:/Program Files/jluna` on windows
++ `<install directory>` is the desired install directory, usually `/usr/local` on unix, `C:/Program Files/jluna` on Windows
 
 Then:
 ```
@@ -216,7 +216,7 @@ make install
 ctest --verbose
 ```
 
-Afterwards, you can make jluna available to your library using 
+Afterward, you can make jluna available to your library using
 
 ```cmake
 # inside your own CMakeLists.txt
@@ -228,7 +228,7 @@ target_link_libraries(<your library> PRIVATE
     "${jluna}" 
     "${<julia>}")
 ```
-Where 
+Where
 + `<install directory>` is the directory specified via `-DCMAKE_INSTALL_PREFIX`
 + `<julia>` is the Julia shared library (usually available in `"${JULIA_BINDIR}/../lib"`)
 + `<your library>` is the name of your library or executable
@@ -241,7 +241,7 @@ If any step of this does not work for you, please follow the [installation guide
 
 The current and all prior releases of jluna are supplied under MIT license, available [here](./LICENSE.txt).
 
-I would like to ask people using this library in commercial or university settings, to disclose their usage of jluna in some small way (for example, at the end of the credits or via a citation) and to make clear the origin of the work (for example by linking this github page). Unlike the text in `LICENSE.txt`, this is not a legally binding condition, only a personal request by me, the developer.
+I would like to ask people using this library in commercial or university settings, to disclose their usage of jluna in some small way (for example, at the end of the credits or via a citation) and to make clear the origin of the work (for example by linking this GitHub page). Unlike the text in `LICENSE.txt`, this is not a legally binding condition, only a personal request by me, the developer.
 
 Thank you for your consideration,
 C.
