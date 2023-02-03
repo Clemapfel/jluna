@@ -53,7 +53,8 @@ namespace jluna
         template<typename>struct TaskValue;
     }
 
-    /// @brief the result of a thread
+    /// @brief The result of a thread
+    /// @note jlunas multi-threading interface should be considered experimental and may be deprecated and/or marked for removal once Julia 1.9 releases
     template<typename Value_t>
     class Future
     {
@@ -86,6 +87,8 @@ namespace jluna
             std::unique_ptr<Value_t> _value;
     };
 
+    /// @brief wrapper around a Julia `Task`, concurrently executed
+    /// @note jlunas multi-threading interface should be considered experimental and may be deprecated and/or marked for removal once Julia 1.9 releases
     template<typename Result_t>
     class Task
     {
@@ -145,6 +148,7 @@ namespace jluna
     /// @brief threadpool that allows scheduled C++-side tasks to safely access the Julia State from within a thread.
     /// Pool cannot be resized, it will use the native Julia threads to execute any C++-side tasks
     /// @note during task creation, the copy ctor will be invoked for all arguments `args` and the functions return value. To avoid this, wrap the type in an std::ref
+    /// @note jlunas multi-threading interface should be considered experimental and may be deprecated and/or marked for removal once Julia 1.9 releases
     class ThreadPool
     {
         template<typename>
@@ -198,6 +202,7 @@ namespace jluna
     };
 
     /// @brief pause the current task, has to be called from within a task allocated via ThreadPool::create
+    /// @note jlunas multi-threading interface should be considered experimental and may be deprecated and/or marked for removal once Julia 1.9 releases
     void yield();
 }
 

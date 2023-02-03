@@ -53,6 +53,14 @@ Given this, we can immediately throw out using any of the C++ `std::thread`-rela
 
 All is not lost, however: jluna offers its own multi-threading framework, allowing for parallel execution of truly arbitrary C++ code - even if that code interacts with the Julia state.
 
+> **NOTE**: As of 02/2023, Julias current stable release (1.8.5) does not have foreign thread support, as of the merge of
+https://github.com/JuliaLang/Julia/pull/45447, however, julia 1.9.x will support foreign therads. This may vastly change
+how the jluna multi-threading interface works, for example the section above may no longer apply. Once the foreign threat
+support becomes part of the stable Julia release, jlunas multi-threading interface may be removed, deprecated or reworked completely.
+Because of this, any function mentioned in this section should be considered **experimental** and, unlike with most of jlunas other
+features, continuity between versions is not guaranteed.
+
+
 ### Initializing the Julia Threadpool
 
 In Julia, we have to decide the number of threads we want to use **before startup**.
@@ -79,7 +87,7 @@ If left unspecified, jluna will initialize Julia with exactly 1 thread. We can s
 using namespace jluna;
 
 initialize(JULIA_NUM_THREADS_AUTO);
-// equivalent to `julia -t auto`
+// equivalent to `Julia -t auto`
 ```
 
 This sets the number of threads to number of local CPUs, just like [setting environment variable `JULIA_NUM_THREADS` to `auto`](https://docs.julialang.org/en/v1/manual/multi-threading/#Starting-Julia-with-multiple-threads) would do for pure Julia.
