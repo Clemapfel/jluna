@@ -54,7 +54,7 @@ Given this, we can immediately throw out using any of the C++ `std::thread`-rela
 All is not lost, however: jluna offers its own multi-threading framework, allowing for parallel execution of truly arbitrary C++ code - even if that code interacts with the Julia state.
 
 > **NOTE**: As of 02/2023, Julias current stable release (1.8.5) does not have foreign thread support, as of the merge of
-https://github.com/JuliaLang/Julia/pull/45447, however, julia 1.9.x will support foreign therads. This may vastly change
+https://github.com/JuliaLang/Julia/pull/45447, however, julia 1.9.x will support foreign threads. This may vastly change
 how the jluna multi-threading interface works, for example the section above may no longer apply. Once the foreign threat
 support becomes part of the stable Julia release, jlunas multi-threading interface may be removed, deprecated or reworked completely.
 Because of this, any function mentioned in this section should be considered **experimental** and, unlike with most of jlunas other
