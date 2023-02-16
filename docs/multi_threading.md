@@ -55,7 +55,7 @@ All is not lost, however: jluna offers its own multi-threading framework, allowi
 
 > **NOTE**: As of 02/2023, Julias current stable release (1.8.5) does not have foreign thread support, as of the merge of
 https://github.com/JuliaLang/Julia/pull/45447, however, julia 1.9.x will support foreign threads. This may vastly change
-how the jluna multi-threading interface works, for example the section above may no longer apply. Once the foreign threat
+how the jluna multi-threading interface works, for example the section above may no longer apply. Once the foreign thread
 support becomes part of the stable Julia release, jlunas multi-threading interface may be removed, deprecated or reworked completely.
 Because of this, any function mentioned in this section should be considered **experimental** and, unlike with most of jlunas other
 features, continuity between versions is not guaranteed.
