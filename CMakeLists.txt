@@ -177,4 +177,5 @@ if (BUILD_BENCHMARK) # AND NOT WIN32)
         .benchmark/benchmark_aux.hpp
     )
     target_link_libraries(jluna_benchmark PRIVATE jluna)
+    target_compile_options(jluna_benchmark PRIVATE "-fpic")
 endif()
