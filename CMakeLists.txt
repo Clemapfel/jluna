@@ -120,6 +120,7 @@ add_library(jluna SHARED
 )
 
 target_compile_features(jluna PUBLIC cxx_std_20)
+target_compile_options(jluna PUBLIC "-fpic")
 target_include_directories(jluna PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 target_link_libraries(jluna PUBLIC
     "$<BUILD_INTERFACE:Julia::Julia>"
