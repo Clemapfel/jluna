@@ -151,6 +151,7 @@ if (BUILD_TESTING)
         .test/test.hpp
     )
     target_link_libraries(jluna_test PRIVATE jluna)
+    target_compile_options(jluna_test PRIVATE "-fpic")
     add_test(NAME jluna_test COMMAND jluna_test)
 endif()
 
