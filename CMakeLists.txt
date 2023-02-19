@@ -44,12 +44,15 @@ find_package(Threads)
 
 ### Configure Files ###
 
-set(SHARED_LIBARY_NAME "${CMAKE_INSTALL_PREFIX}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna${CMAKE_SHARED_LIBRARY_SUFFIX}")
+set(SHARED_LIBRARY_NAME "${CMAKE_INSTALL_PREFIX}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
-file(READ
-    include/julia/jluna.jl
-    JLUNA_JULIA_SOURCE
-)
+# file(READ include/julia/jluna.jl JLUNA)
+file(READ include/julia/jluna_01.jl JLUNA_01)
+file(READ include/julia/jluna_02.jl JLUNA_02)
+file(READ include/julia/jluna_03.jl JLUNA_03)
+file(READ include/julia/jluna_04.jl JLUNA_04)
+file(READ include/julia/jluna_05.jl JLUNA_05)
+file(READ include/julia/jluna_06.jl JLUNA_06)
 
 configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
 

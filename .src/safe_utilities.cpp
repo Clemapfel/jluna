@@ -57,7 +57,7 @@ namespace jluna
 
         forward_last_exception();
 
-        bool success = jl_unbox_bool(jl_eval_string(detail::julia_source));
+        bool success = jl_unbox_bool(jl_eval_string(detail::julia_source.c_str()));
         forward_last_exception();
 
         assert(success);
