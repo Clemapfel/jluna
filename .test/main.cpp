@@ -9,7 +9,6 @@
 #include <include/box.hpp>
 #include <chrono>
 #include <.src/cppcall.inl>
-#include <hashtable.h>
 
 using namespace jluna;
 using namespace jluna::detail;

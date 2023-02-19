@@ -58,7 +58,7 @@ namespace jluna
     class Future
     {
         template<typename>
-        friend class TaskValue;
+        friend struct TaskValue;
         friend class detail::FutureHandler;
 
         public:
