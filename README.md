@@ -241,14 +241,30 @@ If any step of this does not work for you, please follow the [installation guide
 
 The current and all prior releases of jluna are supplied under MIT license, available [here](./LICENSE.txt).
 
-I would like to ask people using this library in commercial or university settings, to disclose their usage of jluna in some small way (for example, at the end of the credits or via a citation) and to make clear the origin of the work (for example by linking this github page). Unlike the text in `LICENSE.txt`, this is not a legally binding condition, only a personal request by me, the developer.
+I would like to ask people using this library in commercial or university settings, to disclose their usage of jluna in some small way (for example, at the end of the credits or via a citation) and to make clear the origin of the work (for example by linking this GitHub page).
+
+If you would like to cite jluna in your academic publication, you can add this [BibTeX](https://www.overleaf.com/learn/latex/Bibliography_management_with_bibtex) entry to your bibliography:
+
+```latex
+ @misc{jluna,
+  author = {C. Cords},
+  title = {jluna: A modern Julia <-> C++ Wrapper},
+  url = {https://www.github.com/clemapfel/jluna},
+  howpublished = {\url{https://www.clemens-cords.com/jluna}},
+  year = {2022},
+  note = {v0.9.2}
+}
+```
+Then use the `\cite{jluna}` command anywhere in your [LaTeX](https://www.latex-project.org/) source code.
 
 Thank you for your consideration,
 C.
 
+
 ---
 
 ## Credits
+
 jluna was designed and written by [Clem Cords](https://github.com/Clemapfel).
 
 #### March 2022:<br>
