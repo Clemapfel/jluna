@@ -260,11 +260,9 @@ Then use the `\cite{jluna}` command anywhere in your [LaTeX](https://www.latex-p
 Thank you for your consideration,
 C.
 
-
 ---
 
 ## Credits
-
 jluna was designed and written by [Clem Cords](https://github.com/Clemapfel).
 
 #### March 2022:<br>
