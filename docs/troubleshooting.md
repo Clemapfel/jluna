@@ -9,6 +9,8 @@ to solve them, is provided here.
 
 During `make install`, your OS may notify you that it was unable to write to a folder due to missing permissions. To fix this, either run `make install` as `sudo` (or as administrator on Windows), or specify a different folder (using `-DCMAKE_INSTALL_PREFIX`) for which jluna or cmake does have write/read permission.
 
+---
+
 ### Unable to detect the Julia executable
 
 When calling:
@@ -43,6 +45,8 @@ println(Sys.BINDIR)
 
 From inside the Julia REPL, which will print the correct directory to the console.
 
+---
+
 ### Found unsuitable version
 
 During the cmake configuration step, the following error may appear:
@@ -54,6 +58,8 @@ CMake Error at /home/(...)/FindPackageHandleStandardArgs.cmake:218 (message):
 ```
 
 Where `1.5.1` could instead be any version before `1.7.0`. This means your Julia version is out of date, either update it through your packet manager or download the latest version [here](https://julialang.org/downloads/), install it, then make sure `JULIA_BINDIR` is pointing to the newer version.
+
+---
 
 ### Could NOT find Julia (missing: X)
 
@@ -85,6 +91,8 @@ julia*/
 Where
 + `*` may be a version suffix, such as `julia-1.7.2`
 + `libjulia.so` may have a different file extension on Windows
+
+---
 
 ### Cannot find <julia.h> / <jluna.hpp>
 
@@ -121,6 +129,8 @@ Where
 + `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
 
 See the [official CMake documentation](https://cmake.org/cmake/help/latest/command/target_include_directories.html) for more information.
+
+---
 
 ### Cannot find libjluna
 
@@ -163,6 +173,8 @@ Where `/path/to/libjluna.so` is the absolute path to the jluna shared library. N
 instead be named `libjluna.lib`, `jluna.dll`, etc., depending on your cmake environment. If you are unsure of where to
 find the library, it will be installed into the directory of `CMAKE_INSTALL_PREFIX` specified [earlier](installation.md#configure-cmake).
 
+---
+
 ### error: `concept` does not name a type
 
 When compiling a target that includes jluna, the following compiler error may occur:
@@ -181,6 +193,8 @@ target_compile_features(<your target> PRIVATE cxx_std_20)
 
 Where `<your target>` is the name of your compile target, such as an executable or library. See the [official cmake documentation](https://cmake.org/cmake/help/latest/command/target_compile_features.html), for more information.
 
+---
+
 ### Segmentation fault in expression starting at none:0
 
 When calling `jluna::initialize`, or any other jluna function, the following error may occur:
@@ -196,6 +210,26 @@ Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)
 ``` 
 
 Where the above is the entirety of the console output. This error means that you tried to access jluna or the Julia C-API from inside a C-side thread that was not master (the thread `main` is executed in). Unrelated to jluna, the C-API disallows this. It will always trigger a crash when accessed concurrently. Please read the [multi-threading section of the manual](multi_threading.md) for more information.
+
+---
+
+### Warning: copy relocation against non-copyable protected symbol
+
+When running your executable that was linked with jluna, the following warning may appear at runtime:
+
+```
+warning: copy relocation against non-copyable protected symbol `jl_nothing' in `/lib64/libjulia.so.1'
+```
+
+Where `jl_nothing` may be another symbol. This warning is triggered by newer versions of clang and gcc and does not indicate a problem. You can silence it by adding the following to *your* `CMakeLists.txt`:
+
+```cmake
+target_compile_options(<your_target> PRIVATE "-fpic")
+```
+
+Where `<your_target>` is your own executable or library using jluna, not jluna itself. If your target already has compile options specified, simply append `-fpic` at the end.
+
+For more information, see https://github.com/Clemapfel/jluna/issues/40.
 
 ---
 
