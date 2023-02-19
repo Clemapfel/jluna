@@ -69,3 +69,6 @@ html_show_sourcelink = False
 html_logo = "_static/logo.png"
 html_favicon = "_static/favicon.png"
 # note: this icon is from noto-emoji, which is a public domain emote package. No copyright applies
+
+# enable markdown links
+myst_heading_anchors = 7
