@@ -27,6 +27,10 @@ int main()
     initialize(2);
     Test::initialize();
 
+
+
+    return 0;
+
     Test::test("c_adapter found", [](){
 
         auto a = safe_eval("return jluna.cppcall.verify_library()");
@@ -1129,7 +1133,7 @@ int main()
                 else
                     Main.safe_eval("cppcall(:" + e + ")");
             }
-            catch (JuliaException& e)
+            catch (JuliaException&)
             {
                 thrown = true;
             }

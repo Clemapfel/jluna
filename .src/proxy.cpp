@@ -27,15 +27,17 @@ namespace jluna
         static jl_function_t* make_named_proxy_id = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "make_named_proxy_id"_sym);
 
         gc_pause;
-        _value_key = detail::create_reference(value);
-        _value_ref = detail::get_reference(_value_key);
+        _value_key = new size_t(detail::create_reference(value));
+        _value_ref = detail::get_reference(*_value_key);
 
         if (id == nullptr)
-            _id_key = detail::create_reference(jl_call1(make_unnamed_proxy_id, jl_box_uint64(_value_key)));
+            _id_key = new size_t(detail::create_reference(jl_call1(make_unnamed_proxy_id, jl_box_uint64(*_value_key))));
         else
-            _id_key = detail::create_reference(jl_call2(make_named_proxy_id, (unsafe::Value*) id, jl_nothing));
+            _id_key = new size_t(detail::create_reference(jl_call2(make_named_proxy_id, (unsafe::Value*) id, jl_nothing)));
 
-        _id_ref = detail::get_reference(_id_key);
+        _id_ref = detail::get_reference(*_id_key);
+
+        std::cout << "Proxy CTor1 (v id): " << *_value_key << " " << *_id_key << std::endl; // TODO
         gc_unpause;
     }
 
@@ -47,18 +49,25 @@ namespace jluna
 
         _owner = owner;
 
-        _value_key = detail::create_reference(value);
-        _value_ref = detail::get_reference(_value_key);
+        _value_key = new size_t(detail::create_reference(value));
+        _value_ref = detail::get_reference(*_value_key);
 
-        _id_key = detail::create_reference(jl_call2(make_named_proxy_id, id, owner->id()));
-        _id_ref = detail::get_reference(_id_key);
+        _id_key = new size_t(detail::create_reference(jl_call2(make_named_proxy_id, id, owner->id())));
+        _id_ref = detail::get_reference(*_id_key);
+
+        std::cout << "Proxy CTor2 (v id): " << *_value_key << " " << *_id_key << std::endl; // TODO
         gc_unpause;
     }
 
     Proxy::ProxyValue::~ProxyValue()
     {
-        detail::free_reference(_value_key);
-        detail::free_reference(_id_key);
+        std::cout << "Proxy DTor (v id): " << *_value_key << " " << *_id_key << std::endl; // TODO
+
+        detail::free_reference(*_value_key);
+        detail::free_reference(*_id_key);
+
+        delete _value_key;
+        delete _id_key;
     }
 
     unsafe::Value* Proxy::ProxyValue::value() const
@@ -189,7 +198,7 @@ namespace jluna
         static jl_function_t* assign = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "assign"_sym);
         static jl_function_t* set_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "set_reference"_sym);
 
-        _content->_value_ref = jluna::safe_call(set_reference, jl_box_uint64(_content->_value_key), new_value);
+        _content->_value_ref = jluna::safe_call(set_reference, jl_box_uint64(*_content->_value_key), new_value);
 
         if (_content->_is_mutating)
             jluna::safe_call(assign, new_value, _content->id());
@@ -211,7 +220,7 @@ namespace jluna
 
         gc_pause;
         auto* new_value = jluna::safe_call(evaluate, _content->id());
-        _content->_value_ref = jluna::safe_call(set_reference, jl_box_uint64(_content->_value_key), new_value);
+        _content->_value_ref = jluna::safe_call(set_reference, jl_box_uint64(*_content->_value_key), new_value);
         gc_unpause;
     }
 

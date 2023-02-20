@@ -6,7 +6,7 @@ One of the nicest features of Julia is its array interface. Therefore, it is onl
 auto array_proxy = Main.safe_eval("return [1, 2, 3, 4]");
 
 Int64 third = array_proxy[2];
-std::cout << third << std::endl;
+std::safecout << third << std::endl;
 ```
 ```
 3

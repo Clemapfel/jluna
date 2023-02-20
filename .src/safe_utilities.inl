@@ -40,8 +40,6 @@ namespace jluna
 
         auto* tuple_res = jl_call(jl_safe_call, args.data(), args.size());
 
-        jl_call1(jl_get_global(jl_main_module, jl_symbol("println")), tuple_res);
-
         if (jl_unbox_bool(jl_get_nth_field(tuple_res, 1)))
             throw JuliaException(jl_get_nth_field(tuple_res, 2), jl_string_ptr(jl_get_nth_field(tuple_res, 3)));
 
