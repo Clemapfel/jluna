@@ -278,7 +278,7 @@ namespace jluna
     template<is_unboxable T>
     T Array<V, R>::front() const
     {
-        return operator[](0);
+        return static_cast<T>(operator[](0));
     }
 
     template<is_boxable V, size_t R>

@@ -39,7 +39,8 @@ namespace jluna
         {
             std::stringstream str;
             str << "JULIA_NUM_THREADS=" << (n_threads == 0 ? "auto" : std::to_string(n_threads)) << std::endl;
-            _putenv(str.str().c_str());
+            auto i = _putenv(str.str().c_str());
+            assert(i == 1);
         }
         #else
             setenv("JULIA_NUM_THREADS", std::string(n_threads == 0 ? "auto" : std::to_string(n_threads)).c_str(), 1);

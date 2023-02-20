@@ -274,8 +274,8 @@ int main()
         unsafe::swap_array_data(arr01, arr02);
         for (size_t i = 0; i < 25; ++i)
         {
-            Test::assert_that(jl_unbox_int64(jl_arrayref(arr01, i)) == -(i + 1));
-            Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == +(i + 1));
+            Test::assert_that(jl_unbox_int64(jl_arrayref(arr01, i)) == -(static_cast<Int64>(i + 1)));
+            Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == +(static_cast<Int64>(i + 1)));
         }
 
         unsafe::gc_release(id_1);
@@ -811,7 +811,7 @@ int main()
         {
             first = 'b';
         }
-        catch (JuliaException& e)
+        catch (JuliaException&)
         {
             thrown = true;
         }
@@ -839,7 +839,7 @@ int main()
         {
             field = 456;
         }
-        catch (JuliaException& e)
+        catch (JuliaException&)
         {
             thrown = true;
         }

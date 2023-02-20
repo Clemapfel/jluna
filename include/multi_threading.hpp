@@ -46,7 +46,7 @@ namespace jluna
     namespace detail
     {
         // forward declarations
-        class FutureHandler;
+        struct FutureHandler;
         struct TaskSuper {
             virtual void free() {};
         };
@@ -59,7 +59,7 @@ namespace jluna
     {
         template<typename>
         friend struct TaskValue;
-        friend class detail::FutureHandler;
+        friend struct detail::FutureHandler;
 
         public:
             /// @brief construct

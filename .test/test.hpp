@@ -48,7 +48,7 @@ namespace jluna::detail
             {
                 lambda();
             }
-            catch (const AssertionException& e)
+            catch (const AssertionException&)
             {
                 failed = true;
                 what = "Test::assertion failed";
@@ -111,7 +111,7 @@ namespace jluna::detail
             {
                 lambda();
             }
-            catch (Exception_t& e)
+            catch (Exception_t&)
             {
                 thrown = true;
             }

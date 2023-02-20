@@ -16,31 +16,31 @@ namespace jluna
             retry:
 
             if (jl_isa(in, (unsafe::Value*) jl_bool_type))
-                return jl_unbox_bool(in);
+                return static_cast<T>(jl_unbox_bool(in));
             else if (jl_isa(in, (unsafe::Value*) jl_int8_type))
-                return jl_unbox_int8(in);
+                return static_cast<T>(jl_unbox_int8(in));
             else if (jl_isa(in, (unsafe::Value*) jl_int16_type))
-                return jl_unbox_int16(in);
+                return static_cast<T>(jl_unbox_int16(in));
             else if (jl_isa(in, (unsafe::Value*) jl_int32_type))
-                return jl_unbox_int32(in);
+                return static_cast<T>(jl_unbox_int32(in));
             else if (jl_isa(in, (unsafe::Value*) jl_int64_type))
-                return jl_unbox_int64(in);
+                return static_cast<T>(jl_unbox_int64(in));
             else if (jl_isa(in, (unsafe::Value*) jl_uint8_type))
-                return jl_unbox_uint8(in);
+                return static_cast<T>(jl_unbox_uint8(in));
             else if (jl_isa(in, (unsafe::Value*) jl_uint16_type))
-                return jl_unbox_uint16(in);
+                return static_cast<T>(jl_unbox_uint16(in));
             else if (jl_isa(in, (unsafe::Value*) jl_uint32_type))
-                return jl_unbox_uint32(in);
+                return static_cast<T>(jl_unbox_uint32(in));
             else if (jl_isa(in, (unsafe::Value*) jl_uint64_type))
-                return jl_unbox_uint64(in);
+                return static_cast<T>(jl_unbox_uint64(in));
             else if (jl_isa(in, (unsafe::Value*) jl_float32_type))
-                return jl_unbox_float32(in);
+                return static_cast<T>(jl_unbox_float32(in));
             else if (jl_isa(in, (unsafe::Value*) jl_float64_type))
-                return jl_unbox_float64(in);
+                return static_cast<T>(jl_unbox_float64(in));
             else if (jl_isa(in, (unsafe::Value*) jl_float16_type))
-                return jl_unbox_float32(detail::convert(jl_float32_type, in));
+                return static_cast<T>(jl_unbox_float32(detail::convert(jl_float32_type, in)));
             else if (jl_isa(in, (unsafe::Value*) jl_char_type))
-                return jl_unbox_int32(detail::convert(jl_int32_type, in));
+                return static_cast<T>(jl_unbox_int32(detail::convert(jl_int32_type, in)));
             else
             {
                 if (not first_attempt)
