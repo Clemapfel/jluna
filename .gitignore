@@ -153,3 +153,6 @@ out/build/x64-Debug/temptest.pdb
 out/build/x64-Debug/Testing/Temporary/LastTest.log
 out/build/x64-Debug/VSInheritEnvironments.txt
 *.vsidx
+/out/build/x64-Debug/.cmake/api/v1/reply
+/enc_temp_folder
+/.vs/jluna
