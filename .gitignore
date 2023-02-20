@@ -156,3 +156,4 @@ out/build/x64-Debug/VSInheritEnvironments.txt
 /out/build/x64-Debug/.cmake/api/v1/reply
 /enc_temp_folder
 /.vs/jluna
+.vs/slnx.sqlite-journal

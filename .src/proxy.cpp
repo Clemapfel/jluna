@@ -37,7 +37,6 @@ namespace jluna
 
         _id_ref = detail::get_reference(*_id_key);
 
-        std::cout << "Proxy CTor1 (v id): " << *_value_key << " " << *_id_key << std::endl; // TODO
         gc_unpause;
     }
 
@@ -55,14 +54,11 @@ namespace jluna
         _id_key = new size_t(detail::create_reference(jl_call2(make_named_proxy_id, id, owner->id())));
         _id_ref = detail::get_reference(*_id_key);
 
-        std::cout << "Proxy CTor2 (v id): " << *_value_key << " " << *_id_key << std::endl; // TODO
         gc_unpause;
     }
 
     Proxy::ProxyValue::~ProxyValue()
     {
-        std::cout << "Proxy DTor (v id): " << *_value_key << " " << *_id_key << std::endl; // TODO
-
         detail::free_reference(*_value_key);
         detail::free_reference(*_id_key);
 
