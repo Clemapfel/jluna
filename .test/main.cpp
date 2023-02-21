@@ -931,8 +931,8 @@ int main()
             return jl_unbox_int64(jl_call(_getindex, args.data(), args.size()));
         };
 
-        Test::assert_that(getindex(1, 2, 3) == (size_t) vec.at(0, 1, 2));
-        Test::assert_that(getindex(3, 3, 3) == (size_t) vec.at(2, 2, 2));
+        Test::assert_that(getindex(1, 2, 3) == static_cast<size_t>(vec.at(0, 1, 2)));
+        Test::assert_that(getindex(3, 3, 3) == static_cast<size_t>(vec.at(2, 2, 2)));
     });
 
     Test::test("array: out of range", []() {

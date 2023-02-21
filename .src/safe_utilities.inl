@@ -87,7 +87,7 @@ namespace jluna
         {
             std::stringstream env;
             env << "JULIA_NUM_THREADS=" << (n_threads == 0 ? "auto" : std::to_string(n_threads)) << std::endl;
-            if (not _putenv(env.str().c_str()) == 0)
+            if (not (_putenv(env.str().c_str()) == 0))
                 std::cerr << "[C++][ERROR] In jluna::initialize: Unable to write Windows environment variable `JULIA_NUM_THREADS`" << std::endl;
         }
         #else

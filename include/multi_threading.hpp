@@ -103,11 +103,11 @@ namespace jluna
 
             /// @brief move ctor
             /// @param other: other task, will be unusable after
-            Task(Task&& other);
+            Task(Task&& other) noexcept;
 
             /// @brief move ctor
             /// @param other: other task, will be unusable after
-            Task& operator=(Task&& other);
+            Task& operator=(Task&& other) noexcept;
 
             /// @brief access the Julia-side value of type Task, implicit
             operator unsafe::Value*();
@@ -139,7 +139,7 @@ namespace jluna
             Task(detail::TaskValue<Result_t>*);
 
         private:
-            detail::TaskValue<Result_t>* _value; // lifetime managed by threadpool
+            detail::TaskValue<Result_t>* _value = nullptr; // lifetime managed by threadpool
     };
 
     /// @brief threadpool that allows scheduled C++-side tasks to safely access the Julia State from within a thread.

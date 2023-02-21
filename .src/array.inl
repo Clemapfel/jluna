@@ -80,7 +80,7 @@ namespace jluna
     {}
 
     template<is_boxable T, size_t Rank>
-    size_t Array<T, Rank>::get_dimension(int index) const
+    size_t Array<T, Rank>::get_dimension(size_t index) const
     {
         return jl_array_dim(this->operator unsafe::Array*(), index);
     }
@@ -192,7 +192,7 @@ namespace jluna
     }
 
     template<is_boxable V, size_t R>
-    template<is_unboxable T, typename... Args, std::enable_if_t<sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
+    template<is_unboxable T, typename... Args, std::enable_if_t<sizeof...(Args) == static_cast<int>(R) and (std::is_integral_v<Args> and ...), bool>>
     T Array<V, R>::at(Args... in) const
     {
         {
@@ -215,7 +215,7 @@ namespace jluna
     }
 
     template<is_boxable V, size_t R>
-    template<typename... Args, std::enable_if_t<sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
+    template<typename... Args, std::enable_if_t<sizeof...(Args) == static_cast<int>(R) and (std::is_integral_v<Args> and ...), bool>>
     auto Array<V, R>::at(Args... in)
     {
         {

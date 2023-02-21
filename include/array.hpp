@@ -82,13 +82,13 @@ namespace jluna
             /// @brief multi-dimensional indexing
             /// @param n: Rank-many integers
             /// @returns non-const (assignable) iterator to value
-            template<typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
+            template<typename... Args, std::enable_if_t<sizeof...(Args) == static_cast<int>(Rank) and (std::is_integral_v<Args> and ...), bool> = true>
             auto at(Args... in);
 
             /// @brief multi-dimensional indexing
             /// @param n: Rank-many integers
             /// @returns unboxed value
-            template<is_unboxable T = Value_t, typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
+            template<is_unboxable T = Value_t, typename... Args, std::enable_if_t<sizeof...(Args) == static_cast<int>(Rank) and (std::is_integral_v<Args> and ...), bool> = true>
             T at(Args... in) const;
 
             /// @brief manually assign a value using a linear index
@@ -163,7 +163,7 @@ namespace jluna
 
         private:
             void throw_if_index_out_of_range(int index, size_t dimension) const;
-            size_t get_dimension(int) const;
+            size_t get_dimension(size_t) const;
 
         public:
             /// @brief non-assignable iterator
