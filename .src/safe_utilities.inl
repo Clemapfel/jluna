@@ -7,6 +7,8 @@
 #include <include/unsafe_utilities.hpp>
 #include <.src/include_julia.inl>
 
+#include <mutex>
+
 namespace jluna::detail
 {
     static inline size_t _num_threads = 1;

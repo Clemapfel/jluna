@@ -25,11 +25,6 @@ make_usertype_implicitly_convertible(NonJuliaType);
 int main()
 {
     initialize(2);
-
-    jl_call1(jl_get_global(jl_main_module, jl_symbol("println")), jluna::Int64_t.operator unsafe::Value*());
-
-    return 0;
-
     Test::initialize();
 
     Test::test("c_adapter found", [](){
