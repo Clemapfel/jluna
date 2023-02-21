@@ -60,8 +60,6 @@ int main()
         unsafe::gc_release(id);
     });
 
-    return 0;
-
     Test::test("unsafe: _sym", []() {
 
         using namespace unsafe;

@@ -46,7 +46,7 @@ find_package(Threads)
 
 set(SHARED_LIBRARY_NAME "${CMAKE_INSTALL_PREFIX}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
-# file(READ include/julia/jluna.jl JLUNA)
+# c.f. .src/include_julia.inl.in
 file(READ include/julia/jluna_01.jl JLUNA_01)
 file(READ include/julia/jluna_02.jl JLUNA_02)
 file(READ include/julia/jluna_03.jl JLUNA_03)
@@ -129,9 +129,7 @@ target_link_libraries(jluna PUBLIC
     "$<BUILD_INTERFACE:Threads::Threads>"
 )
 
-### HACK: export all symbols on Windows ###
 set_target_properties(jluna PROPERTIES
-    WINDOWS_EXPORT_ALL_SYMBOLS YES # TODO
     VERSION "${PROJECT_VERSION}"
     SOVERSION "${PROJECT_VERSION}"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_INSTALL_PREFIX}"
@@ -171,7 +169,7 @@ endif()
 ### Declare Benchmark ###
 
 option(BUILD_BENCHMARK "Enable jluna_benchmark" OFF)
-if (BUILD_BENCHMARK) # AND NOT WIN32)
+if (BUILD_BENCHMARK)
     add_executable(
         jluna_benchmark
         .benchmark/main.cpp
