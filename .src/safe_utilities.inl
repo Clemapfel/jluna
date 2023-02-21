@@ -85,12 +85,10 @@ namespace jluna
 
         #ifdef _WIN32
         {
-            /*
-            std::stringstream str;
-            str << "JULIA_NUM_THREADS=" << (n_threads == 0 ? "auto" : std::to_string(n_threads)) << std::endl;
-            auto i = _putenv(str.str().c_str());
-            assert(i == 1);
-            */
+            std::stringstream env;
+            env << "JULIA_NUM_THREADS=" << (n_threads == 0 ? "auto" : std::to_string(n_threads)) << std::endl;
+            if (not _putenv(env.str().c_str()) == 0)
+                std::cerr << "[C++][ERROR] In jluna::initialize: Unable to write Windows environment variable `JULIA_NUM_THREADS`" << std::endl;
         }
         #else
         setenv("JULIA_NUM_THREADS", std::string(n_threads == 0 ? "auto" : std::to_string(n_threads)).c_str(), 1);

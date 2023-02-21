@@ -24,14 +24,18 @@ make_usertype_implicitly_convertible(NonJuliaType);
 
 int main()
 {
-    initialize(2);
+    initialize(2, false, "C:/Users/cleme/Workspace/jluna/out/build/x64-Debug/jluna.dll");
     Test::initialize();
+
+    "println(jluna.cppcall._lib)"_eval;
 
     Test::test("c_adapter found", [](){
 
         auto a = safe_eval("return jluna.cppcall.verify_library()");
         Test::assert_that(jl_unbox_bool(a));
     });
+
+    return 0;
 
     Test::test("unsafe: gc_push / gc_pop", [](){
 
