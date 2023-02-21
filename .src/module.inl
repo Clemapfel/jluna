@@ -305,4 +305,14 @@ namespace jluna
     {
         return Proxy(get<unsafe::Value*>(variable_name), jl_symbol(variable_name.c_str()));
     }
+
+    namespace detail
+    {
+        inline void initialize_modules()
+        {
+            Main = Module(jl_main_module);
+            Core = Module(jl_core_module);
+            Base = Module(jl_base_module);
+        }
+    }
 }

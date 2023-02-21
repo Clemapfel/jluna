@@ -10,6 +10,8 @@
 namespace jluna::detail
 {
     static inline const char* shared_library_name = "@SHARED_LIBRARY_NAME@";
+
+    // necessary to avoid https://learn.microsoft.com/en-us/cpp/error-messages/compiler-errors-1/compiler-error-c2026?view=msvc-170
     static inline std::string julia_source =
        R"(@JLUNA_01@)"
        R"(@JLUNA_02@)"

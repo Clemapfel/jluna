@@ -137,14 +137,6 @@ set_target_properties(jluna PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_INSTALL_PREFIX}"
 )
 
-### TODO
-add_executable(temptest .test/temp.cpp)
-message(WARNING ${JULIA_INCLUDE_DIR})
-
-target_link_libraries(temptest PUBLIC ${JULIA_LIBRARY})
-target_include_directories(temptest PUBLIC ${JULIA_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
-### TODO
-
 ### Install rules ###
 
 if(NOT CMAKE_SKIP_INSTALL_RULES)
