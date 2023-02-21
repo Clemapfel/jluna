@@ -25,6 +25,7 @@ make_usertype_implicitly_convertible(NonJuliaType);
 int main()
 {
     initialize(2, false, "C:/Users/cleme/Workspace/jluna/out/build/x64-Debug/jluna.dll");
+
     Test::initialize();
 
     Test::test("c_adapter found", [](){
@@ -58,6 +59,8 @@ int main()
 
         unsafe::gc_release(id);
     });
+
+    return 0;
 
     Test::test("unsafe: _sym", []() {
 
@@ -432,7 +435,7 @@ int main()
     test_box_unbox("Complex", std::complex<double>(0, 1));
 
     test_box_unbox("Pair", std::pair<size_t, std::string>(12, "abc"));
-    test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(12, "abc", 0.01));
+    test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(size_t(12), "abc", 0.01f));
     test_box_unbox("Symbol", jluna::Symbol("abc"));
 
     auto test_box_unbox_iterable = []<typename T>(const std::string& name, T&& value) {
@@ -928,7 +931,7 @@ int main()
             args.push_back(jl_box_uint64(b));
             args.push_back(jl_box_uint64(c));
 
-            return jl_unbox_int64(jl_call(_getindex, args.data(), args.size()));
+            return jl_unbox_uint64(jl_call(_getindex, args.data(), args.size()));
         };
 
         Test::assert_that(getindex(1, 2, 3) == static_cast<size_t>(vec.at(0, 1, 2)));

@@ -216,6 +216,12 @@ namespace jluna
         return unsafe::call(pair, box<T1>(value.first), box<T2>(value.second));
     }
 
+    #ifdef _MSC_VER
+        // silence false positive conversion warning on MSVC
+        #pragma warning(push)
+        #pragma warning(disable:4267)
+    #endif
+
     template<is_tuple T>
     unsafe::Value* box(const T& value)
     {
@@ -239,4 +245,8 @@ namespace jluna
         gc_unpause;
         return out;
     }
+
+    #ifdef _MSC_VER
+        #pragma warning(pop)
+    #endif
 }

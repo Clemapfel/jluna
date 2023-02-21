@@ -28,6 +28,13 @@ namespace jluna::detail
 
 namespace jluna
 {
+
+    #ifdef _MSC_VER
+        // silence false positive conversion warning on MSVC
+        #pragma warning(push)
+        #pragma warning(disable:4267)
+    #endif
+
     template<is_julia_value_pointer... Args_t>
     unsafe::Value* safe_call(unsafe::Function* function, Args_t... in)
     {
@@ -51,6 +58,10 @@ namespace jluna
         auto* res = jl_get_nth_field(tuple_res, 0);
         return res;
     }
+
+    #ifdef _MSC_VER
+        #pragma warning(pop)
+    #endif
 
     template<is_julia_value_pointer... Ts>
     void println(Ts... in)

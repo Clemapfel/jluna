@@ -214,6 +214,12 @@ namespace jluna
         return operator[]<T>(index);
     }
 
+    #ifdef _MSC_VER
+        // silence false positive conversion warning on MSVC
+        #pragma warning(push)
+        #pragma warning(disable:4267)
+    #endif
+
     template<is_boxable V, size_t R>
     template<typename... Args, std::enable_if_t<sizeof...(Args) == static_cast<int>(R) and (std::is_integral_v<Args> and ...), bool>>
     auto Array<V, R>::at(Args... in)
@@ -236,6 +242,10 @@ namespace jluna
 
         return operator[](index);
     }
+
+    #ifdef _MSC_VER
+        #pragma warning(pop)
+    #endif
 
     template<is_boxable V, size_t R>
     template<is_boxable T>
