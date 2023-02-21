@@ -27,15 +27,11 @@ int main()
     initialize(2, false, "C:/Users/cleme/Workspace/jluna/out/build/x64-Debug/jluna.dll");
     Test::initialize();
 
-    "println(jluna.cppcall._lib)"_eval;
-
     Test::test("c_adapter found", [](){
 
         auto a = safe_eval("return jluna.cppcall.verify_library()");
         Test::assert_that(jl_unbox_bool(a));
     });
-
-    return 0;
 
     Test::test("unsafe: gc_push / gc_pop", [](){
 
@@ -305,6 +301,7 @@ int main()
 
     Test::test("unsafe: resize_array: reshape", []()
     {
+        gc_pause;
         jl_array_t * arr = (jl_array_t*) jl_eval_string("return [i for i in 1:(5*5*5)]");
         size_t id1 = unsafe::gc_preserve(arr);
 
@@ -323,6 +320,8 @@ int main()
 
         for (size_t id : {id1, id2, id3})
             unsafe::gc_release(id);
+
+        gc_unpause;
     });
 
     Test::test("unsafe: resize_array: grow", []() {

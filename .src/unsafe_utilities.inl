@@ -27,16 +27,16 @@ namespace jluna::unsafe
 
     namespace detail
     {
+        inline bool gc_initialized = false;
+
         inline std::nullptr_t gc_init()
         {
-            static bool initialized = false;
-
-            if (initialized)
+            if (gc_initialized)
                 return nullptr;
 
             jl_eval_string(R"(
-                __jluna_heap = Dict{UInt64, Base.RefValue{Any}}();
-                __jluna_heap_index = Base.RefValue(UInt64(0));
+                const __jluna_heap = Dict{UInt64, Base.RefValue{Any}}();
+                const __jluna_heap_index = Base.RefValue(UInt64(0));
                 const __jluna_heap_lock = Base.ReentrantLock()
 
                 function __jluna_add_to_heap(ptr::UInt64)
@@ -53,7 +53,8 @@ namespace jluna::unsafe
                     unlock(__jluna_heap_lock);
                 end
             )");
-            initialized = true;
+
+            detail::gc_initialized = true;
             return nullptr;
         }
     }

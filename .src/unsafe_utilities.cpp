@@ -79,15 +79,8 @@ namespace jluna::unsafe
     void gc_release(size_t id)
     {
         gc_pause;
-
-        static bool initialized = false;
-
-        if (not initialized)
-        {
-            detail::gc_init();
-            initialized = true;
-        }
-
+        detail::gc_init();
+           
         static unsafe::Value* delete_from_heap = get_value(jl_main_module, "__jluna_delete_from_heap"_sym);
         call(delete_from_heap, jl_box_uint64(id));
         gc_unpause;
@@ -196,14 +189,12 @@ namespace jluna::unsafe
         if (jl_array_ndims(array) != 1)
         {
             gc_pause;
-            static auto* tuple_type = [&](){
-                std::array<unsafe::Value*, 1> types;
-                for (size_t i = 0; i < types.size(); ++i)
-                    types.at(i) = (unsafe::Value*) jl_uint64_type;
+            std::array<unsafe::Value*, 1> types;
+            for (size_t i = 0; i < types.size(); ++i)
+                types.at(i) = (unsafe::Value*) jl_int64_type;
 
-                return jl_apply_tuple_type_v(types.data(), types.size());
-            }();
-            auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(one_d));
+            auto* tuple_type = jl_apply_tuple_type_v(types.data(), types.size());
+            auto* tuple = jl_new_struct(tuple_type, jl_box_int64(one_d));
             auto* res = jl_reshape_array(jl_apply_array_type(unsafe::call(array_value_t, array), 1), array, tuple);
             override_array(array, res);
             gc_unpause;
@@ -223,14 +214,12 @@ namespace jluna::unsafe
         if (jl_array_ndims(array) != 2)
         {
             gc_pause;
-            static auto* tuple_type = [&](){
-                std::array<unsafe::Value*, 2> types;
-                for (size_t i = 0; i < types.size(); ++i)
-                    types.at(i) = (unsafe::Value*) jl_uint64_type;
+            std::array<unsafe::Value*, 2> types;
+            for (size_t i = 0; i < types.size(); ++i)
+                types.at(i) = (unsafe::Value*) jl_int64_type;
 
-                return jl_apply_tuple_type_v(types.data(), types.size());
-            }();
-            auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(one_d));
+            auto* tuple_type = jl_apply_tuple_type_v(types.data(), types.size());
+            auto* tuple = jl_new_struct(tuple_type, jl_box_int64(one_d), jl_box_int64(two_d));
             auto* res = jl_reshape_array(jl_apply_array_type(unsafe::call(array_value_t, array), 2), array, tuple);
             override_array(array, res);
             gc_unpause;
