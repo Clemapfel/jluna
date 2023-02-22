@@ -19,3 +19,4 @@ out/install
 /cmake-build-debug-mingw/
 /cmake-build-debug/
 /cmake-build-debug-event-trace/
+/out/
