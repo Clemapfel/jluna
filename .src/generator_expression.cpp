@@ -78,7 +78,7 @@ namespace jluna
     }
 
     GeneratorExpression::ForwardIterator::ForwardIterator(const GeneratorExpression* owner, Int64 state)
-        : _owner(owner), _state(state), _is_end(_state)
+        : _owner(owner), _state(state)
     {}
 
     unsafe::Value* GeneratorExpression::ForwardIterator::operator*()

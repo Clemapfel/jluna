@@ -95,15 +95,15 @@ namespace jluna
             /// @brief dtor
             ~Task();
 
-            /// @brief copy assignment deleted
-            Task& operator=(const Task&) = delete;
-
             /// @brief copy ctor deleted
             Task(const Task&) = delete;
 
             /// @brief move ctor
             /// @param other: other task, will be unusable after
             Task(Task&& other) noexcept;
+
+            /// @brief copy assignment deleted
+            Task& operator=(const Task&) = delete;
 
             /// @brief move ctor
             /// @param other: other task, will be unusable after

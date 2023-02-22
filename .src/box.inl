@@ -41,7 +41,7 @@ namespace jluna
     }
 
     template<is<void> T>
-    unsafe::Value* box(T value)
+    unsafe::Value* box(T)
     {
         return jl_nothing;
     }
@@ -53,13 +53,13 @@ namespace jluna
     }
 
     template<is<std::bool_constant<true>> T>
-    unsafe::Value* box(T value)
+    unsafe::Value* box(T)
     {
         return jl_box_bool(true);
     }
 
     template<is<std::bool_constant<false>> T>
-    unsafe::Value* box(T value)
+    unsafe::Value* box(T)
     {
         return jl_box_bool(false);
     }

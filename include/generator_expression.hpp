@@ -92,7 +92,6 @@ namespace jluna
         private:
             const GeneratorExpression* _owner;
             Int64 _state;
-            bool _is_end = false;
     };
 }
 
