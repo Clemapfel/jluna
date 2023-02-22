@@ -1,4 +1,4 @@
-# jluna: A modern Julia <-> C++ Wrapper (v0.9.2)
+# jluna: A modern Julia <-> C++ Wrapper (v1.0.0)
 
 
 ![](./header.png)

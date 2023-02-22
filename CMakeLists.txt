@@ -26,11 +26,7 @@ Options
 
 #]=======================================================================]
 
-project(jluna VERSION 0.9.2 LANGUAGES CXX)
-
-# TODO
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-# TODO
+project(jluna VERSION 1.0.0 LANGUAGES CXX)
 
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)

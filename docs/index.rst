@@ -107,9 +107,6 @@ FAQ: Is it done / fast yet?
 Julia is feature-complete as of 0.9.0. This release also included `extensive benchmarking <./benchmarks.html>`_, quantifying
 jlunas performance and proving its capability for excellent performance. Correctness is assured through automated testing.
 
-0.9.x will be upgraded to 1.0 in winter 2022, even if no new features are implemented. This is to give the community time
-to make possible suggestions / corrections.
-
 -----
 
 
