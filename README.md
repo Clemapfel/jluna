@@ -136,6 +136,11 @@ For jluna you'll need:
 + [**cmake 3.12**](https://cmake.org/download/) (or newer)
 + C++ Compiler: [g++10](https://gcc.gnu.org/) (or newer), [clang++-12](https://releases.llvm.org/) (or newer), or [MSVC](https://visualstudio.microsoft.com/downloads/) 19.32
 
+On Unix, g++ or clang, installed using your package manager, are recommended. <br>
+On Windows, either use g++ provided by [MinGW](https://sourceforge.net/projects/mingw/) or MSVC provided by the [Visual Studio C++ build tools](https://visualstudio.microsoft.com/downloads/).
+
+In either case, make sure the compilers' version is as stated above.
+
 ---
 
 ## [Installation & Troubleshooting](https://clemens-cords.com/jluna/installation.html)
@@ -158,7 +163,7 @@ cd build
 cmake .. -DJULIA_BINDIR=$(julia -e "println(Sys.BINDIR)") -DCMAKE_CXX_COMPILER=<C++ Compiler> -DCMAKE_INSTALL_PREFIX=<install directory>
 ```
 Where
-+ `<C++ Compiler>` is one of `g++-10`, `g++-11`, `clang++-12`
++ `<C++ Compiler>` is the C++ compiler executable, e.g. `g++`, `clang++`, `cl.exe`, etc.
 + `<install directory>` is the desired install directory, omit this option to use the systems default directory
 
 Then:
