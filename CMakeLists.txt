@@ -123,7 +123,10 @@ add_library(jluna SHARED
 )
 
 target_compile_features(jluna PUBLIC cxx_std_20)
-target_compile_options(jluna PUBLIC "-fpic")
+
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(jluna PUBLIC "-fpic")
+endif()
 
 target_include_directories(jluna PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 target_link_libraries(jluna PUBLIC
