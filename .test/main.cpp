@@ -24,10 +24,9 @@ make_usertype_implicitly_convertible(NonJuliaType);
 
 int main()
 {
-    initialize(2, false, "C:/Users/cleme/Workspace/jluna/out/build/x64-Debug/jluna.dll");
+    initialize(2, false, "C:/Users/cleme/Workspace/jluna/cmake-build-debug-mingw/libjluna.dll");
 
     Test::initialize();
-
     Test::test("c_adapter found", [](){
 
         auto a = safe_eval("return jluna.cppcall.verify_library()");
@@ -1082,21 +1081,15 @@ int main()
         Test::assert_that(vec.get_n_elements() == 6 and vec.front<int>() == 999 and vec.back<int>() == 666);
     });
 
-    Test::test("C: initialize adapter", []() {
-
-    });
-
     Test::test("C: call success", []() {
 
         Main.create_or_assign("test", as_julia_function<Int64(Int64)>([](Int64 in) {
-
             return in + 11;
         }));
 
-        Main.safe_eval("@assert test(100) == 111");
+        Test::assert_that(Main.safe_eval("test(100) == 111").operator bool());
     });
-
-
+    
     Test::test("C: forward exception", []() {
 
         Main.create_or_assign("test", as_julia_function<Nothing()>([]() -> void {

@@ -67,8 +67,9 @@ namespace jluna
             initialize_lock();
             _lock->lock();
         }
-
+        gc_pause;
         jl_set_global(value(), jl_symbol(variable_name.c_str()), box<T>(new_value));
+        gc_unpause;
 
         if (detail::_num_threads != 1)
             _lock->unlock();

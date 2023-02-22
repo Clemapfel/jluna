@@ -266,6 +266,7 @@ namespace jluna
     {
         _value = std::move(other._value);
         other._value = nullptr;
+        return *this;
     }
 
     inline void Task<void>::join()

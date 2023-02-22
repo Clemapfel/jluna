@@ -28,6 +28,10 @@ Options
 
 project(jluna VERSION 0.9.2 LANGUAGES CXX)
 
+# TODO
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+# TODO
+
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)
     option(jluna_DEVELOPER_MODE "Enable developer mode" OFF)
@@ -123,6 +127,8 @@ add_library(jluna SHARED
 )
 
 target_compile_features(jluna PUBLIC cxx_std_20)
+target_compile_options(jluna PUBLIC "-fpic")
+
 target_include_directories(jluna PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 target_link_libraries(jluna PUBLIC
     "$<BUILD_INTERFACE:Julia::Julia>"
