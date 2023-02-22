@@ -147,7 +147,7 @@ namespace jluna
         if (suppress_log)
         {
             safe_eval(R"(
-                if !isdefined(Main, :jluna)
+                if !isdefined(Main, :jluna) && jluna.cppcall.verify_library()
                     print("[JULIA]")
                     Base.printstyled("[ERROR] initialization failed.\n"; color = :red)
                     throw(AssertionError(("[JULIA][ERROR] initialization failed.")))
@@ -157,7 +157,7 @@ namespace jluna
         else
         {
             safe_eval(R"(
-                if isdefined(Main, :jluna)
+                if isdefined(Main, :jluna) && jluna.cppcall.verify_library()
                     print("[JULIA][LOG] ")
                     Base.printstyled("initialization successful (" * string(Threads.nthreads()) * " thread(s)).\n"; color = :green)
                 else

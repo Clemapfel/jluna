@@ -23,34 +23,34 @@ This will have cloned the jluna git repository into the folder `Desktop/jluna`.
 
 ### Configure CMake
 
-Before building, cmake needs to be configured. You can do so using:
+Before building, CMake needs to be configured. You can do so using:
 
 ```bash
 # in Desktop/jluna/build
 cmake .. -DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
 ```
 
-Where `<compiler>` is one of:
-+ `g++-10` (or newer)
-+ `clang++-12` (or newer)
-+ `MSVC 19.30` (or newer)
+Where `<compiler>` is the path to one of the following compiler executables:
++ `g++` (Version 10 or newer)
++ `clang++` (Version 12 or newer)
++ `cl` (MSVC) (Version 19.32 or newer)
 
-and `<path>` is the desired install path, usually `/usr/local` on unix, `C:/Program Files/jluna` on Windows. Keep track of this path, as you may need it later.
+and `<path>` is the desired install path. Keep track of this path, as you may need it later.
 
 Some errors may appear here, if this is the case, head to [troubleshooting](troubleshooting.md).
 
 ### Make Install & Test
 
-Having successfully configured cmake, call:
+Having successfully configured CMake, call:
 
 ```bash
 # in Desktop/jluna/build
 make install
 ```
 
-Which will create the shared libraries `libjluna.*`, where `*` is the platform-dependent library suffix.
+Which will create the shared libraries, usually called `libjluna.so` on Unix and `jluna.dll` on Windows.
 
-You can then verify everything is working correctly by calling
+You can verify everything is working correctly by calling
 
 ```bash
 ctest --verbose
@@ -114,10 +114,10 @@ Where
 + `<julia package>` is the library/package containing the julia C-API
 + `<julia include directory>` is the folder containing `julia.h`.
 
-The shared julia library location is usually
+The shared Julia library location is usually
 + `${JULIA_BINDIR}/../lib`
 
-while the julia include directory is usually
+while the Julia include directory is usually
 + `${JULIA_BINDIR}/../include/` or
 + `${JULIA_BINDIR}/../include/julia/`
 

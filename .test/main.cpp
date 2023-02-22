@@ -24,7 +24,7 @@ make_usertype_implicitly_convertible(NonJuliaType);
 
 int main()
 {
-    initialize(2, false, "C:/Users/cleme/Workspace/jluna/cmake-build-debug-mingw/libjluna.dll");
+    initialize(2);
 
     Test::initialize();
     Test::test("c_adapter found", [](){

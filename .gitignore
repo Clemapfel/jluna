@@ -5,9 +5,6 @@
 /.vscode
 /.benchmark/results
 /.idea/
-/jluna_c_adapter.so/
-/libjluna.so
-/libjluna_c_adapter.so
 /docs/doxygen
 /docs/html
 /docs/latex
@@ -20,3 +17,5 @@ out/install
 *.vsidx
 /enc_temp_folder
 /cmake-build-debug-mingw/
+/cmake-build-debug/
+/cmake-build-debug-event-trace/
