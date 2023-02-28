@@ -83,21 +83,21 @@ int main()
     // C-API
     Benchmark::run_as_base("C-API: set", n_reps, [](){
 
-        Int64 to_box = generate_number<Int64>();
+        auto to_box = generate_number<Int64>();
         jl_set_global(jl_main_module, "x"_sym, jl_box_int64(to_box));
     });
 
     // unsafe
     Benchmark::run("unsafe: set", n_reps, [](){
 
-        Int64 to_box = generate_number<Int64>();
+        auto to_box = generate_number<Int64>();
         unsafe::set_value(jl_main_module, "x"_sym, unsafe::unsafe_box<Int64>(to_box));
     });
 
     // Module::assign
     Benchmark::run("Module::assign", n_reps / 10, [](){
 
-        Int64 to_box = generate_number<Int64>();
+        auto to_box = generate_number<Int64>();
         Main.assign("x", to_box);
     });
 
@@ -105,7 +105,7 @@ int main()
     auto x_proxy = Main["x"];
     Benchmark::run("Proxy::operator=", n_reps / 10, [&](){
 
-        Int64 to_box = generate_number<Int64>();
+        auto to_box = generate_number<Int64>();
         x_proxy = to_box;
     });
 
@@ -304,7 +304,7 @@ int main()
     // run task using std::thread
     Benchmark::run("threading: std::thread", n_reps, [&]()
     {
-        queue.emplace(std::packaged_task<void()>(task));
+        queue.emplace(task);
         queue_cv.notify_all();
         master_cv.wait(master_lock, [](){
             return queue.empty();

@@ -67,8 +67,9 @@ namespace jluna
             initialize_lock();
             _lock->lock();
         }
-
+        gc_pause;
         jl_set_global(value(), jl_symbol(variable_name.c_str()), box<T>(new_value));
+        gc_unpause;
 
         if (detail::_num_threads != 1)
             _lock->unlock();
@@ -304,5 +305,15 @@ namespace jluna
     inline Proxy Module::get(const std::string& variable_name)
     {
         return Proxy(get<unsafe::Value*>(variable_name), jl_symbol(variable_name.c_str()));
+    }
+
+    namespace detail
+    {
+        inline void initialize_modules()
+        {
+            Main = Module(jl_main_module);
+            Core = Module(jl_core_module);
+            Base = Module(jl_base_module);
+        }
     }
 }

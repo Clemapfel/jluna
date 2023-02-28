@@ -27,7 +27,7 @@ namespace jluna::detail
     inline std::string to_string(unsafe::Value* value)
     {
         static auto* string = unsafe::get_function(jl_base_module, "string"_sym);
-        return std::string(jl_string_ptr(unsafe::call(string, value)));
+        return {jl_string_ptr(unsafe::call(string, value))};
     }
 
     inline void assert_type(unsafe::DataType* type_a, unsafe::DataType* type_b)

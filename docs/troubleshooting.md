@@ -125,7 +125,7 @@ target_include_directories(<your target> PRIVATE
 Where
 
 + `<your target>` is the build target, a library or executable
-+ `<path to jluna>` is the install path of the jluna shared library, as specified via `CMAKE_INSTALL_PREFIX` during [configuration](installation.md#configure-cmake)
++ `<path to jluna>` is the installation path of the jluna shared library, as specified via `CMAKE_INSTALL_PREFIX` during [configuration](installation.md#configure-cmake)
 + `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
 
 See the [official CMake documentation](https://cmake.org/cmake/help/latest/command/target_include_directories.html) for more information.

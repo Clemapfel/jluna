@@ -22,10 +22,10 @@ namespace jluna::detail
         {
             public:
                 AssertionException(const std::string& s)
-                        : message(s)
+                    : message(s)
                 {}
 
-                virtual const char* what() const noexcept override final
+                const char* what() const noexcept final
                 {
                     return message.c_str();
                 }
@@ -35,7 +35,7 @@ namespace jluna::detail
         };
 
         template<typename Lambda_t>
-        static void test(const std::string name, Lambda_t&& lambda)
+        static void test(const std::string& name, Lambda_t&& lambda)
         {
             std::cout << name << ": ";
 
@@ -48,7 +48,7 @@ namespace jluna::detail
             {
                 lambda();
             }
-            catch (const AssertionException& e)
+            catch (const AssertionException&)
             {
                 failed = true;
                 what = "Test::assertion failed";
@@ -62,7 +62,7 @@ namespace jluna::detail
             std::cout.clear();
             std::cerr.clear();
 
-            if (failed == false)
+            if (not failed)
                 std::cout << "[OK]";
             else
             {
@@ -94,7 +94,7 @@ namespace jluna::detail
                 std::cout << "|_________________________________\n\n" << std::endl;
             }
 
-            return _failed.size() == 0;
+            return _failed.empty();
         }
 
         static void assert_that(bool b)
@@ -111,7 +111,7 @@ namespace jluna::detail
             {
                 lambda();
             }
-            catch (Exception_t& e)
+            catch (Exception_t&)
             {
                 thrown = true;
             }

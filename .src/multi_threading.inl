@@ -11,15 +11,15 @@ namespace jluna
         struct TaskValue : public detail::TaskSuper
         {
             friend class jluna::ThreadPool;
-            TaskValue(size_t);
+            explicit TaskValue(size_t);
             ~TaskValue();
 
             void free() override;
             void initialize(std::function<unsafe::Value*()>*);
 
-            unsafe::Value* _value;
-            size_t _value_id;
-            size_t _threadpool_id;
+            unsafe::Value* _value = nullptr;
+            size_t _value_id = -1;
+            size_t _threadpool_id = -1;
             std::unique_ptr<Future<Result_t>> _future;
         };
     }
@@ -125,7 +125,7 @@ namespace jluna
     }
 
     template<typename T>
-    Task<T>::Task(Task&& other)
+    Task<T>::Task(Task&& other) noexcept
     {
         _value = std::move(other._value);
         other._value = nullptr;
@@ -141,7 +141,7 @@ namespace jluna
     }
 
     template<typename T>
-    Task<T>& Task<T>::operator=(Task&& other)
+    Task<T>& Task<T>::operator=(Task&& other) noexcept
     {
         _value = std::move(other._value);
         other._value = nullptr;
@@ -220,8 +220,8 @@ namespace jluna
 
             Task& operator=(const Task&) = delete;
             Task(const Task&) = delete;
-            Task(Task&& other);
-            Task& operator=(Task&& other);
+            Task(Task&& other) noexcept;
+            Task& operator=(Task&& other) noexcept;
 
             operator unsafe::Value*();
             void join();
@@ -235,7 +235,7 @@ namespace jluna
             Task(detail::TaskValue<unsafe::Value*>*);
 
         private:
-            detail::TaskValue<unsafe::Value*>* _value; // lifetime managed by threadpool
+            detail::TaskValue<unsafe::Value*>* _value = nullptr; // lifetime managed by threadpool
     };
 
     inline Task<void>::Task(detail::TaskValue<unsafe::Value*>* value)
@@ -248,7 +248,7 @@ namespace jluna
             ThreadPool::free(_value->_threadpool_id);
     }
 
-    inline Task<void>::Task(Task&& other)
+    inline Task<void>::Task(Task&& other) noexcept
     {
         _value = std::move(other._value);
         other._value = nullptr;
@@ -262,10 +262,11 @@ namespace jluna
             return _value->_value;
     }
 
-    inline Task<void>& Task<void>::operator=(Task&& other)
+    inline Task<void>& Task<void>::operator=(Task&& other) noexcept
     {
         _value = std::move(other._value);
         other._value = nullptr;
+        return *this;
     }
 
     inline void Task<void>::join()

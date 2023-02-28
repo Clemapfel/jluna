@@ -248,7 +248,7 @@ RGBA(1.0f0, 0.0f0, 1.0f0, 1.0f0)
 ```
 > **Julia Hint**: `Base.fieldnames` takes a type (not an instance of a type) and returns the symbols of a types fields, in order.
 
-We see that now, `Main.RGBA` is a proper Julia type and `jl_rgba` got the correct values according to each fields boxing / unboxing routine.
+We see that now, `Main.RGBA` is a proper Julia type and `jl_rgba` got the correct values according to each field's boxing / unboxing routine.
 
 The same applies when moving `Main.RGBA` from Julia to C++:
 

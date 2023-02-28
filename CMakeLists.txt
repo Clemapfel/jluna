@@ -26,7 +26,7 @@ Options
 
 #]=======================================================================]
 
-project(jluna VERSION 0.9.2 LANGUAGES CXX)
+project(jluna VERSION 1.0.0 LANGUAGES CXX)
 
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)
@@ -44,12 +44,15 @@ find_package(Threads)
 
 ### Configure Files ###
 
-set(SHARED_LIBARY_NAME "${CMAKE_INSTALL_PREFIX}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna${CMAKE_SHARED_LIBRARY_SUFFIX}")
+set(SHARED_LIBRARY_NAME "${CMAKE_INSTALL_PREFIX}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
-file(READ
-    include/julia/jluna.jl
-    JLUNA_JULIA_SOURCE
-)
+# c.f. .src/include_julia.inl.in
+file(READ include/julia/jluna_01.jl JLUNA_01)
+file(READ include/julia/jluna_02.jl JLUNA_02)
+file(READ include/julia/jluna_03.jl JLUNA_03)
+file(READ include/julia/jluna_04.jl JLUNA_04)
+file(READ include/julia/jluna_05.jl JLUNA_05)
+file(READ include/julia/jluna_06.jl JLUNA_06)
 
 configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
 
@@ -120,15 +123,19 @@ add_library(jluna SHARED
 )
 
 target_compile_features(jluna PUBLIC cxx_std_20)
+
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(jluna PUBLIC "-fpic")
+endif()
+
 target_include_directories(jluna PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 target_link_libraries(jluna PUBLIC
     "$<BUILD_INTERFACE:Julia::Julia>"
     "$<BUILD_INTERFACE:Threads::Threads>"
 )
 
-### HACK: export all symbols on Windows ###
 set_target_properties(jluna PROPERTIES
-    WINDOWS_EXPORT_ALL_SYMBOLS YES # TODO
+    WINDOWS_EXPORT_ALL_SYMBOLS "YES" # TODO: Why is this necessary?
     VERSION "${PROJECT_VERSION}"
     SOVERSION "${PROJECT_VERSION}"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_INSTALL_PREFIX}"
@@ -168,7 +175,7 @@ endif()
 ### Declare Benchmark ###
 
 option(BUILD_BENCHMARK "Enable jluna_benchmark" OFF)
-if (BUILD_BENCHMARK) # AND NOT WIN32)
+if (BUILD_BENCHMARK)
     add_executable(
         jluna_benchmark
         .benchmark/main.cpp

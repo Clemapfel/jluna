@@ -1,6 +1,6 @@
 ## Performance Optimization
 
-The `unsafe` libraries biggest draw is that of increased performance. So far, readers just had to trust the author that `unsafe` was actually much faster. In this section, this will be verified empirically using **benchmarks**.
+The `unsafe` libraries' biggest draw is that of increased performance. So far, readers just had to trust the author that `unsafe` was actually much faster. In this section, this will be verified empirically using **benchmarks**.
 
 > **Hint**: Benchmarking is the process of running a piece of codes many times, recording the time it takes to finish during each cycle. If benchmarks are well-designed, we can calculate how much slower or faster a specific function is by comparing their runtimes to each other.
 
@@ -93,7 +93,7 @@ Note that one of jlunas design goals was for any function in the `unsafe` librar
 
 ### Benchmark: Accessing Julia-side Values
 
-One of the most basic tasks in jluna is getting the value of a Julia-side object. This can be accomplished in many different ways, some of which are listed here:
+One of the most basic tasks in jluna is getting the value of a Julia-side object. This can be accomplished in many ways, some of which are listed here:
 
 ```cpp
 // number of cycles

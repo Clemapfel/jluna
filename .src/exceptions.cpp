@@ -12,7 +12,7 @@
 
 namespace jluna
 {
-    JuliaException::JuliaException(jl_value_t* exception, std::string stacktrace)
+    JuliaException::JuliaException(jl_value_t* exception, const std::string& stacktrace)
         : _value(exception), _message("[JULIA][EXCEPTION] " + stacktrace)
     {}
 

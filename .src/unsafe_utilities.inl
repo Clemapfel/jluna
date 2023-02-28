@@ -5,12 +5,22 @@
 
 namespace jluna::unsafe
 {
+    #ifdef _MSC_VER
+        // silence false positive conversion warning on MSVC
+        #pragma warning(push)
+        #pragma warning(disable:4267)
+    #endif
+
     template<is_julia_value_pointer... Args_t>
     unsafe::Value* call(Function* function, Args_t... args)
     {
         std::array<jl_value_t*, sizeof...(Args_t)> wrapped = {(unsafe::Value*) args...};
         return jl_call(function, wrapped.data(), wrapped.size());
     }
+
+    #ifdef _MSC_VER
+        #pragma warning(pop)
+    #endif
 
     template<is_julia_value_pointer... Args_t>
     unsafe::Value* call(DataType* type, Args_t... args)
@@ -27,33 +37,37 @@ namespace jluna::unsafe
 
     namespace detail
     {
+        inline bool gc_initialized = false;
+
         inline std::nullptr_t gc_init()
         {
-            static bool initialized = false;
-
-            if (initialized)
+            if (gc_initialized)
                 return nullptr;
 
             jl_eval_string(R"(
-                __jluna_heap = Dict{UInt64, Base.RefValue{Any}}();
-                __jluna_heap_index = Base.RefValue(UInt64(0));
-                const __jluna_heap_lock = Base.ReentrantLock()
+                if !isdefined(Main, :__jluna_heap) 
 
-                function __jluna_add_to_heap(ptr::UInt64)
-                    lock(__jluna_heap_lock)
-                    global __jluna_heap_index[] += 1
-                    __jluna_heap[__jluna_heap_index[]] = Ref{Any}(unsafe_pointer_to_objref(Ptr{Any}(ptr)))
-                    unlock(__jluna_heap_lock);
-                    return __jluna_heap_index[];
-                end
+                    const __jluna_heap = Dict{UInt64, Base.RefValue{Any}}();
+                    const __jluna_heap_index = Base.RefValue(UInt64(0));
+                    const __jluna_heap_lock = Base.ReentrantLock()
 
-                function __jluna_delete_from_heap(ptr::UInt64)
-                    lock(__jluna_heap_lock)
-                    delete!(__jluna_heap, ptr)
-                    unlock(__jluna_heap_lock);
+                    function __jluna_add_to_heap(ptr::UInt64)
+                        lock(__jluna_heap_lock)
+                        global __jluna_heap_index[] += 1
+                        __jluna_heap[__jluna_heap_index[]] = Ref{Any}(unsafe_pointer_to_objref(Ptr{Any}(ptr)))
+                        unlock(__jluna_heap_lock);
+                        return __jluna_heap_index[];
+                    end
+
+                    function __jluna_delete_from_heap(ptr::UInt64)
+                        lock(__jluna_heap_lock)
+                        delete!(__jluna_heap, ptr)
+                        unlock(__jluna_heap_lock);
+                    end
                 end
             )");
-            initialized = true;
+
+            detail::gc_initialized = true;
             return nullptr;
         }
     }
@@ -65,13 +79,7 @@ namespace jluna::unsafe
         bool before = jl_gc_is_enabled();
         jl_gc_enable(false);
 
-        static bool initialized = false;
-
-        if (not initialized)
-        {
-            detail::gc_init();
-            initialized = true;
-        }
+        detail::gc_init();
 
         static unsafe::Function* jluna_add_to_heap = get_function(jl_main_module, "__jluna_add_to_heap"_sym);
 
@@ -153,7 +161,7 @@ namespace jluna::unsafe
         size_t index = 0;
         size_t mul = 1;
 
-        for (size_t i = 0; i < array->flags.ndims; ++i)
+        for (size_t i = 0; i < static_cast<size_t>(array->flags.ndims); ++i)
         {
             index += (indices.at(i)) * mul;
             size_t dim = jl_array_dim(array, i);
@@ -180,7 +188,7 @@ namespace jluna::unsafe
         size_t index = 0;
         size_t mul = 1;
 
-        for (size_t i = 0; i < array->flags.ndims; ++i)
+        for (size_t i = 0; i < static_cast<size_t>(array->flags.ndims); ++i)
         {
             index += (indices.at(i)) * mul;
             size_t dim = jl_array_dim(array, i);

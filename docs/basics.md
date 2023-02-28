@@ -143,7 +143,7 @@ Where `Int64` is a type alias of `long int`. Most of the C++ primitive types hav
 
 While the general case will be explained later, for now, be aware that **we have to manually specify the type** of the C++-side variable that captures the result, rather than using `auto`. In the example above, we used `Int64`.
 
-> **C++ Hint**: `auto` is a keyword that asks the compiler to automatically deduce the type of a variable at compile time.
+> **C++ Hint**: `auto` is a keyword that asks the compiler to automatically deduce the type of variable at compile time.
 
 If the result of a Julia-side expression is of a different type than the declared C++-side variable, jluna will try to convert the result, such that its type matches the declared C++-side type:
 

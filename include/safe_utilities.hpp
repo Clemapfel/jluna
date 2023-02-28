@@ -34,7 +34,7 @@ namespace jluna
     /// @param args: arguments, either need to be already Julia-side or boxable
     /// @returns result
     template<is_julia_value_pointer... Args_t>
-    unsafe::Value* safe_call(unsafe::Function* function, Args_t... args);
+    unsafe::Value* safe_call(unsafe::Function* function, Args_t...);
 
     /// @brief evaluate string with exception forwarding
     /// @param string: code as string

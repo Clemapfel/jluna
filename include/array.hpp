@@ -163,7 +163,7 @@ namespace jluna
 
         private:
             void throw_if_index_out_of_range(int index, size_t dimension) const;
-            size_t get_dimension(int) const;
+            size_t get_dimension(size_t) const;
 
         public:
             /// @brief non-assignable iterator

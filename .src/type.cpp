@@ -11,7 +11,7 @@ namespace jluna
     Type::Type() = default;
 
     Type::Type(jl_datatype_t* value)
-        : Proxy((unsafe::Value*) value, (value->name == NULL ? jl_symbol("Union{}") : value->name->name))
+        : Proxy((unsafe::Value*) value, (value->name == nullptr ? jl_symbol("Union{}") : value->name->name))
     {}
 
     Type::Type(Proxy* owner)
@@ -23,7 +23,7 @@ namespace jluna
     Type Type::unroll() const
     {
         static jl_function_t* unroll = unsafe::get_function("jluna"_sym, "unroll_type"_sym);
-        return Type((jl_datatype_t*) jluna::safe_call(unroll, get()));
+        return {(jl_datatype_t*) jluna::safe_call(unroll, get())};
     }
 
     Type::operator jl_datatype_t*()
@@ -38,7 +38,7 @@ namespace jluna
 
     Type Type::get_super_type() const
     {
-        return Type(get()->super);
+        return {get()->super};
     }
 
     Symbol Type::get_symbol() const

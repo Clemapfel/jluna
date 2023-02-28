@@ -16,31 +16,31 @@ namespace jluna
             retry:
 
             if (jl_isa(in, (unsafe::Value*) jl_bool_type))
-                return jl_unbox_bool(in);
+                return static_cast<T>(jl_unbox_bool(in));
             else if (jl_isa(in, (unsafe::Value*) jl_int8_type))
-                return jl_unbox_int8(in);
+                return static_cast<T>(jl_unbox_int8(in));
             else if (jl_isa(in, (unsafe::Value*) jl_int16_type))
-                return jl_unbox_int16(in);
+                return static_cast<T>(jl_unbox_int16(in));
             else if (jl_isa(in, (unsafe::Value*) jl_int32_type))
-                return jl_unbox_int32(in);
+                return static_cast<T>(jl_unbox_int32(in));
             else if (jl_isa(in, (unsafe::Value*) jl_int64_type))
-                return jl_unbox_int64(in);
+                return static_cast<T>(jl_unbox_int64(in));
             else if (jl_isa(in, (unsafe::Value*) jl_uint8_type))
-                return jl_unbox_uint8(in);
+                return static_cast<T>(jl_unbox_uint8(in));
             else if (jl_isa(in, (unsafe::Value*) jl_uint16_type))
-                return jl_unbox_uint16(in);
+                return static_cast<T>(jl_unbox_uint16(in));
             else if (jl_isa(in, (unsafe::Value*) jl_uint32_type))
-                return jl_unbox_uint32(in);
+                return static_cast<T>(jl_unbox_uint32(in));
             else if (jl_isa(in, (unsafe::Value*) jl_uint64_type))
-                return jl_unbox_uint64(in);
+                return static_cast<T>(jl_unbox_uint64(in));
             else if (jl_isa(in, (unsafe::Value*) jl_float32_type))
-                return jl_unbox_float32(in);
+                return static_cast<T>(jl_unbox_float32(in));
             else if (jl_isa(in, (unsafe::Value*) jl_float64_type))
-                return jl_unbox_float64(in);
+                return static_cast<T>(jl_unbox_float64(in));
             else if (jl_isa(in, (unsafe::Value*) jl_float16_type))
-                return jl_unbox_float32(detail::convert(jl_float32_type, in));
+                return static_cast<T>(jl_unbox_float32(detail::convert(jl_float32_type, in)));
             else if (jl_isa(in, (unsafe::Value*) jl_char_type))
-                return jl_unbox_int32(detail::convert(jl_int32_type, in));
+                return static_cast<T>(jl_unbox_int32(detail::convert(jl_int32_type, in)));
             else
             {
                 if (not first_attempt)
@@ -186,7 +186,7 @@ namespace jluna
     T unbox(unsafe::Value* value)
     {
         gc_pause;
-        static jl_datatype_t* type = (jl_datatype_t*) jl_eval_string(("return " + as_julia_type<std::complex<Value_t>>::type_name).c_str());
+        static auto* type = (jl_datatype_t*) jl_eval_string(("return " + as_julia_type<std::complex<Value_t>>::type_name).c_str());
         auto* res = detail::convert(type, value);
 
         auto* re = jl_get_nth_field(res, 0);
@@ -201,7 +201,7 @@ namespace jluna
     T unbox(unsafe::Value* value)
     {
         gc_pause;
-        jl_array_t* in = (jl_array_t*) value;
+        auto* in = (jl_array_t*) value;
 
         std::vector<Value_t> out;
         out.reserve(in->length);
@@ -266,7 +266,7 @@ namespace jluna
     {
         gc_pause;
         static jl_function_t* serialize = unsafe::get_function("jluna"_sym, "serialize"_sym);
-        jl_array_t* as_array = (jl_array_t*) jl_call1(serialize, value);
+        auto* as_array = (jl_array_t*) jl_call1(serialize, value);
 
         T out;
         for (size_t i = 0; i < jl_array_len(as_array); ++i)
@@ -298,7 +298,7 @@ namespace jluna
         }
 
         template<typename Tuple_t, typename Value_t, std::size_t... is>
-        void unbox_tuple_aux(Tuple_t& tuple, unsafe::Value* value, std::index_sequence<is...> _)
+        void unbox_tuple_aux(Tuple_t& tuple, unsafe::Value* value, std::index_sequence<is...>)
         {
             (unbox_tuple_aux_aux<Tuple_t, Value_t, is>(tuple, value), ...);
         }
@@ -312,7 +312,7 @@ namespace jluna
         }
 
         template<typename... Ts>
-        std::tuple<Ts...> unbox_tuple_pre(unsafe::Value* v, std::tuple<Ts...> _)
+        std::tuple<Ts...> unbox_tuple_pre(unsafe::Value* v, std::tuple<Ts...>)
         {
             return unbox_tuple<Ts...>(v);
         }

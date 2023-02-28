@@ -1,6 +1,6 @@
 # Specialized Proxies: Modules
 
-We have already used `jluna::Module` (`Module` henceforth) in limited ways before, it is now time to learn about all its features. While non-module proxies are capable of manipulation the Julia state, most of `Module`s member functions [are more optimized](benchmarks.md#performance-evaluation-summary) for this purpose and should be preferred. Correct use of `Module` is central to any application using jluna.
+We have already used `jluna::Module` (`Module` henceforth) in limited ways before, it is now time to learn about all its features. While non-module proxies are capable of manipulation the Julia state, most of `Module`s member functions [are more optimized](benchmarks.md#performance-evaluation--summary) for this purpose and should be preferred. Correct use of `Module` is central to any application using jluna.
 
 ### Assign in Module
 
@@ -20,7 +20,7 @@ Module M = Main.safe_eval("return M");
 
 We've already seen that we can modify this variable using `M.safe_eval`, however, this is fairly slow performance-wise. This is, because we force Julia to `Meta.parse`, then `eval` the `"return M"`.
 
-`Module::assign` [is much faster](benchmarks.md#mutating-julia-side-variables-results):
+`Module::assign` [is much faster](benchmarks.md#mutating-julia-side-variables--results):
 
 ```cpp
 // works but slow:

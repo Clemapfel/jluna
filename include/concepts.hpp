@@ -224,10 +224,8 @@ namespace jluna
     namespace detail
     {
         template<typename T, size_t... Ns>
-        constexpr bool is_tuple_aux(std::index_sequence<Ns...> _)
+        constexpr bool is_tuple_aux(std::index_sequence<Ns...>)
         {
-            if (false) _ = _; // silence unused arg warning
-
             return std::is_same_v<T, std::tuple<std::tuple_element_t<Ns, T>...>>;
         }
     }

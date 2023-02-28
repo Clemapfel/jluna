@@ -9,7 +9,6 @@
 #include <include/box.hpp>
 #include <chrono>
 #include <.src/cppcall.inl>
-#include <hashtable.h>
 
 using namespace jluna;
 using namespace jluna::detail;
@@ -26,8 +25,8 @@ make_usertype_implicitly_convertible(NonJuliaType);
 int main()
 {
     initialize(2);
-    Test::initialize();
 
+    Test::initialize();
     Test::test("c_adapter found", [](){
 
         auto a = safe_eval("return jluna.cppcall.verify_library()");
@@ -275,8 +274,8 @@ int main()
         unsafe::swap_array_data(arr01, arr02);
         for (size_t i = 0; i < 25; ++i)
         {
-            Test::assert_that(jl_unbox_int64(jl_arrayref(arr01, i)) == -(i + 1));
-            Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == +(i + 1));
+            Test::assert_that(jl_unbox_int64(jl_arrayref(arr01, i)) == -(static_cast<Int64>(i + 1)));
+            Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == +(static_cast<Int64>(i + 1)));
         }
 
         unsafe::gc_release(id_1);
@@ -302,6 +301,7 @@ int main()
 
     Test::test("unsafe: resize_array: reshape", []()
     {
+        gc_pause;
         jl_array_t * arr = (jl_array_t*) jl_eval_string("return [i for i in 1:(5*5*5)]");
         size_t id1 = unsafe::gc_preserve(arr);
 
@@ -320,6 +320,8 @@ int main()
 
         for (size_t id : {id1, id2, id3})
             unsafe::gc_release(id);
+
+        gc_unpause;
     });
 
     Test::test("unsafe: resize_array: grow", []() {
@@ -430,7 +432,7 @@ int main()
     test_box_unbox("Complex", std::complex<double>(0, 1));
 
     test_box_unbox("Pair", std::pair<size_t, std::string>(12, "abc"));
-    test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(12, "abc", 0.01));
+    test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(size_t(12), "abc", 0.01f));
     test_box_unbox("Symbol", jluna::Symbol("abc"));
 
     auto test_box_unbox_iterable = []<typename T>(const std::string& name, T&& value) {
@@ -812,7 +814,7 @@ int main()
         {
             first = 'b';
         }
-        catch (JuliaException& e)
+        catch (JuliaException&)
         {
             thrown = true;
         }
@@ -840,7 +842,7 @@ int main()
         {
             field = 456;
         }
-        catch (JuliaException& e)
+        catch (JuliaException&)
         {
             thrown = true;
         }
@@ -926,11 +928,11 @@ int main()
             args.push_back(jl_box_uint64(b));
             args.push_back(jl_box_uint64(c));
 
-            return jl_unbox_int64(jl_call(_getindex, args.data(), args.size()));
+            return jl_unbox_uint64(jl_call(_getindex, args.data(), args.size()));
         };
 
-        Test::assert_that(getindex(1, 2, 3) == (size_t) vec.at(0, 1, 2));
-        Test::assert_that(getindex(3, 3, 3) == (size_t) vec.at(2, 2, 2));
+        Test::assert_that(getindex(1, 2, 3) == static_cast<size_t>(vec.at(0, 1, 2)));
+        Test::assert_that(getindex(3, 3, 3) == static_cast<size_t>(vec.at(2, 2, 2)));
     });
 
     Test::test("array: out of range", []() {
@@ -1079,21 +1081,15 @@ int main()
         Test::assert_that(vec.get_n_elements() == 6 and vec.front<int>() == 999 and vec.back<int>() == 666);
     });
 
-    Test::test("C: initialize adapter", []() {
-
-    });
-
     Test::test("C: call success", []() {
 
         Main.create_or_assign("test", as_julia_function<Int64(Int64)>([](Int64 in) {
-
             return in + 11;
         }));
 
-        Main.safe_eval("@assert test(100) == 111");
+        Test::assert_that(Main.safe_eval("test(100) == 111").operator bool());
     });
-
-
+    
     Test::test("C: forward exception", []() {
 
         Main.create_or_assign("test", as_julia_function<Nothing()>([]() -> void {
@@ -1130,7 +1126,7 @@ int main()
                 else
                     Main.safe_eval("cppcall(:" + e + ")");
             }
-            catch (JuliaException& e)
+            catch (JuliaException&)
             {
                 thrown = true;
             }

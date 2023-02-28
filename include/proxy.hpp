@@ -203,7 +203,7 @@ namespace jluna
             /// @brief access field
             /// @param symbol: name of field
             /// @returns pointer to field data
-            unsafe::Value* get_field(jl_sym_t*);
+            unsafe::Value* get_field(jl_sym_t*) const;
 
             /// @brief owner
             std::shared_ptr<ProxyValue> _owner;
@@ -211,8 +211,8 @@ namespace jluna
             /// @brief points to julia-side variable
             const bool _is_mutating = true;
 
-            size_t _id_key;
-            size_t _value_key;
+            size_t* _id_key = new size_t(0);
+            size_t* _value_key = new size_t(0);
 
             mutable unsafe::Value* _id_ref;
             mutable unsafe::Value* _value_ref;

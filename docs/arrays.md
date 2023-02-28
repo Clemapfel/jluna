@@ -71,7 +71,7 @@ array_1d: [1, 2, 3, 4, 5]
 array_2d: [1 4 7; 2 5 8; 3 6 9]
 ```
 
-Where `jluna::safe_eval` is faster version of `Main.safe_eval`, as it returns a pointer to Julia-side values, not a proxy. Because we are binding the result to a proxy  (`jluna::Array`) anyway, `jluna::safe_eval` is the better choice in this situation. For more information, visit the section on [performance optimization tips](benchmarks.md#performance-evaluation-summary).
+Where `jluna::safe_eval` is faster version of `Main.safe_eval`, as it returns a pointer to Julia-side values, not a proxy. Because we are binding the result to a proxy  (`jluna::Array`) anyway, `jluna::safe_eval` is the better choice in this situation. For more information, visit the section on [performance optimization tips](benchmarks.md#performance-evaluation--summary).
 
 We created two arrays, a `Base.Array{Int64, 1}` bound to the C++-side array proxy `array_1d`, as well as a `Base.Array{Int64, 2}`, bound to `array_2d`.
 
@@ -143,7 +143,7 @@ cpp: 4
 jl : 3
 ```
 
-C++ indices are 0-based, this means `array[3]` will give use the `(3 - 0)`th element, which for our vector is `4`. In Julia, indices are 1-based, meaning `getindex(array, 3)` will gives us the `(3 - 1)`th element, which is `3`.
+C++ indices are 0-based, this means `array[3]` will give use the `(3 - 0)`th element, which for our vector is `4`. In Julia, indices are 1-based, meaning `getindex(array, 3)` will give us the `(3 - 1)`th element, which is `3`.
 
 The following table illustrates how to translate C++-side indexing into Julia-side indexing:
 

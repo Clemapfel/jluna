@@ -80,7 +80,7 @@ namespace jluna
     {}
 
     template<is_boxable T, size_t Rank>
-    size_t Array<T, Rank>::get_dimension(int index) const
+    size_t Array<T, Rank>::get_dimension(size_t index) const
     {
         return jl_array_dim(this->operator unsafe::Array*(), index);
     }
@@ -214,6 +214,12 @@ namespace jluna
         return operator[]<T>(index);
     }
 
+    #ifdef _MSC_VER
+        // silence false positive conversion warning on MSVC
+        #pragma warning(push)
+        #pragma warning(disable:4267)
+    #endif
+
     template<is_boxable V, size_t R>
     template<typename... Args, std::enable_if_t<sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
     auto Array<V, R>::at(Args... in)
@@ -236,6 +242,10 @@ namespace jluna
 
         return operator[](index);
     }
+
+    #ifdef _MSC_VER
+        #pragma warning(pop)
+    #endif
 
     template<is_boxable V, size_t R>
     template<is_boxable T>
@@ -278,7 +288,7 @@ namespace jluna
     template<is_unboxable T>
     T Array<V, R>::front() const
     {
-        return operator[](0);
+        return static_cast<T>(operator[](0));
     }
 
     template<is_boxable V, size_t R>

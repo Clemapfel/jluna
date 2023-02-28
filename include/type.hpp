@@ -32,7 +32,7 @@ namespace jluna
 
             /// @brief unroll type as much as possible
             /// @returns unrolled type
-            Type unroll() const;
+            [[nodiscard]] Type unroll() const;
 
             /// @brief get direct super type
             /// @returns type

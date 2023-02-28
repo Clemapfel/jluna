@@ -28,11 +28,11 @@ namespace jluna
 
             /// @brief get iterator to front of range
             /// @returns iterator
-            ForwardIterator begin() const;
+            [[nodiscard]] ForwardIterator begin() const;
 
             /// @brief get iterator to past-the-end element
             /// @returns iterator
-            ForwardIterator end() const;
+            [[nodiscard]] ForwardIterator end() const;
 
             /// @brief get length of iterable component
             size_t size() const;
@@ -92,7 +92,6 @@ namespace jluna
         private:
             const GeneratorExpression* _owner;
             Int64 _state;
-            bool _is_end = false;
     };
 }
 

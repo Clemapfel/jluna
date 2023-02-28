@@ -21,50 +21,53 @@ cd build
 
 This will have cloned the jluna git repository into the folder `Desktop/jluna`.
 
+> **Tip**: If you are using an IDE like VisualStudio, Atom, or CLion and your compilers are up-to-date, simply create a new project by cloning jluna, then have your IDE automatically configure, build, and install jluna for you. If this fails for whatever reason and you're unable to solve it in your IDE, continue onto manual installation below instead
+
 ### Configure CMake
 
-Before building, cmake needs to be configured. You can do so using:
+Before building, CMake needs to be configured. You can do so using:
 
 ```bash
 # in Desktop/jluna/build
 cmake .. -DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
 ```
 
-Where `<compiler>` is one of:
-+ `g++-10` (or newer)
-+ `clang++-12` (or newer)
-+ `MSVC 19.30` (or newer)
+Where `<compiler>` is the path to one of the following compiler executables:
++ `g++` (Version 10 or newer)
++ `clang++` (Version 12 or newer)
++ `cl` (MSVC) (Version 19.32 or newer)
 
-and `<path>` is the desired install path, usually `/usr/local` on unix, `C:/Program Files/jluna` on Windows. Keep track of this path, as you may need it later.
+and `<path>` is the desired install path. Keep track of this path, as you may need it later.
 
 Some errors may appear here, if this is the case, head to [troubleshooting](troubleshooting.md).
 
 ### Make Install & Test
 
-Having successfully configured cmake, call:
+Having successfully configured CMake, call:
 
 ```bash
 # in Desktop/jluna/build
 make install
 ```
 
-Which will create the shared libraries `libjluna.*`, where `*` is the platform-dependent library suffix.
+Which will create the shared libraries, usually called `libjluna.so` on Unix and `jluna.dll` on Windows.
 
-You can then verify everything is working correctly by calling
+We can verify everything works by calling 
 
 ```bash
+# in Desktop/jluna/build
 ctest --verbose
 ```
 
-This will print a number of lines to the console. Make sure that at the very end, it says:
+Which will produce a lot of text output. At the very end, it should say:
 
 ```
-1: 
-1: Number of tests unsuccessful: 0
-1/1 Test #1: jluna_test .......................   Passed    4.65 sec
+Number of tests unsuccessful: 0
 
-100% tests passed, 0 tests failed out of 1
+Process finished with exit code 0
 ```
+
+Which means jluna is working and ready to be used!
 
 ### Linking
 
@@ -114,10 +117,10 @@ Where
 + `<julia package>` is the library/package containing the julia C-API
 + `<julia include directory>` is the folder containing `julia.h`.
 
-The shared julia library location is usually
+The shared Julia library location is usually
 + `${JULIA_BINDIR}/../lib`
 
-while the julia include directory is usually
+while the Julia include directory is usually
 + `${JULIA_BINDIR}/../include/` or
 + `${JULIA_BINDIR}/../include/julia/`
 

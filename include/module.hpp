@@ -265,7 +265,7 @@ namespace jluna
             jl_module_t* value() const;
 
             void initialize_lock();
-            Mutex* _lock;
+            Mutex* _lock = nullptr;
     };
 
     /// @brief Proxy of singleton Main, initialized by State::initialize

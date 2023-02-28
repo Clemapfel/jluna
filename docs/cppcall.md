@@ -1,10 +1,10 @@
 ## Calling C++ Functions from Julia
 
-We've seen how to call Julia functions from C++. Despite being more of a Julia-wrapper for C++ than a C++-wrapper for Julia, in jluna, calling C++ functions from Julia is actually just as convenient and [performant](benchmarks.md#calling-c-functions-from-julia-results).
+We've seen how to call Julia functions from C++. Despite being more of a Julia-wrapper for C++ than a C++-wrapper for Julia, in jluna, calling C++ functions from Julia is actually just as convenient and [performant](benchmarks.md#calling-c-functions-from-julia--results).
 
 To call a C++ function, we need to assign to a Julia-side variable, a **lambda**.
 
-> **C++ Hint**: Lambdas are C++s anonymous function objects. Before continuing with this section, it is recommend to read up on the basics of lambdas [here](https://docs.microsoft.com/en-us/cpp/cpp/lambda-expressions-in-cpp). Users are expected to know about basic syntax, trailing return types and capture clauses from this point onward.
+> **C++ Hint**: Lambdas are C++s anonymous function objects. Before continuing with this section, it is recommended to read up on the basics of lambdas [here](https://docs.microsoft.com/en-us/cpp/cpp/lambda-expressions-in-cpp). Users are expected to know about basic syntax, trailing return types and capture clauses from this point onward.
 
 ### Creating a Function Object
 
@@ -19,7 +19,7 @@ auto add = [](Int64 a, Int64 b) -> Int64
 
 This function has the signature `(Int64, Int64) -> Int64`.
 
-When interfacing with jluna, we should always manually specify the trailing return type of a lambda using `->`. We should never use `auto`, either for the lambdas return- or any of the argument-types.
+When interfacing with jluna, we should always manually specify the trailing return type of lambda using `->`. We should never use `auto`, either for the lambdas return- or any of the argument-types.
 
 To make this function available to Julia, we use `as_julia_function`.
 + the argument of `as_julia_function` is a lambda or `std::function` object
@@ -29,7 +29,7 @@ To make this function available to Julia, we use `as_julia_function`.
 
 Because `add` has the signature `(Int64, Int64) -> Int64`, we use `as_julia_function<Int64(Int64, Int64)>`.
 
-> **C++ Hint**: `std::function` and thus `as_julia_function` uses the C-style syntax for a functions signature. A function with return-type `R` and argument types `T1, T2, ..., Tn` has the signature `(T1, T2, ..., Tn) -> R`, or `R(T1, T2, ..., Tn)` in C-style.
+> **C++ Hint**: `std::function` and thus `as_julia_function` uses the C-style syntax for a functions' signature. A function with return-type `R` and argument types `T1, T2, ..., Tn` has the signature `(T1, T2, ..., Tn) -> R`, or `R(T1, T2, ..., Tn)` in C-style.
 
 We can then assign the result of `as_julia_function` to a Julia variable like so:
 
@@ -69,8 +69,8 @@ Not all function signatures are supported for `as_julia_function`. Its argument 
 ```
 
 Where
-+ `T_r` is `void` or [unboxable](proxies.md#unboxable-types)
-+ `T1`, `T2`, `T3` are  [boxable](proxies.md#unboxable-types)
++ `T_r` is `void` or [unboxable](proxies.md#-un--boxable-types)
++ `T1`, `T2`, `T3` are  [boxable](proxies.md#-un--boxable-types)
 
 This may seem limiting at first, how could we execute arbitrary C++ code when we are only allowed to use functions with a maximum of three arguments using only (Un)Boxable types? The next sections will answer this question.
 
@@ -161,7 +161,7 @@ If we want our lambda to take any number of *differently-typed* arguments, we ca
 
 ### Using Non-Julia Objects
 
-We now know how to work around the restriction on the number of arguments, but what about the types? Not all types are [(Un)Boxable](proxies.md#unboxable-types), but this does not mean we cannot use arbitrary C++ types. How? By using **captures**.
+We now know how to work around the restriction on the number of arguments, but what about the types? Not all types are [(Un)Boxable](proxies.md#-un--boxable-types), but this does not mean we cannot use arbitrary C++ types. How? By using **captures**.
 
 Let's say we have the following C++ class:
 
@@ -254,4 +254,4 @@ std::cout << instance._value << std::endl;
 
 The Julia-side function modified our C++-side instance, despite its type being uninterpretable to Julia.
 
-By cleverly employing captures and collections / tuples, the restriction on what functions can be forwarded to Julia using `as_julia_function` are lifted. Any arbitrary C++ function (and thus any arbitrary C++ code) can now be executed Julia-side. Furthermore, calling C++ functions like this [introduces no overhead](benchmarks.md#calling-c-functions-from-julia-results), making this feature of jluna very powerful.
+By cleverly employing captures and collections / tuples, the restriction on what functions can be forwarded to Julia using `as_julia_function` are lifted. Any arbitrary C++ function (and thus any arbitrary C++ code) can now be executed Julia-side. Furthermore, calling C++ functions like this [introduces no overhead](benchmarks.md#calling-c-functions-from-julia--results), making this feature of jluna very powerful.

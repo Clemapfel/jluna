@@ -30,7 +30,7 @@ int main()
 }
 ```
 
-Here, we're doing a very simple operation. We created a C++ lambda that *does nothing*. It executes no Julia-side code by handing `jl_eval_string` (the C-APIs way to execute strings as code) an empty string, after which is simply returns. We then create a C++-side thread using `std::thread`. In C++, once a thread is created, it starts running immediately. We wait for its execution to finish using `.join()`.
+Here, we're doing a very simple operation. We created a C++ lambda that *does nothing*. It executes no Julia-side code by handing `jl_eval_string` (the C-APIs way to execute strings as code) an empty string, after which it simply returns. We then create a C++-side thread using `std::thread`. In C++, once a thread is created, it starts running immediately. We wait for its execution to finish using `.join()`.
 
 Note that **not a single jluna function was called** over the runtime of this main. All functions where purely Julia C-API functions.
 
@@ -45,9 +45,9 @@ Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)
 
 It segfaults without an error.
 
-This is, because the Julia C-API is seemingly hardcoded to prevent any call of C-API functions from anywhere but master scope (the scope of the thread `main` is executed in). It is assumed that this is done so the garbage collector can safely keep track of allocations.
+I am unsure of the exact reason for this behavior, but [some have stated](https://github.com/Clemapfel/jluna/issues/42) that it is related to the way Julia initializes thread local storage (TLS), which is the environment of code ran inside a thread. Only Julia threads themselves allocate the TLS correctly, when running Julia from a non-Julia thread, it will look for it's allocated TLS, which isn't there, hence the segfault.
 
-For obvious reasons, this makes things quite difficult, because, **we cannot access the Julia state from within a C++-side thread**. This has nothing to do with jluna, it is how the C-API was designed.
+While this was apparently [fixed in Julia version 1.9](https://github.com/JuliaLang/julia/pull/46609), for those of us using an earlier Julia version, this makes things quite difficult for us. **We cannot access the Julia state from within a C++-side thread**. This has nothing to do with jluna, it is how the C-API was designed.
 
 Given this, we can immediately throw out using any of the C++ `std::thread`-related multi-threading support, as well as libraries like [libuv](https://github.com/libuv/libuv). It is important to keep this in mind, if our application already uses these frameworks, we have to take care to **never execute code that interacts with Julia from within a thread**. This includes any of jlunas functionalities, as it is, of course, build entirely on the Julia C-API.
 
