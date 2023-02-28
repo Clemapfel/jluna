@@ -21,6 +21,8 @@ cd build
 
 This will have cloned the jluna git repository into the folder `Desktop/jluna`.
 
+> **Tip**: If you are using an IDE like VisualStudio, Atom, or CLion, simply create a new project by cloning jluna, then have your IDE automatically set up and build it for you. If this fails for whatever reason, continue onto the manual installation process below
+
 ### Configure CMake
 
 Before building, CMake needs to be configured. You can do so using:
