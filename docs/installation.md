@@ -52,22 +52,6 @@ make install
 
 Which will create the shared libraries, usually called `libjluna.so` on Unix and `jluna.dll` on Windows.
 
-You can verify everything is working correctly by calling
-
-```bash
-ctest --verbose
-```
-
-This will print a number of lines to the console. Make sure that at the very end, it says:
-
-```
-1: 
-1: Number of tests unsuccessful: 0
-1/1 Test #1: jluna_test .......................   Passed    4.65 sec
-
-100% tests passed, 0 tests failed out of 1
-```
-
 ### Linking
 
 Now that jluna is installed on your system, your application can access it using:

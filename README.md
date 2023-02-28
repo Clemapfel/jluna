@@ -166,8 +166,9 @@ Where
 Then:
 ```
 make install
-ctest --verbose
 ```
+
+Which will deposit the library to the specified system folder.
 
 #### Example Usage
 
@@ -176,7 +177,6 @@ For example, installing on a linux machine using g++:
 ```
 cmake .. -DJULIA_BINDIR=$(julia -e "println(Sys.BINDIR)") -DCMAKE_CXX_COMPILER=/usr/bin/g++
 sudo make install
-ctest --verbose
 ```
 Where ommitting `DCMAKE_INSTALL_PATH` makes CMake choose the default system path. `sudo` was necessary to write to that path.
 
