@@ -332,7 +332,7 @@ y
 
 Here, we did not need to `gc_preserve`. We can be sure that `Char(121)` is protected, because we just created a named Julia-side variable, `jl_char`, pointing to it. If we were to reassign `jl_char`, `Char(121)` may be garbage collected at any point afterwards.
 
-All of `unsafe::get_*` / `unsafe::set_*` functions will be vastly superior, in terms of performance, when compared to `Module::safe_eval`. They [are even faster](benchmarks.md#mutating-julia-side-variables-results) than `Module::assign`.
+All of `unsafe::get_*` / `unsafe::set_*` functions will be vastly superior, in terms of performance, when compared to `Module::safe_eval`. They [are even faster](benchmarks.md#mutating-julia-side-variables--results) than `Module::assign`.
 
 ---
 
