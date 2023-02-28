@@ -104,10 +104,21 @@ is more dominant, as jluna provides clearer design, more documentation and overa
 FAQ: Is it done / fast yet?
 ***************************
 
-Julia is feature-complete as of 0.9.0. This release also included `extensive benchmarking <./benchmarks.html>`_, quantifying
+jluna is feature-complete as of 0.9.0. This release also included `extensive benchmarking <./benchmarks.html>`_, quantifying
 jlunas performance and proving its capability for excellent performance. Correctness is assured through automated testing.
 
+1.0 released in February 2023, as of that release, Windows support is no longer experimental, and Windows machines are now fully supported.
+
 -----
+
+FAQ: Do you know Julia 1.9 will include foreign thread support?
+***************************************************************
+
+I am aware that with the release of Julia 1.9 basically the entire multi-threading module will have to be deprecated.
+Until then, multi-threading should still be supported for less up-to-date machines, however, developers
+using jluna should be aware that the multi-threading module (and only it) may be marked for deletion at some point. For all
+other library features, jluna guarantees version continuity and backwards compatibility.
+
 
 
 
