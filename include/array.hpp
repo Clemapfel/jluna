@@ -82,7 +82,7 @@ namespace jluna
             /// @brief multi-dimensional indexing
             /// @param n: Rank-many integers
             /// @returns non-const (assignable) iterator to value
-            template<typename... Args, std::enable_if_t<sizeof...(Args) == static_cast<int>(Rank) and (std::is_integral_v<Args> and ...), bool> = true>
+            template<typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
             auto at(Args... in);
 
             /// @brief multi-dimensional indexing

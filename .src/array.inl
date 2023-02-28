@@ -192,7 +192,7 @@ namespace jluna
     }
 
     template<is_boxable V, size_t R>
-    template<is_unboxable T, typename... Args, std::enable_if_t<sizeof...(Args) == static_cast<int>(R) and (std::is_integral_v<Args> and ...), bool>>
+    template<is_unboxable T, typename... Args, std::enable_if_t<sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
     T Array<V, R>::at(Args... in) const
     {
         {
@@ -221,7 +221,7 @@ namespace jluna
     #endif
 
     template<is_boxable V, size_t R>
-    template<typename... Args, std::enable_if_t<sizeof...(Args) == static_cast<int>(R) and (std::is_integral_v<Args> and ...), bool>>
+    template<typename... Args, std::enable_if_t<sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
     auto Array<V, R>::at(Args... in)
     {
         {
