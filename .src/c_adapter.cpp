@@ -27,8 +27,8 @@ void jluna_free_lambda(void* in, int n_args)
         delete (jluna::detail::lambda_2_arg*) in;
     else if (n_args == 3)
         delete (jluna::detail::lambda_3_arg*) in;
-    //else
-        //throw std::invalid_argument("In c_adapter::jluna_free_lambda: " + std::to_string(n_args) + " is a invalid number of arguments");
+    else
+        std::cerr << "[C++][WARNING] In c_adapter::jluna_free_lambda: Unreachable reached" << std::endl;
 }
 
 jluna::unsafe::Value* jluna_invoke_lambda_0(void* function_ptr)
