@@ -84,7 +84,7 @@ namespace jluna
         return nullptr; // unreachable
     }
 
-    unsafe::Value* Proxy::ProxyValue::get_field(jl_sym_t* symbol)
+    unsafe::Value* Proxy::ProxyValue::get_field(jl_sym_t* symbol) const
     {
         static jl_function_t* dot = unsafe::get_function("jluna"_sym, "dot"_sym);
 
@@ -131,7 +131,7 @@ namespace jluna
         else
             out = jluna::safe_call(getindex, v, box<size_t>(i + 1));
 
-        return Proxy(out, _content, jl_box_uint64(i+1));
+        return {out, _content, jl_box_uint64(i+1)};
     }
 
     Proxy::operator unsafe::Value*()
@@ -155,7 +155,7 @@ namespace jluna
     Proxy::operator std::string() const
     {
         static jl_function_t* to_string = jl_get_function(jl_base_module, "string");
-        return std::string(jl_string_data(jl_call1(to_string, _content->value())));
+        return {jl_string_data(jl_call1(to_string, _content->value()))};
     }
 
     std::string Proxy::get_name() const
@@ -170,7 +170,7 @@ namespace jluna
         auto* svec = jl_field_names((jl_datatype_t*) (jl_isa(_content->value(), (unsafe::Value*) jl_datatype_type) ? _content->value() : jl_typeof(_content->value())));
         std::vector<std::string> out;
         for (size_t i = 0; i < jl_svec_len(svec); ++i)
-            out.push_back(std::string(jl_symbol_name((jl_sym_t*) jl_svecref(svec, i))));
+            out.emplace_back(jl_symbol_name((jl_sym_t*) jl_svecref(svec, i)));
 
         gc_unpause;
         return out;
@@ -178,7 +178,7 @@ namespace jluna
 
     Type Proxy::get_type() const
     {
-        return Type((jl_datatype_t*) jl_typeof(_content->value()));
+        return  {(jl_datatype_t*) jl_typeof(_content->value())};
     }
 
     bool Proxy::is_mutating() const
@@ -204,7 +204,7 @@ namespace jluna
     Proxy Proxy::as_unnamed() const
     {
         static auto* deepcopy = unsafe::get_function(jl_base_module, "deepcopy"_sym);
-        return Proxy(unsafe::call(deepcopy, _content->value()), nullptr);
+        return {unsafe::call(deepcopy, _content->value()), nullptr};
     }
 
     void Proxy::update()

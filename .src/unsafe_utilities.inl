@@ -161,7 +161,7 @@ namespace jluna::unsafe
         size_t index = 0;
         size_t mul = 1;
 
-        for (size_t i = 0; i < array->flags.ndims; ++i)
+        for (size_t i = 0; i < static_cast<size_t>(array->flags.ndims); ++i)
         {
             index += (indices.at(i)) * mul;
             size_t dim = jl_array_dim(array, i);
@@ -188,7 +188,7 @@ namespace jluna::unsafe
         size_t index = 0;
         size_t mul = 1;
 
-        for (size_t i = 0; i < array->flags.ndims; ++i)
+        for (size_t i = 0; i < static_cast<size_t>(array->flags.ndims); ++i)
         {
             index += (indices.at(i)) * mul;
             size_t dim = jl_array_dim(array, i);

@@ -11,7 +11,7 @@ namespace jluna
         struct TaskValue : public detail::TaskSuper
         {
             friend class jluna::ThreadPool;
-            TaskValue(size_t);
+            explicit TaskValue(size_t);
             ~TaskValue();
 
             void free() override;

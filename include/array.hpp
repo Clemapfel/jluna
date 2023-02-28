@@ -88,7 +88,7 @@ namespace jluna
             /// @brief multi-dimensional indexing
             /// @param n: Rank-many integers
             /// @returns unboxed value
-            template<is_unboxable T = Value_t, typename... Args, std::enable_if_t<sizeof...(Args) == static_cast<int>(Rank) and (std::is_integral_v<Args> and ...), bool> = true>
+            template<is_unboxable T = Value_t, typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
             T at(Args... in) const;
 
             /// @brief manually assign a value using a linear index

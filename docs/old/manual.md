@@ -2826,12 +2826,12 @@ We can wait for the value of a future to become available by calling `.wait()`. 
 
 The user is responsible for any potential data races a `jluna::Task` may trigger. Useful C++-side tools for this application include the following (where their Julia-side functional equivalent is listed for reference):
 
-| C++ | Julia | C++ Documentation  |
-|------------|--------------|---------------------|
-| `std::mutex` | `Base.ReentrantLock` |  [[here]](https://en.cppreference.com/w/cpp/thread/mutex)                  |
-| `std::lock_guard`| `Threads.@lock` | [[here]](https://en.cppreference.com/w/cpp/thread/lock_guard)
-| `std::condition_variable` | `Threads.Condition` | [[here]](https://en.cppreference.com/w/cpp/thread/condition_variable)
-| `std::unique_lock` | `n/a` | [[here]](https://en.cppreference.com/w/cpp/thread/unique_lock)
+| C++                       | Julia                | C++ Documentation                                                     |
+|---------------------------|----------------------|-----------------------------------------------------------------------|
+| `std::mutex`              | `Base.ReentrantLock` | [[here]](https://en.cppreference.com/w/cpp/thread/mutex)              |
+| `std::lock_guard`         | `Threads.@lock`      | [[here]](https://en.cppreference.com/w/cpp/thread/lock_guard)         
+| `std::condition_variable` | `Threads.Condition`  | [[here]](https://en.cppreference.com/w/cpp/thread/condition_variable) 
+| `std::unique_lock`        | `n/a`                | [[here]](https://en.cppreference.com/w/cpp/thread/unique_lock)        
 
 Furthermore, jluna provides its own lock-like object `jluna::Mutex`, which is a simple wrapper around a Julia-side `Base.ReentrantLock`. It has the same usage and interface as `std::mutex`, except that it works when called both from C++ and Julia, because it is (Un)Boxable.
 
@@ -3663,15 +3663,15 @@ Here, we created a Julia-side function `f`. We used various ways to access the v
 
 ### Accessing Julia-side Values: Results
 
-| function used | median duration (ms) | overhead (%)|
-|------|----------------------|-------------|
-| `C-API` | `8.1e-05ms` | `0%` |
-| `unsafe::get_function` | `8.4e-05ms` | `4%` |
-| `unsafe::get_value` | `8.4e-05ms` | `4%` |
-| `Module::get<T>` | `0.000282ms` | `248%` |
-| `Proxy::Proxy(unsafe::Value*)` | `0.005378ms` | `6190%` |
-| `Proxy::operator[](std::string)` | `0.005378ms` | `6540%` |
-| `jl_eval_string` | `0.085889ms` | `105936%` |
+| function used                    | median duration (ms) | overhead (%) |
+|----------------------------------|----------------------|--------------|
+| `C-API`                          | `8.1e-05ms`          | `0%`         |
+| `unsafe::get_function`           | `8.4e-05ms`          | `4%`         |
+| `unsafe::get_value`              | `8.4e-05ms`          | `4%`         |
+| `Module::get<T>`                 | `0.000282ms`         | `248%`       |
+| `Proxy::Proxy(unsafe::Value*)`   | `0.005378ms`         | `6190%`      |
+| `Proxy::operator[](std::string)` | `0.005378ms`         | `6540%`      |
+| `jl_eval_string`                 | `0.085889ms`         | `105936%`    |
 
 We see that there are vast runtime difference between individual benchmarks. Firstly, `unsafe` falls into the `< 5%` overhead range, which is good to see. 
 
@@ -3732,12 +3732,12 @@ During each cycle of each benchmark, we generate a random `Int64` using `generat
 
 ### Mutating Julia-side Variables: Results
 
-| name | median duration (ms) | overhead|
-|------|----------------------|-------------|
-| `C-API` | `0.000137ms`           | `0%`  |
-| `unsafe::set_value` | `0.000141ms` | `3%` |
-| `Module::assign` | `0.000379ms` | `176%` |
-| `named proxy` | `0.062295ms` | `45370.8%` | 
+| name                | median duration (ms) | overhead   |
+|---------------------|----------------------|------------|
+| `C-API`             | `0.000137ms`         | `0%`       |
+| `unsafe::set_value` | `0.000141ms`         | `3%`       |
+| `Module::assign`    | `0.000379ms`         | `176%`     |
+| `named proxy`       | `0.062295ms`         | `45370.8%` | 
 
 
 `unsafe` once again makes it below its target 5% goal, much more comfortably this time.
@@ -3808,13 +3808,13 @@ Here, we first access a pointer to our simple Julia-side function, `f`.This func
 
 ### Calling Julia-side Functions: Results
 
-| name | median duration (ms) | overhead|
-|------|----------------------|-------------|
-| `C-API` | `0.000243ms` | `0%` |
-| `unsafe::call` | `0.000256ms` | `5.34%` |
-| `jluna::safe_call` | `0.000513ms` | `111%` | 
-| `Proxy::safe_call<T>` | `0.000689ms` | `184%` |
-| `Proxy::operator()` | `0.006068ms` | `2397.12%` |
+| name                  | median duration (ms) | overhead   |
+|-----------------------|----------------------|------------|
+| `C-API`               | `0.000243ms`         | `0%`       |
+| `unsafe::call`        | `0.000256ms`         | `5.34%`    |
+| `jluna::safe_call`    | `0.000513ms`         | `111%`     | 
+| `Proxy::safe_call<T>` | `0.000689ms`         | `184%`     |
+| `Proxy::operator()`   | `0.006068ms`         | `2397.12%` |
 
 `unsafe` barely misses its target 5%, though `0.34%` could very well be due to noise.
 
@@ -3926,11 +3926,11 @@ To make for a fair comparison, the overhead of `jl_gc_collect` was introduced to
 
 ### Using jluna::Array: Results
 
-| name | median duration (ms) | overhead|
-|------|----------------------|-------------|
-| `C-API` | `0.049239ms`       | `0%`  |
-| `unsafe` | `0.049703ms` | `0.94%` |
-| `jluna::Array` | `0.074531ms` | `51.3658%` |
+| name           | median duration (ms) | overhead   |
+|----------------|----------------------|------------|
+| `C-API`        | `0.049239ms`         | `0%`       |
+| `unsafe`       | `0.049703ms`         | `0.94%`    |
+| `jluna::Array` | `0.074531ms`         | `51.3658%` |
 
 Once again, `unsafe` is very close to the C-API, 1% being far below 5%. 
 
@@ -4028,10 +4028,10 @@ This benchmark does not measure overhead compared to the C-API, it measures how 
 
 ### Constructing `jluna::Task`: Results
 
-| name | median duration (ms) | overhead|
-|------|----------------------|-------------|
-| `jluna::Task` | `0.011592ms`   | `0%`  |
-| `std::thread` | `0.012151ms`   | `4.82229%`  |
+| name          | median duration (ms) | overhead   |
+|---------------|----------------------|------------|
+| `jluna::Task` | `0.011592ms`         | `0%`       |
+| `std::thread` | `0.012151ms`         | `4.82229%` |
 
 Results suggest that the `std::` thread pool is actually slightly slower, about 5%. While this is not significant enough to make one thread pool better than the other, it assures users that migrating a parallel architecture from C++-only to jluna will not incur any overhead, making `jluna::ThreadPool` a fully valid replacement in both functionality and performance.
 

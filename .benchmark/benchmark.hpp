@@ -25,8 +25,7 @@ namespace jluna
         struct Result
         {
             Result()
-                : _name(""),
-                  _min(0),
+                : _min(0),
                   _max(0),
                   _average(0),
                   _median(0),
@@ -165,7 +164,7 @@ namespace jluna
                 std::cout << "│ Max    : " << max << "ms" << std::endl;
                 std::cout << "│ Median : " << med << "ms" << std::endl;
                 std::cout << "│ " << std::endl;
-                std::cout << "│ Overhead: " << (res._overhead * 100) << "%" << std::endl;
+                std::cout << "│ Overhead: " << (res._overhead * 100.f) << "%" << std::endl;
 
                 if (res._exception_maybe != "")
                 {

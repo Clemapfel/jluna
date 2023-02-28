@@ -203,7 +203,7 @@ namespace jluna
             /// @brief access field
             /// @param symbol: name of field
             /// @returns pointer to field data
-            unsafe::Value* get_field(jl_sym_t*);
+            unsafe::Value* get_field(jl_sym_t*) const;
 
             /// @brief owner
             std::shared_ptr<ProxyValue> _owner;

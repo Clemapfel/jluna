@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <stddef.h>
-
 #include <include/julia_wrapper.hpp>
+
+#include <cstddef>
 #include <functional>
 #include <string>
 

@@ -38,7 +38,7 @@ namespace jluna
 
     Module Module::get_parent_module() const
     {
-        return Module(value()->parent);
+        return {value()->parent};
     }
 
     bool Module::is_top_module() const
@@ -79,7 +79,7 @@ namespace jluna
 
     Symbol Module::get_symbol() const
     {
-        return Symbol(value()->name);
+        return {value()->name};
     }
 
     void Module::initialize_lock()

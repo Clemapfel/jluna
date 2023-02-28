@@ -25,11 +25,11 @@ namespace jluna
             /// @brief ctor
             /// @param exception: value pointing to a julia-side instance of the exception
             /// @param stacktrace: string describing the exception and the stacktrace
-            JuliaException(jl_value_t* exception, std::string stacktrace);
+            JuliaException(jl_value_t* exception, const std::string& stacktrace);
 
             /// @brief get description
             /// @returns c-string
-            virtual const char* what() const noexcept override final;
+            [[nodiscard]] const char* what() const noexcept final;
 
             /// @brief decay to jl value
             /// @returns jl_value_t*
@@ -48,7 +48,7 @@ namespace jluna
 
         /// @brief get description
         /// @returns c-string
-        virtual const char* what() const noexcept override final;
+        [[nodiscard]] const char* what() const noexcept final;
     };
 
     /// @brief if exception occurred, forward as JuliaException

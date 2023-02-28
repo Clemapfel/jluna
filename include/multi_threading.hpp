@@ -136,7 +136,7 @@ namespace jluna
 
         protected:
             /// @brief ctor private, use ThreadPool::create
-            Task(detail::TaskValue<Result_t>*);
+            explicit Task(detail::TaskValue<Result_t>*);
 
         private:
             detail::TaskValue<Result_t>* _value = nullptr; // lifetime managed by threadpool

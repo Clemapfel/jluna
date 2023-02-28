@@ -26,7 +26,7 @@ namespace jluna::unsafe
     /// @param object: pointer
     /// @returns id, keep track of this as it is needed to free the object
     template<is_julia_value T>
-    [[nodiscard]] size_t gc_preserve(T* value);
+    [[nodiscard]] size_t gc_preserve(T*);
 
     /// @brief preserve multiple values
     /// @param values: pointer

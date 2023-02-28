@@ -18,7 +18,7 @@ namespace jluna
         auto* res = jl_eval_string(in);
         forward_last_exception();
 
-        static jl_datatype_t* generator_type = (jl_datatype_t*) jl_eval_string("Base.Generator");
+        static auto* generator_type = (jl_datatype_t*) jl_eval_string("Base.Generator");
         if (not jl_isa(res, (unsafe::Value*) generator_type))
         {
             std::stringstream error_str;
@@ -84,7 +84,7 @@ namespace jluna
     unsafe::Value* GeneratorExpression::ForwardIterator::operator*()
     {
         gc_pause;
-        auto* out = jl_get_nth_field(jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state)), 0);
+        auto* out = jl_get_nth_field(jl_call2(_iterate, _owner->get(), jl_box_int64(_state)), 0);
         gc_unpause;
         return out;
     }
@@ -94,7 +94,7 @@ namespace jluna
         auto previous = _state;
 
         gc_pause;
-        auto* next = jl_call2(_owner->_iterate, _owner->get(), jl_box_int64(_state));
+        auto* next = jl_call2(_iterate, _owner->get(), jl_box_int64(_state));
 
         if (jl_is_nothing(next))
             _state = previous;

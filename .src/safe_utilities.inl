@@ -135,7 +135,7 @@ namespace jluna
 
         std::stringstream str;
         str << "jluna.cppcall.eval(:(const _lib = \""
-            << (jluna_shared_library_path == "" ? jluna::detail::shared_library_name : jluna_shared_library_path)
+            << (jluna_shared_library_path.empty() ? jluna::detail::shared_library_name : jluna_shared_library_path)
             << "\"))";
 
         jl_eval_string(str.str().c_str());
