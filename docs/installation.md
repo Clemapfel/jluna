@@ -21,7 +21,7 @@ cd build
 
 This will have cloned the jluna git repository into the folder `Desktop/jluna`.
 
-> **Tip**: If you are using an IDE like VisualStudio, Atom, or CLion and your compilers are up-to-date, simply create a new project by cloning jluna, then have your IDE automatically configure, build and link jluna for you. If this fails for whatever reason, continue onto manual installation below instead
+> **Tip**: If you are using an IDE like VisualStudio, Atom, or CLion and your compilers are up-to-date, simply create a new project by cloning jluna, then have your IDE automatically configure, build, and install jluna for you. If this fails for whatever reason and you're unable to solve it in your IDE, continue onto manual installation below instead
 
 ### Configure CMake
 
@@ -51,6 +51,23 @@ make install
 ```
 
 Which will create the shared libraries, usually called `libjluna.so` on Unix and `jluna.dll` on Windows.
+
+We can verify everything works by calling 
+
+```bash
+# in Desktop/jluna/build
+ctest --verbose
+```
+
+Which will produce a lot of text output. At the very end, it should say:
+
+```
+Number of tests unsuccessful: 0
+
+Process finished with exit code 0
+```
+
+Which means jluna is working and ready to be used!
 
 ### Linking
 

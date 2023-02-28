@@ -4,8 +4,17 @@ module cppcall
 
     #const _lib = "<call jluna::initialize to initialize this field>";
 
+    """
+    check if jluna shared library is setup correctly
+    """
     function verify_library() ::Bool
-        return ccall((:jluna_verify, cppcall._lib), Bool, ());
+        out = false
+        try
+            out = ccall((:jluna_verify, cppcall._lib), Bool, ())
+        catch e
+            println(Base.stderr, "[JULIA][ERROR] In jluna.verify_library: Unable to locate jluna shared library at `", cppcall._lib, "`. You can specify the correct path manually when calling jluna::initialize.`")
+        end
+        return out
     end
 
     """

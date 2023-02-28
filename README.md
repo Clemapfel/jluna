@@ -144,7 +144,7 @@ In either case, make sure the compilers' version is as stated above, as jluna us
 
 > A step-by-step guide is available [here](https://clemens-cords.com/jluna/installation.html). It is recommended that you follow this guide, instead of the highly abridged version below.
 
-> **For IDEs**: In many cases, simply opening the cloned jluna project in you IDE (such as VisualStudio, Atom, or CLion) will allow it to automatically set everything up. After initialization, simply run "install" from your build menu.
+> **For IDEs**: In many cases, simply opening the cloned jluna project in you IDE (such as VisualStudio, Atom, or CLion) will allow your IDE to automatically set everything up. After initialization, simply run "install" from your build menu.
 
 ### Command Line
 
@@ -166,17 +166,23 @@ Where
 Then:
 ```
 make install
+ctest --verbose
 ```
 
-Which will deposit the library to the specified system folder.
+Which will deposit the library to the specified system folder and run tests to make sure everything works.
 
 #### Example Usage
 
 For example, installing on a linux machine using g++:
 
 ```
+git clone https://github.com/Clemapfel/jluna
+cd jluna
+mkdir build
+cd build
 cmake .. -DJULIA_BINDIR=$(julia -e "println(Sys.BINDIR)") -DCMAKE_CXX_COMPILER=/usr/bin/g++
 sudo make install
+ctest --verbose
 ```
 Where ommitting `DCMAKE_INSTALL_PATH` makes CMake choose the default system path. `sudo` was necessary to write to that path.
 
