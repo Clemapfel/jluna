@@ -111,8 +111,8 @@ jlunas performance and proving its capability for excellent performance. Correct
 
 -----
 
-FAQ: Do you know Julia 1.9 will include foreign thread support?
-***************************************************************
+FAQ: Did you know Julia 1.9 will include foreign thread support?
+****************************************************************
 
 I am aware that with the release of Julia 1.9 basically the entire multi-threading module will have to be deprecated.
 Until then, multi-threading should still be supported for less up-to-date machines, however, developers
