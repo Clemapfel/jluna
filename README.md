@@ -215,7 +215,7 @@ The current and all prior releases of jluna are supplied under MIT license, avai
 
 I would like to ask people using this library in commercial or university settings, to disclose their usage of jluna in some small way (for example, at the end of the credits or via a citation) and to make clear the origin of the work (for example by linking this GitHub page).
 
-If you would like to cite jluna in your academic publication, you can the entry in [CITATION.bib](CITATION.bib) to your [BibTeX](https://www.overleaf.com/learn/latex/Bibliography_management_with_bibtex) bibliography, then use the `\cite{jluna}` command anywhere in your [LaTeX](https://www.latex-project.org/) source code.
+If you would like to cite jluna in your academic publication, you can copy the entry in [CITATION.bib](CITATION.bib) to your [BibTeX](https://www.overleaf.com/learn/latex/Bibliography_management_with_bibtex) bibliography, then use the `\cite{jluna}` command anywhere in your [LaTeX](https://www.latex-project.org/) source code.
 
 Thank you for your consideration,
 C.
