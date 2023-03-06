@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you would like to cite jluna in your academic publications, please cite it as follows"
+authors:
+- family-names: "Cords"
+  given-names: "Clemens"
+title: "jluna: A modern Julia Wrapper for C++"
+version: 1.0.0
+year: 2022
+url: "https://www.github.com/clemapfel/jluna"
+howpublished: "https://www.clemens-cords.com/jluna"
