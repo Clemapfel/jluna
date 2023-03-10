@@ -16,7 +16,7 @@ jluna aims to fully wrap the official Julia C-API, replacing it in projects with
 3. [Documentation](#documentation)<br>
 4. [Dependencies](#dependencies)<br>
    4.1 [Julia 1.7.0+](#dependencies)<br>
-   4.2 [Supported Compilers: gcc10, gcc11, clang12](#dependencies)<br>
+   4.2 [Supported Compilers: g++, clang++, MSVC](#dependencies)<br>
    4.3 [CMake 3.12+](#dependencies)<br>
 5. [Installation](#installation--troubleshooting)<br>
 6. [License](#license)
