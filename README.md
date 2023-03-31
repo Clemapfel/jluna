@@ -144,7 +144,7 @@ In either case, make sure the compilers' version is as stated above, as jluna us
 
 > A step-by-step guide is available [here](https://clemens-cords.com/jluna/installation.html). It is recommended that you follow this guide, instead of the highly abridged version below.
 
-> **For IDEs**: In many cases, simply opening the cloned jluna project in you IDE (such as VisualStudio, Atom, or CLion) will allow your IDE to automatically set everything up. After initialization, simply run "install" from your build menu.
+> **For IDEs**: In many cases, simply opening the cloned jluna project in an IDE (such as VisualStudio, Atom, or CLion) will allow it to automatically set everything up for you. After initialization, simply run "install" from your build menu.
 
 ### Command Line
 
