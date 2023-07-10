@@ -11,7 +11,7 @@
 
 namespace jluna::detail
 {
-    static inline size_t _num_threads = 1;
+    static inline uint64_t _num_threads = 1;
 
     void initialize_modules();
     void initialize_types();
@@ -19,9 +19,9 @@ namespace jluna::detail
 
     constexpr char _id_marker = '#';
 
-    size_t create_reference(unsafe::Value* in);
-    unsafe::Value* get_reference(size_t key);
-    void free_reference(size_t key);
+    uint64_t create_reference(unsafe::Value* in);
+    unsafe::Value* get_reference(uint64_t key);
+    void free_reference(uint64_t key);
 
     inline std::mutex initialize_lock = std::mutex();
 }
@@ -43,11 +43,11 @@ namespace jluna
         static auto* jl_safe_call = unsafe::get_function("jluna"_sym, "safe_call"_sym);
 
         static std::array<unsafe::Value*, sizeof...(Args_t) + 1> args;
-        static auto set = [&](size_t i, unsafe::Value* x) {args[i] = x;};
+        static auto set = [&](uint64_t i, unsafe::Value* x) {args[i] = x;};
 
         args[0] = (unsafe::Value*) function;
 
-        size_t i = 1;
+        uint64_t i = 1;
         (set(i++, (unsafe::Value*) in), ...);
 
         auto* tuple_res = jl_call(jl_safe_call, args.data(), args.size());
@@ -77,7 +77,7 @@ namespace jluna
     }
 
     inline void initialize(
-        size_t n_threads,
+        uint64_t n_threads,
         bool suppress_log,
         const std::string& jluna_shared_library_path,
         const std::string& julia_bindir,
@@ -117,10 +117,8 @@ namespace jluna
 
         forward_last_exception();
 
-        bool success = jl_unbox_bool(jl_eval_string(detail::julia_source.c_str()));
-        forward_last_exception();
-
-        assert(success);
+        auto* res = jl_eval_string(detail::julia_source.c_str());
+        assert(res != nullptr && jl_unbox_bool(res));
 
         jl_eval_string(R"(
             begin

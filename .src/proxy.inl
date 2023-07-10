@@ -29,10 +29,10 @@ namespace jluna
     };
 
     template<is_unboxable T>
-    T Proxy::operator[](size_t i)
+    T Proxy::operator[](uint64_t i)
     {
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
-        return unbox<T>(jluna::safe_call(getindex, _content->value(), box<size_t>(i + 1)));
+        return unbox<T>(jluna::safe_call(getindex, _content->value(), box<uint64_t>(i + 1)));
     }
 
     template<is_unboxable T, std::enable_if_t<not std::is_same_v<T, std::string>, bool>>

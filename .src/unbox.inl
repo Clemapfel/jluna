@@ -206,7 +206,7 @@ namespace jluna
         std::vector<Value_t> out;
         out.reserve(in->length);
 
-        for (size_t i = 0; i < in->length; ++i)
+        for (uint64_t i = 0; i < in->length; ++i)
             out.emplace_back(unbox<Value_t>(jl_arrayref(in, i)));
 
         gc_unpause;
@@ -269,7 +269,7 @@ namespace jluna
         auto* as_array = (jl_array_t*) jl_call1(serialize, value);
 
         T out;
-        for (size_t i = 0; i < jl_array_len(as_array); ++i)
+        for (uint64_t i = 0; i < jl_array_len(as_array); ++i)
             out.insert(unbox<Value_t>(jl_arrayref(as_array, i)));
 
         gc_unpause;
@@ -291,13 +291,13 @@ namespace jluna
 
     namespace detail    // helper functions for tuple unboxing
     {
-        template<typename Tuple_t, typename Value_t, size_t i>
+        template<typename Tuple_t, typename Value_t, uint64_t i>
         void unbox_tuple_aux_aux(Tuple_t& tuple, unsafe::Value* value)
         {
             std::get<i>(tuple) = unbox<std::tuple_element_t<i, Tuple_t>>(jl_get_nth_field(value, i));
         }
 
-        template<typename Tuple_t, typename Value_t, std::size_t... is>
+        template<typename Tuple_t, typename Value_t, std::uint64_t... is>
         void unbox_tuple_aux(Tuple_t& tuple, unsafe::Value* value, std::index_sequence<is...>)
         {
             (unbox_tuple_aux_aux<Tuple_t, Value_t, is>(tuple, value), ...);

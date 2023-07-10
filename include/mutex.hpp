@@ -43,7 +43,7 @@ namespace jluna
             Mutex(unsafe::Value*);
 
             unsafe::Value* _value;
-            size_t _value_id;
+            uint64_t _value_id;
     };
 }
 

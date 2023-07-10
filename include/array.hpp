@@ -17,7 +17,7 @@ namespace jluna
     /// @brief wrapper for julia-side Array{Value_t, Rank}
     /// @tparam Value_t: boxable value ype
     /// @tparam Rank: rank of the array
-    template<is_boxable Value_t, size_t Rank>
+    template<is_boxable Value_t, uint64_t Rank>
     class Array : public Proxy
     {
         public:
@@ -28,7 +28,7 @@ namespace jluna
             using value_type = Value_t;
 
             /// @brief dimensionality, equivalent to julia-side Array{Value_t, Rank}
-            static constexpr size_t rank = Rank;
+            static constexpr uint64_t rank = Rank;
 
             /// @brief construct as child of already existing proxy, implicit
             /// @param proxy: pointer to already created proxy
@@ -41,7 +41,7 @@ namespace jluna
 
             /// @brief constructor, initialize values as undef, implicit
             /// @param size: target size of the new array
-            Array(size_t);
+            Array(uint64_t);
 
             /// @brief construct as thin wrapper, does not invoke copy
             /// @warning user is responsible for data being properly formatted and staying in scope
@@ -53,8 +53,8 @@ namespace jluna
             /// @brief linear indexing, no bounds checking
             /// @param index: 0-based
             /// @returns assignable iterator to element
-            /// @note this function intentionally shadows Proxy::operator[](size_t) -> Proxy
-            auto operator[](size_t);
+            /// @note this function intentionally shadows Proxy::operator[](uint64_t) -> Proxy
+            auto operator[](uint64_t);
 
             /// @brief julia-style array comprehension indexing
             /// @param generator_expression: generator expression used for the index list
@@ -64,7 +64,7 @@ namespace jluna
             /// @brief julia-style list indexing
             /// @param range: iterable range with indices
             /// @returns new array, result of Julia-side getindex(this, range)
-            jluna::Vector<Value_t> operator[](const std::vector<size_t>& range) const;
+            jluna::Vector<Value_t> operator[](const std::vector<uint64_t>& range) const;
 
             /// @brief julia-style list indexing
             /// @param list: initializer list with indices
@@ -77,7 +77,7 @@ namespace jluna
             /// @param index: index, 0-based
             /// @returns unboxed value at given index. May throw jluna::JuliaException if index out of range
             template<is_unboxable T = Value_t>
-            T operator[](size_t) const;
+            T operator[](uint64_t) const;
 
             /// @brief multi-dimensional indexing
             /// @param n: Rank-many integers
@@ -95,16 +95,16 @@ namespace jluna
             /// @param index: linear index, 0-based
             /// @param value: new value
             template<is_boxable T = Value_t>
-            void set(size_t i, T);
+            void set(uint64_t i, T);
 
             /// @brief get number of elements
             /// @returns Base.length
-            size_t get_n_elements() const;
+            uint64_t get_n_elements() const;
 
             /// @brief get size in specific dimension
             /// @param dimension_index: 0-based
             /// @returns result of Base.size(array, dimension_index)
-            size_t size(size_t dimension_index) const;
+            uint64_t size(uint64_t dimension_index) const;
 
             /// @brief get iterator to 0-indexed element
             /// @returns assignable iterator
@@ -146,7 +146,7 @@ namespace jluna
 
             /// @brief call Base.sizehint!, allocates array to be of specified size. Useful for optimization
             /// @param size: target size
-            void reserve(size_t);
+            void reserve(uint64_t);
 
             /// @brief cast to unsafe::Value*, implicit
             using Proxy::operator unsafe::Value*;
@@ -162,8 +162,8 @@ namespace jluna
             using Proxy::_content;
 
         private:
-            void throw_if_index_out_of_range(int index, size_t dimension) const;
-            size_t get_dimension(size_t) const;
+            void throw_if_index_out_of_range(int index, uint64_t dimension) const;
+            uint64_t get_dimension(uint64_t) const;
 
         public:
             /// @brief non-assignable iterator
@@ -173,7 +173,7 @@ namespace jluna
                     /// @brief ctor
                     /// @param index
                     /// @param pointer to array
-                    ConstIterator(size_t i, Array<Value_t, Rank>*);
+                    ConstIterator(uint64_t i, Array<Value_t, Rank>*);
 
                     /// @brief increment
                     /// @returns reference to self
@@ -219,7 +219,7 @@ namespace jluna
 
                 protected:
                     Array<Value_t, Rank>* _owner;
-                    size_t _index;
+                    uint64_t _index;
             };
 
             /// @brief assignable iterator
@@ -228,7 +228,7 @@ namespace jluna
                 /// @brief ctor
                 /// @param index
                 /// @param pointer to array
-                Iterator(size_t i, Array<Value_t, Rank>*);
+                Iterator(uint64_t i, Array<Value_t, Rank>*);
 
                 using ConstIterator::operator*;
 
@@ -269,7 +269,7 @@ namespace jluna
             /// @warning the user is responsible for data being correctly formatted and staying in scope
             /// @param data: pointer to Julia-side data
             /// @param size: size along the first dimension
-            Vector(Value_t* data, size_t size);
+            Vector(Value_t* data, uint64_t size);
 
             /// @brief construct as child of already existing proxy, implicit
             /// @param proxy: proxy
@@ -283,11 +283,11 @@ namespace jluna
             /// @brief insert a value
             /// @param pos: linear index, 0-based
             /// @param value: new value
-            void insert(size_t pos, Value_t value);
+            void insert(uint64_t pos, Value_t value);
 
             /// @brief erase at specified position
             /// @param pos: linear index, 0-based
-            void erase(size_t pos);
+            void erase(uint64_t pos);
 
             /// @brief add to front
             /// @tparam T: type of value, not necessarily the same as the declared array type

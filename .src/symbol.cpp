@@ -32,7 +32,7 @@ namespace jluna
         return (jl_sym_t*) Proxy::operator const unsafe::Value*();
     }
 
-    size_t Symbol::hash() const
+    uint64_t Symbol::hash() const
     {
         return ((jl_sym_t*) Proxy::operator const unsafe::Value*())->hash;
     }

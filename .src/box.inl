@@ -163,7 +163,7 @@ namespace jluna
     {
         gc_pause;
         auto* out = unsafe::new_array((unsafe::Value*) as_julia_type<Value_t>::type(), value.size());
-        for (size_t i = 0; i < value.size(); ++i)
+        for (uint64_t i = 0; i < value.size(); ++i)
         {
             auto* topush = box<Value_t>(value.at(i));
             jl_arrayset(out, topush, i);
@@ -231,13 +231,13 @@ namespace jluna
         auto* args_t = unsafe::new_array((unsafe::Value*) jl_type_type, std::tuple_size_v<T>);
 
         {
-            size_t i = 0;
+            uint64_t i = 0;
             std::apply([&](auto... elements) {
                 (jl_arrayset(args_v, box(elements), i++), ...);
             }, value);
         }
 
-        for (size_t i = 0; i < std::tuple_size_v<T>; ++i)
+        for (uint64_t i = 0; i < std::tuple_size_v<T>; ++i)
             jl_arrayset(args_t, jl_typeof(jl_arrayref(args_v, i)), i);
 
         auto tuple_t = jl_apply_tuple_type_v((jl_value_t**) args_t->data, args_t->length);

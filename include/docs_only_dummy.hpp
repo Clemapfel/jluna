@@ -25,13 +25,13 @@ namespace jluna::unsafe::docs_only
     /// @param values: pointer
     /// @returns vector of ids, needed to free the objects
     template<typename T>
-    size_t gc_preserve(T* value) {assert(false);};
+    uint64_t gc_preserve(T* value) {assert(false);};
 
     /// @brief preserve values
     /// @param values: pointer
     /// @returns vector of ids, needed to free the objects
     template<typename... Ts>
-    size_t gc_preserve(Ts... value) {assert(false);};
+    uint64_t gc_preserve(Ts... value) {assert(false);};
 
     /// @brief allocate new array
     /// @param value_type: value type of the array
@@ -44,14 +44,14 @@ namespace jluna::unsafe::docs_only
     /// @param value_type: value type of the array
     /// @params one_d: size along first dimension
     /// @returns array after allocation
-    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d) {assert(false);};
+    unsafe::Array* new_array(unsafe::Value* value_type, uint64_t one_d) {assert(false);};
 
     /// @brief allocate 1d array
     /// @param value_type: value type of the array
     /// @params one_d: size along first dimension
     /// @params two_d: size along second dimension
     /// @returns array after allocation
-    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d) {assert(false);};
+    unsafe::Array* new_array(unsafe::Value* value_type, uint64_t one_d, uint64_t two_d) {assert(false);};
 
     /// @brief create an array from already existing data, does not invoking a copy
     /// @param value_type: value type of the array
@@ -66,7 +66,7 @@ namespace jluna::unsafe::docs_only
     /// @param data: pointer to the data, no verification is performed that the data is properly aligned or of the given value type
     /// @params size: size along first dimension
     /// @returns array object as thin wrapper
-    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d) {assert(false);};
+    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, uint64_t one_d) {assert(false);};
 
     /// @brief reshape array along all dimensions
     /// @param array: array to reshape
@@ -78,14 +78,14 @@ namespace jluna::unsafe::docs_only
     /// @param array: array to reshape
     /// @param one_d: size along first dimension
     /// @note optimal performance is only achieved if the array is already 1d
-    void resize_array(unsafe::Array* array, size_t one_d) {assert(false);};
+    void resize_array(unsafe::Array* array, uint64_t one_d) {assert(false);};
 
     /// @brief reshape array to 2d
     /// @param array: array to reshape
     /// @param one_d: size along first dimension
     /// @param two_d: size along second dimension
     /// @note optimal performance is only achieved if the array is already 2d
-    void resize_array(unsafe::Array* array, size_t one_d, size_t two_d) {assert(false);};
+    void resize_array(unsafe::Array* array, uint64_t one_d, uint64_t two_d) {assert(false);};
 
     /// @brief access element
     /// @param array: array to access
@@ -98,14 +98,14 @@ namespace jluna::unsafe::docs_only
     /// @param array: array to access
     /// @params index: index along the first dimension
     /// @returns pointer to element, or nullptr if out of bounds
-    unsafe::Value* get_index(unsafe::Array*, size_t) {assert(false);};
+    unsafe::Value* get_index(unsafe::Array*, uint64_t) {assert(false);};
 
     /// @brief access element, linear indexing
     /// @param array: array to access
     /// @params i: index along the first dimension
     /// @params j: index along the second dimension
     /// @returns pointer to element, or nullptr if out of bounds
-    unsafe::Value* get_index(unsafe::Array*, size_t, size_t) {assert(false);};
+    unsafe::Value* get_index(unsafe::Array*, uint64_t, uint64_t) {assert(false);};
 
     /// @brief modify element by index
     /// @param array: array to modify
@@ -118,12 +118,12 @@ namespace jluna::unsafe::docs_only
     /// @param array: array to modify
     /// @param value: new value assigned to the element
     /// @params index: index along the first dimension
-    void set_index(unsafe::Array*, unsafe::Value* value, size_t) {assert(false);};
+    void set_index(unsafe::Array*, unsafe::Value* value, uint64_t) {assert(false);};
 
     /// @brief modify element by index
     /// @param array: array to modify
     /// @param value: new value assigned to the element
     /// @params i: index along the first dimension
     /// @params j: index along the second dimension
-    void set_index(unsafe::Array*, unsafe::Value* value, size_t, size_t) {assert(false);};
+    void set_index(unsafe::Array*, unsafe::Value* value, uint64_t, uint64_t) {assert(false);};
 }

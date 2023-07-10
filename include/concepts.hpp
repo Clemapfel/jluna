@@ -84,17 +84,17 @@ namespace jluna
         using return_t = typename as_std_function::result_type;
 
         // number of arguments
-        static constexpr size_t n_args = sizeof...(Args_t);
+        static constexpr uint64_t n_args = sizeof...(Args_t);
 
         // all argument types as tuple type
         using argument_ts = std::tuple<Args_t...>;
 
         // type of i-th argument
-        template<size_t i>
+        template<uint64_t i>
         using argument_type = std::tuple_element_t<i, argument_ts>;
     };
 
-    template<typename T, size_t i>
+    template<typename T, uint64_t i>
     using get_nth_argument_t = std::tuple_element_t<i, typename function_traits<T>::argument_ts>;
 
     /// @brief forward function or lambda as C-literal function
@@ -130,7 +130,7 @@ namespace jluna
     >::value;
 
     /// @concept: function with n args
-    template<typename T, size_t N>
+    template<typename T, uint64_t N>
     concept is_function_with_n_args = (function_traits<detail::as_c_function_v<T>>::n_args == N);
 
     /// @concept: can be cast to jl_value_t*
@@ -223,7 +223,7 @@ namespace jluna
     /// @concept is tuple
     namespace detail
     {
-        template<typename T, size_t... Ns>
+        template<typename T, uint64_t... Ns>
         constexpr bool is_tuple_aux(std::index_sequence<Ns...>)
         {
             return std::is_same_v<T, std::tuple<std::tuple_element_t<Ns, T>...>>;

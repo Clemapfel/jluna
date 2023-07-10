@@ -38,7 +38,7 @@ namespace jluna
 
             /// @brief hash, constant runtime
             /// @returns hash
-            size_t hash() const;
+            uint64_t hash() const;
 
             /// @brief equality operator, uses hash
             /// @param other: other symbol

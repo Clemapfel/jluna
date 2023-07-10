@@ -11,13 +11,13 @@ namespace jluna
 {
     /// @brief treat the string as a generator expression and return iterable, lazy-eval range
     class GeneratorExpression;
-    GeneratorExpression operator""_gen(const char*, size_t);
+    GeneratorExpression operator""_gen(const char*, uint64_t);
 
     /// @brief wrapper for Base.Generator, only create by _gen
     /// @note expression is evaluated lazily
     class GeneratorExpression
     {
-        friend GeneratorExpression operator""_gen(const char*, size_t);
+        friend GeneratorExpression operator""_gen(const char*, uint64_t);
 
         public:
             /// @brief dtor
@@ -35,7 +35,7 @@ namespace jluna
             [[nodiscard]] ForwardIterator end() const;
 
             /// @brief get length of iterable component
-            size_t size() const;
+            uint64_t size() const;
 
             /// @brief get julia-side Base.generator object
             explicit operator unsafe::Value*() const;
@@ -49,7 +49,7 @@ namespace jluna
             Int64 _length;
 
             unsafe::Value* get() const;
-            size_t _value_key;
+            uint64_t _value_key;
             unsafe::Value* _value_ref;
 
             static inline jl_function_t* _iterate = nullptr;

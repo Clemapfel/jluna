@@ -56,9 +56,9 @@ void* jluna_to_pointer(jl_value_t* in)
     return (void*) in;
 }
 
-size_t jluna_invoke_from_task(size_t function_ptr)
+uint64_t jluna_invoke_from_task(uint64_t function_ptr)
 {
-    return reinterpret_cast<size_t>(
+    return reinterpret_cast<uint64_t>(
         (*reinterpret_cast<std::function<jluna::unsafe::Value*()>*>(function_ptr))()
     );
 }

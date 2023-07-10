@@ -73,7 +73,7 @@ namespace jluna::unsafe
     }
 
     template<is_julia_value T>
-    size_t gc_preserve(T* in)
+    uint64_t gc_preserve(T* in)
     {
         auto* value = (unsafe::Value*) in;
         bool before = jl_gc_is_enabled();
@@ -89,9 +89,9 @@ namespace jluna::unsafe
     }
 
     template<is_julia_value_pointer... Ts, std::enable_if_t<(sizeof...(Ts) > 2), bool>>
-    std::vector<size_t> gc_preserve(Ts... values)
+    std::vector<uint64_t> gc_preserve(Ts... values)
     {
-        std::vector<size_t> out;
+        std::vector<uint64_t> out;
         out.reserve(sizeof...(Ts));
         (out.push_back(gc_preserve(values)), ...);
         return out;
@@ -104,7 +104,7 @@ namespace jluna::unsafe
         jl_gc_enable(false);
         static auto* tuple_type = [&](){
             std::array<jl_value_t*, sizeof...(Dims)> types;
-            for (size_t i = 0; i < types.size(); ++i)
+            for (uint64_t i = 0; i < types.size(); ++i)
                 types.at(i) = (jl_value_t*) jl_uint64_type;
 
             return jl_apply_tuple_type_v(types.data(), types.size());
@@ -122,7 +122,7 @@ namespace jluna::unsafe
         jl_gc_enable(false);
         static auto* tuple_type = [&](){
             std::array<jl_value_t*, sizeof...(Dims)> types;
-            for (size_t i = 0; i < types.size(); ++i)
+            for (uint64_t i = 0; i < types.size(); ++i)
                 types.at(i) = (jl_value_t*) jl_uint64_type;
 
             return jl_apply_tuple_type_v(types.data(), types.size());
@@ -140,7 +140,7 @@ namespace jluna::unsafe
         jl_gc_enable(false);
         static auto* tuple_type = [&](){
             std::array<jl_value_t*, sizeof...(Dims)> types;
-            for (size_t i = 0; i < types.size(); ++i)
+            for (uint64_t i = 0; i < types.size(); ++i)
                 types.at(i) = (jl_value_t*) jl_uint64_type;
 
             return jl_apply_tuple_type_v(types.data(), types.size());
@@ -157,26 +157,26 @@ namespace jluna::unsafe
     template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool>>
     unsafe::Value* get_index(unsafe::Array* array, Index... index_per_dimension)
     {
-        std::array<size_t, sizeof...(Index)> indices = {size_t(index_per_dimension)...};
-        size_t index = 0;
-        size_t mul = 1;
+        std::array<uint64_t, sizeof...(Index)> indices = {uint64_t(index_per_dimension)...};
+        uint64_t index = 0;
+        uint64_t mul = 1;
 
-        for (size_t i = 0; i < static_cast<size_t>(array->flags.ndims); ++i)
+        for (uint64_t i = 0; i < static_cast<uint64_t>(array->flags.ndims); ++i)
         {
             index += (indices.at(i)) * mul;
-            size_t dim = jl_array_dim(array, i);
+            uint64_t dim = jl_array_dim(array, i);
             mul *= dim;
         }
 
         return jl_arrayref(array, index);
     }
 
-    inline unsafe::Value* get_index(unsafe::Array* array, size_t i)
+    inline unsafe::Value* get_index(unsafe::Array* array, uint64_t i)
     {
         return jl_arrayref(array, i);
     }
 
-    inline unsafe::Value* get_index(unsafe::Array* array, size_t i, size_t j)
+    inline unsafe::Value* get_index(unsafe::Array* array, uint64_t i, uint64_t j)
     {
         return jl_arrayref(array, i + jl_array_dim(array, 0) * j);
     }
@@ -184,27 +184,27 @@ namespace jluna::unsafe
     template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool>>
     void set_index(unsafe::Array* array, unsafe::Value* new_value, Index... index_per_dimension)
     {
-        std::array<size_t, sizeof...(Index)> indices = {size_t(index_per_dimension)...};
-        size_t index = 0;
-        size_t mul = 1;
+        std::array<uint64_t, sizeof...(Index)> indices = {uint64_t(index_per_dimension)...};
+        uint64_t index = 0;
+        uint64_t mul = 1;
 
-        for (size_t i = 0; i < static_cast<size_t>(array->flags.ndims); ++i)
+        for (uint64_t i = 0; i < static_cast<uint64_t>(array->flags.ndims); ++i)
         {
             index += (indices.at(i)) * mul;
-            size_t dim = jl_array_dim(array, i);
+            uint64_t dim = jl_array_dim(array, i);
             mul *= dim;
         }
 
         jl_arrayset(array, new_value, index);
     }
 
-    inline void set_index(unsafe::Array* array, unsafe::Value* value, size_t i)
+    inline void set_index(unsafe::Array* array, unsafe::Value* value, uint64_t i)
     {
         jl_arrayset(array, value, i);
     }
 
     template<typename T>
-    void set_array_data(unsafe::Array* array, T* new_data, size_t new_size)
+    void set_array_data(unsafe::Array* array, T* new_data, uint64_t new_size)
     {
         array->data = new_data;
         jl_gc_wb(array, new_data);

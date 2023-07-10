@@ -229,7 +229,7 @@ namespace jluna
             /// @param variable_name: exact name of variable
             /// @param dims: length in each dimension
             /// @returns *named* proxy to newly created array, filled with undef
-            template<is_boxable T, size_t N, is<size_t>... Dims>
+            template<is_boxable T, uint64_t N, is<uint64_t>... Dims>
             [[nodiscard]] Array<T, N> new_array(const std::string& name, Dims... dims);
 
             /// @brief wrap c-property parent
