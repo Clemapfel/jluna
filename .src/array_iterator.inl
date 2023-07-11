@@ -106,7 +106,7 @@ namespace jluna
         static jl_function_t* setindex = jl_get_function(jl_base_module, "setindex!");
 
         gc_pause;
-        jl_call3(setindex, _owner->operator jl_value_t *(), box(value), box(_index + 1));
+        jl_call3(setindex, _owner->operator jl_value_t *(), box(value), box((uint64_t)(_index + 1)));
         gc_unpause;
 
         return *this;
