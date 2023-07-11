@@ -46,10 +46,10 @@ namespace jluna
         return get()->name->name;
     }
 
-    size_t Type::get_n_fields() const
+    uint64_t Type::get_n_fields() const
     {
         static jl_function_t* get_n_fields = unsafe::get_function("jluna"_sym, "get_n_fields"_sym);
-        return unbox<size_t>(jluna::safe_call(get_n_fields, get()));
+        return unbox<uint64_t>(jluna::safe_call(get_n_fields, get()));
     }
 
     std::vector<std::pair<Symbol, Type>> Type::get_fields() const
@@ -64,10 +64,10 @@ namespace jluna
         return unbox<std::vector<std::pair<Symbol, Type>>>(jluna::safe_call(get_parameters, get()));
     }
 
-    size_t Type::get_n_parameters() const
+    uint64_t Type::get_n_parameters() const
     {
         static jl_function_t* get_n_fields = unsafe::get_function("jluna"_sym, "get_n_parameters"_sym);
-        return unbox<size_t>(jluna::safe_call(get_n_fields, get()));
+        return unbox<uint64_t>(jluna::safe_call(get_n_fields, get()));
     }
 
     unsafe::Value* Type::get_singleton_instance() const

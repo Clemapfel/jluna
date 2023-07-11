@@ -102,7 +102,7 @@ namespace jluna
     void detail::TaskValue<T>::initialize(std::function<unsafe::Value*()>* in)
     {
         static auto* make_task = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna.cppcall"), "make_task"_sym);
-        _value = unsafe::call(make_task, box(reinterpret_cast<size_t>(in)));
+        _value = unsafe::call(make_task, box(reinterpret_cast<uint64_t>(in)));
 
         static auto* setfield = unsafe::get_function(jl_base_module, "setfield!"_sym);
         static auto* sticky = jl_symbol("sticky");

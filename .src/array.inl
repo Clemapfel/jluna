@@ -159,7 +159,7 @@ namespace jluna
         res.reserve(gen.size());
 
         for (auto it : gen)
-            res.push_back(this->operator[](unbox<size_t>(it)));
+            res.push_back(this->operator[](unbox<uint64_t>(it)));
 
         gc_unpause;
         return res;

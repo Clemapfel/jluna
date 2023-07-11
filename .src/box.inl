@@ -184,7 +184,7 @@ namespace jluna
 
         gc_pause;
 
-        auto* out = unsafe::call(new_dict, as_julia_type<Key_t>::type(), as_julia_type<Value_t>::type(), box(value.size()));
+        auto* out = unsafe::call(new_dict, as_julia_type<Key_t>::type(), as_julia_type<Value_t>::type(), box((uint64_t) value.size()));
         for (auto& pair : value)
             safe_call(setindex, out, box<Value_t>(pair.second), box<Key_t>(pair.first));
 
@@ -200,7 +200,7 @@ namespace jluna
 
         gc_pause;
 
-        auto* out = unsafe::call(new_set, as_julia_type<Value_t>::type(), box(value.size()));
+        auto* out = unsafe::call(new_set, as_julia_type<Value_t>::type(), box((uint64_t) value.size()));
 
         for (auto& e : value)
             unsafe::call(push, out, box<Value_t>(e));
