@@ -25,7 +25,7 @@ namespace jluna::detail
         (jl_call1(gc_push, jl_box_voidpointer((void*) ts)), ...);
     }
 
-    inline void gc_pop(size_t n = 1)
+    inline void gc_pop(uint64_t n = 1)
     {
         static unsafe::Function* gc_pop = nullptr;
 
@@ -37,7 +37,7 @@ namespace jluna::detail
             jl_gc_enable(true);
         }
 
-        for (size_t i = 0; i < n; ++i)
+        for (uint64_t i = 0; i < n; ++i)
             jl_call0(gc_pop);
     }
 

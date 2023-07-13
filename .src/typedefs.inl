@@ -176,14 +176,14 @@ namespace jluna::detail
             std::stringstream str;
             str << "Tuple{";
 
-            size_t n = sizeof...(Ts);
-            auto push = [&](const std::string& name, size_t i) {
+            uint64_t n = sizeof...(Ts);
+            auto push = [&](const std::string& name, uint64_t i) {
                 str << name;
                 if (i != n)
                     str << ", ";
             };
 
-            size_t i = 0u;
+            uint64_t i = 0u;
             (push(as_julia_type_aux<Ts>::type_name, ++i), ...);
 
             str << "}";

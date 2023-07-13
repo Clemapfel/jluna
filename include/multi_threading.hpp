@@ -179,18 +179,18 @@ namespace jluna
 
             /// @brief get number of threads
             /// @returns number
-            static size_t n_threads();
+            static uint64_t n_threads();
 
             /// @brief get id of current task
             /// @returns number
-            static size_t thread_id();
+            static uint64_t thread_id();
 
         private:
-            static void free(size_t id);
+            static void free(uint64_t id);
 
-            static inline size_t _current_id = 0;
+            static inline uint64_t _current_id = 0;
             static inline std::mutex _storage_lock = std::mutex();
-            static inline std::map<size_t,
+            static inline std::map<uint64_t,
                 std::pair<
                     detail::TaskSuper*,
                     std::unique_ptr<std::function<unsafe::Value*()>>

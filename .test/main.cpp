@@ -15,7 +15,7 @@ using namespace jluna::detail;
 
 struct NonJuliaType
 {
-    std::vector<size_t> _field;
+    std::vector<uint64_t> _field;
 };
 set_usertype_enabled(NonJuliaType);
 make_usertype_implicitly_convertible(NonJuliaType);
@@ -40,7 +40,7 @@ int main()
 
         collect_garbage();
 
-        auto after = unbox<std::vector<size_t>>(value);
+        auto after = unbox<std::vector<uint64_t>>(value);
         Test::assert_that(after.at(2) == 342);
 
         gc_pop(1);
@@ -53,7 +53,7 @@ int main()
 
         collect_garbage();
 
-        auto after = unbox<std::vector<size_t>>(value);
+        auto after = unbox<std::vector<uint64_t>>(value);
         Test::assert_that(after.at(2) == 342);
 
         unsafe::gc_release(id);
@@ -64,7 +64,7 @@ int main()
         using namespace unsafe;
 
         auto* symbol = jl_eval_string("return Symbol(\"test\")");
-        size_t symbol_id = unsafe::gc_preserve(symbol);
+        uint64_t symbol_id = unsafe::gc_preserve(symbol);
         Test::assert_that("test"_sym == (jl_sym_t*) symbol);
         unsafe::gc_release(symbol_id);
     });
@@ -72,7 +72,7 @@ int main()
     Test::test("as_julia_pointer", [](){
 
         auto* ptr = jl_eval_string("return 1234");
-        size_t true_value = (size_t) ptr;
+        uint64_t true_value = (uint64_t) ptr;
 
         Test::assert_that(true_value == unbox<UInt64>(detail::convert((unsafe::DataType*) UInt64_t, as_julia_pointer(ptr))));
     });
@@ -194,7 +194,7 @@ int main()
 
         using namespace unsafe;
 
-        std::vector<size_t> gc_ids;
+        std::vector<uint64_t> gc_ids;
 
         auto* one_d = new_array(Float64_t, 15);
         gc_ids.push_back(unsafe::gc_preserve(one_d));
@@ -211,7 +211,7 @@ int main()
         Test::assert_that(jl_array_len(six_d) == pow(15, 6));
         Test::assert_that(jl_array_ndims(six_d) == 6);
 
-        for (size_t id : gc_ids)
+        for (uint64_t id : gc_ids)
             unsafe::gc_release(id);
     });
 
@@ -219,45 +219,45 @@ int main()
 
         using namespace unsafe;
 
-        std::vector<size_t> gc_ids;
+        std::vector<uint64_t> gc_ids;
 
-        std::vector<size_t> one_d_vec;
-        for (size_t i = 0; i < 10; ++i)
+        std::vector<uint64_t> one_d_vec;
+        for (uint64_t i = 0; i < 10; ++i)
             one_d_vec.push_back(i);
 
         auto* one_d = unsafe::new_array_from_data(UInt64_t, one_d_vec.data(), one_d_vec.size());
         gc_ids.push_back(unsafe::gc_preserve(one_d));
         Test::assert_that(jl_unbox_uint64(jl_arrayref(one_d, 9)) == 9);
 
-        std::vector<size_t> two_d_vec;
-        for (size_t i = 0; i < 25; ++i)
+        std::vector<uint64_t> two_d_vec;
+        for (uint64_t i = 0; i < 25; ++i)
             two_d_vec.push_back(i);
 
         auto* two_d = unsafe::new_array_from_data(UInt64_t, two_d_vec.data(), 5, 5);
         gc_ids.push_back(unsafe::gc_preserve(two_d));
         Test::assert_that(jl_unbox_uint64(jl_arrayref(two_d, 9)) == 9);
 
-        std::vector<size_t> four_d_vec;
-        for (size_t i = 0; i < 4 * 4 * 4 * 4; ++i)
+        std::vector<uint64_t> four_d_vec;
+        for (uint64_t i = 0; i < 4 * 4 * 4 * 4; ++i)
             four_d_vec.push_back(i);
 
         auto* four_d = unsafe::new_array_from_data(UInt64_t, four_d_vec.data(), 4, 4, 4, 4);
         gc_ids.push_back(unsafe::gc_preserve(four_d));
         Test::assert_that(jl_unbox_uint64(jl_arrayref(four_d, 9)) == 9);
 
-        for (size_t id : gc_ids)
+        for (uint64_t id : gc_ids)
             unsafe::gc_release(id);
     });
 
     Test::test("unsafe: override_array", []() {
 
         jl_array_t * arr01 = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
-        size_t id_1 = unsafe::gc_preserve(arr01);
+        uint64_t id_1 = unsafe::gc_preserve(arr01);
         jl_array_t * arr02 = (jl_array_t*) jl_eval_string("return Int64[i for i in 25:(25+25)]");
-        size_t id_2 = unsafe::gc_preserve(arr02);
+        uint64_t id_2 = unsafe::gc_preserve(arr02);
 
         unsafe::override_array(arr02, arr01);
-        for (size_t i = 0; i < 25; ++i)
+        for (uint64_t i = 0; i < 25; ++i)
             Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == i + 1);
 
         unsafe::gc_release(id_1);
@@ -267,12 +267,12 @@ int main()
     Test::test("unsafe: swap_array_data", []() {
 
         jl_array_t * arr01 = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
-        size_t id_1 = unsafe::gc_preserve(arr01);
+        uint64_t id_1 = unsafe::gc_preserve(arr01);
         jl_array_t * arr02 = (jl_array_t*) jl_eval_string("return Int64[i for i in -1:-1:-25]");
-        size_t id_2 = unsafe::gc_preserve(arr02);
+        uint64_t id_2 = unsafe::gc_preserve(arr02);
 
         unsafe::swap_array_data(arr01, arr02);
-        for (size_t i = 0; i < 25; ++i)
+        for (uint64_t i = 0; i < 25; ++i)
         {
             Test::assert_that(jl_unbox_int64(jl_arrayref(arr01, i)) == -(static_cast<Int64>(i + 1)));
             Test::assert_that(jl_unbox_int64(jl_arrayref(arr02, i)) == +(static_cast<Int64>(i + 1)));
@@ -285,15 +285,15 @@ int main()
     Test::test("unsafe: set_array_data", []() {
 
         jl_array_t * arr01 = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
-        size_t id = unsafe::gc_preserve(arr01);
+        uint64_t id = unsafe::gc_preserve(arr01);
 
         std::vector<Int64> new_data;
-        for (size_t i = 0; i < 30; ++i)
+        for (uint64_t i = 0; i < 30; ++i)
             new_data.push_back(i + 43);
 
         unsafe::set_array_data(arr01, new_data.data(), new_data.size());
 
-        for (size_t i = 0; i < new_data.size(); ++i)
+        for (uint64_t i = 0; i < new_data.size(); ++i)
             Test::assert_that(jl_unbox_int64(jl_arrayref(arr01, i)) == new_data.at(i));
 
         unsafe::gc_release(id);
@@ -303,22 +303,22 @@ int main()
     {
         gc_pause;
         jl_array_t * arr = (jl_array_t*) jl_eval_string("return [i for i in 1:(5*5*5)]");
-        size_t id1 = unsafe::gc_preserve(arr);
+        uint64_t id1 = unsafe::gc_preserve(arr);
 
         unsafe::resize_array(arr, 5, 5, 5);
         Test::assert_that(jl_array_ndims(arr) == 3);
 
         arr = (jl_array_t*) jl_eval_string("return [i for i in 1:(5*5)]");
-        size_t id2 = unsafe::gc_preserve(arr);
+        uint64_t id2 = unsafe::gc_preserve(arr);
         unsafe::resize_array(arr, 5, 5);
         Test::assert_that(jl_array_ndims(arr) == 2);
 
         arr = (jl_array_t*) jl_eval_string("return reshape([i for i in 1:(5*5)], 5, 5)");
-        size_t id3 = unsafe::gc_preserve(arr);
+        uint64_t id3 = unsafe::gc_preserve(arr);
         unsafe::resize_array(arr, 25);
         Test::assert_that(jl_array_ndims(arr) == 1);
 
-        for (size_t id : {id1, id2, id3})
+        for (uint64_t id : {id1, id2, id3})
             unsafe::gc_release(id);
 
         gc_unpause;
@@ -327,61 +327,61 @@ int main()
     Test::test("unsafe: resize_array: grow", []() {
 
         jl_array_t * arr = (jl_array_t*) jl_eval_string("return [i for i in 1:(5*5*5)]");
-        size_t id1 = unsafe::gc_preserve(arr);
+        uint64_t id1 = unsafe::gc_preserve(arr);
         unsafe::resize_array(arr, 5 * 5);
         Test::assert_that(jl_array_len(arr) == 5 * 5);
         unsafe::resize_array(arr, 5 * 5 * 5);
         Test::assert_that(jl_array_len(arr) == 5 * 5 * 5);
 
         arr = (jl_array_t*) jl_eval_string("return reshape([i for i in 1:(5*5)], 5, 5)");
-        size_t id2 = unsafe::gc_preserve(arr);
+        uint64_t id2 = unsafe::gc_preserve(arr);
         unsafe::resize_array(arr, 4, 4);
         Test::assert_that(jl_array_len(arr) == 4 * 4);
         unsafe::resize_array(arr, 6, 6);
         Test::assert_that(jl_array_len(arr) == 6 * 6);
 
-        for (size_t id : {id1, id2})
+        for (uint64_t id : {id1, id2})
             unsafe::gc_release(id);
     });
 
     Test::test("unsafe: array: get_index", []() {
 
         jl_array_t * arr = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
-        size_t id1 = unsafe::gc_preserve(arr);
+        uint64_t id1 = unsafe::gc_preserve(arr);
 
-        for (size_t i = 0; i < 25; ++i)
+        for (uint64_t i = 0; i < 25; ++i)
             Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, i)) == i + 1);
 
         static unsafe::Function* getindex = unsafe::get_function(jl_base_module, "getindex"_sym);
 
         arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(6*8)], 6, 8)");
-        size_t id2 = unsafe::gc_preserve(arr);
+        uint64_t id2 = unsafe::gc_preserve(arr);
         Test::assert_that(jl_unbox_int64(unsafe::call(getindex, arr, jl_box_int64(4), jl_box_int64(4))) ==
                           jl_unbox_int64(unsafe::get_index(arr, 3, 3)));
 
         arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(3*4*5*6)], 3, 4, 5, 6)");
-        size_t id3 = unsafe::gc_preserve(arr);
+        uint64_t id3 = unsafe::gc_preserve(arr);
         Test::assert_that(jl_unbox_int64(unsafe::get_index(arr, 2, 2, 2, 2)) == jl_unbox_int64(
                 unsafe::call(getindex, arr, jl_box_int64(3), jl_box_int64(3), jl_box_int64(3), jl_box_int64(3))));
 
-        for (size_t id : {id1, id2, id3})
+        for (uint64_t id : {id1, id2, id3})
             unsafe::gc_release(id);
     });
 
     Test::test("unsafe: get_array_size", []() {
 
         jl_array_t * arr = (jl_array_t*) jl_eval_string("return Int64[i for i in 1:25]");
-        size_t id1 = unsafe::gc_preserve(arr);
+        uint64_t id1 = unsafe::gc_preserve(arr);
         Test::assert_that(unsafe::get_array_size(arr) == 25);
 
         arr = (jl_array_t*) jl_eval_string("return reshape(Int64[i for i in 1:(3*5*4)], 3, 5, 4)");
-        size_t id2 = unsafe::gc_preserve(arr);
+        uint64_t id2 = unsafe::gc_preserve(arr);
 
         Test::assert_that(unsafe::get_array_size(arr, 0) == 3);
         Test::assert_that(unsafe::get_array_size(arr, 1) == 5);
         Test::assert_that(unsafe::get_array_size(arr, 2) == 4);
 
-        for (size_t id : {id1, id2})
+        for (uint64_t id : {id1, id2})
             unsafe::gc_release(id);
     });
 
@@ -431,8 +431,8 @@ int main()
     test_box_unbox("Float64", Float64(0.01));
     test_box_unbox("Complex", std::complex<double>(0, 1));
 
-    test_box_unbox("Pair", std::pair<size_t, std::string>(12, "abc"));
-    test_box_unbox("Tuple3", std::tuple<size_t, std::string, float>(size_t(12), "abc", 0.01f));
+    test_box_unbox("Pair", std::pair<uint64_t, std::string>(12, "abc"));
+    test_box_unbox("Tuple3", std::tuple<uint64_t, std::string, float>(uint64_t(12), "abc", 0.01f));
     test_box_unbox("Symbol", jluna::Symbol("abc"));
 
     auto test_box_unbox_iterable = []<typename T>(const std::string& name, T&& value) {
@@ -446,10 +446,10 @@ int main()
         });
     };
 
-    test_box_unbox_iterable("Vector", std::vector<size_t>{1, 2, 3, 4});
-    test_box_unbox_iterable("Dict", std::map<size_t, std::string>{{12, "abc"}});
-    test_box_unbox_iterable("Dict", std::unordered_map<size_t, std::string>{{12, "abc"}});
-    test_box_unbox_iterable("Set", std::set<size_t>{1, 2, 3, 4});
+    test_box_unbox_iterable("Vector", std::vector<uint64_t>{1, 2, 3, 4});
+    test_box_unbox_iterable("Dict", std::map<uint64_t, std::string>{{12, "abc"}});
+    test_box_unbox_iterable("Dict", std::unordered_map<uint64_t, std::string>{{12, "abc"}});
+    test_box_unbox_iterable("Set", std::set<uint64_t>{1, 2, 3, 4});
 
     Test::test("make_new_named_undef", []() {
 
@@ -499,48 +499,48 @@ int main()
 
     Test::test("make_new_named_vector", []() {
 
-        std::vector<size_t> value = {1, 2, 3};
+        std::vector<uint64_t> value = {1, 2, 3};
         auto res = Main.new_vector("test", value);
-        Test::assert_that(res.operator std::vector<size_t>() == value);
+        Test::assert_that(res.operator std::vector<uint64_t>() == value);
 
         //jl_eval_string("test = undef");
     });
 
     Test::test("make_new_named_set", []() {
 
-        std::set<size_t> value = {1, 2, 3};
+        std::set<uint64_t> value = {1, 2, 3};
         auto res = Main.new_set("test", value);
-        Test::assert_that(res.operator std::set<size_t>() == value);
+        Test::assert_that(res.operator std::set<uint64_t>() == value);
 
         //jl_eval_string("test = undef");
     });
 
     Test::test("make_new_named_dict", []() {
 
-        std::unordered_map<size_t, std::string> value = {{2, "abc"}};
+        std::unordered_map<uint64_t, std::string> value = {{2, "abc"}};
         auto res = Main.new_dict("test", value);
-        Test::assert_that(res.operator std::unordered_map<size_t, std::string>() == value);
+        Test::assert_that(res.operator std::unordered_map<uint64_t, std::string>() == value);
 
-        std::map<size_t, std::string> value2 = {{2, "abc"}};
+        std::map<uint64_t, std::string> value2 = {{2, "abc"}};
         auto res2 = Main.new_dict("test", value);
-        Test::assert_that(res2.operator std::map<size_t, std::string>() == value2);
+        Test::assert_that(res2.operator std::map<uint64_t, std::string>() == value2);
         //jl_eval_string("test = undef");
     });
 
     Test::test("make_new_pair", []() {
 
-        std::pair<size_t, std::string> value = {2, "abc"};
+        std::pair<uint64_t, std::string> value = {2, "abc"};
         auto res = Main.new_pair("test", value.first, value.second);
-        Test::assert_that(res.operator std::pair<size_t, std::string>() == value);
+        Test::assert_that(res.operator std::pair<uint64_t, std::string>() == value);
 
         //jl_eval_string("test = undef");
     });
 
     Test::test("make_new_tuple", []() {
 
-        std::tuple<size_t, std::string, int> value = {2, "abc", -1};
+        std::tuple<uint64_t, std::string, int> value = {2, "abc", -1};
         auto res = Main.new_tuple("test", std::get<0>(value), std::get<1>(value), std::get<2>(value));
-        Test::assert_that(res.operator std::tuple<size_t, std::string, int>() == value);
+        Test::assert_that(res.operator std::tuple<uint64_t, std::string, int>() == value);
 
         //jl_eval_string("test = undef");
     });
@@ -569,7 +569,7 @@ int main()
     Test::test("proxy trivial dtor", []() {
 
         jl_value_t * val = jl_eval_string("return [1, 2, 3, 4]");
-        size_t n = 0;
+        uint64_t n = 0;
         {
             auto proxy = Proxy(val, nullptr);
             n = jl_unbox_int64(jl_eval_string("return length(jluna.memory_handler._refs.x)"));
@@ -781,11 +781,11 @@ int main()
 
         Main.safe_eval("instance = 9999");
 
-        Test::assert_that((size_t) proxy["_field"] == 123);
+        Test::assert_that((uint64_t) proxy["_field"] == 123);
 
         proxy.update();
 
-        Test::assert_that((size_t) proxy == 9999);
+        Test::assert_that((uint64_t) proxy == 9999);
     });
 
     Test::test("proxy make unnamed", []() {
@@ -895,7 +895,7 @@ int main()
         //Test::assert_that(false);
         try
         {
-            jluna::Array<size_t, 1> arr = jluna::safe_eval(R"(return ["abc", "def"])");
+            jluna::Array<uint64_t, 1> arr = jluna::safe_eval(R"(return ["abc", "def"])");
             arr.at(0) = "string";
         }
         catch (...)
@@ -920,7 +920,7 @@ int main()
         Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         ArrayAny3d vec = Main["array"];
 
-        static auto getindex = [&](size_t a, size_t b, size_t c) -> size_t {
+        static auto getindex = [&](uint64_t a, uint64_t b, uint64_t c) -> uint64_t {
             jl_function_t* _getindex = jl_get_function(jl_base_module, "getindex");
             std::vector<jl_value_t*> args;
             args.push_back((jl_value_t*) vec);
@@ -931,15 +931,15 @@ int main()
             return jl_unbox_uint64(jl_call(_getindex, args.data(), args.size()));
         };
 
-        Test::assert_that(getindex(1, 2, 3) == static_cast<size_t>(vec.at(0, 1, 2)));
-        Test::assert_that(getindex(3, 3, 3) == static_cast<size_t>(vec.at(2, 2, 2)));
+        Test::assert_that(getindex(1, 2, 3) == static_cast<uint64_t>(vec.at(0, 1, 2)));
+        Test::assert_that(getindex(3, 3, 3) == static_cast<uint64_t>(vec.at(2, 2, 2)));
     });
 
     Test::test("array: out of range", []() {
         Main.safe_eval("array = reshape(collect(1:27), 3, 3, 3)");
         ArrayAny3d arr = Main["array"];
 
-        static auto test = [&](size_t a, size_t b, size_t c) -> bool {
+        static auto test = [&](uint64_t a, uint64_t b, uint64_t c) -> bool {
             try
             {
                 arr.at(a, b, c);
@@ -987,7 +987,7 @@ int main()
         bool thrown = false;
         try
         {
-            size_t as = *it;
+            uint64_t as = *it;
         }
         catch (jluna::JuliaException&)
         {
@@ -1057,7 +1057,7 @@ int main()
     Test::test("vector: insert", []() {
 
         Main.safe_eval("vector = UInt64[1, 2, 3, 4]");
-        Vector<size_t> vec = Main["vector"];
+        Vector<uint64_t> vec = Main["vector"];
 
         vec.insert(0, 16);
         Test::assert_that((int) vec.at(0) == 16);
@@ -1066,7 +1066,7 @@ int main()
     Test::test("vector: erase", []() {
 
         Main.safe_eval("vector = UInt64[1, 99, 3, 4]");
-        Vector<size_t> vec = Main["vector"];
+        Vector<uint64_t> vec = Main["vector"];
 
         vec.erase(0);
         Test::assert_that((int) vec.at(0) == 99 and vec.get_n_elements() == 3);
@@ -1074,7 +1074,7 @@ int main()
 
     Test::test("vector: append", []() {
         Main.safe_eval("vector = UInt64[1, 1, 1, 1]");
-        Vector<size_t> vec = Main["vector"];
+        Vector<uint64_t> vec = Main["vector"];
 
         vec.push_front(999);
         vec.push_back(666);
@@ -1146,7 +1146,7 @@ int main()
     Test::test("Symbol: Hash", []() {
 
         auto proxy = jluna::Symbol("abc");
-        Test::assert_that(proxy.hash() == (size_t) Base["hash"]((unsafe::Value*) proxy));
+        Test::assert_that(proxy.hash() == (uint64_t) Base["hash"]((unsafe::Value*) proxy));
     });
 
     Test::test("Type: CTOR", []() {
@@ -1154,7 +1154,7 @@ int main()
         auto type = Type(jl_nothing_type);
         Test::assert_that(type.operator _jl_datatype_t*() == jl_nothing_type);
 
-        type = as_julia_type<std::vector<size_t>>::type();
+        type = as_julia_type<std::vector<uint64_t>>::type();
     });
 
     auto test_type = []<typename T>(Type& a, T b) {
@@ -1337,7 +1337,7 @@ int main()
 
         auto gen = "(x for x in 1:10)"_gen;
 
-        size_t i = 1;
+        uint64_t i = 1;
         for (auto e : gen)
         {
             Test::assert_that(unbox<Int32>(e) == i);
@@ -1353,19 +1353,19 @@ int main()
 
     Test::test("Usertype: add property", []() {
 
-        Usertype<NonJuliaType>::add_property<std::vector<size_t>>(
+        Usertype<NonJuliaType>::add_property<std::vector<uint64_t>>(
                 "_field",
-                [](NonJuliaType& in) -> std::vector<size_t> {
+                [](NonJuliaType& in) -> std::vector<uint64_t> {
                     return in._field;
                 }
         );
 
-        Usertype<NonJuliaType>::add_property<std::vector<size_t>>(
+        Usertype<NonJuliaType>::add_property<std::vector<uint64_t>>(
                 "_field",
-                [](NonJuliaType& in) -> std::vector<size_t> {
+                [](NonJuliaType& in) -> std::vector<uint64_t> {
                     return in._field;
                 },
-                [](NonJuliaType& out, std::vector<size_t> in) -> void {
+                [](NonJuliaType& out, std::vector<uint64_t> in) -> void {
                     out._field = in;
                 }
         );
@@ -1408,7 +1408,7 @@ int main()
 
     Test::test("Task<T>: schedule/join", []()
     {
-        auto task = ThreadPool::create<size_t()>([]() -> size_t {
+        auto task = ThreadPool::create<uint64_t()>([]() -> uint64_t {
             return 4;
         });
 
@@ -1421,12 +1421,12 @@ int main()
 
     Test::test("Task<T>: move ctor", []()
     {
-        std::vector<Task<size_t>> task_a;
-        task_a.push_back(ThreadPool::create<size_t()>([]() -> size_t {
+        std::vector<Task<uint64_t>> task_a;
+        task_a.push_back(ThreadPool::create<uint64_t()>([]() -> uint64_t {
             return 4;
         }));
 
-        std::vector<Task<size_t>> task_b;
+        std::vector<Task<uint64_t>> task_b;
         task_b.emplace_back(std::move(task_a.back()));
 
         task_a.back().schedule();
@@ -1438,8 +1438,8 @@ int main()
 
     Test::test("Task<T>: access task proxy", []()
     {
-        auto lambda = []() -> size_t {return 4;};
-        auto task = ThreadPool::create<size_t()>(lambda);
+        auto lambda = []() -> uint64_t {return 4;};
+        auto task = ThreadPool::create<uint64_t()>(lambda);
         auto task_proxy = Proxy(static_cast<unsafe::Value*>(task));
 
         Test::assert_that((bool)task_proxy["sticky"] == false);

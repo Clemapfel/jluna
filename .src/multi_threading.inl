@@ -11,15 +11,15 @@ namespace jluna
         struct TaskValue : public detail::TaskSuper
         {
             friend class jluna::ThreadPool;
-            explicit TaskValue(size_t);
+            explicit TaskValue(uint64_t);
             ~TaskValue();
 
             void free() override;
             void initialize(std::function<unsafe::Value*()>*);
 
             unsafe::Value* _value = nullptr;
-            size_t _value_id = -1;
-            size_t _threadpool_id = -1;
+            uint64_t _value_id = -1;
+            uint64_t _threadpool_id = -1;
             std::unique_ptr<Future<Result_t>> _future;
         };
     }
@@ -84,7 +84,7 @@ namespace jluna
     // ###
 
     template<typename T>
-    detail::TaskValue<T>::TaskValue(size_t id)
+    detail::TaskValue<T>::TaskValue(uint64_t id)
         : _threadpool_id(id), _future(std::make_unique<Future<T>>())
     {}
 
@@ -102,7 +102,7 @@ namespace jluna
     void detail::TaskValue<T>::initialize(std::function<unsafe::Value*()>* in)
     {
         static auto* make_task = unsafe::get_function((unsafe::Module*) jl_eval_string("return jluna.cppcall"), "make_task"_sym);
-        _value = unsafe::call(make_task, box(reinterpret_cast<size_t>(in)));
+        _value = unsafe::call(make_task, box(reinterpret_cast<uint64_t>(in)));
 
         static auto* setfield = unsafe::get_function(jl_base_module, "setfield!"_sym);
         static auto* sticky = jl_symbol("sticky");
@@ -376,19 +376,19 @@ namespace jluna
         return Task<Return_t>(task);
     }
 
-    inline size_t ThreadPool::n_threads()
+    inline uint64_t ThreadPool::n_threads()
     {
         static auto* nthreads = unsafe::get_function("Threads"_sym, "nthreads"_sym);
         return unbox<Int64>(jl_call0(nthreads));
     }
 
-    inline size_t ThreadPool::thread_id()
+    inline uint64_t ThreadPool::thread_id()
     {
         static auto* threadid = unsafe::get_function("Threads"_sym, "threadid"_sym);
         return unbox<Int64>(jl_call0(threadid));
     }
 
-    inline void ThreadPool::free(size_t id)
+    inline void ThreadPool::free(uint64_t id)
     {
         _storage_lock.lock();
         auto it = _storage.find(id);

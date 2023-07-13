@@ -7,7 +7,7 @@
 
 namespace jluna
 {
-    GeneratorExpression operator""_gen(const char* in, size_t n)
+    GeneratorExpression operator""_gen(const char* in, uint64_t n)
     {
         std::stringstream str;
         gc_pause;
@@ -67,7 +67,7 @@ namespace jluna
         return ForwardIterator(this, _length);
     }
 
-    size_t GeneratorExpression::size() const
+    uint64_t GeneratorExpression::size() const
     {
         return _length;
     }

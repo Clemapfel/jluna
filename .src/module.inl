@@ -259,7 +259,7 @@ namespace jluna
         return Proxy(jl_get_global(value(), sym), sym);
     }
 
-    template<is_boxable T, size_t N, is<size_t>... Dims>
+    template<is_boxable T, uint64_t N, is<uint64_t>... Dims>
     Array<T, N> Module::new_array(const std::string& name, Dims... dims)
     {
         static_assert(sizeof...(Dims) == N, "wrong number of dimension initializers");
@@ -267,12 +267,12 @@ namespace jluna
         std::stringstream str;
         str << name << " = " << as_julia_type<Array<T, N>>::type_name << "(undef,";
 
-        auto add = [&](size_t dim, size_t i){
+        auto add = [&](uint64_t dim, uint64_t i){
             str << dim << (i != sizeof...(Dims) ? ", " : ")");
         };
 
         {
-            size_t i = 0;
+            uint64_t i = 0;
             (add(dims, ++i), ...);
         }
 

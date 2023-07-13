@@ -76,12 +76,12 @@ namespace jluna::detail
         jl_atexit_hook(0);
     }
 
-    size_t create_reference(unsafe::Value* in)
+    uint64_t create_reference(unsafe::Value* in)
     {
         throw_if_uninitialized();
         static unsafe::Function* create_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "create_reference"_sym);
 
-        size_t res = -1;
+        uint64_t res = -1;
 
         gc_pause;
         res = jl_unbox_uint64(jluna::safe_call(create_reference, jl_box_voidpointer((void*) in)));
@@ -89,17 +89,17 @@ namespace jluna::detail
         return res;
     }
 
-    unsafe::Value* get_reference(size_t key)
+    unsafe::Value* get_reference(uint64_t key)
     {
         static unsafe::Function* get_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "get_reference"_sym);
-        return jluna::safe_call(get_reference, jl_box_uint64(static_cast<size_t>(key)));
+        return jluna::safe_call(get_reference, jl_box_uint64(static_cast<uint64_t>(key)));
     }
 
-    void free_reference(size_t key)
+    void free_reference(uint64_t key)
     {
         throw_if_uninitialized();
         static unsafe::Function* free_reference = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "free_reference"_sym);
-        jluna::safe_call(free_reference, jl_box_uint64(static_cast<size_t>(key)));
+        jluna::safe_call(free_reference, jl_box_uint64(static_cast<uint64_t>(key)));
     }
 }
 

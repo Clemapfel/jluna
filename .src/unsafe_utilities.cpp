@@ -7,12 +7,12 @@
 
 namespace jluna
 {
-    unsafe::Symbol* operator""_sym(const char* str, size_t)
+    unsafe::Symbol* operator""_sym(const char* str, uint64_t)
     {
         return jl_symbol(str);
     }
 
-    unsafe::Value* operator""_eval(const char* str, size_t)
+    unsafe::Value* operator""_eval(const char* str, uint64_t)
     {
         return jl_eval_string(str);
     }
@@ -76,7 +76,7 @@ namespace jluna::unsafe
         gc_unpause;
     }
 
-    void gc_release(size_t id)
+    void gc_release(uint64_t id)
     {
         gc_pause;
         detail::gc_init();
@@ -101,12 +101,12 @@ namespace jluna::unsafe
         return jl_gc_is_enabled();
     }
 
-    size_t get_array_size(unsafe::Array* array)
+    uint64_t get_array_size(unsafe::Array* array)
     {
         return array->length;
     }
 
-    size_t get_array_size(unsafe::Array* array, size_t dimension_index)
+    uint64_t get_array_size(unsafe::Array* array, uint64_t dimension_index)
     {
         return jl_array_dim(array, dimension_index);
     }
@@ -116,22 +116,22 @@ namespace jluna::unsafe
         return reinterpret_cast<unsafe::Value*>(array->data);
     }
 
-    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d)
+    unsafe::Array* new_array(unsafe::Value* value_type, uint64_t one_d)
     {
         return jl_alloc_array_1d(jl_apply_array_type(value_type, 1), one_d);
     }
 
-    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d)
+    unsafe::Array* new_array(unsafe::Value* value_type, uint64_t one_d, uint64_t two_d)
     {
         return jl_alloc_array_2d(jl_apply_array_type(value_type, 2), one_d, two_d);
     }
 
-    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d)
+    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, uint64_t one_d)
     {
         return jl_ptr_to_array_1d(jl_apply_array_type(value_type, 1), data, one_d, 0);
     }
 
-    void sizehint(unsafe::Array* arr, size_t n_elements)
+    void sizehint(unsafe::Array* arr, uint64_t n_elements)
     {
         jl_array_sizehint(arr, n_elements);
     }
@@ -182,7 +182,7 @@ namespace jluna::unsafe
         gc_unpause;
     }
 
-    void resize_array(unsafe::Array* array, size_t one_d)
+    void resize_array(unsafe::Array* array, uint64_t one_d)
     {
         static unsafe::Function* array_value_t = unsafe::get_function("jluna"_sym, "get_value_type_of_array"_sym);
 
@@ -190,7 +190,7 @@ namespace jluna::unsafe
         {
             gc_pause;
             std::array<unsafe::Value*, 1> types;
-            for (size_t i = 0; i < types.size(); ++i)
+            for (uint64_t i = 0; i < types.size(); ++i)
                 types.at(i) = (unsafe::Value*) jl_int64_type;
 
             auto* tuple_type = jl_apply_tuple_type_v(types.data(), types.size());
@@ -207,7 +207,7 @@ namespace jluna::unsafe
         array->flags.isaligned = 0;
     }
 
-    void resize_array(unsafe::Array* array, size_t one_d, size_t two_d)
+    void resize_array(unsafe::Array* array, uint64_t one_d, uint64_t two_d)
     {
         static unsafe::Function* array_value_t = unsafe::get_function("jluna"_sym, "get_value_type_of_array"_sym);
 
@@ -215,7 +215,7 @@ namespace jluna::unsafe
         {
             gc_pause;
             std::array<unsafe::Value*, 2> types;
-            for (size_t i = 0; i < types.size(); ++i)
+            for (uint64_t i = 0; i < types.size(); ++i)
                 types.at(i) = (unsafe::Value*) jl_int64_type;
 
             auto* tuple_type = jl_apply_tuple_type_v(types.data(), types.size());

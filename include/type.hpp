@@ -43,16 +43,16 @@ namespace jluna
             Symbol get_symbol() const;
 
             /// @brief get number of parameters
-            /// @returns size_t
-            size_t get_n_parameters() const;
+            /// @returns uint64_t
+            uint64_t get_n_parameters() const;
 
             /// @brief get parameter names
             /// @returns vector
             std::vector<std::pair<Symbol, Type>> get_parameters() const;
 
             /// @brief get number of fields
-            /// @returns size_t
-            size_t get_n_fields() const;
+            /// @returns uint64_t
+            uint64_t get_n_fields() const;
 
             /// @brief get field names
             /// @returns vector

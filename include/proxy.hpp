@@ -68,13 +68,13 @@ namespace jluna
             /// @brief linear indexing, if array type, returns getindex result
             /// @param index: index, 0-based
             /// @returns field as proxy
-            Proxy operator[](size_t);
+            Proxy operator[](uint64_t);
 
             /// @brief linear indexing, if array type returns getindex result
             /// @param index: index, 0-based
             /// @returns field as proxy
             template<is_unboxable T>
-            T operator[](size_t);
+            T operator[](uint64_t);
 
             /// @brief cast to Any
             explicit operator unsafe::Value*();
@@ -211,8 +211,8 @@ namespace jluna
             /// @brief points to julia-side variable
             const bool _is_mutating = true;
 
-            size_t* _id_key = new size_t(0);
-            size_t* _value_key = new size_t(0);
+            uint64_t* _id_key = new uint64_t(0);
+            uint64_t* _value_key = new uint64_t(0);
 
             mutable unsafe::Value* _id_ref;
             mutable unsafe::Value* _value_ref;

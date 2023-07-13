@@ -25,13 +25,13 @@ namespace jluna
         static jl_function_t* make_named_proxy_id = unsafe::get_function((unsafe::Module*) jl_eval_string("jluna.memory_handler"), "make_named_proxy_id"_sym);
 
         gc_pause;
-        _value_key = new size_t(detail::create_reference(value));
+        _value_key = new uint64_t(detail::create_reference(value));
         _value_ref = detail::get_reference(*_value_key);
 
         if (id == nullptr)
-            _id_key = new size_t(detail::create_reference(jl_call1(make_unnamed_proxy_id, jl_box_uint64(*_value_key))));
+            _id_key = new uint64_t(detail::create_reference(jl_call1(make_unnamed_proxy_id, jl_box_uint64(*_value_key))));
         else
-            _id_key = new size_t(detail::create_reference(jl_call2(make_named_proxy_id, (unsafe::Value*) id, jl_nothing)));
+            _id_key = new uint64_t(detail::create_reference(jl_call2(make_named_proxy_id, (unsafe::Value*) id, jl_nothing)));
 
         _id_ref = detail::get_reference(*_id_key);
 
@@ -46,10 +46,10 @@ namespace jluna
 
         _owner = owner;
 
-        _value_key = new size_t(detail::create_reference(value));
+        _value_key = new uint64_t(detail::create_reference(value));
         _value_ref = detail::get_reference(*_value_key);
 
-        _id_key = new size_t(detail::create_reference(jl_call2(make_named_proxy_id, id, owner->id())));
+        _id_key = new uint64_t(detail::create_reference(jl_call2(make_named_proxy_id, id, owner->id())));
         _id_ref = detail::get_reference(*_id_key);
 
         gc_unpause;
@@ -119,7 +119,7 @@ namespace jluna
         return operator[](field.c_str());
     }
 
-    Proxy Proxy::operator[](size_t i)
+    Proxy Proxy::operator[](uint64_t i)
     {
         static jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
 
@@ -129,7 +129,7 @@ namespace jluna
         if (jl_is_array(v) && jl_array_len(v) < i)
             out = jl_arrayref((unsafe::Array*) v, i);
         else
-            out = jluna::safe_call(getindex, v, box<size_t>(i + 1));
+            out = jluna::safe_call(getindex, v, box<uint64_t>(i + 1));
 
         return {out, _content, jl_box_uint64(i+1)};
     }
@@ -169,7 +169,7 @@ namespace jluna
         gc_pause;
         auto* svec = jl_field_names((jl_datatype_t*) (jl_isa(_content->value(), (unsafe::Value*) jl_datatype_type) ? _content->value() : jl_typeof(_content->value())));
         std::vector<std::string> out;
-        for (size_t i = 0; i < jl_svec_len(svec); ++i)
+        for (uint64_t i = 0; i < jl_svec_len(svec); ++i)
             out.emplace_back(jl_symbol_name((jl_sym_t*) jl_svecref(svec, i)));
 
         gc_unpause;

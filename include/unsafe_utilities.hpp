@@ -13,11 +13,11 @@ namespace jluna
 {
     /// @brief string suffix operator to create a symbol from a string
     /// @returns symbol
-    unsafe::Symbol* operator""_sym(const char*, size_t);
+    unsafe::Symbol* operator""_sym(const char*, uint64_t);
 
     /// @brief literal operator for prettier syntax
     /// @returns result of jl_eval_string
-    unsafe::Value* operator""_eval(const char*, size_t);
+    unsafe::Value* operator""_eval(const char*, uint64_t);
 }
 
 namespace jluna::unsafe
@@ -26,21 +26,21 @@ namespace jluna::unsafe
     /// @param object: pointer
     /// @returns id, keep track of this as it is needed to free the object
     template<is_julia_value T>
-    [[nodiscard]] size_t gc_preserve(T*);
+    [[nodiscard]] uint64_t gc_preserve(T*);
 
     /// @brief preserve multiple values
     /// @param values: pointer
     /// @returns vector of ids, needed to free the objects
     template<is_julia_value_pointer... Ts, std::enable_if_t<(sizeof...(Ts) > 2), bool> = true>
-    [[nodiscard]] std::vector<size_t> gc_preserve(Ts... values);
+    [[nodiscard]] std::vector<uint64_t> gc_preserve(Ts... values);
 
     /// @brief free a preserved object, the object may not be dealloaced immediately, simply marked for garbage collection
     /// @param id: id of object, result of gc_preserve
-    void gc_release(size_t id);
+    void gc_release(uint64_t id);
 
     /// @brief free preserved objects
     /// @param ids: vector of ids
-    void gc_release(std::vector<size_t>& ids);
+    void gc_release(std::vector<uint64_t>& ids);
 
     /// @brief set garbage collection to inactive
     void gc_disable();
@@ -141,14 +141,14 @@ namespace jluna::unsafe
     /// @param value_type: value type of the array
     /// @params one_d: size along first dimension
     /// @returns array after allocation
-    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d);
+    unsafe::Array* new_array(unsafe::Value* value_type, uint64_t one_d);
 
     /// @brief allocate 1d array
     /// @param value_type: value type of the array
     /// @params one_d: size along first dimension
     /// @params two_d: size along second dimension
     /// @returns array after allocation
-    unsafe::Array* new_array(unsafe::Value* value_type, size_t one_d, size_t two_d);
+    unsafe::Array* new_array(unsafe::Value* value_type, uint64_t one_d, uint64_t two_d);
 
     /// @brief create an array from already existing data, does not invoking a copy
     /// @param value_type: value type of the array
@@ -163,12 +163,12 @@ namespace jluna::unsafe
     /// @param data: pointer to the data, no verification is performed that the data is properly aligned or of the given value type
     /// @params size: size along first dimension
     /// @returns array object as thin wrapper
-    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, size_t one_d);
+    unsafe::Array* new_array_from_data(unsafe::Value* value_type, void* data, uint64_t one_d);
 
     /// @brief pre-allocate array, may increase performance
     /// @param array: array to reserve
     /// @param n_elements: new number of elements
-    void sizehint(unsafe::Array*, size_t n_elements);
+    void sizehint(unsafe::Array*, uint64_t n_elements);
 
     /// @brief reshape array along all dimensions
     /// @param array: array to reshape
@@ -180,14 +180,14 @@ namespace jluna::unsafe
     /// @param array: array to reshape
     /// @param one_d: size along first dimension
     /// @note optimal performance is only achieved if the array is already 1d
-    void resize_array(unsafe::Array* array, size_t one_d);
+    void resize_array(unsafe::Array* array, uint64_t one_d);
 
     /// @brief reshape array to 2d
     /// @param array: array to reshape
     /// @param one_d: size along first dimension
     /// @param two_d: size along second dimension
     /// @note optimal performance is only achieved if the array is already 2d
-    void resize_array(unsafe::Array* array, size_t one_d, size_t two_d);
+    void resize_array(unsafe::Array* array, uint64_t one_d, uint64_t two_d);
 
     /// @brief replace one arrays content with another, does not cause allocation
     /// @param overridden: array to be modified
@@ -197,12 +197,12 @@ namespace jluna::unsafe
     /// @brief get number of elements in array
     /// @param array: array
     /// @returns number of elements
-    size_t get_array_size(unsafe::Array*);
+    uint64_t get_array_size(unsafe::Array*);
 
     /// @brief get array size along specified dimension
     /// @param dimension_index: index, 0-based
     /// @returns size along that dimension
-    size_t get_array_size(unsafe::Array*, size_t dimension_index);
+    uint64_t get_array_size(unsafe::Array*, uint64_t dimension_index);
 
     /// @brief access element
     /// @param array: array to access
@@ -210,8 +210,8 @@ namespace jluna::unsafe
     /// @returns pointer to element, or nullptr if out of bounds
     template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool> = true>
     unsafe::Value* get_index(unsafe::Array*, Index... index_per_dimension);
-    unsafe::Value* get_index(unsafe::Array*, size_t);
-    unsafe::Value* get_index(unsafe::Array*, size_t, size_t);
+    unsafe::Value* get_index(unsafe::Array*, uint64_t);
+    unsafe::Value* get_index(unsafe::Array*, uint64_t, uint64_t);
 
     /// @brief modify element by index
     /// @param array: array to modify
@@ -219,8 +219,8 @@ namespace jluna::unsafe
     /// @params index_per_dimension: index in each dimension
     template<typename... Index, std::enable_if_t<(sizeof...(Index) > 2), bool> = true>
     void set_index(unsafe::Array*, unsafe::Value* value, Index... index_per_dimension);
-    void set_index(unsafe::Array*, unsafe::Value* value, size_t);
-    void set_index(unsafe::Array*, unsafe::Value* value, size_t, size_t);
+    void set_index(unsafe::Array*, unsafe::Value* value, uint64_t);
+    void set_index(unsafe::Array*, unsafe::Value* value, uint64_t, uint64_t);
 
     /// @brief access raw array data
     /// @param array: array
@@ -238,7 +238,7 @@ namespace jluna::unsafe
     /// @param new_size: number of elements in new_data
     /// @note if value types mismatch, the behavior is undefined
     template<typename T>
-    void set_array_data(unsafe::Array* array, T* new_data, size_t new_size);
+    void set_array_data(unsafe::Array* array, T* new_data, uint64_t new_size);
 
     /// @brief push element to front of 1d array
     /// @param array: array

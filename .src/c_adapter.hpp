@@ -44,7 +44,7 @@ extern "C"
     /// @brief invoke function ptr, used within threadpool
     /// @param function_pointer
     /// @returns result pointer
-    size_t jluna_invoke_from_task(size_t function_ptr);
+    uint64_t jluna_invoke_from_task(uint64_t function_ptr);
 
     /// @brief verify c_adapter is working, used for test
     /// @returns true

@@ -42,7 +42,7 @@ namespace jluna::detail
         }
     }
 
-    inline size_t tuple_length(unsafe::Value* tuple)
+    inline uint64_t tuple_length(unsafe::Value* tuple)
     {
         static auto* length = unsafe::get_function(jl_base_module, "length"_sym);
         return jl_unbox_int64(unsafe::call(length, tuple));

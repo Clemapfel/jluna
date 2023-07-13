@@ -12,7 +12,7 @@ namespace jluna
     class Proxy;
 
     /// @brief constant, equivalent to `-t auto`
-    constexpr size_t JULIA_NUM_THREADS_AUTO = 0;
+    constexpr uint64_t JULIA_NUM_THREADS_AUTO = 0;
 
     /// @brief initialize environment from image
     /// @param n_threads: number of threads to initialize the julia threadpool with. Default: 1
@@ -21,7 +21,7 @@ namespace jluna
     /// @param julia_bindir: absolute path that is the location of the julia image. Leave empty to use default path
     /// @param image_path: the path of a system image file (*.so), a non-absolute path is interpreted as relative to julia_bindir
     void initialize(
-        size_t n_threads = 1,
+        uint64_t n_threads = 1,
         bool suppress_log = false,
         const std::string& jluna_shared_library_path = "",
         const std::string& julia_bindir = "",
