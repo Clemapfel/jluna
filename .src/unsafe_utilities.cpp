@@ -7,12 +7,12 @@
 
 namespace jluna
 {
-    unsafe::Symbol* operator""_sym(const char* str, uint64_t)
+    unsafe::Symbol* operator""_sym(const char* str, size_t)
     {
         return jl_symbol(str);
     }
 
-    unsafe::Value* operator""_eval(const char* str, uint64_t)
+    unsafe::Value* operator""_eval(const char* str, size_t)
     {
         return jl_eval_string(str);
     }
