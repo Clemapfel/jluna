@@ -8,10 +8,20 @@
 
 namespace jluna
 {
+    namespace detail
+    {
+        inline bool is_union_empty(jl_datatype_t* type)
+        {
+            static auto* propertynames = jl_get_function(jl_main_module, "propertynames");
+            static auto* sizeof_f = jl_get_function(jl_main_module, "sizeof");
+            return jl_unbox_int64(jl_call1(sizeof_f, jl_call1(propertynames, (jl_value_t*) type))) == 0;
+        }
+    }
+
     Type::Type() = default;
 
     Type::Type(jl_datatype_t* value)
-        : Proxy((unsafe::Value*) value, (value->name == nullptr ? jl_symbol("Union{}") : value->name->name))
+        : Proxy((unsafe::Value*) value, (detail::is_union_empty(value) ? jl_symbol("Union{}") : value->name->name))
     {}
 
     Type::Type(Proxy* owner)

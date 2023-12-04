@@ -241,7 +241,13 @@ namespace jluna
             jl_arrayset(args_t, jl_typeof(jl_arrayref(args_v, i)), i);
 
         auto tuple_t = jl_apply_tuple_type_v((jl_value_t**) args_t->data, args_t->length);
-        auto* out = jl_new_structv(tuple_t, (jl_value_t**) args_v->data, args_v->length);
+
+        #if JULIA_VERSION_MAJOR >= 2 or JULIA_VERSION_MINOR >= 10
+            auto* out = jl_new_structv((jl_datatype_t*) tuple_t, (jl_value_t**) args_v->data, args_v->length);
+        #else
+            auto* out = jl_new_structv(tuple_t, (jl_value_t**) args_v->data, args_v->length);
+        #endif
+
         gc_unpause;
         return out;
     }

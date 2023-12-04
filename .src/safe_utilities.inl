@@ -122,8 +122,7 @@ namespace jluna
 
         jl_eval_string(R"(
             begin
-                local version = tryparse(Float32, SubString(string(VERSION), 1, 3))
-                if (version < 1.7)
+                if (isless(VERSION, v"1.7"))
                     local message = "jluna requires julia v1.7.0 or higher, but v" * string(VERSION) * " was detected. Please download the latest julia release at https://julialang.org/downloads/#current_stable_release, set JULIA_BINDIR accordingly, then recompile jluna using cmake. For more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting"
                     throw(AssertionError(message))
                 end

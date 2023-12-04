@@ -22,17 +22,46 @@ make_usertype_implicitly_convertible(NonJuliaType);
 
 #include <thread>
 
+#include <chrono>
+
 int main()
 {
     initialize(2, false, "/home/clem/Workspace/jluna/cmake-build-debug/libjluna.so");
 
-    jluna::Array<Int64, 1> array = Main.safe_eval("return [1, 2, 3, 4, 5, 6, 7, 8, 9]");
-    auto sub = array[{1, 3, 5}];
+    /*
+    using namespace std::chrono_literals;
 
-    for (Int64 i : sub)
-        std::cout << i << std::endl;
+    jluna::initialize(8);
+    std::vector<Task<void>> tasks;
+    {
+        // declare lambda
+        std::function<void()> print_numbers = []() -> void
+        {
+            for (size_t i = 0; i < 10000; ++i)
+                if (i%100 == 0)
+                    std::cout << i << std::endl;
+        };
+
+        // add task to storage
+        tasks.push_back(ThreadPool::create(print_numbers));
+
+        // wait for 1ms
+        std::this_thread::sleep_for(1ms);
+    }
+
+    for (auto& Task : tasks)
+        Task.schedule();
+
+    // wait for another 10ms
+    std::this_thread::sleep_for(10000ms);
+    std::cout << "Main waited 10 sec" << std::endl;
+
+    for (auto& Task : tasks)
+        Task.join();
 
     return 0;
+    */
+
 
     Test::initialize();
     Test::test("c_adapter found", [](){

@@ -194,7 +194,13 @@ namespace jluna::unsafe
                 types.at(i) = (unsafe::Value*) jl_int64_type;
 
             auto* tuple_type = jl_apply_tuple_type_v(types.data(), types.size());
-            auto* tuple = jl_new_struct(tuple_type, jl_box_int64(static_cast<Int64>(one_d)));
+
+            #if JULIA_VERSION_MAJOR >= 2 or JULIA_VERSION_MINOR >= 10
+                auto* tuple = jl_new_struct((jl_datatype_t*) tuple_type, jl_box_int64(static_cast<Int64>(one_d)));
+            #else
+                auto* tuple = jl_new_struct(tuple_type, jl_box_int64(static_cast<Int64>(one_d)));
+            #endif
+
             auto* res = jl_reshape_array(jl_apply_array_type(unsafe::call(array_value_t, array), 1), array, tuple);
             override_array(array, res);
             gc_unpause;
@@ -219,7 +225,13 @@ namespace jluna::unsafe
                 types.at(i) = (unsafe::Value*) jl_int64_type;
 
             auto* tuple_type = jl_apply_tuple_type_v(types.data(), types.size());
-            auto* tuple = jl_new_struct(tuple_type, jl_box_int64(static_cast<Int64>(one_d)), jl_box_int64(static_cast<Int64>(two_d)));
+
+            #if JULIA_VERSION_MAJOR >= 2 or JULIA_VERSION_MINOR >= 10
+                auto* tuple = jl_new_struct((jl_datatype_t*) tuple_type, jl_box_int64(static_cast<Int64>(one_d)), jl_box_int64(static_cast<Int64>(two_d)));
+            #else
+                auto* tuple = jl_new_struct(tuple_type, jl_box_int64(static_cast<Int64>(one_d)), jl_box_int64(static_cast<Int64>(two_d)));
+            #endif
+
             auto* res = jl_reshape_array(jl_apply_array_type(unsafe::call(array_value_t, array), 2), array, tuple);
             override_array(array, res);
             gc_unpause;
