@@ -28,7 +28,6 @@ int main()
 {
     initialize(2, false, "/home/clem/Workspace/jluna/cmake-build-debug/libjluna.so");
 
-    /*
     using namespace std::chrono_literals;
 
     jluna::initialize(8);
@@ -60,8 +59,6 @@ int main()
         Task.join();
 
     return 0;
-    */
-
 
     Test::initialize();
     Test::test("c_adapter found", [](){
