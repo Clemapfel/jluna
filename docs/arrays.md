@@ -75,12 +75,15 @@ Where `jluna::safe_eval` is faster version of `Main.safe_eval`, as it returns a 
 
 We created two arrays, a `Base.Array{Int64, 1}` bound to the C++-side array proxy `array_1d`, as well as a `Base.Array{Int64, 2}`, bound to `array_2d`.
 
-To get a specific element of any array, we use `operator[](size_t...)`:
+
+\note Since jluna version 1.1, `operator[]` is no longer publically exposed. Instead, all array indexing is done through `at`. This is because top-level comma expressions in `operator[]`, such as `x[1, 2, 3]` are [marked deprecated and soon-to-be-removed for future C++ versions](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1161r3.html). In 1.1+, we **cannot use `array[1]` to index an array**, we should use `array.at(1)` instead.
+
+To get a specific element of any array, we use `at(size_t...)`:
 
 ```cpp
 // access elements at index (0-based)
-Int64 one_d_at_3 = array_1d[2];
-Int64 two_d_at_2_2 = array_2d[1, 1];
+Int64 one_d_at_3 = array_1d.at(2);
+Int64 two_d_at_2_2 = array_2d.at(1, 1);
 
 // print
 std::cout << one_d_at_3 << std::endl;
@@ -90,17 +93,17 @@ std::cout << one_d_at_2_2 << std::endl;
 3
 5
 ```
-For a 1d array, `operator[]` takes a single argument, its **linear index** (see below). For a 2d array, `operator[]` takes two arguments, one for each dimension. This extends to any dimensionality, for a 5d array, we would call `operator[]` with 5 integers. All indices used for member function of `jluna::Array` are 0-based.
+For a 1d array, `at` takes a single argument, its **linear index** (see below). For a 2d array, `at` takes two arguments, one for each dimension. This extends to any dimensionality, for a 5d array, we would call `at` with 5 integers. All indices used for member function of `jluna::Array` are 0-based.
 
 Bounds-checking is performed Julia side, if an array element is accessed out of bounds, a `JuliaException` will be thrown.
 
 ### Linear Indexing
 
-While n-dimensional indexing is only available for arrays of rank 2 or higher, linear indexing is available for all arrays, regardless of rank. We can linear-index any array using `operator[](size_t)`:
+While n-dimensional indexing is only available for arrays of rank 2 or higher, linear indexing is available for all arrays, regardless of rank. We can linear-index any array using `at(size_t)`:
 
 ```cpp
 Array<Int64, 3> array_3d = jluna::safe_eval("return reshape(Int64[i for i in 1:(3*3*3)], 3, 3, 3)");
-std::cout << (Int64) array_3d[3] << std::endl;
+std::cout << (Int64) array_3.at(3) << std::endl;
 ```
 ```
 4
@@ -109,18 +112,18 @@ Linear indexing accesses the n-th element in column-first order, just like it wo
 
 ### List Indexing
 
-jluna also supports Julia-style list indexing for `operator[]`:
+jluna also supports Julia-style list indexing for `at`:
 
 ```cpp
 Array<Int64, 1> vector = jluna::safe_eval("return [i for i in 1:10]");
-auto sub_vector = vector[{1, 5, 2, 7}];
+auto sub_vector = vector.at({1, 5, 2, 7});
 
 Base["println"](sub_vector);
 ```
 ```
 [2, 6, 3, 8]
 ```
-> **C++ Hint**: Here, the syntax used, `{1, 5, 2, 7}`, is called a "brace-enclosed initializer list", which is a form of [aggregate initialization](https://en.cppreference.com/w/cpp/language/aggregate_initialization) in C++. It can be best though of as a proto-vector, the compiler will infer the vectors type and construct it for us. In our case, because `Array::operator[]` expects a list of integer, it will interpret `{1, 5, 2, 7}` as the argument for an implicitly called constructor for that type, creating a `std::vector<size_t>`.<br>
+> **C++ Hint**: Here, the syntax used, `{1, 5, 2, 7}`, is called a "brace-enclosed initializer list", which is a form of [aggregate initialization](https://en.cppreference.com/w/cpp/language/aggregate_initialization) in C++. It can be best though of as a proto-vector, the compiler will infer the vectors type and construct it for us. In our case, because `Array::at` expects a list of integer, it will interpret `{1, 5, 2, 7}` as the argument for an implicitly called constructor for that type, creating a `std::vector<size_t>`.<br>
 >
 > see also: [list initialization](https://en.cppreference.com/w/cpp/language/list_initialization).
 
@@ -133,7 +136,7 @@ This is about as good a place as any to talk about index bases. Consider the fol
 Array<Int64, 1> array = jluna::safe_eval("return Int64[1, 2, 3, 4, 5, 6]");
 
 // access element through C++ function
-std::cout << "cpp: " << (Int64) array[3] << std::endl;
+std::cout << "cpp: " << (Int64) array.at(3) << std::endl;
 
 // access element through Julia function
 std::cout << "jl : " << (Int64) Base["getindex"](array, 3) << std::endl;
@@ -143,19 +146,19 @@ cpp: 4
 jl : 3
 ```
 
-C++ indices are 0-based, this means `array[3]` will give use the `(3 - 0)`th element, which for our vector is `4`. In Julia, indices are 1-based, meaning `getindex(array, 3)` will give us the `(3 - 1)`th element, which is `3`.
+C++ indices are 0-based, this means `array.at(3)` will give use the `(3 - 0)`th element, which for our vector is `4`. In Julia, indices are 1-based, meaning `getindex(array, 3)` will give us the `(3 - 1)`th element, which is `3`.
 
 The following table illustrates how to translate C++-side indexing into Julia-side indexing:
 
-| Rank | Julia                | jluna                       |
-|------|----------------------|-----------------------------|
-| 1    | `M[1]`               | `M[0]`                      |
-| 2    | `M[1, 2]`            | `M[0, 1]`                   |
-| 3    | `M[1, 2, 3]`         | `M[0, 1, 2]`                |
-| Any  | `M[ [1, 13, 7] ]`    | `M[ {0, 12, 6} ]`           |
-| Any  | `M[i for i in 1:10]` | `M["i for i in 1:10"_gen]`  |
-|      |                      |                             |
-| *    | `M[:]`               | not available               |
+| Rank | Julia                | jluna                         |
+|------|----------------------|-------------------------------|
+| 1    | `M[1]`               | `M.at(0)`                     |
+| 2    | `M[1, 2]`            | `M.at(0, 1)`                  |
+| 3    | `M[1, 2, 3]`         | `M.at(0, 1, 2)`               |
+| Any  | `M[ [1, 13, 7] ]`    | `M.at( {0, 12, 6} )`          |
+| Any  | `M[i for i in 1:10]` | `M.at("i for i in 1:10"_gen)` |
+|      |                      |                               |
+| *    | `M[:]`               | not available                 |
 
 Where `_gen` is a string-literal operator that  constructs a generator expression from the code it was called with. We will learn more about them shortly.
 

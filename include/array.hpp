@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2022 Clemens Cords
 // Created on 11.01.22 by clem (mail@clemens-cords.com)
 //
@@ -50,45 +50,44 @@ namespace jluna
             template<typename... Dims>
             Array(Value_t*, Dims... size_per_dimension);
 
-            /// @brief linear indexing, no bounds checking
-            /// @param index: 0-based
-            /// @returns assignable iterator to element
-            /// @note this function intentionally shadows Proxy::operator[](uint64_t) -> Proxy
-            auto operator[](uint64_t);
-
             /// @brief julia-style array comprehension indexing
             /// @param generator_expression: generator expression used for the index list
             /// @returns new array, result of Julia-side getindex(this, range)
-            jluna::Vector<Value_t> operator[](const GeneratorExpression&) const;
+            jluna::Vector<Value_t> at(const GeneratorExpression&) const;
 
             /// @brief julia-style list indexing
             /// @param range: iterable range with indices
             /// @returns new array, result of Julia-side getindex(this, range)
-            jluna::Vector<Value_t> operator[](const std::vector<uint64_t>& range) const;
+            jluna::Vector<Value_t> at(const std::vector<uint64_t>& range) const;
 
             /// @brief julia-style list indexing
             /// @param list: initializer list with indices
             /// @returns new array, result of Julia-side getindex(this, range)
             template<is_boxable T>
-            jluna::Vector<Value_t> operator[](std::initializer_list<T>&&) const;
-
-            /// @brief linear indexing, no bounds checking
-            /// @tparam T: return type, usually Value_t
-            /// @param index: index, 0-based
-            /// @returns unboxed value at given index. May throw jluna::JuliaException if index out of range
-            template<is_unboxable T = Value_t>
-            T operator[](uint64_t) const;
+            jluna::Vector<Value_t> at(std::initializer_list<T>&&) const;
 
             /// @brief multi-dimensional indexing
             /// @param n: Rank-many integers
             /// @returns non-const (assignable) iterator to value
-            template<typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
+            template<typename... Args, std::enable_if_t<Rank >= 2 and sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
             auto at(Args... in);
 
             /// @brief multi-dimensional indexing
             /// @param n: Rank-many integers
             /// @returns unboxed value
-            template<is_unboxable T = Value_t, typename... Args, std::enable_if_t<sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
+            template<is_unboxable T = Value_t, typename... Args, std::enable_if_t<Rank >= 2 and sizeof...(Args) == Rank and (std::is_integral_v<Args> and ...), bool> = true>
+            T at(Args... in) const;
+
+            /// @brief linear indexing
+            /// @param n: singular index
+            /// @returns non-const (assignable) iterator to value
+            template<typename... Args, std::enable_if_t<sizeof...(Args) == 1 and (std::is_integral_v<Args> and ...), bool> = true>
+            auto at(Args... in);
+
+            /// @brief linear indexing
+            /// @param n: singular index
+            /// @returns unboxed value
+            template<is_unboxable T = Value_t, typename... Args, std::enable_if_t<sizeof...(Args) == 1 and (std::is_integral_v<Args> and ...), bool> = true>
             T at(Args... in) const;
 
             /// @brief manually assign a value using a linear index
@@ -158,8 +157,42 @@ namespace jluna
             /// @returns void pointer
             void* data();
 
+            /// @brief linear indexing, no bounds checking
+            /// @param index: 0-based
+            /// @returns assignable iterator to element
+            /// @note this function intentionally shadows Proxy::operator[](uint64_t) -> Proxy
+            [[deprecated("Use Array:at instead")]] auto operator[](uint64_t);
+
+            /// @brief linear indexing, no bounds checking
+            /// @tparam T: return type, usually Value_t
+            /// @param index: index, 0-based
+            /// @returns unboxed value at given index. May throw jluna::JuliaException if index out of range
+            template<is_unboxable T = Value_t>
+            [[deprecated("Use Array:at instead")]] T operator[](uint64_t) const;
+
+            /// @brief julia-style array comprehension indexing
+            /// @param generator_expression: generator expression used for the index list
+            /// @returns new array, result of Julia-side getindex(this, range)
+            [[deprecated("Use Array:at instead")]] jluna::Vector<Value_t> operator[](const GeneratorExpression&) const;
+
+            /// @brief julia-style list indexing
+            /// @param range: iterable range with indices
+            /// @returns new array, result of Julia-side getindex(this, range)
+            [[deprecated("Use Array:at instead")]] jluna::Vector<Value_t> operator[](const std::vector<uint64_t>& range) const;
+
+            /// @brief julia-style list indexing
+            /// @param list: initializer list with indices
+            /// @returns new array, result of Julia-side getindex(this, range)
+            template<is_boxable T>
+            [[deprecated("Use Array:at instead")]] jluna::Vector<Value_t> operator[](std::initializer_list<T>&&) const;
+
         protected:
             using Proxy::_content;
+
+            auto linear_index(uint64_t i);
+
+            template<is_unboxable T = Value_t>
+            T linear_index(uint64_t) const;
 
         private:
             void throw_if_index_out_of_range(int index, uint64_t dimension) const;

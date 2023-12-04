@@ -138,7 +138,6 @@ set_target_properties(jluna PROPERTIES
     WINDOWS_EXPORT_ALL_SYMBOLS "YES" # TODO: Why is this necessary?
     VERSION "${PROJECT_VERSION}"
     SOVERSION "${PROJECT_VERSION}"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_INSTALL_PREFIX}"
 )
 
 ### Install rules ###
