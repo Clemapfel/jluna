@@ -26,39 +26,7 @@ make_usertype_implicitly_convertible(NonJuliaType);
 
 int main()
 {
-    initialize(2, false, "/home/clem/Workspace/jluna/cmake-build-debug/libjluna.so");
-
-    using namespace std::chrono_literals;
-
-    jluna::initialize(8);
-    std::vector<Task<void>> tasks;
-    {
-        // declare lambda
-        std::function<void()> print_numbers = []() -> void
-        {
-            for (size_t i = 0; i < 10000; ++i)
-                if (i%100 == 0)
-                    std::cout << i << std::endl;
-        };
-
-        // add task to storage
-        tasks.push_back(ThreadPool::create(print_numbers));
-
-        // wait for 1ms
-        std::this_thread::sleep_for(1ms);
-    }
-
-    for (auto& Task : tasks)
-        Task.schedule();
-
-    // wait for another 10ms
-    std::this_thread::sleep_for(10000ms);
-    std::cout << "Main waited 10 sec" << std::endl;
-
-    for (auto& Task : tasks)
-        Task.join();
-
-    return 0;
+    initialize(2); //, false, "/home/clem/Workspace/jluna/cmake-build-debug/libjluna.so");
 
     Test::initialize();
     Test::test("c_adapter found", [](){
@@ -933,8 +901,7 @@ int main()
             arr.at(0) = "string";
         }
         catch (...)
-        {
-        }
+        {}
     });
 
     Test::test("array: front/back", []() {
@@ -1052,7 +1019,7 @@ int main()
         bool thrown = false;
         try
         {
-            arr.begin().operator std::vector<std::string>();
+            arr.begin().operator Module();
         }
         catch (...)
         {
@@ -1060,6 +1027,7 @@ int main()
         }
 
         Test::assert_that(thrown);
+        Test::assert_that(arr.begin().operator std::string() == "1");
         Test::assert_that(arr.begin().operator Int64() == 1);
     });
 
