@@ -22,8 +22,6 @@ make_usertype_implicitly_convertible(NonJuliaType);
 
 #include <thread>
 
-#include <chrono>
-
 int main()
 {
     initialize(2); //, false, "/home/clem/Workspace/jluna/cmake-build-debug/libjluna.so");
