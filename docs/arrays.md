@@ -75,9 +75,6 @@ Where `jluna::safe_eval` is faster version of `Main.safe_eval`, as it returns a 
 
 We created two arrays, a `Base.Array{Int64, 1}` bound to the C++-side array proxy `array_1d`, as well as a `Base.Array{Int64, 2}`, bound to `array_2d`.
 
-
-\note Since jluna version 1.1, `operator[]` is no longer publically exposed. Instead, all array indexing is done through `at`. This is because top-level comma expressions in `operator[]`, such as `x[1, 2, 3]` are [marked deprecated and soon-to-be-removed for future C++ versions](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1161r3.html). In 1.1+, we **cannot use `array[1]` to index an array**, we should use `array.at(1)` instead.
-
 To get a specific element of any array, we use `at(size_t...)`:
 
 ```cpp
@@ -93,6 +90,9 @@ std::cout << one_d_at_2_2 << std::endl;
 3
 5
 ```
+
+> **Note**: Since jluna version 1.0.1, `operator[]` is no longer recommended to be used with `jluna::Array`. Instead, all array indexing is done through `Array::at`. This is because top-level comma expressions in `operator[]`, such as `x[1, 2, 3]`, are [marked deprecated and soon-to-be-removed for future C++ versions](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1161r3.html).
+
 For a 1d array, `at` takes a single argument, its **linear index** (see below). For a 2d array, `at` takes two arguments, one for each dimension. This extends to any dimensionality, for a 5d array, we would call `at` with 5 integers. All indices used for member function of `jluna::Array` are 0-based.
 
 Bounds-checking is performed Julia side, if an array element is accessed out of bounds, a `JuliaException` will be thrown.
