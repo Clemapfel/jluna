@@ -109,7 +109,13 @@ namespace jluna::unsafe
 
             return jl_apply_tuple_type_v(types.data(), types.size());
         }();
-        auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+
+        #if JULIA_VERSION_MAJOR >= 2 or JULIA_VERSION_MINOR >= 10
+            auto* tuple = jl_new_struct((jl_datatype_t*) tuple_type, jl_box_uint64(size_per_dimension)...);
+        #else
+            auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+        #endif
+
         auto* res = jl_new_array(jl_apply_array_type(value_type, sizeof...(Dims)), tuple);
         jl_gc_enable(before);
         return res;
@@ -127,7 +133,13 @@ namespace jluna::unsafe
 
             return jl_apply_tuple_type_v(types.data(), types.size());
         }();
-        auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+
+        #if JULIA_VERSION_MAJOR >= 2 or JULIA_VERSION_MINOR >= 10
+            auto* tuple = jl_new_struct((jl_datatype_t*) tuple_type, jl_box_uint64(size_per_dimension)...);
+        #else
+            auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+        #endif
+
         auto* res = jl_ptr_to_array(jl_apply_array_type(value_type, sizeof...(Dims)), data, tuple, 0);
         jl_gc_enable(before);
         return res;
@@ -148,7 +160,12 @@ namespace jluna::unsafe
 
         static jl_function_t* get_value_type_of_array = get_function("jluna"_sym, "get_value_type_of_array"_sym);
 
-        auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+        #if JULIA_VERSION_MAJOR >= 2 or JULIA_VERSION_MINOR >= 10
+            auto* tuple = jl_new_struct((jl_datatype_t*) tuple_type, jl_box_uint64(size_per_dimension)...);
+        #else
+            auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+        #endif
+
         auto* res = jl_reshape_array(jl_apply_array_type(unsafe::call(get_value_type_of_array, array), sizeof...(Dims)), array, tuple);
         override_array(array, res);
         jl_gc_enable(before);

@@ -79,7 +79,7 @@ jluna aims to fully wrap the official Julia C-API, replacing it in projects with
 Array<Int64, 2> matrix = Main.safe_eval("return reshape([i for i in 1:(4*4)], 4, 4)");
 
 // supports multi-dimensional indexing (and array comprehension, not shown here)
-matrix[0, 2] = 999;
+matrix.at(0, 2) = 999;
 Main["println"](matrix);
 
 // even has generator expressions!
@@ -209,23 +209,26 @@ If any step of this does not work for you, please follow the [installation guide
 
 ---
 
-## License
-
-The current and all prior releases of jluna are supplied under MIT license, available [here](./LICENSE.txt).
-
-I would like to ask people using this library in commercial or university settings, to disclose their usage of jluna in some small way (for example, at the end of the credits or via a citation) and to make clear the origin of the work (for example by linking this GitHub page).
-
-If you would like to cite jluna in your academic publication, you can copy the entry in [CITATION.bib](CITATION.bib) to your [BibTeX](https://www.overleaf.com/learn/latex/Bibliography_management_with_bibtex) bibliography, then use the `\cite{jluna}` command anywhere in your [LaTeX](https://www.latex-project.org/) source code.
-
-Thank you for your consideration,
-C.
-
----
-
 ## Credits
 jluna was designed and written by [Clem Cords](https://github.com/Clemapfel).
 
 #### March 2022:<br>
 + CMake improvements by [friendlyanon](https://github.com/friendlyanon)
 
+## Donations
+
+Jluna was created with no expectation of compensation and made available for free. Consider donating to reward past work and support the continued development of this library:
+
++ [GitHub Sponsors](https://github.com/sponsors/Clemapfel)
++ [PayPal](https://www.paypal.com/donate/?hosted_button_id=8KWF3JTDF8XL2)
+
 ---
+
+## License & Citation
+
+The current and all prior releases of jluna are supplied under MIT license, available [here](./LICENSE.txt).
+
+If you would like to cite jluna in your academic publication, you can copy the entry in [CITATION.bib](CITATION.bib) to your [BibTeX](https://www.overleaf.com/learn/latex/Bibliography_management_with_bibtex) bibliography, then use the `\cite{jluna}` command anywhere in your [LaTeX](https://www.latex-project.org/) source code.
+
+Thank you for your consideration,
+C.

@@ -24,7 +24,7 @@ make_usertype_implicitly_convertible(NonJuliaType);
 
 int main()
 {
-    initialize(2);
+    initialize(2); //, false, "/home/clem/Workspace/jluna/cmake-build-debug/libjluna.so");
 
     Test::initialize();
     Test::test("c_adapter found", [](){
@@ -886,7 +886,7 @@ int main()
 
         auto vec = jluna::Array<Int64, 1>(Main.safe_eval("return collect(Int64(1):100)"), nullptr);
 
-        const auto subvec = vec[{12, 19, 99, 2}];
+        const auto subvec = vec.at({12, 19, 99, 2});
 
         Test::assert_that(subvec.at(0) == 13 and subvec.at(1) == 20 and subvec.at(2) == 100 and subvec.at(3) == 3);
     });
@@ -899,8 +899,7 @@ int main()
             arr.at(0) = "string";
         }
         catch (...)
-        {
-        }
+        {}
     });
 
     Test::test("array: front/back", []() {
@@ -1018,7 +1017,7 @@ int main()
         bool thrown = false;
         try
         {
-            arr.begin().operator std::vector<std::string>();
+            arr.begin().operator Module();
         }
         catch (...)
         {
@@ -1026,6 +1025,7 @@ int main()
         }
 
         Test::assert_that(thrown);
+        Test::assert_that(arr.begin().operator std::string() == "1");
         Test::assert_that(arr.begin().operator Int64() == 1);
     });
 
@@ -1043,7 +1043,7 @@ int main()
     Test::test("array: comprehension", []() {
 
         auto arr = jluna::Array<Int64, 1>(jl_eval_string("return collect(0:10)"));
-        auto vec = arr["(i for i in 0:9 if i % 2 == 0)"_gen];
+        auto vec = arr.at("(i for i in 0:9 if i % 2 == 0)"_gen);
 
         for (auto it : vec)
             Test::assert_that(it.operator int() % 2 == 0);

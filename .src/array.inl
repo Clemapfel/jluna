@@ -125,7 +125,7 @@ namespace jluna
     }
 
     template<is_boxable V, uint64_t R>
-    auto Array<V, R>::operator[](uint64_t i)
+    auto Array<V, R>::linear_index(uint64_t i)
     {
         if (i >= get_n_elements())
         {
@@ -138,7 +138,13 @@ namespace jluna
     }
 
     template<is_boxable V, uint64_t R>
-    Vector<V> Array<V, R>::operator[](const std::vector<uint64_t>& range) const
+    auto Array<V, R>::operator[](uint64_t i)
+    {
+       return linear_index(i);
+    }
+
+    template<is_boxable V, uint64_t R>
+    Vector<V> Array<V, R>::at(const std::vector<uint64_t>& range) const
     {
         gc_pause;
         auto* out = unsafe::new_array((unsafe::Value*) as_julia_type<V>::type(), range.size());
@@ -152,14 +158,14 @@ namespace jluna
     }
 
     template<is_boxable V, uint64_t R>
-    Vector<V> Array<V, R>::operator[](const GeneratorExpression& gen) const
+    Vector<V> Array<V, R>::at(const GeneratorExpression& gen) const
     {
         gc_pause;
         auto res = Vector<V>();
         res.reserve(gen.size());
 
         for (auto it : gen)
-            res.push_back(this->operator[](unbox<uint64_t>(it)));
+            res.push_back(this->at(unbox<uint64_t>(it)));
 
         gc_unpause;
         return res;
@@ -167,19 +173,39 @@ namespace jluna
 
     template<is_boxable V, uint64_t R>
     template<is_boxable T>
-    Vector<V> Array<V, R>::operator[](std::initializer_list<T>&& list) const
+    Vector<V> Array<V, R>::at(std::initializer_list<T>&& list) const
     {
         std::vector<uint64_t> index;
         index.reserve(list.size());
         for (auto& e : list)
             index.push_back(e);
 
-        return operator[](index);
+        return at(index);
+    }
+
+
+    template<is_boxable V, uint64_t R>
+    Vector<V> Array<V, R>::operator[](const std::vector<uint64_t>& range) const
+    {
+        return this->at(range);
+    }
+
+    template<is_boxable V, uint64_t R>
+    Vector<V> Array<V, R>::operator[](const GeneratorExpression& gen) const
+    {
+        return this->at(gen);
+    }
+
+    template<is_boxable V, uint64_t R>
+    template<is_boxable T>
+    Vector<V> Array<V, R>::operator[](std::initializer_list<T>&& list) const
+    {
+        return this->at(std::forward<std::initializer_list<T>&&>(list));
     }
 
     template<is_boxable V, uint64_t R>
     template<is_unboxable T>
-    T Array<V, R>::operator[](uint64_t i) const
+    T Array<V, R>::linear_index(uint64_t i) const
     {
         if (i >= get_n_elements())
         {
@@ -192,7 +218,14 @@ namespace jluna
     }
 
     template<is_boxable V, uint64_t R>
-    template<is_unboxable T, typename... Args, std::enable_if_t<sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
+    template<is_unboxable T>
+    T Array<V, R>::operator[](uint64_t i) const
+    {
+        return linear_index(i);
+    }
+
+    template<is_boxable V, uint64_t R>
+    template<is_unboxable T, typename... Args, std::enable_if_t<R >= 2 and sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
     T Array<V, R>::at(Args... in) const
     {
         {
@@ -221,7 +254,7 @@ namespace jluna
     #endif
 
     template<is_boxable V, uint64_t R>
-    template<typename... Args, std::enable_if_t<sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
+    template<typename... Args, std::enable_if_t<R >= 2 and sizeof...(Args) == R and (std::is_integral_v<Args> and ...), bool>>
     auto Array<V, R>::at(Args... in)
     {
         {
@@ -240,7 +273,26 @@ namespace jluna
             mul *= dim;
         }
 
-        return operator[](index);
+        return linear_index(index);
+    }
+
+    template<is_boxable V, uint64_t R>
+    template<typename... Args, std::enable_if_t<sizeof...(Args) == 1 and (std::is_integral_v<Args> and ...), bool>>
+    auto Array<V, R>::at(Args... in)
+    {
+        auto index = (in, ...);
+        return linear_index(index);
+    }
+
+    /// @brief linear indexing
+    /// @param n: singular index
+    /// @returns unboxed value
+    template<is_boxable V, uint64_t R>
+    template<is_unboxable T, typename... Args, std::enable_if_t<sizeof...(Args) == 1 and (std::is_integral_v<Args> and ...), bool>>
+    T Array<V, R>::at(Args... in) const
+    {
+        auto index = (in, ...);
+        return linear_index<T>(index);
     }
 
     #ifdef _MSC_VER
@@ -257,7 +309,7 @@ namespace jluna
     template<is_boxable V, uint64_t R>
     auto Array<V, R>::front()
     {
-        return operator[](0);
+        return linear_index(0);
     }
 
     template<is_boxable V, uint64_t R>
@@ -288,20 +340,20 @@ namespace jluna
     template<is_unboxable T>
     T Array<V, R>::front() const
     {
-        return static_cast<T>(operator[](0));
+        return static_cast<T>(linear_index(0));
     }
 
     template<is_boxable V, uint64_t R>
     auto Array<V, R>::back()
     {
-        return operator[](get_n_elements() - 1);
+        return linear_index(get_n_elements() - 1);
     }
 
     template<is_boxable V, uint64_t R>
     template<is_unboxable T>
     T Array<V, R>::back() const
     {
-        return operator[]<T>(get_n_elements() - 1);
+        return linear_index<T>(get_n_elements() - 1);
     }
 
     template<is_boxable V, uint64_t R>
