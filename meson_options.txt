@@ -1,0 +1,1 @@
+option('JULIA_EXECUTABLE', type: 'string', value: '', description: 'Path to julia executable, usually in <julia_dir>/bin')
