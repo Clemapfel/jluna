@@ -7,7 +7,7 @@ project('jluna', 'cpp',
 
 julia_executable = find_program(get_option('JULIA_EXECUTABLE'), 'julia', required: false)
 if not julia_executable.found()
-    error('Unable to detect Julia executable. Please set the JULIA_EXECUTABLE meson option to the absolute path of the executable, for example, if the executable is located at `/usr/bin/julia`, call `meson setup build -DJULIA_EXECUTABLE="/usr/bin/julia"')
+    error('Unable to detect Julia executable. Please run `print(joinpath(Sys.BINDIR), "julia")` manually within the Julia REPL, then set the `JULIA_EXECUTABLE` meson option to the returned value. For example, if the executable is `/usr/bin/julia`, call `meson setup build -DJULIA_EXECUTABLE="/usr/bin/julia"')
 endif
 
 cpp_compiler = meson.get_compiler('cpp')
