@@ -12,8 +12,7 @@ endif
 
 cpp_compiler = meson.get_compiler('cpp')
 
-julia_bindir = run_command(julia_executable, '-e "print(stdout, Sys.BINDIR)"', check: true).stdout().strip()
-julia_bindir = '/home/clem/Applications/julia-1.9.3/julia-1.9.3/bin'
+julia_bindir = run_command(julia_executable, '-e print(Sys.BINDIR)', check: true).stdout().strip()
 
 julia_include_directory = include_directories(join_paths(julia_bindir, '../include'))
 julia_library_directory = join_paths(julia_bindir, '../lib')
