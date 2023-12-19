@@ -1,9 +1,8 @@
 ## Troubleshooting
 
-Several errors may arise during compilation, linking, or regular usage. A list of the most common issue, and how 
-to solve them, is provided here.
+Several errors may arise during compilation, linking, or regular usage. A list of the most common issue, and how to solve them, is provided here.
 
-------------------
+---
 
 ### Permission Denied
 
@@ -17,30 +16,27 @@ When calling:
 
 ```bash
 # in ~/Desktop/jluna/build
-cmake .. #-DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
+cmake ..
 ```
-
-(Where the commented out arguments are set as detailed in the [section on configuring cmake](installation.md#configure-cmake).)
 
 You may encounter the following error:
 
 ```text
 CMake Error at cmake/find/FindJulia.cmake:5 (message):
-  Unable to detect the Julia executable.  Make sure JULIA_BINDIR is set
-  correctly.
+  Unable to detect the Julia executable, make sure `JULIA_BINDIR` is set to the path returned by calling `print(Sys.BINDIR)` in the Julia REPL..
 ```
 
-This error appears, because jluna was unable to locate the Julia package on your system. To make jluna aware of the location manually, you can pass the following variable to the cmake command:
+This error appears, because jluna was unable to locate Julia on your system. To make jluna aware of the location manually, you can pass the following variable to the cmake command:
 
 ```bash
-cmake .. -DJULIA_BINDIR=path/to/your/julia/bin #-DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
+cmake .. -DJULIA_BINDIR=path/to/your/julia/bin 
 ```
 
-Where `path/to/your/julia/bin` is the path of the binary directory of your Julia image. If you are unsure of its location, you can execute
+Where `path/to/your/julia/bin` is the path of the binary directory of your Julia image. If you are unsure of its location, you can execute:
 
 ```julia
 # in Julia
-println(Sys.BINDIR)
+print(Sys.BINDIR)
 ```
 
 From inside the Julia REPL, which will print the correct directory to the console.
@@ -117,16 +113,15 @@ compilation terminated.
 This means the `include_directories` in your `CMakeLists.txt` were set improperly. Make sure the following lines are present in your `CMakeLists.txt`:
 
 ```text
-target_include_directories(<your target> PRIVATE
-    "<path to jluna>" 
-    "<path to julia>"
+find_package(jluna REQUIRED)
+
+target_include_directories(your_target PRIVATE
+    ${JLUNA_INCLUDE_DIRECTORIES}
 )
 ``` 
 Where
 
-+ `<your target>` is the build target, a library or executable
-+ `<path to jluna>` is the installation path of the jluna shared library, as specified via `CMAKE_INSTALL_PREFIX` during [configuration](installation.md#configure-cmake)
-+ `<path to julia>` is the location of `julia.h`, usually `${JULIA_BINDIR}/../include` or `${JULIA_BINDIR}/../include/julia`
++ `your_target` is the build target, a library or executable
 
 See the [official CMake documentation](https://cmake.org/cmake/help/latest/command/target_include_directories.html) for more information.
 
@@ -156,12 +151,9 @@ terminate called after throwing an instance of 'jluna::JuliaException'
 signal (6): Aborted
 ```
 
-To allow the jluna initialized Julia state to interact with the library, the Julia part of jluna needs to know where to
-find the jluna shared library, `libjluna.so`, you compiled earlier. If this error occurs, it means Julia was unable to
-do so. To address this, you can manually specify the path to the shared library during `jluna::initialize`:
+jluna needs to access the shared library created during installation of jluna. This error means it failed to do so. To address this, you can override the shared library path manually during `jluna::initialize`:
 
 ```cpp
-// initialize with manually set path
 jluna::initialize(
     1,        // number of threads
     false,    // should logging be disabled
@@ -170,8 +162,16 @@ jluna::initialize(
 ```
 
 Where `/path/to/libjluna.so` is the absolute path to the jluna shared library. Note that, on Windows, the library may
-instead be named `libjluna.lib`, `jluna.dll`, etc., depending on your cmake environment. If you are unsure of where to
-find the library, it will be installed into the directory of `CMAKE_INSTALL_PREFIX` specified [earlier](installation.md#configure-cmake).
+instead be named `libjluna.lib`, `jluna.dll`, etc., depending on your cmake environment. 
+
+If you are unsure of where the library is located, on unix, you can use the `locate` command:
+
+```bash
+sudo updatedb
+locate *jluna.so
+```
+
+On Windows, use the windows explorer search function or [your IDE](https://stackoverflow.com/questions/13819184/determine-the-directory-of-a-shared-library) to locate the correct path. 
 
 ---
 
@@ -188,10 +188,10 @@ When compiling a target that includes jluna, the following compiler error may oc
 This indicates that you have not configured your compiler to utilize C++20, or your compiler is out of date. After verifying you are using `g++-10` (or newer), `clang++-12` (or newer) or `MSVC 19.32` (or newer), make sure the following line is present in your `CMakeLists.txt`:
 
 ```cmake
-target_compile_features(<your target> PRIVATE cxx_std_20)
+target_compile_features(your_target PRIVATE cxx_std_20)
 ```
 
-Where `<your target>` is the name of your compile target, such as an executable or library. See the [official cmake documentation](https://cmake.org/cmake/help/latest/command/target_compile_features.html), for more information.
+Where `your_target` is the name of your compile target, such as an executable or library. See the [official cmake documentation](https://cmake.org/cmake/help/latest/command/target_compile_features.html), for more information.
 
 ---
 
@@ -224,10 +224,10 @@ warning: copy relocation against non-copyable protected symbol `jl_nothing' in `
 Where `jl_nothing` may be another symbol. This warning is triggered by newer versions of clang and gcc and does not indicate a problem. You can silence it by adding the following to *your* `CMakeLists.txt`:
 
 ```cmake
-target_compile_options(<your_target> PRIVATE "-fpic")
+target_compile_options(your_target PRIVATE "-fpic")
 ```
 
-Where `<your_target>` is your own executable or library using jluna, not jluna itself. If your target already has compile options specified, simply append `-fpic` at the end.
+Where `your_target` is your own executable or library using jluna, not jluna itself. If your target already has compile options specified, simply append `-fpic` at the end.
 
 For more information, see https://github.com/Clemapfel/jluna/issues/40.
 

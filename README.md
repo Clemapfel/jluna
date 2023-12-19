@@ -170,20 +170,22 @@ To use jluna, in your own `CMakeLists.txt`, add:
 find_package(jluna REQUIRED)
 ```
 
-Then, where `my_target` is the name of your own CMake library or executable:
+Then, where `my_target` is the name of **your own** CMake library or executable:
 
 ```cmake
-target_link_libraries(my_target PRIVATE 
+target_compile_features(my_target PUBLIC cxx_std_20)
+
+target_link_libraries(my_target PUBLIC 
     ${JLUNA_LIBRARIES}
     # other libraries here
 )
-target_include_directories(my_target PRIVATE 
+target_include_directories(my_target PUBLIC 
     ${JLUNA_INCLUDE_DIRECTORIES}
     # other paths here
 )
 ```
 
-For a full hello world project you can copy and paste, see [here](/example).
+For a complete example project you can use to build off of, see [here](/example).
 
 ---
 

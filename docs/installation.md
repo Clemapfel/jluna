@@ -1,148 +1,136 @@
 # Installation
 
-The following is a step-by-step guide on how to install jluna and link it to your application. The [upcoming section on troubleshooting](troubleshooting.md) addresses the most common errors experienced during installation.
+The following is a step-by-step guide of how to install jluna on our system and how to create a project that uses jluna. If an error appears at any point, we can head to the
+[section on troubleshooting](troubleshooting.md) which is likely to have a solution.
 
-----------------
+---
 
 ## Installing jluna
 
-This section will guide users on how to install jluna, either globally or in a folder-contained manner.
+### Unix
 
-### Cloning from Git
+This section shows how to install jluna on an Linux distro or macOS. **If you are using Windows, skip to the next section**.
 
-First, jluna needs to be downloaded. To do this, navigate into any public folder (henceforth assumed to be `Desktop`) and execute:
+To install jluna, we first need to download it to our system. To do this, we call, in any public directory, henceforth assumed to be `Desktop`:
 
 ```bash
+# in Desktop/
 git clone https://github.com/clemapfel/jluna.git
 cd jluna
 mkdir build
 cd build
 ```
 
-This will have cloned the jluna git repository into the folder `Desktop/jluna`.
-
-> **Tip**: If you are using an IDE like VisualStudio, Atom, or CLion and your compilers are up-to-date, simply create a new project by cloning jluna, then have your IDE automatically configure, build, and install jluna for you. If this fails for whatever reason and you're unable to solve it in your IDE, continue onto manual installation below instead
-
-### Configure CMake
-
-Before building, CMake needs to be configured. You can do so using:
+We now need to compile jluna and link it against the specific Julia on our system. For most users, the following will do so automatically:
 
 ```bash
 # in Desktop/jluna/build
-cmake .. -DCMAKE_CXX_COMPILER=<compiler> -DCMAKE_INSTALL_PREFIX=<path>
+cmake ..
+sudo make install -j 8
 ```
 
-Where `<compiler>` is the path to one of the following compiler executables:
-+ `g++` (Version 10 or newer)
-+ `clang++` (Version 12 or newer)
-+ `cl` (MSVC) (Version 19.32 or newer)
+Where `sudo` is required to write to the global shared library directory.
 
-and `<path>` is the desired install path. Keep track of this path, as you may need it later.
+If cmake fails to locate Julia, or compiler errors appear, head to the [troubleshooting section](troubleshooting.md).
 
-Some errors may appear here, if this is the case, head to [troubleshooting](troubleshooting.md).
+### Windows
 
-### Make Install & Test
+TODO
 
-Having successfully configured CMake, call:
+---
+
+## Creating a new Project using jluna
+
+If we are creating a completely new project, we can download the example project template to make starting out easy. It contains everything needed to create a new C++ executable or library using jluna.
+
+To download the template, navigate to the folder you want your project to be located in, henceforth assumed to be `Workspace`
 
 ```bash
-# in Desktop/jluna/build
-make install
+# in Workspace
+git clone https://github.com/jluna
+cp -r jluna/example jluna_example
+rm -r jluna
 ```
 
-Which will create the shared libraries, usually called `libjluna.so` on Unix and `jluna.dll` on Windows.
+This will create a folder `jluna_example` in the `Workspace` directory.
 
-We can verify everything works by calling 
+> **Tip**: If we want to use an IDE such as Visual Studio or CLion, simply opening `jluna_example/CMakeLists.txt` in that IDE should be the only thing that is needed to start a new project
+
+To compile our new project manually, we do:
 
 ```bash
-# in Desktop/jluna/build
-ctest --verbose
+# in Workspace
+cd jluna_example
+mkdir build
+cd build
+cmake ..
+make
 ```
 
-Which will produce a lot of text output. At the very end, it should say:
+This will deposit an executable `jluna_example` into `Workspace/jluna_example/build`. To run it, we simply do:
 
+```bash
+# in Workspace/jluna_example/build
+./jluna_example
 ```
-Number of tests unsuccessful: 0
-
-Process finished with exit code 0
+```
+[JULIA][LOG] initialization successful (2 thread(s)).
+hello world!
 ```
 
-Which means jluna is working and ready to be used!
+We can modify this project freely, see the source code comments in `jluna_example/CMakeLists.txt`, `jluna_example/jluna_example.hpp`, and `jluna_example/main.cpp`.
 
-### Linking
+---
 
-Now that jluna is installed on your system, your application can access it using:
+## Adding jluna to an existing project
+
+### CMake
+
+If we already have an established project and we want to add jluna to its set of tools, we need to modify our own projects `CMakeLists.txt`, henceforth assumed to be located at `existing_project/CMakeLists.txt`. 
+
+After installing jluna, it can be located using the `find_package` command:
 
 ```cmake
-# in users own CMakeLists.txt
-find_library(jluna REQUIRED NAMES jluna)
-```
-
-If the above fails, you may need to manually specify, which directory jluna was installed into, using:
-
-```cmake
-# in users own CMakeLists.txt
-find_library(jluna REQUIRED 
-    NAMES jluna
-    PATHS <install path>
-)
-```
-
-Where `<install path>` is the path specified as `-DCMAKE_INSTALL_PREFIX` during configuration before.
-
-Note that `jlunas` install rules also export is as a package, so it will be available through `find_package` on systems where it was installed globally:
-
-```cmake
+# in existing_project/CMakeLists.txt
 find_package(jluna REQUIRED)
 ```
 
-After `find_library` or `find_package`, link your own library or executable to jluna like so:
+This command locates jluna and sets two cmake variables:
+
++ `JLUNA_LIBRARIES` contains the path to jluna and Julia shared libraries
++ `JLUNA_INCLUDE_DIRECTORIES` contains the path to the jluna and Julia headers
+
+We can then link against jluna and Julia like so:
 
 ```cmake
-# in your own CMakeLists.txt
-target_link_libraries(<target> PRIVATE 
-    "${jluna}" 
-    "${<julia package>}"
+# set cpp standard to c++20
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+
+# add jluna and Julia include directories
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${JLUNA_INCLUDE_DIRECTORIES}
+    # other include directories here
 )
-target_include_directories(<target> PRIVATE 
-    "${<jluna include directory>}" 
-    "${<julia include directory>}"
+
+# link against jluna and Julia
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    ${JLUNA_LIBRARIES}
+    # other libraries here
 )
-target_compile_features(<target> PRIVATE cxx_std_20)
 ```
 
-Where
-+ `<target>` is the identifier of your library / executable
-+ `<jluna include directory>` is the folder containing `jluna.hpp`
-+ `<julia package>` is the library/package containing the julia C-API
-+ `<julia include directory>` is the folder containing `julia.h`.
+where `PROJECT_NAME` is a cmake variable with the name of our existing cmake target.
 
-The shared Julia library location is usually
-+ `${JULIA_BINDIR}/../lib`
+To import jluna functionality into C++, we simply add `#include <jluna.hpp>` to our already existing headers.
 
-while the Julia include directory is usually
-+ `${JULIA_BINDIR}/../include/` or
-+ `${JULIA_BINDIR}/../include/julia/`
+---
 
-If building your library triggers linker or compiler errors, head to [troubleshooting](troubleshooting.md).
+### Meson
 
-### Example: Hello World
 
-A basic example main could be the following:
 
-```cpp
-#include <jluna.hpp>
+---
 
-using namespace jluna;
-int main()
-{
-    initialize();
-    Base["println"]("hello julia");
-    
-    return 0;
-}
-```
+### Docker
 
-Where `jluna.hpp` already includes `julia.h`.
-
-To learn how to use more of jlunas features, continue on to the [manual](basics.md).
+A community member has created an example project for jluna using Docker. See [here](https://github.com/Clemapfel/jluna/issues/51) for more information.

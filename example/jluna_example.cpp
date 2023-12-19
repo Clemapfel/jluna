@@ -4,6 +4,7 @@ namespace jluna_example
 {
     void example_function()
     {
-        jluna::Main["println"]("hello world");
+        // example function implementation, prints "hello world" using Julia
+        jluna::Main["println"]("hello world!");
     }
 }
