@@ -44,7 +44,8 @@ find_package(Threads)
 
 ### Configure Files ###
 
-set(SHARED_LIBRARY_NAME "${CMAKE_INSTALL_PREFIX}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna${CMAKE_SHARED_LIBRARY_SUFFIX}")
+include(GNUInstallDirs)
+set(SHARED_LIBRARY_NAME "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 # c.f. .src/include_julia.inl.in
 file(READ .src/julia/jluna_01.jl JLUNA_01)
@@ -118,24 +119,26 @@ if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(jluna PUBLIC "-fpic")
 endif()
 
-set(JLUNA_INCLUDE_DIRECTORIES
+target_include_directories(jluna PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>"
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/include"
-)
-
-target_include_directories(jluna PUBLIC
-    ${JLUNA_INCLUDE_DIRECTORIES}
+    "${JULIA_INCLUDE_DIR}"
 )
 
 target_link_libraries(jluna PUBLIC
     "$<BUILD_INTERFACE:Julia::Julia>"
     "$<BUILD_INTERFACE:Threads::Threads>"
+    ${JULIA_LIBRARY}
 )
 
 set_target_properties(jluna PROPERTIES
+    LINKER_LANGUAGE CXX
+    POSITION_INDEPENDENT_CODE ON
     WINDOWS_EXPORT_ALL_SYMBOLS "YES" # TODO: Why is this necessary?
     VERSION "${PROJECT_VERSION}"
     SOVERSION "${PROJECT_VERSION}"
+    INTERFACE_INCLUDE_DIRECTORIES "${JULIA_INCLUDE_DIR}"
+    INTERFACE_LINK_LIBRARIES ${JULIA_LIBRARY}
 )
 
 ### Install rules ###

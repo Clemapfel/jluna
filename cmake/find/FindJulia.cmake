@@ -62,7 +62,7 @@ endmacro()
 
 # detect Julia executable
 find_program(JULIA_EXECUTABLE julia PATHS ENV JULIA_BINDIR)
-julia_bail_if_false("Unable to detect the Julia executable. Make sure JULIA_BINDIR is set correctly." JULIA_EXECUTABLE)
+julia_bail_if_false("Unable to detect the Julia executable, make sure `JULIA_BINDIR` is set to the path returned by calling `print(Sys.BINDIR)` in the Julia REPL." JULIA_EXECUTABLE)
 
 # detect Julia binary dir
 if(NOT DEFINED JULIA_BINDIR)

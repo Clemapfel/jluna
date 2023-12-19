@@ -341,16 +341,16 @@ namespace jluna
             using Array<Value_t, 1>::_content;
     };
 
-    ///@brief typedefs for Array{Any, 1}
+    /// @brief typedefs for Array{Any, 1}
     using ArrayAny1d = Array<unsafe::Value*, 1>;
 
-    ///@brief typedefs for Array{Any, 2}
+    /// @brief typedefs for Array{Any, 2}
     using ArrayAny2d = Array<unsafe::Value*, 2>;
 
-    ///@brief typedefs for Array{Any, 3}
+    /// @brief typedefs for Array{Any, 3}
     using ArrayAny3d = Array<unsafe::Value*, 3>;
 
-    ///@brief typedefs for Array{Any, N}
+    /// @brief typedefs for Array{Any, N}
     using VectorAny = Vector<unsafe::Value*>;
 }
 

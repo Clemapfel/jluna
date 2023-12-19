@@ -112,6 +112,7 @@ Main.safe_eval(R"(
 ```
 cpp prints: what_julia_hands_it
 ```
+
 ---
 
 ## Documentation
@@ -136,88 +137,64 @@ For jluna you'll need:
 On Unix, g++ or clang (installed using your package manager) are recommended. <br>
 On Windows, either use g++ provided by [MinGW](https://sourceforge.net/projects/mingw/) or MSVC provided by the [Visual Studio C++ build tools](https://visualstudio.microsoft.com/downloads/).
 
-In either case, make sure the compilers' version is as stated above, as jluna uses modern C++20 features extensively.
+In either case, make sure the compilers' version is as stated above or newer, as jluna uses modern C++20 features extensively.
 
 ---
 
-## [Installation & Troubleshooting](https://clemens-cords.com/jluna/installation.html)
+## Quick Installation
 
-> A step-by-step guide is available [here](https://clemens-cords.com/jluna/installation.html). It is recommended that you follow this guide, instead of the highly abridged version below.
+(For a step-by-step guide, please visit the [documentation](https://clemens-cords.com/jluna/installation.html#))
 
-> **For IDEs**: In many cases, simply opening the cloned jluna project in an IDE (such as VisualStudio, Atom, or CLion) will allow it to automatically set everything up for you. After initialization, simply run "install" from your build menu.
-
-### Command Line
-
-Execute, in your bash console, in any public directory:
+In any public directory, execute:
 
 ```bash
-git clone https://github.com/Clemapfel/jluna
+git clone https://github.com/clemapfel/jluna
 cd jluna
-mkdir build
+mkdir build 
 cd build
-```
-```
-cmake .. -DJULIA_BINDIR=$(julia -e "println(Sys.BINDIR)") -DCMAKE_CXX_COMPILER=<C++ Compiler> -DCMAKE_INSTALL_PREFIX=<install directory>
-```
-Where
-+ `<C++ Compiler>` is the C++ compiler executable, e.g. `g++`, `clang++`, `cl.exe`, etc.
-+ `<install directory>` is the desired install directory, omit this option to use the systems default directory
-
-Then:
-```
-make install
-ctest --verbose
+cmake .. 
+sudo make install -j 8
 ```
 
-Which will deposit the library to the specified system folder and run tests to make sure everything works.
+If jluna fails to detect Julia, set 'JULIA_BINDIR' to the return value of `print(Sys.BINDIR)`, executed in the Julia REPL. For example, if `print(Sys.BINDIR)` returns the path `/home/Desktop/julia-1.9.3/bin`, call 
 
-#### Example Usage
-
-For example, installing on a linux machine using g++:
-
+```bash
+cmake .. -DJULIA_BINDIR="/home/Dekstop/julia-1.9.3/bin"
 ```
-git clone https://github.com/Clemapfel/jluna
-cd jluna
-mkdir build
-cd build
-cmake .. -DJULIA_BINDIR=$(julia -e "println(Sys.BINDIR)") -DCMAKE_CXX_COMPILER=/usr/bin/g++
-sudo make install
-ctest --verbose
-```
-Where ommitting `DCMAKE_INSTALL_PATH` makes CMake choose the default system path. `sudo` was necessary to write to that path.
 
 ---
 
-Afterward, you can make jluna available to your library using
+To use jluna, in your own `CMakeLists.txt`, add:
 
 ```cmake
-# inside your own CMakeLists.txt
-find_library(jluna REQUIRED 
-    NAMES jluna
-    PATHS <install directory>
-)
-target_link_libraries(<your library> PRIVATE
-    "${jluna}" 
-    "${<julia>}")
+find_package(jluna REQUIRED)
 ```
-Where
-+ `<install directory>` is the directory specified via `-DCMAKE_INSTALL_PREFIX`
-+ `<julia>` is the Julia shared library (usually available in `"${JULIA_BINDIR}/../lib"`)
-+ `<your library>` is the name of your library or executable
 
-If any step of this does not work for you, please follow the [installation guide](https://clemens-cords.com/jluna/installation.html) instead.
+Then, where `my_target` is the name of your own CMake library or executable:
+
+```cmake
+target_link_libraries(my_target PRIVATE 
+    ${JLUNA_LIBRARIES}
+    # other libraries here
+)
+target_include_directories(my_target PRIVATE 
+    ${JLUNA_INCLUDE_DIRECTORIES}
+    # other paths here
+)
+```
+
+For a full hello world project you can copy and paste, see [here](/example).
 
 ---
 
 ## Credits
 jluna was designed and written by [Clem Cords](https://github.com/Clemapfel).
 
-## Prior Contributors
 + **March 2022**: CMake improvements by [friendlyanon](https://github.com/friendlyanon)
 
 ## Donations
 
-Jluna was created with no expectation of compensation and made available for free. Consider donating to reward past work and support the continued development of this library:
+jluna was created with no expectation of compensation and made available for free. Consider donating to reward past work and support the continued development of this library:
 
 + [GitHub Sponsors](https://github.com/sponsors/Clemapfel)
 + [PayPal](https://www.paypal.com/donate/?hosted_button_id=8KWF3JTDF8XL2)

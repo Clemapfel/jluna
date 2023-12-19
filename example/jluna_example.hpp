@@ -1,4 +1,4 @@
-#include <jluna/jluna.hpp>
+#include <jluna.hpp>
 
 namespace jluna_example
 {
