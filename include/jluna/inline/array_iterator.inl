@@ -7,7 +7,7 @@ namespace jluna
 {
     template<is_boxable V, uint64_t R>
     Array<V, R>::ConstIterator::ConstIterator(uint64_t i, Array<V, R>* array)
-        : _index(i), _owner(array)
+    : _index(i), _owner(array)
     {}
 
     template<is_boxable V, uint64_t R>
@@ -75,9 +75,9 @@ namespace jluna
     {
         gc_pause;
         auto res = Proxy(
-            jl_arrayref((jl_array_t*) _owner->_content->value(), _index),
-            _owner->_content,
-            jl_box_uint64(_index+1)
+        jl_arrayref((jl_array_t*) _owner->_content->value(), _index),
+        _owner->_content,
+        jl_box_uint64(_index+1)
         );
         gc_unpause;
         return res;
@@ -93,7 +93,7 @@ namespace jluna
 
     template<is_boxable V, uint64_t R>
     Array<V, R>::Iterator::Iterator(uint64_t i, Array<V, R>* array)
-        : ConstIterator(i, array)
+    : ConstIterator(i, array)
     {}
 
     template<is_boxable V, uint64_t R>

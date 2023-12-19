@@ -3,8 +3,8 @@
 // Created on 30.01.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/exceptions.hpp>
-#include <include/unsafe_utilities.hpp>
+#include <jluna/exceptions.hpp>
+#include <jluna/unsafe_utilities.hpp>
 
 #include <sstream>
 #include <vector>

@@ -3,7 +3,7 @@
 // Created on 31.01.22 by clem (mail@clemens-cords.com)
 //
 
-#include <.src/common.hpp>
+#include <jluna/common.hpp>
 
 #include <iostream>
 
@@ -63,7 +63,7 @@ namespace jluna
     {
         return jl_box_bool(false);
     }
-    
+
     template<is<char> T>
     unsafe::Value* box(T value)
     {
@@ -174,9 +174,9 @@ namespace jluna
     }
 
     template<typename T, typename Key_t, typename Value_t, std::enable_if_t<
-            std::is_same_v<T, std::unordered_map<Key_t, Value_t>> or
-            std::is_same_v<T, std::map<Key_t, Value_t>>,
-            bool>>
+    std::is_same_v<T, std::unordered_map<Key_t, Value_t>> or
+    std::is_same_v<T, std::map<Key_t, Value_t>>,
+    bool>>
     unsafe::Value* box(const T& value)
     {
         static auto* new_dict = unsafe::get_function("jluna"_sym, "new_dict"_sym);
@@ -217,7 +217,7 @@ namespace jluna
     }
 
     #ifdef _MSC_VER
-        // silence false positive conversion warning on MSVC
+    // silence false positive conversion warning on MSVC
         #pragma warning(push)
         #pragma warning(disable:4267)
     #endif
@@ -241,7 +241,13 @@ namespace jluna
             jl_arrayset(args_t, jl_typeof(jl_arrayref(args_v, i)), i);
 
         auto tuple_t = jl_apply_tuple_type_v((jl_value_t**) args_t->data, args_t->length);
+
+        #if JULIA_VERSION_MAJOR >= 2 or JULIA_VERSION_MINOR >= 10
+        auto* out = jl_new_structv((jl_datatype_t*) tuple_t, (jl_value_t**) args_v->data, args_v->length);
+        #else
         auto* out = jl_new_structv(tuple_t, (jl_value_t**) args_v->data, args_v->length);
+        #endif
+
         gc_unpause;
         return out;
     }

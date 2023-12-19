@@ -3,10 +3,10 @@
 // Created on 04.04.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/safe_utilities.hpp>
-#include <include/unsafe_utilities.hpp>
-#include <include/type.hpp>
-#include <include/module.hpp>
+#include <jluna/safe_utilities.hpp>
+#include <jluna/unsafe_utilities.hpp>
+#include <jluna/type.hpp>
+#include <jluna/module.hpp>
 #include <mutex>
 
 namespace jluna

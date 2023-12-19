@@ -47,22 +47,22 @@ jluna aims to fully wrap the official Julia C-API, replacing it in projects with
 
 ```cpp
  // execute multi-line Julia code
- Main.safe_eval(R"(
+Main.safe_eval(R"(
      f(x) = x^x^x
      vec = Int64[1, 2, 3, 4]
  )");
 
- // call Julia functions with C++ values
- auto f = Main["f"];
- std::cout << (Int64) f(3) << std::endl;
+// call Julia functions with C++ values
+auto f = Main["f"];
+std::cout << (Int64) f(3) << std::endl;
 
- // mutate Julia-side values
- Main["vec"][2] = 999;
- Main.safe_eval("println(vec)");
+// mutate Julia-side values
+Main["vec"][2] = 999;
+Main.safe_eval("println(vec)");
 
- // assign `std` objects to Julia variables
- Main["vec"] = std::vector<char>{117, 118, 119, 120};
- Main.safe_eval("println(vec)");
+// assign `std` objects to Julia variables
+Main["vec"] = std::vector<char>{117, 118, 119, 120};
+Main.safe_eval("println(vec)");
 ```
 ```
 2030534587
@@ -79,7 +79,7 @@ jluna aims to fully wrap the official Julia C-API, replacing it in projects with
 Array<Int64, 2> matrix = Main.safe_eval("return reshape([i for i in 1:(4*4)], 4, 4)");
 
 // supports multi-dimensional indexing (and array comprehension, not shown here)
-matrix[0, 2] = 999;
+matrix.at(0, 2) = 999;
 Main["println"](matrix);
 
 // even has generator expressions!
@@ -129,9 +129,9 @@ For jluna you'll need:
 + [**Julia 1.7.0**](https://julialang.org/downloads/#current_stable_release) (or newer)
 + [**cmake 3.12**](https://cmake.org/download/) (or newer)
 + C++ Compiler, one of
-  - [g++10](https://gcc.gnu.org/) (or newer)<br> 
-  - [clang++-12](https://releases.llvm.org/) (or newer)<br> 
-  - [MSVC](https://visualstudio.microsoft.com/downloads/) 19.34 (or newer)
+    - [g++10](https://gcc.gnu.org/) (or newer)<br>
+    - [clang++-12](https://releases.llvm.org/) (or newer)<br>
+    - [MSVC](https://visualstudio.microsoft.com/downloads/) 19.34 (or newer)
 
 On Unix, g++ or clang (installed using your package manager) are recommended. <br>
 On Windows, either use g++ provided by [MinGW](https://sourceforge.net/projects/mingw/) or MSVC provided by the [Visual Studio C++ build tools](https://visualstudio.microsoft.com/downloads/).
@@ -209,23 +209,26 @@ If any step of this does not work for you, please follow the [installation guide
 
 ---
 
-## License
+## Credits
+jluna was designed and written by [Clem Cords](https://github.com/Clemapfel).
+
+## Prior Contributors
++ **March 2022**: CMake improvements by [friendlyanon](https://github.com/friendlyanon)
+
+## Donations
+
+Jluna was created with no expectation of compensation and made available for free. Consider donating to reward past work and support the continued development of this library:
+
++ [GitHub Sponsors](https://github.com/sponsors/Clemapfel)
++ [PayPal](https://www.paypal.com/donate/?hosted_button_id=8KWF3JTDF8XL2)
+
+---
+
+## License & Citation
 
 The current and all prior releases of jluna are supplied under MIT license, available [here](./LICENSE.txt).
-
-I would like to ask people using this library in commercial or university settings, to disclose their usage of jluna in some small way (for example, at the end of the credits or via a citation) and to make clear the origin of the work (for example by linking this GitHub page).
 
 If you would like to cite jluna in your academic publication, you can copy the entry in [CITATION.bib](CITATION.bib) to your [BibTeX](https://www.overleaf.com/learn/latex/Bibliography_management_with_bibtex) bibliography, then use the `\cite{jluna}` command anywhere in your [LaTeX](https://www.latex-project.org/) source code.
 
 Thank you for your consideration,
 C.
-
----
-
-## Credits
-jluna was designed and written by [Clem Cords](https://github.com/Clemapfel).
-
-#### March 2022:<br>
-+ CMake improvements by [friendlyanon](https://github.com/friendlyanon)
-
----

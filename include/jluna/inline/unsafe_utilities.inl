@@ -6,7 +6,7 @@
 namespace jluna::unsafe
 {
     #ifdef _MSC_VER
-        // silence false positive conversion warning on MSVC
+    // silence false positive conversion warning on MSVC
         #pragma warning(push)
         #pragma warning(disable:4267)
     #endif
@@ -109,7 +109,13 @@ namespace jluna::unsafe
 
             return jl_apply_tuple_type_v(types.data(), types.size());
         }();
+
+        #if JULIA_VERSION_MAJOR >= 2 or JULIA_VERSION_MINOR >= 10
+        auto* tuple = jl_new_struct((jl_datatype_t*) tuple_type, jl_box_uint64(size_per_dimension)...);
+        #else
         auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+        #endif
+
         auto* res = jl_new_array(jl_apply_array_type(value_type, sizeof...(Dims)), tuple);
         jl_gc_enable(before);
         return res;
@@ -127,7 +133,13 @@ namespace jluna::unsafe
 
             return jl_apply_tuple_type_v(types.data(), types.size());
         }();
+
+        #if JULIA_VERSION_MAJOR >= 2 or JULIA_VERSION_MINOR >= 10
+        auto* tuple = jl_new_struct((jl_datatype_t*) tuple_type, jl_box_uint64(size_per_dimension)...);
+        #else
         auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+        #endif
+
         auto* res = jl_ptr_to_array(jl_apply_array_type(value_type, sizeof...(Dims)), data, tuple, 0);
         jl_gc_enable(before);
         return res;
@@ -148,7 +160,12 @@ namespace jluna::unsafe
 
         static jl_function_t* get_value_type_of_array = get_function("jluna"_sym, "get_value_type_of_array"_sym);
 
+        #if JULIA_VERSION_MAJOR >= 2 or JULIA_VERSION_MINOR >= 10
+        auto* tuple = jl_new_struct((jl_datatype_t*) tuple_type, jl_box_uint64(size_per_dimension)...);
+        #else
         auto* tuple = jl_new_struct(tuple_type, jl_box_uint64(size_per_dimension)...);
+        #endif
+
         auto* res = jl_reshape_array(jl_apply_array_type(unsafe::call(get_value_type_of_array, array), sizeof...(Dims)), array, tuple);
         override_array(array, res);
         jl_gc_enable(before);
@@ -258,7 +275,7 @@ namespace jluna::unsafe
     {
         return jl_box_int32(in);
     }
-    
+
     template<is<int64_t> T>
     unsafe::Value* unsafe_box(int64_t in)
     {
@@ -294,7 +311,7 @@ namespace jluna::unsafe
     {
         return jl_box_float32(in);
     }
-    
+
     template<is<double> T>
     unsafe::Value* unsafe_box(double in)
     {
@@ -324,55 +341,55 @@ namespace jluna::unsafe
     {
         return *(reinterpret_cast<int8_t*>(in));
     }
-    
+
     template<is<int16_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<int16_t*>(in));
     }
-    
+
     template<is<int32_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<int32_t*>(in));
     }
-    
+
     template<is<int64_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<int64_t*>(in));
     }
-    
+
     template<is<uint8_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<uint8_t*>(in));
     }
-    
+
     template<is<uint16_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<uint16_t*>(in));
     }
-    
+
     template<is<uint32_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<uint32_t*>(in));
     }
-    
+
     template<is<uint64_t> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<uint64_t*>(in));
     }
-    
+
     template<is<Float32> T>
     T unsafe_unbox(unsafe::Value* in)
     {
         return *(reinterpret_cast<Float32*>(in));
     }
-    
+
     template<is<Float64> T>
     T unsafe_unbox(unsafe::Value* in)
     {

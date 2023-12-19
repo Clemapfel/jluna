@@ -7,19 +7,19 @@
 
 // collects all end-user relevant headers from jluna/include
 
-#include <include/julia_wrapper.hpp>
-#include <include/exceptions.hpp>
-#include <include/concepts.hpp>
-#include <include/unsafe_utilities.hpp>
-#include <include/safe_utilities.hpp>
-#include <include/box.hpp>
-#include <include/unbox.hpp>
-#include <include/multi_threading.hpp>
-#include <include/proxy.hpp>
-#include <include/array.hpp>
-#include <include/cppcall.hpp>
-#include <include/type.hpp>
-#include <include/symbol.hpp>
-#include <include/module.hpp>
-#include <include/generator_expression.hpp>
-#include <include/usertype.hpp>
+#include <jluna/julia_wrapper.hpp>
+#include <jluna/exceptions.hpp>
+#include <jluna/concepts.hpp>
+#include <jluna/unsafe_utilities.hpp>
+#include <jluna/safe_utilities.hpp>
+#include <jluna/box.hpp>
+#include <jluna/unbox.hpp>
+#include <jluna/multi_threading.hpp>
+#include <jluna/proxy.hpp>
+#include <jluna/array.hpp>
+#include <jluna/cppcall.hpp>
+#include <jluna/type.hpp>
+#include <jluna/symbol.hpp>
+#include <jluna/module.hpp>
+#include <jluna/generator_expression.hpp>
+#include <jluna/usertype.hpp>

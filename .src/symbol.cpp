@@ -3,7 +3,7 @@
 // Created on 07.02.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/symbol.hpp>
+#include <jluna/symbol.hpp>
 
 namespace jluna
 {

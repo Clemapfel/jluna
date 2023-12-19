@@ -47,79 +47,69 @@ find_package(Threads)
 set(SHARED_LIBRARY_NAME "${CMAKE_INSTALL_PREFIX}/${CMAKE_SHARED_LIBRARY_PREFIX}jluna${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 # c.f. .src/include_julia.inl.in
-file(READ include/julia/jluna_01.jl JLUNA_01)
-file(READ include/julia/jluna_02.jl JLUNA_02)
-file(READ include/julia/jluna_03.jl JLUNA_03)
-file(READ include/julia/jluna_04.jl JLUNA_04)
-file(READ include/julia/jluna_05.jl JLUNA_05)
-file(READ include/julia/jluna_06.jl JLUNA_06)
+file(READ .src/julia/jluna_01.jl JLUNA_01)
+file(READ .src/julia/jluna_02.jl JLUNA_02)
+file(READ .src/julia/jluna_03.jl JLUNA_03)
+file(READ .src/julia/jluna_04.jl JLUNA_04)
+file(READ .src/julia/jluna_05.jl JLUNA_05)
+file(READ .src/julia/jluna_06.jl JLUNA_06)
 
-configure_file("${CMAKE_SOURCE_DIR}/.src/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/.src/include_julia.inl" @ONLY)
+configure_file("${CMAKE_SOURCE_DIR}/include/jluna/inline/include_julia.inl.in" "${CMAKE_SOURCE_DIR}/include/jluna/inline/include_julia.inl" @ONLY)
 
 ### Declare Library ###
 
-add_library(jluna SHARED
+set(JLUNA_INCLUDE
     jluna.hpp
+    include/jluna/exceptions.hpp
+    include/jluna/typedefs.hpp
+    include/jluna/inline/typedefs.inl
+    include/jluna/unsafe_utilities.hpp
+    include/jluna/inline/unsafe_utilities.inl
+    include/jluna/safe_utilities.hpp
+    include/jluna/inline/safe_utilities.inl
+    include/jluna/concepts.hpp
+    include/jluna/box.hpp
+    include/jluna/inline/box.inl
+    include/jluna/unbox.hpp
+    include/jluna/inline/unbox.inl
+    include/jluna/proxy.hpp
+    include/jluna/inline/proxy.inl
+    include/jluna/array.hpp
+    include/jluna/inline/array.inl
+    include/jluna/inline/array_iterator.inl
+    include/jluna/cppcall.hpp
+    include/jluna/inline/cppcall.inl
+    include/jluna/module.hpp
+    include/jluna/inline/module.inl
+    include/jluna/symbol.hpp
+    include/jluna/inline/symbol.inl
+    include/jluna/type.hpp
+    include/jluna/inline/type.inl
+    include/jluna/generator_expression.hpp
+    include/jluna/usertype.hpp
+    include/jluna/inline/usertype.inl
+    include/jluna/multi_threading.hpp
+    include/jluna/inline/multi_threading.inl
+    include/jluna/mutex.hpp
+    include/jluna/c_adapter.hpp
+)
 
-    include/exceptions.hpp
+set(JLUNA_SRC
     .src/exceptions.cpp
-
-    include/typedefs.hpp
-    .src/typedefs.inl
-
-    include/unsafe_utilities.hpp
-    .src/unsafe_utilities.inl
     .src/unsafe_utilities.cpp
-
-    include/safe_utilities.hpp
-    .src/safe_utilities.inl
     .src/safe_utilities.cpp
-
-    include/concepts.hpp
-
-    include/box.hpp
-    .src/box.inl
-
-    include/unbox.hpp
-    .src/unbox.inl
-
-    include/proxy.hpp
     .src/proxy.cpp
-    .src/proxy.inl
-
-    include/array.hpp
-    .src/array.inl
-    .src/array_iterator.inl
-
-    include/cppcall.hpp
-    .src/cppcall.inl
-
-    include/module.hpp
     .src/module.cpp
-    .src/module.inl
-
-    include/symbol.hpp
     .src/symbol.cpp
-    .src/symbol.inl
-
-    include/type.hpp
     .src/type.cpp
-    .src/type.inl
-
-    include/generator_expression.hpp
     .src/generator_expression.cpp
-
-    include/usertype.hpp
-    .src/usertype.inl
-
-    include/multi_threading.hpp
-    .src/multi_threading.inl
-
-    include/mutex.hpp
     .src/mutex.cpp
-
-    .src/c_adapter.hpp
     .src/c_adapter.cpp
+)
+
+add_library(jluna SHARED
+    ${JLUNA_INCLUDE}
+    ${JLUNA_SRC}
 )
 
 target_compile_features(jluna PUBLIC cxx_std_20)
@@ -128,7 +118,15 @@ if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(jluna PUBLIC "-fpic")
 endif()
 
-target_include_directories(jluna PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
+set(JLUNA_INCLUDE_DIRECTORIES
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>"
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/include"
+)
+
+target_include_directories(jluna PUBLIC
+    ${JLUNA_INCLUDE_DIRECTORIES}
+)
+
 target_link_libraries(jluna PUBLIC
     "$<BUILD_INTERFACE:Julia::Julia>"
     "$<BUILD_INTERFACE:Threads::Threads>"
@@ -138,7 +136,6 @@ set_target_properties(jluna PROPERTIES
     WINDOWS_EXPORT_ALL_SYMBOLS "YES" # TODO: Why is this necessary?
     VERSION "${PROJECT_VERSION}"
     SOVERSION "${PROJECT_VERSION}"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_INSTALL_PREFIX}"
 )
 
 ### Install rules ###
@@ -147,35 +144,25 @@ if(NOT CMAKE_SKIP_INSTALL_RULES)
     include(cmake/install-rules.cmake)
 endif()
 
-include(CTest)
 ### Declare Test ###
 
-option(BUILD_TESTING "Enable jluna_test" ON)
-if (BUILD_TESTING)
+option(JLUNA_BUILD_TESTING "Enable jluna_test" ON)
+if (JLUNA_BUILD_TESTING)
+    include(CTest)
     add_executable(
         jluna_test
-        .test/main.cpp
-        .test/test.hpp
+        "${CMAKE_SOURCE_DIR}/.test/main.cpp"
+        "${CMAKE_SOURCE_DIR}/.test/test.hpp"
     )
     target_link_libraries(jluna_test PRIVATE jluna)
+    target_include_directories(jluna_test PRIVATE ${JLUNA_INCLUDE_DIRECTORIES})
     add_test(NAME jluna_test COMMAND jluna_test)
-endif()
-
-### Developer mode ###
-
-if(NOT jluna_DEVELOPER_MODE)
-    return()
-elseif(NOT PROJECT_IS_TOP_LEVEL)
-    message(
-        AUTHOR_WARNING
-        "Developer mode is intended for developers of jluna"
-    )
 endif()
 
 ### Declare Benchmark ###
 
-option(BUILD_BENCHMARK "Enable jluna_benchmark" OFF)
-if (BUILD_BENCHMARK)
+option(JLUNA_BUILD_BENCHMARK "Enable jluna_benchmark" OFF)
+if (JLUNA_BUILD_BENCHMARK)
     add_executable(
         jluna_benchmark
         .benchmark/main.cpp

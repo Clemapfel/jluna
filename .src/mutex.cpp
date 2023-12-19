@@ -3,9 +3,9 @@
 // Created on 15.04.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/typedefs.hpp>
-#include <include/unsafe_utilities.hpp>
-#include <include/mutex.hpp>
+#include <jluna/typedefs.hpp>
+#include <jluna/unsafe_utilities.hpp>
+#include <jluna/mutex.hpp>
 
 namespace jluna
 {

@@ -3,9 +3,9 @@
 // Created on 04.04.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/exceptions.hpp>
-#include <include/unsafe_utilities.hpp>
-#include <.src/include_julia.inl>
+#include <jluna/exceptions.hpp>
+#include <jluna/unsafe_utilities.hpp>
+#include <jluna/inline/include_julia.inl>
 
 #include <mutex>
 
@@ -30,7 +30,7 @@ namespace jluna
 {
 
     #ifdef _MSC_VER
-        // silence false positive conversion warning on MSVC
+    // silence false positive conversion warning on MSVC
         #pragma warning(push)
         #pragma warning(disable:4267)
     #endif
@@ -77,11 +77,11 @@ namespace jluna
     }
 
     inline void initialize(
-        uint64_t n_threads,
-        bool suppress_log,
-        const std::string& jluna_shared_library_path,
-        const std::string& julia_bindir,
-        const std::string& image_path
+    uint64_t n_threads,
+    bool suppress_log,
+    const std::string& jluna_shared_library_path,
+    const std::string& julia_bindir,
+    const std::string& image_path
     )
     {
         static bool is_initialized = false;
@@ -122,8 +122,7 @@ namespace jluna
 
         jl_eval_string(R"(
             begin
-                local version = tryparse(Float32, SubString(string(VERSION), 1, 3))
-                if (version < 1.7)
+                if (isless(VERSION, v"1.7"))
                     local message = "jluna requires julia v1.7.0 or higher, but v" * string(VERSION) * " was detected. Please download the latest julia release at https://julialang.org/downloads/#current_stable_release, set JULIA_BINDIR accordingly, then recompile jluna using cmake. For more information, visit https://github.com/Clemapfel/jluna/blob/master/README.md#troubleshooting"
                     throw(AssertionError(message))
                 end

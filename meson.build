@@ -2,6 +2,7 @@ project('jluna', 'cpp',
     version: '1.1.0',
     default_options : ['cpp_std=c++20'],
 )
+cpp_compiler = meson.get_compiler('cpp')
 
 ### DETECT JULIA ###
 
@@ -9,8 +10,6 @@ julia_executable = find_program(get_option('JULIA_EXECUTABLE'), 'julia', require
 if not julia_executable.found()
     error('Unable to detect Julia executable. Please run `print(joinpath(Sys.BINDIR), "julia")` manually within the Julia REPL, then set the `JULIA_EXECUTABLE` meson option to the returned value. For example, if the executable is `/usr/bin/julia`, call `meson setup build -DJULIA_EXECUTABLE="/usr/bin/julia"')
 endif
-
-cpp_compiler = meson.get_compiler('cpp')
 
 julia_bindir = run_command(julia_executable, '-e print(Sys.BINDIR)', check: true).stdout().strip()
 

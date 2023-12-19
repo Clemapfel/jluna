@@ -3,7 +3,7 @@
 // Created on 16.02.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/generator_expression.hpp>
+#include <jluna/generator_expression.hpp>
 
 namespace jluna
 {

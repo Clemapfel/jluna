@@ -3,9 +3,9 @@
 // Created on 07.02.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/module.hpp>
-#include <include/safe_utilities.hpp>
-#include <.src/common.hpp>
+#include <jluna/module.hpp>
+#include <jluna/safe_utilities.hpp>
+#include <jluna/common.hpp>
 
 namespace jluna
 {

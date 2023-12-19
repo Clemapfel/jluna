@@ -1,12 +1,11 @@
 #ifdef __cplusplus
 
-#include <include/julia_wrapper.hpp>
-#include <include/cppcall.hpp>
+#include <jluna/julia_wrapper.hpp>
+#include <jluna/cppcall.hpp>
+#include <jluna/c_adapter.hpp>
 
 #include <iostream>
 #include <thread>
-
-#include <.src/c_adapter.hpp>
 
 jluna::unsafe::Value* jluna_make(void* function_ptr, int n_args)
 {

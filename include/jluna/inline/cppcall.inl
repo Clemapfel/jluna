@@ -3,14 +3,14 @@
 // Created on 17.04.22 by clem (mail@clemens-cords.com)
 //
 
-#include <include/typedefs.hpp>
-#include <include/mutex.hpp>
-#include <include/concepts.hpp>
-#include <include/unsafe_utilities.hpp>
-#include <include/safe_utilities.hpp>
-#include <include/box.hpp>
-#include <include/proxy.hpp>
-#include <.src/c_adapter.hpp>
+#include <jluna/typedefs.hpp>
+#include <jluna/mutex.hpp>
+#include <jluna/concepts.hpp>
+#include <jluna/unsafe_utilities.hpp>
+#include <jluna/safe_utilities.hpp>
+#include <jluna/box.hpp>
+#include <jluna/proxy.hpp>
+#include <jluna/c_adapter.hpp>
 
 #include <unordered_map>
 #include <functional>

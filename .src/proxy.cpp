@@ -6,8 +6,8 @@
 #include <deque>
 #include <iostream>
 
-#include <include/proxy.hpp>
-#include <include/type.hpp>
+#include <jluna/proxy.hpp>
+#include <jluna/type.hpp>
 
 namespace jluna
 {
