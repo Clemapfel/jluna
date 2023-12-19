@@ -6,6 +6,8 @@ set(package jluna)
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 install(
     FILES jluna.hpp
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"

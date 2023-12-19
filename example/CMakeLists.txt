@@ -7,7 +7,7 @@ set(PROJECT_NAME jluna_example)
 project(${PROJECT_NAME} VERSION 0.1.0 LANGUAGES CXX)
 
 # find jluna, this also sets `JLUNA_LIBRARIES` and `JLUNA_INCLUDE_DIRECTORIES`
-find_package(jluna REQUIRED)
+find_package(jluna REQUIRED VERSION 1.1.0)
 
 # add executable
 add_executable(${PROJECT_NAME}

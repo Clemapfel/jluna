@@ -26,7 +26,7 @@ Options
 
 #]=======================================================================]
 
-project(jluna VERSION 1.0.0 LANGUAGES CXX)
+project(jluna VERSION 1.1.0 LANGUAGES CXX)
 
 include(cmake/project-is-top-level.cmake)
 if(PROJECT_IS_TOP_LEVEL)
@@ -131,6 +131,7 @@ target_link_libraries(jluna PUBLIC
     ${JULIA_LIBRARY}
 )
 
+get_filename_component(JULIA_LIBRARY_PATH "${JULIA_LIBRARY}" DIRECTORY)
 set_target_properties(jluna PROPERTIES
     LINKER_LANGUAGE CXX
     POSITION_INDEPENDENT_CODE ON
@@ -138,7 +139,8 @@ set_target_properties(jluna PROPERTIES
     VERSION "${PROJECT_VERSION}"
     SOVERSION "${PROJECT_VERSION}"
     INTERFACE_INCLUDE_DIRECTORIES "${JULIA_INCLUDE_DIR}"
-    INTERFACE_LINK_LIBRARIES ${JULIA_LIBRARY}
+    INTERFACE_LINK_LIBRARIES "${JULIA_LIBRARY}"
+    INTERFACE_LINK_DIRECTORIES "${JULIA_LIBRARY_PATH}"
 )
 
 ### Install rules ###
