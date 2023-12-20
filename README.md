@@ -143,7 +143,7 @@ In either case, make sure the compilers' version is as stated above or newer, as
 
 ## Quick Installation
 
-(For a step-by-step guide, please visit the [documentation](https://clemens-cords.com/jluna/installation.html#))
+(If you are windows, please visit the [step-by-step documentation guide](https://clemens-cords.com/jluna/installation.html#) instead)
 
 In any public directory, execute:
 
