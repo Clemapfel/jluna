@@ -13,11 +13,11 @@ namespace jluna
 {
     /// @brief string suffix operator to create a symbol from a string
     /// @returns symbol
-    unsafe::Symbol* operator""_sym(const char*, uint64_t);
+    unsafe::Symbol* operator""_sym(const char*, unsigned long);
 
     /// @brief literal operator for prettier syntax
     /// @returns result of jl_eval_string
-    unsafe::Value* operator""_eval(const char*, uint64_t);
+    unsafe::Value* operator""_eval(const char*, unsigned long);
 }
 
 namespace jluna::unsafe
