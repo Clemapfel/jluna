@@ -7,7 +7,7 @@
 
 namespace jluna
 {
-    GeneratorExpression operator""_gen(const char* in, uint64_t n)
+    GeneratorExpression operator""_gen(const char* in, unsigned long n)
     {
         std::stringstream str;
         gc_pause;
