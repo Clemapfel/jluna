@@ -24,6 +24,12 @@ jluna aims to fully wrap the official Julia C-API, replacing it in projects with
 
 ---
 
+### Anouncements
+
+> **Note**: jluna is currently **not available for Apple aarch64 architectures**, such as those used by the M1 or M2 MacBooks. See [here](https://github.com/Clemapfel/jluna/issues/64) for more information. jluna should still work for Windows 10, 11, Linux, and FreeBSD.
+
+---
+
 ### Features
 
 + expressive, generic syntax
