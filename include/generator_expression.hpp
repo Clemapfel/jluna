@@ -11,13 +11,13 @@ namespace jluna
 {
     /// @brief treat the string as a generator expression and return iterable, lazy-eval range
     class GeneratorExpression;
-    GeneratorExpression operator""_gen(const char*, uint64_t);
+    GeneratorExpression operator""_gen(const char*, unsigned long);
 
     /// @brief wrapper for Base.Generator, only create by _gen
     /// @note expression is evaluated lazily
     class GeneratorExpression
     {
-        friend GeneratorExpression operator""_gen(const char*, uint64_t);
+        friend GeneratorExpression operator""_gen(const char*, unsigned long);
 
         public:
             /// @brief dtor
