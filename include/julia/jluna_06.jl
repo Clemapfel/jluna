@@ -110,7 +110,7 @@ module cppcall
         elseif n == N == 2
             return from_pointer(invoke_function(f, to_pointer(xs[1]), to_pointer(xs[2])));
         elseif n == N == 3
-            return from_pt(invoke_function(f, to_pointer(xs[1]), to_pointer(xs[2]), to_pointer(xs[3])));
+            return from_pointer(invoke_function(f, to_pointer(xs[1]), to_pointer(xs[2]), to_pointer(xs[3])));
         elseif N != 0 && N != 1 && N != 2 & N != 3
             return from_pointer(invoke_function(f, to_pointer([xs...])));
         else
